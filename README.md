@@ -1,70 +1,143 @@
-# Getting Started with Create React App
+# MPASAT Online - Financial Management System
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern financial management system built with React and SQLite, featuring income/expense tracking, reporting, and multi-currency support.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- 🔐 Secure user authentication
+- 💰 Income and expense tracking
+- 📊 Visual reports and analytics
+- 💱 Multi-currency support (USD, EUR, FCFA)
+- 📱 Responsive design
+- 📄 PDF report generation
+- 📈 Interactive charts
+- 🔄 Real-time updates
 
-### `npm start`
+## Prerequisites
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Node.js (v14 or higher)
+- npm or yarn
+- SQLite3
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Installation
 
-### `npm test`
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd quick-app
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. Install backend dependencies:
+```bash
+cd backend
+npm install
+```
 
-### `npm run build`
+3. Install frontend dependencies:
+```bash
+cd ../frontend
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Configuration
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Create a `.env` file in the backend directory:
+```bash
+PORT=5000
+JWT_SECRET=your-secret-key
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Running the Application
 
-### `npm run eject`
+1. Start the backend server:
+```bash
+cd backend
+npm run dev
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+2. Start the frontend development server:
+```bash
+cd frontend
+npm start
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. Access the application at `http://localhost:3000`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Default Credentials
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- Username: admin1234
+- Password: admin4321
 
-## Learn More
+## Database Schema
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Users Table
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Transactions Table
+```sql
+CREATE TABLE transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  type TEXT NOT NULL CHECK(type IN ('Income', 'Expense')),
+  name TEXT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  currency TEXT NOT NULL,
+  description TEXT,
+  date DATE NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+```
 
-### Code Splitting
+## API Endpoints
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Authentication
+- POST `/api/login` - User login
 
-### Analyzing the Bundle Size
+### Transactions
+- GET `/api/transactions` - Get user transactions
+- POST `/api/transactions` - Create new transaction
+- GET `/api/transactions/summary` - Get transactions summary
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Technologies Used
 
-### Making a Progressive Web App
+### Frontend
+- React
+- Chart.js
+- Material-UI Icons
+- jsPDF
+- Context API for state management
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### Backend
+- Node.js
+- Express
+- SQLite3
+- JSON Web Tokens
+- bcryptjs for password hashing
 
-### Advanced Configuration
+## Security Features
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- Password hashing with bcrypt
+- JWT-based authentication
+- SQL injection prevention
+- Input validation
+- Secure session management
 
-### Deployment
+## Contributing
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### `npm run build` fails to minify
+## License
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is licensed under the MIT License - see the LICENSE file for details. 

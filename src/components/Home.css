@@ -1,0 +1,280 @@
+body, .home-root {
+  background: #eaf6fb;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  overflow-x: hidden;
+}
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 32px 0 32px;
+  background: transparent;
+}
+.home-logo-title {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.home-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(20,41,106,0.08);
+}
+.home-title {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #14296a;
+  letter-spacing: 1px;
+}
+.home-get-started-btn {
+  background: linear-gradient(135deg, #14296a, #1e3a8a);
+  color: #fff;
+  border: none;
+  padding: 0.9rem 2.2rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(20,41,106,0.13);
+  transition: all 0.2s;
+}
+.home-get-started-btn:hover {
+  background: #1e3a8a;
+  transform: translateY(-2px) scale(1.04);
+}
+.home-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px 40px 16px;
+}
+.home-info-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin: 40px 0 32px 0;
+  justify-content: center;
+}
+.home-info-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(20,41,106,0.09);
+  padding: 24px 28px 18px 28px;
+  min-width: 260px;
+  max-width: 340px;
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+.home-info-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #183a6d;
+  margin-bottom: 8px;
+}
+.home-info-header svg {
+  font-size: 1.3em;
+  color: #1e3a8a;
+}
+.home-info-body {
+  color: #444;
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+.home-vocationals-section {
+  margin: 40px 0 0 0;
+}
+.home-vocationals-title {
+  color: #14296a;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+  text-align: center;
+}
+.home-vocationals-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+.home-vocational-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(20,41,106,0.09);
+  padding: 28px 22px 22px 22px;
+  max-width: 420px;
+  width: 100%;
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+.home-vocational-title {
+  color: #183a6d;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.home-vocational-desc {
+  color: #444;
+  font-size: 1rem;
+  margin-bottom: 16px;
+  min-height: 48px;
+}
+.home-vocational-images-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 18px;
+  width: 100%;
+  margin-top: 18px;
+  box-sizing: border-box;
+}
+.home-voc-img-cell {
+  background: #f8fafc;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  min-width: 0;
+  height: 100px;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.home-vocational-img {
+  width: 100%;
+  height: 100%;
+  max-height: 140px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(20,41,106,0.08);
+  background: #f8fafc;
+  display: block;
+}
+.home-vocational-loading {
+  color: #14296a;
+  font-size: 1.1rem;
+  text-align: center;
+  margin: 32px 0;
+}
+@media (max-width: 1100px) {
+  .home-info-section {
+    gap: 18px;
+  }
+  .home-info-card {
+    min-width: 0;
+    max-width: 100%;
+    padding: 18px 10px 12px 10px;
+  }
+  .home-vocationals-grid {
+    gap: 18px;
+  }
+  .home-vocational-card {
+    max-width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+    padding: 18px 8px 12px 8px;
+  }
+  .home-vocationals-section {
+    padding: 0 2vw 30px 2vw;
+  }
+  .home-vocational-images-2x2 {
+    gap: 10px;
+  }
+}
+@media (max-width: 700px) {
+  .home-header {
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px 8px 0 8px;
+  }
+  .home-title {
+    font-size: 1.2rem;
+  }
+  .home-info-section {
+    flex-direction: column;
+    gap: 14px;
+    padding: 0 2vw;
+  }
+  .home-info-card {
+    min-width: 0;
+    max-width: 100%;
+    padding: 14px 6px 10px 6px;
+  }
+  .home-vocationals-title {
+    font-size: 1.1rem;
+  }
+  .home-vocational-card {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    padding: 12px 4px 8px 4px;
+    border-radius: 12px;
+    margin: 12px 0;
+  }
+  .home-vocationals-grid {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+  .home-vocational-images-2x2 {
+    gap: 10px;
+  }
+  .home-voc-img-cell {
+    min-height: 80px;
+    height: 100px;
+    border-radius: 10px;
+    border: 1.5px solid #e3e8f0;
+    background: #f4f8fb;
+    box-shadow: 0 1px 4px rgba(20,41,106,0.06);
+  }
+  .home-vocational-img {
+    height: 100%;
+    max-height: 90px;
+    border-radius: 8px;
+  }
+}
+@media (max-width: 600px) {
+  .home-main {
+    padding: 0 2vw 20px 2vw;
+  }
+  .home-vocationals-grid {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+  .home-vocational-card {
+    padding: 10px 2px 6px 2px;
+    width: 100%;
+  }
+  .home-vocational-images-2x2 {
+    gap: 4px;
+  }
+  .home-voc-img-cell {
+    min-height: 60px;
+    height: 80px;
+    border-radius: 8px;
+    border: 1.5px solid #e3e8f0;
+    background: #f4f8fb;
+    box-shadow: 0 1px 4px rgba(20,41,106,0.06);
+  }
+  .home-vocational-img {
+    max-height: 70px;
+    border-radius: 6px;
+  }
+} 
