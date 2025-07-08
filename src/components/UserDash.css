@@ -458,9 +458,9 @@
   word-break: break-word;
 }
 .userdash-single-stat-value {
-  font-size: 30px;
-  font-weight: 900;
-  word-break: break-word;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #14296a;
 }
 @media (max-width: 600px) {
   .userdash-single-stat-card-wrapper {
@@ -508,4 +508,80 @@
 html, body, .userdash-dashboard-container, .userdash-main-content {
   overflow-x: hidden !important;
   box-sizing: border-box;
+}
+.userdash-metric-section {
+  margin: 32px 0 0 0;
+  padding: 16px 0 0 0;
+  background: none;
+}
+.userdash-metric-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #14296a;
+  margin-bottom: 12px;
+  text-align: left;
+}
+@media (max-width: 600px) {
+  .userdash-metric-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .userdash-metric-section {
+    padding: 8px 0 0 0;
+  }
+}
+
+/* Role-based info box styles */
+.userdash-info-box {
+  background: #eff6ff;
+  border: 2px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #1e40af;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.userdash-info-box p {
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .userdash-main-content {
+    padding: 1rem;
+  }
+  .userdash-dashboard-content {
+    margin-top: 60px;
+    gap: 18px;
+  }
+  .userdash-header h1 {
+    font-size: 1.3rem;
+  }
+  .userdash-stats-row {
+    gap: 1rem;
+  }
+  .userdash-stat-card2 {
+    width: 95vw;
+    min-width: 0;
+    height: 100px;
+    padding: 10px;
+    font-size: 1rem;
+  }
+  .userdash-card-label {
+    font-size: 1rem;
+  }
+  .userdash-card-value {
+    font-size: 1.5rem;
+  }
+  .userdash-card-bg-icon {
+    font-size: 2rem;
+  }
+  .userdash-user-avatar {
+    top: 18px;
+    right: 8px;
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+  }
 }

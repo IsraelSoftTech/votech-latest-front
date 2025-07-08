@@ -941,31 +941,73 @@
 
 .actions {
   display: flex;
-  gap: 8px;
-  justify-content: flex-start;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
 }
 
-.actions .edit-btn,
-.actions .delete-btn {
-  padding: 6px;
-  border-radius: 4px;
-  font-size: 16px;
-  min-width: 32px;
-  height: 32px;
-  background: #14296a;
-  color: #fff;
+.status-cell {
+  text-align: center;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.status-approved {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.status-rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.approve-btn {
+  background-color: #10b981;
+  color: white;
   border: none;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.actions .edit-btn:hover,
-.actions .delete-btn:hover {
-  box-shadow: 0 4px 16px rgba(20,41,106,0.18);
-  filter: brightness(0.95);
+.approve-btn:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+.reject-btn {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reject-btn:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
 }
 
 .empty-table {
@@ -1151,4 +1193,32 @@
   .teachers-modal-header h2 {
     font-size: 1rem;
   }
+}
+
+.reject-btn:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+.actions .edit-btn,
+.actions .delete-btn {
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 16px;
+  min-width: 32px;
+  height: 32px;
+  background: #14296a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actions .edit-btn:hover,
+.actions .delete-btn:hover {
+  box-shadow: 0 4px 16px rgba(20,41,106,0.18);
+  filter: brightness(0.95);
 } 

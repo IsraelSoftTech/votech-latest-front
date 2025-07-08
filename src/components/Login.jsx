@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import logo from '../assets/logo.png';
 import apiService from '../services/api';
-import { MdVisibility, MdVisibilityOff, MdClose } from 'react-icons/md';
+import { MdPerson, MdSchool, MdAdminPanelSettings, MdPeople, MdLock, MdVisibility, MdVisibilityOff, MdClose } from 'react-icons/md';
 import { FaCheckCircle } from 'react-icons/fa';
 import Loader from './Loader';
 
@@ -26,21 +26,54 @@ function Login() {
     confirmPassword: ''
   });
   const [resetError, setResetError] = useState('');
+  const [selectedRole, setSelectedRole] = useState('Parent');
+
+  const roleOptions = [
+    { key: 'Admin', icon: <MdAdminPanelSettings size={28} />, label: 'Admin' },
+    { key: 'Student', icon: <MdSchool size={28} />, label: 'Student' },
+    { key: 'Teacher', icon: <MdPeople size={28} />, label: 'Teacher' },
+    { key: 'Parent', icon: <MdPerson size={28} />, label: 'Parent' },
+  ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const { username, password } = formData;
+      const response = await apiService.login(username, password);
+      sessionStorage.setItem('authUser', JSON.stringify({
+        ...response.user,
+        initials: username.charAt(0).toUpperCase()
+      }));
+      
+      // Redirect based on user role
+      setTimeout(() => {
+        setLoading(false);
+        const userRole = response.user.role;
+        if (userRole === 'admin') {
+          navigate('/dashboard', { replace: true });
+        } else if (userRole === 'teacher') {
+          navigate('/teacher-dashboard', { replace: true });
+        } else {
+          // student and parent go to user dashboard
+          navigate('/user-dashboard', { replace: true });
+        }
+      }, 1000);
+    } catch (error) {
+      setError(error.message || 'Login failed. Please try again.');
+      setLoading(false);
+    }
   };
 
   const handleForgotPasswordInputChange = (e) => {
     const { name, value } = e.target;
-    setForgotPasswordData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setForgotPasswordData(prev => ({ ...prev, [name]: value }));
     setResetError('');
   };
 
@@ -48,13 +81,10 @@ function Login() {
     try {
       setLoading(true);
       setResetError('');
-      
-      // Call API to check if user exists with given username and phone number
       const response = await apiService.checkUser(
-        forgotPasswordData.username, 
+        forgotPasswordData.username,
         forgotPasswordData.phoneNumber
       );
-      
       if (response.exists) {
         setShowForgotPasswordModal(false);
         setShowResetPasswordModal(true);
@@ -72,32 +102,24 @@ function Login() {
     try {
       setLoading(true);
       setResetError('');
-
       if (forgotPasswordData.newPassword !== forgotPasswordData.confirmPassword) {
         setResetError('Passwords do not match.');
         setLoading(false);
         return;
       }
-
-      // Call API to reset password
       await apiService.resetPassword(
         forgotPasswordData.username,
         forgotPasswordData.phoneNumber,
         forgotPasswordData.newPassword
       );
-
       setShowResetPasswordModal(false);
       setShowSuccessMessage(true);
-      
-      // Clear form data
       setForgotPasswordData({
         username: '',
         phoneNumber: '',
         newPassword: '',
         confirmPassword: ''
       });
-
-      // Redirect to login after 2 seconds
       setTimeout(() => {
         setShowSuccessMessage(false);
         navigate('/');
@@ -109,116 +131,84 @@ function Login() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const { username, password } = formData;
-      const response = await apiService.login(username, password);
-      
-      // Store user data in sessionStorage
-      sessionStorage.setItem('authUser', JSON.stringify({
-        ...response.user,
-        initials: username.charAt(0).toUpperCase()
-      }));
-      
-      // Redirect based on role
-      const role = response.user?.role;
-      setTimeout(() => {
-        setLoading(false);
-        if (role === 'admin') {
-          navigate('/dashboard', { replace: true });
-        } else if (role === 'user') {
-          navigate('/user-dashboard', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
-      }, 1000);
-    } catch (error) {
-      setError(error.message || 'Login failed. Please try again.');
-      setLoading(false);
-    }
+  const handleRoleClick = (role) => {
+    setSelectedRole(role);
+    // Optionally, navigate to a different login route for each role
+    // For now, just update the UI
   };
 
-  if (loading) {
-    return <Loader />;
-  }
+  if (loading) return <Loader />;
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="logo-section">
-          <img src={logo} alt="MPASAT Logo" className="logo" />
-          <h1>MPASAT</h1>
-        </div>
-
-        <form onSubmit={handleSubmit} className="login-form">
-          {error && <div className="error-message">{error}</div>}
-          
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleInputChange}
-              required
-              placeholder="Enter your username"
-              className="form-input"
-            />
+    <div className="login-portal-root">
+      <div className="login-portal-card">
+        {/* Left Panel */}
+        <div className="login-portal-left">
+          <div className="login-portal-logo-section">
+            <img src={logo} alt="MPASAT Logo" className="login-portal-logo" />
+            <h1 className="login-portal-title">MPASAT</h1>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <div className="password-input-group">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-                placeholder="Enter your password"
-                className="form-input"
-              />
-              <button
-                type="button"
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
+          <div className="login-portal-school-title">School Portal</div>
+          <div className="login-portal-subtitle">Select your role to login</div>
+          <div className="login-portal-roles-grid">
+            {roleOptions.map(opt => (
+              <div
+                key={opt.key}
+                className={`login-portal-role-card${selectedRole === opt.key ? ' selected' : ''}`}
+                onClick={() => handleRoleClick(opt.key)}
               >
-                {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
-              </button>
+                {opt.icon}
+                <span>{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Right Panel */}
+        <div className="login-portal-right">
+          <div className="login-portal-form-card">
+            <h2 className="login-portal-form-title">{selectedRole} Login</h2>
+            <form onSubmit={handleSubmit} className="login-portal-form">
+              {error && <div className="login-portal-error">{error}</div>}
+              <div className="login-portal-form-group">
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="Enter your username or parent ID"
+                  className="login-portal-input"
+                  autoComplete="username"
+                  required
+                />
+              </div>
+              <div className="login-portal-form-group">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Enter your password"
+                  className="login-portal-input"
+                  autoComplete="current-password"
+                  required
+                />
+                <span className="login-portal-password-toggle" onClick={() => setShowPassword(v => !v)}>
+                  {showPassword ? <MdVisibilityOff size={20} /> : <MdVisibility size={20} />}
+                </span>
+              </div>
+              <button type="submit" className="login-portal-login-btn">Login</button>
+            </form>
+            <div className="login-portal-links">
+              <div>
+                Forgot password? <span className="login-portal-link" onClick={() => setShowForgotPasswordModal(true)}>Reset</span>
+              </div>
+              <div style={{ marginTop: 8 }}>
+                Don't have an account? <span className="login-portal-link" onClick={() => navigate('/account')}>Create Account</span>
+              </div>
             </div>
           </div>
-
-          <button 
-            type="submit" 
-            className="login-button"
-            disabled={loading}
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-
-          <div className="forgot-password-section">
-            <span>Forgot password?</span>
-            <button 
-              type="button"
-              className="reset-button"
-              onClick={() => setShowForgotPasswordModal(true)}
-            >
-              Reset
-            </button>
-          </div>
-
-          <div className="create-account-link">
-            Don't have an account? <span onClick={() => navigate('/account')}>Create Account</span>
-          </div>
-        </form>
+        </div>
       </div>
-
       {/* Forgot Password Modal */}
       {showForgotPasswordModal && (
         <div className="modal-overlay">
@@ -241,9 +231,7 @@ function Login() {
                 <MdClose />
               </button>
             </div>
-
             {resetError && <div className="error-message">{resetError}</div>}
-
             <div className="form-group">
               <label htmlFor="reset-username">Username</label>
               <input
@@ -257,7 +245,6 @@ function Login() {
                 required
               />
             </div>
-
             <div className="form-group">
               <label htmlFor="phone-number">Phone Number</label>
               <input
@@ -271,7 +258,6 @@ function Login() {
                 required
               />
             </div>
-
             <button 
               className="check-button"
               onClick={handleCheckUser}
@@ -282,7 +268,6 @@ function Login() {
           </div>
         </div>
       )}
-
       {/* Reset Password Modal */}
       {showResetPasswordModal && (
         <div className="modal-overlay">
@@ -305,9 +290,7 @@ function Login() {
                 <MdClose />
               </button>
             </div>
-
             {resetError && <div className="error-message">{resetError}</div>}
-
             <div className="form-group">
               <label htmlFor="new-password">New Password</label>
               <div className="password-input-group">
@@ -330,7 +313,6 @@ function Login() {
                 </button>
               </div>
             </div>
-
             <div className="form-group">
               <label htmlFor="confirm-password">Confirm Password</label>
               <div className="password-input-group">
@@ -353,7 +335,6 @@ function Login() {
                 </button>
               </div>
             </div>
-
             <button 
               className="reset-button"
               onClick={handleResetPassword}
@@ -364,7 +345,6 @@ function Login() {
           </div>
         </div>
       )}
-
       {/* Success Message */}
       {showSuccessMessage && (
         <div className="success-message-overlay">

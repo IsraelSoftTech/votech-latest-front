@@ -1,280 +1,214 @@
-body, .home-root {
-  background: #eaf6fb;
-  min-height: 100vh;
+body, .mpasat-home-root {
   margin: 0;
+  padding: 0;
+  min-height: 100vh;
   font-family: 'Segoe UI', Arial, sans-serif;
+  background: #eaf6fb;
   overflow-x: hidden;
 }
-.home-header {
+.mpasat-home-root {
+  min-height: 100vh;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 32px 32px 0 32px;
-  background: transparent;
+  flex-direction: column;
 }
-.home-logo-title {
+.mpasat-home-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 48px 0 48px;
+  position: relative;
+  z-index: 2;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(20,41,106,0.04);
+}
+.mpasat-home-logo-title {
   display: flex;
   align-items: center;
   gap: 18px;
 }
-.home-logo {
-  width: 60px;
-  height: 60px;
+.mpasat-home-logo {
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(20,41,106,0.08);
+  background: #fff;
 }
-.home-title {
+.mpasat-home-title {
   font-size: 2.1rem;
   font-weight: 800;
   color: #14296a;
   letter-spacing: 1px;
+  display: flex;
+  flex-direction: column;
 }
-.home-get-started-btn {
+.mpasat-home-title-full {
+  display: block;
+}
+.mpasat-home-title-short {
+  display: none;
+}
+.mpasat-home-nav {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+.mpasat-home-nav-item {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #222;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 18px;
+  border-radius: 6px 6px 0 0;
+  transition: background 0.2s, color 0.2s;
+  position: relative;
+}
+.mpasat-home-nav-item.active::after {
+  content: '';
+  display: block;
+  height: 3px;
+  width: 100%;
+  background: #2563eb;
+  border-radius: 2px 2px 0 0;
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+}
+.mpasat-home-nav-item.active,
+.mpasat-home-nav-item:hover {
+  background: rgba(37,99,235,0.07);
+  color: #2563eb;
+}
+.mpasat-home-main {
+  flex: 1;
+  width: 100vw;
+  min-height: 80vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mpasat-home-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.72);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mpasat-home-welcome {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: #fff;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 48px 32px 56px 32px;
+  background: rgba(20,41,106,0.18);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(20,41,106,0.18);
+}
+.mpasat-home-welcome-title {
+  font-size: 2.8rem;
+  font-weight: 900;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 12px rgba(20,41,106,0.22);
+}
+.mpasat-home-welcome-desc {
+  font-size: 1.35rem;
+  font-weight: 500;
+  margin-bottom: 36px;
+  text-shadow: 0 2px 8px rgba(20,41,106,0.18);
+}
+.mpasat-home-register-btn {
   background: linear-gradient(135deg, #14296a, #1e3a8a);
   color: #fff;
   border: none;
-  padding: 0.9rem 2.2rem;
-  border-radius: 10px;
-  font-size: 1.1rem;
+  padding: 1.1rem 2.8rem;
+  border-radius: 12px;
+  font-size: 1.25rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(20,41,106,0.13);
+  box-shadow: 0 4px 16px rgba(20,41,106,0.18);
   transition: all 0.2s;
 }
-.home-get-started-btn:hover {
+.mpasat-home-register-btn:hover {
   background: #1e3a8a;
   transform: translateY(-2px) scale(1.04);
 }
-.home-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 16px 40px 16px;
-}
-.home-info-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 28px;
-  margin: 40px 0 32px 0;
-  justify-content: center;
-}
-.home-info-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 18px rgba(20,41,106,0.09);
-  padding: 24px 28px 18px 28px;
-  min-width: 260px;
-  max-width: 340px;
-  flex: 1 1 300px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 0;
-}
-.home-info-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #183a6d;
-  margin-bottom: 8px;
-}
-.home-info-header svg {
-  font-size: 1.3em;
-  color: #1e3a8a;
-}
-.home-info-body {
-  color: #444;
-  font-size: 1.02rem;
-  line-height: 1.6;
-}
-.home-vocationals-section {
-  margin: 40px 0 0 0;
-}
-.home-vocationals-title {
-  color: #14296a;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 18px;
-  text-align: center;
-}
-.home-vocationals-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 32px;
-  justify-content: center;
-  width: 100%;
-  box-sizing: border-box;
-}
-.home-vocational-card {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(20,41,106,0.09);
-  padding: 28px 22px 22px 22px;
-  max-width: 420px;
-  width: 100%;
-  flex: 1 1 320px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 10px;
-  box-sizing: border-box;
-}
-.home-vocational-title {
-  color: #183a6d;
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin-bottom: 8px;
-}
-.home-vocational-desc {
-  color: #444;
-  font-size: 1rem;
-  margin-bottom: 16px;
-  min-height: 48px;
-}
-.home-vocational-images-2x2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 18px;
-  width: 100%;
-  margin-top: 18px;
-  box-sizing: border-box;
-}
-.home-voc-img-cell {
-  background: #f8fafc;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 80px;
-  min-width: 0;
-  height: 100px;
-  width: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-.home-vocational-img {
-  width: 100%;
-  height: 100%;
-  max-height: 140px;
-  max-width: 100%;
-  object-fit: contain;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(20,41,106,0.08);
-  background: #f8fafc;
-  display: block;
-}
-.home-vocational-loading {
-  color: #14296a;
-  font-size: 1.1rem;
-  text-align: center;
-  margin: 32px 0;
-}
-@media (max-width: 1100px) {
-  .home-info-section {
-    gap: 18px;
+@media (max-width: 900px) {
+  .mpasat-home-header {
+    padding: 18px 16px 0 16px;
   }
-  .home-info-card {
-    min-width: 0;
-    max-width: 100%;
-    padding: 18px 10px 12px 10px;
+  .mpasat-home-title {
+    font-size: 1.3rem;
   }
-  .home-vocationals-grid {
-    gap: 18px;
+  .mpasat-home-welcome-title {
+    font-size: 2.1rem;
   }
-  .home-vocational-card {
-    max-width: 100%;
-    min-width: 0;
-    flex: 1 1 100%;
-    padding: 18px 8px 12px 8px;
+  .mpasat-home-welcome-desc {
+    font-size: 1.05rem;
   }
-  .home-vocationals-section {
-    padding: 0 2vw 30px 2vw;
-  }
-  .home-vocational-images-2x2 {
-    gap: 10px;
-  }
-}
-@media (max-width: 700px) {
-  .home-header {
-    flex-direction: column;
-    gap: 18px;
-    padding: 18px 8px 0 8px;
-  }
-  .home-title {
-    font-size: 1.2rem;
-  }
-  .home-info-section {
-    flex-direction: column;
-    gap: 14px;
-    padding: 0 2vw;
-  }
-  .home-info-card {
-    min-width: 0;
-    max-width: 100%;
-    padding: 14px 6px 10px 6px;
-  }
-  .home-vocationals-title {
-    font-size: 1.1rem;
-  }
-  .home-vocational-card {
-    min-width: 0;
-    max-width: 100%;
-    width: 100%;
-    padding: 12px 4px 8px 4px;
-    border-radius: 12px;
-    margin: 12px 0;
-  }
-  .home-vocationals-grid {
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-  }
-  .home-vocational-images-2x2 {
-    gap: 10px;
-  }
-  .home-voc-img-cell {
-    min-height: 80px;
-    height: 100px;
-    border-radius: 10px;
-    border: 1.5px solid #e3e8f0;
-    background: #f4f8fb;
-    box-shadow: 0 1px 4px rgba(20,41,106,0.06);
-  }
-  .home-vocational-img {
-    height: 100%;
-    max-height: 90px;
-    border-radius: 8px;
+  .mpasat-home-welcome {
+    padding: 32px 8vw 36px 8vw;
   }
 }
 @media (max-width: 600px) {
-  .home-main {
-    padding: 0 2vw 20px 2vw;
-  }
-  .home-vocationals-grid {
+  .mpasat-home-header {
     flex-direction: column;
-    gap: 10px;
-    width: 100%;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 4vw 0 4vw;
+    background: #fff;
   }
-  .home-vocational-card {
-    padding: 10px 2px 6px 2px;
-    width: 100%;
+  .mpasat-home-logo {
+    width: 40px;
+    height: 40px;
   }
-  .home-vocational-images-2x2 {
-    gap: 4px;
+  .mpasat-home-title-full {
+    display: none;
   }
-  .home-voc-img-cell {
-    min-height: 60px;
-    height: 80px;
+  .mpasat-home-title-short {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #222;
+  }
+  .mpasat-home-title {
+    font-size: 1.5rem;
+    color: #222;
+  }
+  .mpasat-home-nav {
+    gap: 16px;
+  }
+  .mpasat-home-main {
+    min-height: 60vh;
+  }
+  .mpasat-home-welcome {
+    padding: 24px 2vw 28px 2vw;
+    border-radius: 14px;
+  }
+  .mpasat-home-welcome-title {
+    font-size: 1.3rem;
+  }
+  .mpasat-home-welcome-desc {
+    font-size: 0.98rem;
+    margin-bottom: 22px;
+  }
+  .mpasat-home-register-btn {
+    font-size: 1rem;
+    padding: 0.7rem 1.6rem;
     border-radius: 8px;
-    border: 1.5px solid #e3e8f0;
-    background: #f4f8fb;
-    box-shadow: 0 1px 4px rgba(20,41,106,0.06);
-  }
-  .home-vocational-img {
-    max-height: 70px;
-    border-radius: 6px;
   }
 } 

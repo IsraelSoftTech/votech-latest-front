@@ -17,6 +17,7 @@ import {
 } from 'chart.js';
 import { useYear } from '../context/YearContext';
 
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -44,6 +45,7 @@ function Dash() {
     parents: 0 // Placeholder for parents
   });
   const [yearlyTotalFees, setYearlyTotalFees] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -89,6 +91,9 @@ function Dash() {
       }
     };
     fetchUserAndData();
+    const handleResize = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [regularNavigate, selectedYear]);
 
   const handleLogout = async () => {

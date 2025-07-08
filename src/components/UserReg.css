@@ -7,18 +7,23 @@
   padding: 40px 10px 20px 10px;
 }
 .userreg-header {
-  width: 100%;
-  max-width: 1200px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 .userreg-header h1 {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #14296a;
   margin: 0;
+  color: #333;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+.userreg-header-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 .userreg-add-btn {
   background: linear-gradient(135deg, #14296a, #1e3a8a);
@@ -678,4 +683,154 @@
   }
 }
 
-/* --- All other .userreg-* styles remain unchanged for isolation --- */ 
+/* --- All other .userreg-* styles remain unchanged for isolation --- */
+
+/* Role-based UI styles */
+.userreg-student-info {
+  display: flex;
+  align-items: center;
+}
+
+.userreg-already-registered {
+  background: #f0fdf4;
+  border: 2px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  color: #16a34a;
+  font-weight: 600;
+  text-align: center;
+}
+
+.userreg-already-registered p {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.userreg-info-box {
+  background: #eff6ff;
+  border: 2px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #1e40af;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.userreg-info-box p {
+  margin: 0;
+}
+
+.userreg-delete-all-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.userreg-delete-all-btn:hover {
+  background: #c82333;
+}
+
+.userreg-confirm-modal {
+  background: white;
+  border-radius: 10px;
+  padding: 0;
+  max-width: 450px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+.userreg-confirm-header {
+  background: #f8f9fa;
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+  border-radius: 10px 10px 0 0;
+}
+
+.userreg-confirm-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.userreg-confirm-body {
+  padding: 20px;
+}
+
+.userreg-confirm-body p {
+  margin: 0 0 10px 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.userreg-confirm-body p:last-child {
+  margin-bottom: 0;
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.userreg-confirm-actions {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #e9ecef;
+  justify-content: flex-end;
+}
+
+.userreg-cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.userreg-cancel-btn:hover {
+  background: #5a6268;
+}
+
+.userreg-delete-confirm-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.userreg-delete-confirm-btn:hover {
+  background: #c82333;
+}
+
+.userreg-delete-all-confirm-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.userreg-delete-all-confirm-btn:hover {
+  background: #c82333;
+} 

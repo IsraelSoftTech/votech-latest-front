@@ -39,6 +39,7 @@ function Fees() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showNoStudentsModal, setShowNoStudentsModal] = useState(false);
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState('');
   const [printStats, setPrintStats] = useState([]);
@@ -173,29 +174,50 @@ function Fees() {
   // Print Receipt
   const printReceipt = () => {
     const printWindow = window.open('', '_blank');
+    
+    // Calculate totals for the printed receipt
+    const totalFees = getFeeAmount('Registration') + getFeeAmount('Tuition') + getFeeAmount('Vocational') + getFeeAmount('Sport Wear') + getFeeAmount('Sanitation & Health');
+    const totalBalance = Object.values(studentFees?.balance || {}).reduce((a, b) => a + Number(b || 0), 0);
+    const totalPaid = Math.max(0, totalFees - totalBalance);
+    const totalFeeLeft = Object.values(studentFees?.balance || {}).reduce((a, b) => a + Number(b || 0), 0);
+    
     printWindow.document.write(`
       <html>
         <head>
-          <title>Payment Receipt</title>
+          <title>Payment Receipt - ${receiptData.studentName}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-            .receipt { max-width: 400px; margin: 0 auto; border: 2px solid #333; padding: 20px; }
-            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-            .receipt-number { font-size: 12px; color: #666; }
-            .details { margin: 20px 0; }
-            .detail-row { display: flex; justify-content: space-between; margin: 8px 0; }
-            .total { border-top: 1px solid #333; padding-top: 10px; font-weight: bold; font-size: 18px; }
-            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
-            @media print { body { margin: 0; } }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+            .receipt { max-width: 500px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; }
+            .header { text-align: center; border-bottom: 2px solid #14296a; padding-bottom: 15px; margin-bottom: 25px; }
+            .header h1 { color: #14296a; margin: 0 0 5px 0; font-size: 24px; }
+            .header h2 { color: #333; margin: 0 0 10px 0; font-size: 18px; }
+            .receipt-number { font-size: 12px; color: #666; background: #f8f9fa; padding: 5px 10px; border-radius: 4px; display: inline-block; }
+            .details { margin: 25px 0; }
+            .detail-row { display: flex; justify-content: space-between; margin: 12px 0; padding: 8px 0; border-bottom: 1px solid #eee; }
+            .detail-row:last-child { border-bottom: none; }
+            .detail-row span:first-child { font-weight: 600; color: #333; }
+            .detail-row span:last-child { color: #14296a; font-weight: 500; }
+            .total { border-top: 2px solid #14296a; padding-top: 15px; margin-top: 20px; }
+            .total .detail-row { font-weight: bold; font-size: 16px; color: #14296a; }
+            .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+            .footer p { margin: 5px 0; color: #666; }
+            .footer small { color: #999; font-size: 11px; }
+            .amount-highlight { background: #e8f4fd; padding: 10px; border-radius: 6px; margin: 15px 0; }
+            .amount-highlight .detail-row { border-bottom: none; margin: 5px 0; }
+            @media print { 
+              body { margin: 0; background: white; } 
+              .receipt { box-shadow: none; border: 1px solid #ddd; }
+            }
           </style>
         </head>
         <body>
           <div class="receipt">
             <div class="header">
-              <h2>MPASAT ONLINE</h2>
-              <h3>Payment Receipt</h3>
+              <h1>MPASAT ONLINE</h1>
+              <h2>Payment Receipt</h2>
               <div class="receipt-number">Receipt #: ${receiptData.receiptNumber}</div>
             </div>
+            
             <div class="details">
               <div class="detail-row">
                 <span>Student Name:</span>
@@ -218,15 +240,39 @@ function Fees() {
                 <span>${receiptData.time}</span>
               </div>
             </div>
+            
+            <div class="amount-highlight">
+              <div class="detail-row">
+                <span>${receiptData.feeType} Amount Paid:</span>
+                <span>XAF${receiptData.amount.toLocaleString()}</span>
+              </div>
+              <div class="detail-row">
+                <span>${receiptData.feeType} Amount Left:</span>
+                <span>XAF${studentFees?.balance[receiptData.feeType]?.toLocaleString() || 0}</span>
+              </div>
+            </div>
+            
+            <div class="details">
+              <div class="detail-row">
+                <span>Total Amount Paid (All Fees):</span>
+                <span>XAF${totalPaid.toLocaleString()}</span>
+              </div>
+              <div class="detail-row">
+                <span>Total Fee Left:</span>
+                <span>XAF${totalFeeLeft.toLocaleString()}</span>
+              </div>
+            </div>
+            
             <div class="total">
               <div class="detail-row">
                 <span>Amount Paid:</span>
                 <span>XAF${receiptData.amount.toLocaleString()}</span>
               </div>
             </div>
+            
             <div class="footer">
               <p>Thank you for your payment!</p>
-              <p>This is a computer generated receipt</p>
+              <small>This is a computer generated receipt</small>
             </div>
           </div>
         </body>
@@ -254,6 +300,12 @@ function Fees() {
     try {
       const stats = await ApiService.getClassFeeStats(selectedClass, selectedYear);
       setPrintStats(stats);
+      
+      // Check if no students found
+      if (stats.length === 0) {
+        const selectedClassName = classes.find(c => c.id === selectedClass)?.name || 'Unknown Class';
+        setPrintError(`No students found in class "${selectedClassName}". Students need to be assigned to this class to view fee data.`);
+      }
     } catch (err) {
       setPrintError(err.message);
     } finally {
@@ -263,6 +315,13 @@ function Fees() {
 
   const printClassList = () => {
     const selectedClassName = classes.find(c => c.id === selectedClass)?.name || 'Unknown Class';
+    
+    // Check if there are any students to print
+    if (printStats.length === 0) {
+      setShowNoStudentsModal(true);
+      return;
+    }
+    
     const printWindow = window.open('', '_blank');
     
     // Calculate totals
@@ -630,9 +689,30 @@ function Fees() {
                   <span>Time:</span>
                   <span>{receiptData.time}</span>
                 </div>
+                <div className="receipt-row">
+                  <span>{receiptData.feeType} Amount Paid:</span>
+                  <span>XAF{receiptData.amount.toLocaleString()}</span>
+                </div>
+                <div className="receipt-row">
+                  <span>{receiptData.feeType} Amount Left:</span>
+                  <span>XAF{studentFees?.balance[receiptData.feeType]?.toLocaleString() || 0}</span>
+                </div>
+                <div className="receipt-row">
+                  <span>Total Amount Paid (All Fees):</span>
+                  <span>XAF{(() => {
+                    const totalFees = getFeeAmount('Registration') + getFeeAmount('Tuition') + getFeeAmount('Vocational') + getFeeAmount('Sport Wear') + getFeeAmount('Sanitation & Health');
+                    const totalBalance = Object.values(studentFees?.balance || {}).reduce((a, b) => a + Number(b || 0), 0);
+                    const totalPaid = Math.max(0, totalFees - totalBalance);
+                    return totalPaid.toLocaleString();
+                  })()}</span>
+                </div>
+                <div className="receipt-row">
+                  <span>Total Fee Left:</span>
+                  <span>XAF{(Object.values(studentFees?.balance || {}).reduce((a, b) => a + Number(b || 0), 0)).toLocaleString()}</span>
+                </div>
                 <div className="receipt-total">
                   <span>Amount Paid:</span>
-                  <span>XAF{receiptData.amount.toLocaleString()}</span>
+                  <span>XAF${receiptData.amount.toLocaleString()}</span>
                 </div>
               </div>
               <div className="receipt-footer">
@@ -735,6 +815,32 @@ function Fees() {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No Students Modal */}
+      {showNoStudentsModal && (
+        <div className="fees-modal-overlay" onClick={() => setShowNoStudentsModal(false)}>
+          <div className="fees-modal fees-confirm-modal" onClick={e => e.stopPropagation()}>
+            <div className="fees-modal-header">
+              <h2><MdWarning /> No Students Found</h2>
+              <button className="fees-modal-close" onClick={() => setShowNoStudentsModal(false)}>
+                <MdClose />
+              </button>
+            </div>
+            <div className="fees-confirm-body">
+              <p>No students found in class <strong>"{classes.find(c => c.id === selectedClass)?.name}"</strong>.</p>
+              <p>Students need to be assigned to this class to generate a fee report.</p>
+            </div>
+            <div className="fees-confirm-actions">
+              <button 
+                className="fees-cancel-btn"
+                onClick={() => setShowNoStudentsModal(false)}
+              >
+                OK
+              </button>
             </div>
           </div>
         </div>

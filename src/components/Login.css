@@ -407,4 +407,305 @@ body, .login-container {
     padding: 14px;
     font-size: 1rem;
   }
+}
+
+/* Root container */
+.login-portal-root {
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(120deg, #2563a6 0%, #1e3c72 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+}
+
+.login-portal-card {
+  display: flex;
+  width: 800px;
+  min-height: 440px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(30,60,114,0.12);
+  overflow: hidden;
+}
+
+/* Left Panel */
+.login-portal-left {
+  background: #17406d;
+  color: #fff;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px 24px 24px;
+  position: relative;
+}
+
+.login-portal-logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.login-portal-logo {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 8px;
+}
+
+.login-portal-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin: 0;
+  color: #fff;
+}
+
+.login-portal-school-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  margin-top: 8px;
+  letter-spacing: 0.5px;
+}
+
+.login-portal-subtitle {
+  font-size: 1rem;
+  color: #c7d6e7;
+  margin-bottom: 22px;
+}
+
+.login-portal-roles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.login-portal-role-card {
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 18px 0 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #e3eaf3;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(30,60,114,0.04);
+  border: 2px solid transparent;
+}
+
+.login-portal-role-card.selected, .login-portal-role-card:hover {
+  background: #fff;
+  color: #17406d;
+  border: 2px solid #2563a6;
+  box-shadow: 0 4px 16px rgba(30,60,114,0.10);
+}
+
+.login-portal-role-card span {
+  margin-top: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Right Panel */
+.login-portal-right {
+  flex: 1;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 32px;
+}
+
+.login-portal-form-card {
+  width: 100%;
+  max-width: 340px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(30,60,114,0.04);
+  padding: 32px 28px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.login-portal-form-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #17406d;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.login-portal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-portal-form-group {
+  position: relative;
+}
+
+.login-portal-input {
+  width: 100%;
+  padding: 12px 40px 12px 14px;
+  border: 1.5px solid #c7d6e7;
+  border-radius: 7px;
+  font-size: 1rem;
+  background: #f7fafd;
+  color: #17406d;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.login-portal-input:focus {
+  border: 1.5px solid #2563a6;
+  background: #fff;
+}
+
+.login-portal-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #2563a6;
+  cursor: pointer;
+}
+
+.login-portal-login-btn {
+  width: 100%;
+  background: #17406d;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 7px;
+  padding: 12px 0;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.login-portal-login-btn:hover {
+  background: #2563a6;
+}
+
+.login-portal-error {
+  color: #c0392b;
+  background: #ffeaea;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 0.98rem;
+  text-align: center;
+}
+
+.login-portal-links {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 1rem;
+  color: #17406d;
+}
+
+.login-portal-link {
+  color: #2563a6;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.login-portal-link:hover {
+  color: #17406d;
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .login-portal-card {
+    width: 98vw;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .login-portal-root {
+    min-height: 100vh;
+    width: 100vw;
+    align-items: flex-start;
+    justify-content: flex-start;
+    overflow-x: hidden;
+  }
+  .login-portal-card {
+    flex-direction: column;
+    width: 100vw;
+    min-width: 0;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+    height: 100vh;
+  }
+  .login-portal-left {
+    width: 100vw;
+    border-radius: 0;
+    padding: 24px 8px 12px 8px;
+    min-width: 0;
+  }
+  .login-portal-right {
+    width: 100vw;
+    min-width: 0;
+    padding: 0 4px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .login-portal-form-card {
+    max-width: 100vw;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 18px 4px 12px 4px;
+    min-width: 0;
+  }
+  .login-portal-form-title {
+    font-size: 1.1rem;
+  }
+  .login-portal-input {
+    font-size: 0.98rem;
+    padding: 10px 36px 10px 10px;
+  }
+  .login-portal-role-card {
+    font-size: 0.95rem;
+    padding: 12px 0 6px 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .login-portal-form-card {
+    padding: 8px 2px 8px 2px;
+  }
+  .login-portal-form-title {
+    font-size: 1rem;
+  }
+  .login-portal-input {
+    font-size: 0.92rem;
+    padding: 8px 30px 8px 8px;
+  }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+.login-portal-card,
+.login-portal-form-card,
+.login-portal-input,
+.login-portal-role-card {
+  box-sizing: border-box;
 } 

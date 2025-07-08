@@ -26,6 +26,10 @@ function Students() {
   const [selectedClassForPrint, setSelectedClassForPrint] = useState('');
   const [uploading, setUploading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [showApproveAllConfirm, setShowApproveAllConfirm] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
   const [formData, setFormData] = useState({
     registration_date: '',
     full_name: '',
@@ -172,15 +176,64 @@ function Students() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this student?')) {
-      try {
-        await ApiService.deleteStudent(id);
-        await fetchStudents(selectedYear);
-      } catch (error) {
-        console.error('Error deleting student:', error);
-        setError(error.message);
-      }
+  const handleDeleteClick = (student) => {
+    setStudentToDelete(student);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!studentToDelete) return;
+    
+    try {
+      await ApiService.deleteStudent(studentToDelete.id);
+      setSuccessMessage('Student deleted successfully!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+      await fetchStudents(selectedYear);
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      setError(error.message);
+    } finally {
+      setShowDeleteConfirm(false);
+      setStudentToDelete(null);
+    }
+  };
+
+  const handleDeleteAllClick = () => {
+    setShowDeleteAllConfirm(true);
+  };
+
+  const handleDeleteAllConfirm = async () => {
+    try {
+      const result = await ApiService.deleteAllStudents();
+      setSuccessMessage(`${result.count} students deleted successfully!`);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+      await fetchStudents(selectedYear);
+    } catch (error) {
+      console.error('Error deleting all students:', error);
+      setError(error.message);
+    } finally {
+      setShowDeleteAllConfirm(false);
+    }
+  };
+
+  const handleApproveAllClick = () => {
+    setShowApproveAllConfirm(true);
+  };
+
+  const handleApproveAllConfirm = async () => {
+    try {
+      const result = await ApiService.approveAllStudents();
+      setSuccessMessage(result.message);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      await fetchStudents(selectedYear);
+    } catch (error) {
+      console.error('Error approving all students:', error);
+      setError(error.message);
+    } finally {
+      setShowApproveAllConfirm(false);
     }
   };
 
@@ -530,6 +583,14 @@ function Students() {
               <MdAdd />
               Add Student
             </button>
+            <button className="approve-all-button" onClick={handleApproveAllClick}>
+              <MdCheckCircle />
+              Approve All
+            </button>
+            <button className="delete-all-button" onClick={handleDeleteAllClick}>
+              <MdDelete />
+              Delete All
+            </button>
             <button className="upload-button" onClick={() => setShowUploadModal(true)}>
               <MdUpload />
               Upload Students
@@ -580,6 +641,7 @@ function Students() {
                   <td>{student.guardian_contact}</td>
                   <td>{student.vocational_training || '-'}</td>
                   <td className="actions">
+                    <div className={`status-dot ${student.status || 'pending'}`}></div>
                     <button 
                       className="edit-btn" 
                       onClick={() => handleEdit(student)}
@@ -589,7 +651,7 @@ function Students() {
                     </button>
                     <button 
                       className="delete-btn" 
-                      onClick={() => handleDelete(student.id)}
+                      onClick={() => handleDeleteClick(student)}
                       title="Delete Student"
                     >
                       <MdDelete />
@@ -950,6 +1012,96 @@ function Students() {
         <div className="success-message">
           <MdCheckCircle className="success-icon" />
           <span>{successMessage}</span>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal confirm-modal">
+            <div className="modal-header">
+              <h3>Confirm Delete</h3>
+            </div>
+            <div className="modal-content">
+              <p>Are you sure you want to delete student <strong>"{studentToDelete?.full_name}"</strong>?</p>
+              <p>This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="cancel-btn"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setStudentToDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="delete-confirm-btn"
+                onClick={handleDeleteConfirm}
+              >
+                Delete Student
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete All Confirmation Modal */}
+      {showDeleteAllConfirm && (
+        <div className="modal-overlay">
+          <div className="modal confirm-modal">
+            <div className="modal-header">
+              <h3>Confirm Delete All</h3>
+            </div>
+            <div className="modal-content">
+              <p>Are you sure you want to delete <strong>ALL {students.length} students</strong>?</p>
+              <p>This action cannot be undone and will permanently remove all student records.</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="cancel-btn"
+                onClick={() => setShowDeleteAllConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="delete-all-confirm-btn"
+                onClick={handleDeleteAllConfirm}
+              >
+                Delete All Students
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approve All Confirmation Modal */}
+      {showApproveAllConfirm && (
+        <div className="modal-overlay">
+          <div className="modal confirm-modal">
+            <div className="modal-header">
+              <h3>Confirm Approve All</h3>
+            </div>
+            <div className="modal-content">
+              <p>Are you sure you want to approve all pending students?</p>
+              <p>This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="cancel-btn"
+                onClick={() => setShowApproveAllConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="approve-all-confirm-btn"
+                onClick={handleApproveAllConfirm}
+              >
+                Approve All Students
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

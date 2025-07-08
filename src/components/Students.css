@@ -88,7 +88,7 @@
   align-items: center;
 }
 
-.add-button, .upload-button, .print-button {
+.add-button, .upload-button, .print-button, .approve-all-button {
   width: 100%;
   justify-content: center;
   background: #14296a !important;
@@ -105,7 +105,7 @@
   transition: all 0.3s ease;
 }
 
-.add-button:hover, .upload-button:hover, .print-button:hover {
+.add-button:hover, .upload-button:hover, .print-button:hover, .approve-all-button:hover {
   box-shadow: 0 4px 16px rgba(20,41,106,0.18);
   filter: brightness(0.95);
 }
@@ -195,17 +195,25 @@
 
 .actions {
   display: flex;
-  gap: 8px;
-  justify-content: flex-start;
+  gap: 14px;
+  justify-content: center;
+  align-items: center;
+}
+
+.actions .status-dot {
+  margin-right: 2px;
 }
 
 .actions .edit-btn,
 .actions .delete-btn {
-  padding: 6px;
-  border-radius: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
   font-size: 16px;
   min-width: 32px;
   height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-table {
@@ -881,13 +889,6 @@
 
 /* Enhanced button interactions for touch devices */
 @media (max-width: 768px) {
-  .add-button, .upload-button, .print-button,
-  .edit-btn, .delete-btn,
-  .cancel-btn, .save-btn {
-    min-height: 44px; /* Minimum touch target size */
-    touch-action: manipulation;
-  }
-  
   .add-button:active, .upload-button:active, .print-button:active,
   .edit-btn:active, .delete-btn:active,
   .cancel-btn:active, .save-btn:active {
@@ -1160,4 +1161,128 @@
   .students-modal-header h2 {
     font-size: 1rem;
   }
+}
+
+/* Status styles */
+.status-cell {
+  display: none;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.approved {
+  background-color: #16a34a;
+}
+
+.status-dot.pending {
+  background-color: #dc2626;
+}
+
+.status-text {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-text.approved {
+  color: #16a34a;
+}
+
+.status-text.pending {
+  color: #dc2626;
+}
+
+.approve-all-button:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.delete-all-button {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.delete-all-button:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.confirm-modal {
+  max-width: 450px;
+}
+
+.confirm-modal .modal-content {
+  padding: 1.5rem;
+}
+
+.confirm-modal .modal-content p {
+  margin: 0 0 0.5rem 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.confirm-modal .modal-content p:last-child {
+  margin-bottom: 0;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.delete-confirm-btn {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.delete-confirm-btn:hover {
+  background: #b91c1c;
+}
+
+.delete-all-confirm-btn {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.delete-all-confirm-btn:hover {
+  background: #b91c1c;
+}
+
+.approve-all-confirm-btn {
+  background: #059669;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.approve-all-confirm-btn:hover {
+  background: #047857;
 } 

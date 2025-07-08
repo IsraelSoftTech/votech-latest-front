@@ -21,6 +21,11 @@ function UserReg() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userRole, setUserRole] = useState('');
+  const [hasRegisteredStudent, setHasRegisteredStudent] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
   const [formData, setFormData] = useState({
     registration_date: '',
     full_name: '',
@@ -34,7 +39,8 @@ function UserReg() {
     previous_average: '',
     guardian_contact: '',
     student_picture: null,
-    vocational_training: ''
+    vocational_training: '',
+    class_id: ''
   });
 
   useEffect(() => {
@@ -45,6 +51,8 @@ function UserReg() {
           navigate('/');
           return;
         }
+        const user = JSON.parse(authUser);
+        setUserRole(user.role);
         setLoading(true);
         await Promise.all([
           fetchStudents(selectedYear),
@@ -64,6 +72,14 @@ function UserReg() {
     try {
       const data = await ApiService.getStudents(year);
       setStudents(data);
+      // Check if user has already registered a student (for student role)
+      const authUser = sessionStorage.getItem('authUser');
+      if (authUser) {
+        const user = JSON.parse(authUser);
+        if (user.role === 'student') {
+          setHasRegisteredStudent(data.length > 0);
+        }
+      }
     } catch (error) {
       setError(error.message);
     } finally {
@@ -99,6 +115,13 @@ function UserReg() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if student has already registered and this is a new registration
+    if (userRole === 'student' && hasRegisteredStudent && !editingStudent) {
+      setError('You have already registered yourself as a student. Students can only register once.');
+      return;
+    }
+    
     try {
       const submitData = new FormData();
       Object.keys(formData).forEach(key => {
@@ -120,6 +143,7 @@ function UserReg() {
       setShowModal(false);
       setEditingStudent(null);
       resetForm();
+      setError(null);
       await fetchStudents(selectedYear);
     } catch (error) {
       setError(error.message);
@@ -141,7 +165,8 @@ function UserReg() {
       previous_average: student.previous_average || '',
       guardian_contact: student.guardian_contact || '',
       student_picture: null,
-      vocational_training: student.vocational_training || ''
+      vocational_training: student.vocational_training || '',
+      class_id: student.class_id || ''
     });
     setShowModal(true);
   };
@@ -154,6 +179,46 @@ function UserReg() {
       } catch (error) {
         setError(error.message);
       }
+    }
+  };
+
+  const handleDeleteClick = (student) => {
+    setStudentToDelete(student);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!studentToDelete) return;
+    
+    try {
+      await ApiService.deleteStudent(studentToDelete.id);
+      setSuccessMessage('Student deleted successfully!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+      await fetchStudents(selectedYear);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setShowDeleteConfirm(false);
+      setStudentToDelete(null);
+    }
+  };
+
+  const handleDeleteAllClick = () => {
+    setShowDeleteAllConfirm(true);
+  };
+
+  const handleDeleteAllConfirm = async () => {
+    try {
+      const result = await ApiService.deleteAllStudents();
+      setSuccessMessage(`${result.count} students deleted successfully!`);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+      await fetchStudents(selectedYear);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setShowDeleteAllConfirm(false);
     }
   };
 
@@ -171,7 +236,8 @@ function UserReg() {
       previous_average: '',
       guardian_contact: '',
       student_picture: null,
-      vocational_training: ''
+      vocational_training: '',
+      class_id: ''
     });
   };
 
@@ -259,12 +325,54 @@ function UserReg() {
       {/* Main Content */}
       <div className="userreg-main-content">
         <div className="userreg-header">
-          <h1>Register Students</h1>
-          <button className="userreg-add-btn" onClick={() => { setEditingStudent(null); resetForm(); setShowModal(true); }}>
-            Add Student
-          </button>
+          <h1>
+            {userRole === 'student' ? 'Student Registration' : 'Register Students'}
+          </h1>
+          {userRole === 'student' ? (
+            <div className="userreg-student-info">
+              {hasRegisteredStudent ? (
+                <div className="userreg-already-registered">
+                  <p>✅ You have already registered yourself as a student.</p>
+                  <p>Students can only register once.</p>
+                </div>
+              ) : (
+                <button className="userreg-add-btn" onClick={() => { 
+                  if (userRole === 'student' && hasRegisteredStudent) {
+                    setError('You have already registered yourself as a student. Students can only register once.');
+                    return;
+                  }
+                  setEditingStudent(null); 
+                  resetForm(); 
+                  setShowModal(true); 
+                }}>
+                  Register Myself
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="userreg-header-buttons">
+              <button className="userreg-add-btn" onClick={() => { setEditingStudent(null); resetForm(); setShowModal(true); }}>
+                Add Student
+              </button>
+              {userRole === 'admin' && students.length > 0 && (
+                <button className="userreg-delete-all-btn" onClick={handleDeleteAllClick}>
+                  Delete All Students
+                </button>
+              )}
+            </div>
+          )}
         </div>
         {error && <div className="userreg-error">{error}</div>}
+        {userRole === 'student' && !hasRegisteredStudent && (
+          <div className="userreg-info-box">
+            <p>📝 <strong>Student Registration:</strong> You can only register yourself once. Make sure all information is correct before submitting.</p>
+          </div>
+        )}
+        {userRole === 'parent' && (
+          <div className="userreg-info-box">
+            <p>👨‍👩‍👧‍👦 <strong>Parent Registration:</strong> You can register multiple students (your children). Each student will have their own record.</p>
+          </div>
+        )}
         <div className="userreg-table-wrapper">
           <table className="userreg-table">
             <thead>
@@ -301,7 +409,7 @@ function UserReg() {
                     <button className="userreg-action-icon edit" onClick={() => handleEdit(student)} title="Edit Student">
                       <MdEdit />
                     </button>
-                    <button className="userreg-action-icon delete" onClick={() => handleDelete(student.id)} title="Delete Student">
+                    <button className="userreg-action-icon delete" onClick={() => handleDeleteClick(student)} title="Delete Student">
                       <MdDelete />
                     </button>
                   </td>
@@ -312,7 +420,11 @@ function UserReg() {
           {students.length === 0 && !loading && (
             <div className="userreg-empty-table">
               <h3>No Students Found</h3>
-              <p>Start by adding your first student using the "Add Student" button above.</p>
+              {userRole === 'student' ? (
+                <p>You haven't registered yourself as a student yet. Click "Register Myself" to get started.</p>
+              ) : (
+                <p>Start by adding your first student using the "Add Student" button above.</p>
+              )}
             </div>
           )}
         </div>
@@ -322,10 +434,29 @@ function UserReg() {
             <div className="userreg-modal">
               <div className="userreg-modal-header">
                 <h2>{editingStudent ? 'Edit Student' : 'Add New Student'}</h2>
-                <button className="userreg-close-btn" onClick={() => setShowModal(false)}>×</button>
+                <button className="userreg-close-btn" onClick={() => { 
+                  setShowModal(false); 
+                  setError(null); 
+                }}>×</button>
               </div>
               <form onSubmit={handleSubmit} className="student-form">
                 <div className="form-row">
+                  <div className="form-group">
+                    <label>Class *</label>
+                    <select
+                      name="class_id"
+                      value={formData.class_id}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Select a class</option>
+                      {classes.map((classItem) => (
+                        <option key={classItem.id} value={classItem.id}>
+                          {classItem.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="form-group">
                     <label>Registration Date *</label>
                     <input
@@ -510,6 +641,67 @@ function UserReg() {
         {showSuccess && (
           <div className="userreg-success-message">
             <span>{successMessage}</span>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="userreg-modal-overlay">
+            <div className="userreg-confirm-modal">
+              <div className="userreg-confirm-header">
+                <h3>Confirm Delete</h3>
+              </div>
+              <div className="userreg-confirm-body">
+                <p>Are you sure you want to delete student <strong>"{studentToDelete?.full_name}"</strong>?</p>
+                <p>This action cannot be undone.</p>
+              </div>
+              <div className="userreg-confirm-actions">
+                <button 
+                  className="userreg-cancel-btn"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setStudentToDelete(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="userreg-delete-confirm-btn"
+                  onClick={handleDeleteConfirm}
+                >
+                  Delete Student
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete All Confirmation Modal */}
+        {showDeleteAllConfirm && (
+          <div className="userreg-modal-overlay">
+            <div className="userreg-confirm-modal">
+              <div className="userreg-confirm-header">
+                <h3>Confirm Delete All</h3>
+              </div>
+              <div className="userreg-confirm-body">
+                <p>Are you sure you want to delete <strong>ALL {students.length} students</strong>?</p>
+                <p>This action cannot be undone and will permanently remove all student records.</p>
+              </div>
+              <div className="userreg-confirm-actions">
+                <button 
+                  className="userreg-cancel-btn"
+                  onClick={() => setShowDeleteAllConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="userreg-delete-all-confirm-btn"
+                  onClick={handleDeleteAllConfirm}
+                >
+                  Delete All Students
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -95,15 +95,15 @@ class ApiService {
     }
   }
 
-  async createAccount(userData) {
+  async createAccount({ username, contact, password, role }) {
     try {
-      console.log('Sending registration request:', userData);
+      console.log('Sending registration request:', { username, contact, password, role });
       const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify({ username, contact, password, role }),
       });
 
       // First try to parse the response as text
@@ -188,10 +188,36 @@ class ApiService {
         method: 'DELETE',
         headers: this.getAuthHeaders(),
       });
-
       return await this.handleResponse(response);
     } catch (error) {
       console.error('Delete student error:', error);
+      throw error;
+    }
+  }
+
+  async deleteAllStudents() {
+    try {
+      const response = await fetch(`${API_URL}/students/delete-all`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Delete all students error:', error);
+      throw error;
+    }
+  }
+
+  async approveAllStudents() {
+    try {
+      const response = await fetch(`${API_URL}/students/approve-all`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+      });
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Approve all students error:', error);
       throw error;
     }
   }
@@ -389,6 +415,21 @@ class ApiService {
     }
   }
 
+  async updateTeacherStatus(id, status) {
+    try {
+      const response = await fetch(`${API_URL}/teachers/${id}/status`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ status }),
+      });
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Update teacher status error:', error);
+      throw error;
+    }
+  }
+
   // User management endpoints
   async getUsers() {
     try {
@@ -535,9 +576,10 @@ class ApiService {
     }
   }
 
-  async getClassFeeStats(classId) {
+  async getClassFeeStats(classId, year) {
     try {
-      const response = await fetch(`${API_URL}/fees/class/${classId}`, {
+      const url = year ? `${API_URL}/fees/class/${classId}?year=${year}` : `${API_URL}/fees/class/${classId}`;
+      const response = await fetch(url, {
         headers: this.getAuthHeaders(),
       });
       return await this.handleResponse(response);
@@ -601,6 +643,31 @@ class ApiService {
   async getPublicVocational() {
     const response = await fetch(`${API_URL}/vocational/public`);
     return await response.json();
+  }
+
+  // Debug methods
+  async getDebugClasses() {
+    try {
+      const response = await fetch(`${API_URL}/debug/classes`, {
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Get debug classes error:', error);
+      throw error;
+    }
+  }
+
+  async getDebugStudents() {
+    try {
+      const response = await fetch(`${API_URL}/debug/students`, {
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Get debug students error:', error);
+      throw error;
+    }
   }
 }
 

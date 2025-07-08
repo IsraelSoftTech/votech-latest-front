@@ -930,4 +930,26 @@
   line-height: 1.1;
   max-width: 100%;
   overflow-wrap: break-word;
+}
+
+.dashboard-metric-section {
+  margin: 32px 0 0 0;
+  padding: 16px 0 0 0;
+  background: none;
+}
+.dashboard-metric-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #14296a;
+  margin-bottom: 12px;
+  text-align: left;
+}
+@media (max-width: 600px) {
+  .dashboard-metric-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .dashboard-metric-section {
+    padding: 8px 0 0 0;
+  }
 } 

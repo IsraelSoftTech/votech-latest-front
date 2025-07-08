@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './Teachers.css';
 import logo from '../assets/logo.png';
 import { useNavigation } from '../context/NavigationContext';
-import { MdDashboard, MdLogout, MdPeople, MdSchool, MdWork, MdPerson, MdAdd, MdEdit, MdDelete, MdSearch, MdMenu, MdClose, MdCheckCircle, MdAttachMoney, MdBadge } from 'react-icons/md';
+import { MdDashboard, MdLogout, MdPeople, MdSchool, MdWork, MdPerson, MdAdd, MdEdit, MdDelete, MdSearch, MdMenu, MdClose, MdCheckCircle, MdAttachMoney, MdBadge, MdCheck, MdClose as MdReject } from 'react-icons/md';
 import ApiService from '../services/api';
 import { useYear } from '../context/YearContext';
 
@@ -112,17 +112,70 @@ function Teachers() {
     }
   };
 
+  const handleApproveTeacher = async (teacherId) => {
+    if (window.confirm('Are you sure you want to approve this teacher?')) {
+      try {
+        await ApiService.updateTeacherStatus(teacherId, 'approved');
+        await fetchTeachers(selectedYear);
+        setShowSuccess(true);
+        setSuccessMessage('Teacher approved successfully!');
+        setTimeout(() => {
+          setShowSuccess(false);
+        }, 2000);
+      } catch (error) {
+        console.error('Error approving teacher:', error);
+        setError(error.message);
+      }
+    }
+  };
+
+  const handleRejectTeacher = async (teacherId) => {
+    if (window.confirm('Are you sure you want to reject this teacher?')) {
+      try {
+        await ApiService.updateTeacherStatus(teacherId, 'rejected');
+        await fetchTeachers(selectedYear);
+        setShowSuccess(true);
+        setSuccessMessage('Teacher rejected successfully!');
+        setTimeout(() => {
+          setShowSuccess(false);
+        }, 2000);
+      } catch (error) {
+        console.error('Error rejecting teacher:', error);
+        setError(error.message);
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Send all the form data
+      const teacherData = {
+        teacher_name: formData.teacher_name,
+        subjects: formData.subjects,
+        id_card: formData.id_card,
+        classes_taught: formData.classes_taught,
+        salary_amount: formData.salary_amount
+      };
+
       if (editingTeacher) {
-        await ApiService.updateTeacher(editingTeacher.id, formData);
+        await ApiService.updateTeacher(editingTeacher.id, teacherData);
         setSuccessMessage('Teacher updated successfully!');
       } else {
-        await ApiService.createTeacher(formData);
+        await ApiService.createTeacher(teacherData);
         setSuccessMessage('Teacher created successfully!');
       }
       setShowModal(false);
+      setEditingTeacher(null);
+      // Reset form data
+      setFormData({
+        teacher_name: '',
+        subjects: '',
+        id_card: '',
+        classes_taught: '',
+        salary_amount: ''
+      });
+      // Refresh the teachers list
       await fetchTeachers(selectedYear);
       setShowSuccess(true);
       setTimeout(() => {
@@ -306,6 +359,7 @@ function Teachers() {
                   <th>ID Card</th>
                   <th>Classes Taught</th>
                   <th>Salary Amount</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -322,6 +376,12 @@ function Teachers() {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0
                     }).format(parseFloat(teacher.salary_amount))}</td>
+                    <td className={`status-cell status-${teacher.status}`}>
+                      <span className={`status-badge status-${teacher.status}`}>
+                        {teacher.status === 'pending' ? 'PENDING' : 
+                         teacher.status === 'approved' ? 'APPROVED' : 'REJECTED'}
+                      </span>
+                    </td>
                     <td className="actions">
                       <button
                         className="edit-btn"
@@ -331,6 +391,26 @@ function Teachers() {
                       >
                         <MdEdit />
                       </button>
+                      {teacher.status === 'pending' && (
+                        <>
+                          <button
+                            className="approve-btn"
+                            onClick={() => handleApproveTeacher(teacher.id)}
+                            title="Approve Teacher"
+                            aria-label="Approve Teacher"
+                          >
+                            <MdCheck />
+                          </button>
+                          <button
+                            className="reject-btn"
+                            onClick={() => handleRejectTeacher(teacher.id)}
+                            title="Reject Teacher"
+                            aria-label="Reject Teacher"
+                          >
+                            <MdReject />
+                          </button>
+                        </>
+                      )}
                       <button
                         className="delete-btn"
                         onClick={() => handleDeleteTeacher(teacher.id)}
