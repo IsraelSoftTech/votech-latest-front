@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './Loader.css';
 
-const Loader = () => {
+const Loader = ({ onFinish }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (onFinish) onFinish();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [onFinish]);
+
   return (
-    <div className="loader-container">
-      <div className="cube-loader">
-        <div className="cubes">
-          <div className="cube cube1"></div>
-          <div className="cube cube2"></div>
-          <div className="cube cube3"></div>
-        </div>
-        <div className="loader-text">MPASAT</div>
-      </div>
+    <div className="loader-root">
+      <div className="dot dot-blue"></div>
+      <div className="dot dot-darkblue"></div>
+      <div className="dot dot-orange"></div>
     </div>
   );
 };
