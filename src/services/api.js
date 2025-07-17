@@ -1,4 +1,5 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
+console.log('API URL:', API_URL);
 
 class ApiService {
   constructor() {
