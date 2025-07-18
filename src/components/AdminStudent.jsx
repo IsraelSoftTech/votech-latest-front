@@ -37,11 +37,23 @@ const students = [
   { name: 'Nancy Drew', sex: 'F', class: 'Form 5', dob: '03/10/2011', pob: 'Kumba', dept: 'Commerce' },
 ];
 
+// Import classes from AdminClass (for now, copy the array)
+const classOptions = [
+  'Form 1', 'Form 2', 'Form 3', 'Form 4', 'Form 5',
+  'Lower Sixth', 'Upper Sixth', 'Science 1', 'Science 2', 'Commercial'
+];
+// Placeholder specialties array (to be replaced with real data from Specialties.jsx)
+const specialtyOptions = [
+  'ICT', 'Business', 'Science', 'Arts', 'Commerce', 'Elect.Engr', 'BC'
+];
+
 function AdminStudent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
+    studentId: '',
+    regDate: new Date().toISOString().slice(0, 10),
     fullName: '',
     sex: '',
     dob: '',
@@ -58,11 +70,36 @@ function AdminStudent() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // 2. Add students state to store registered students
+  const [studentList, setStudentList] = useState([]);
+
+  // 3. Helper to generate student ID
+  const generateStudentId = (fullName, regDate, index) => {
+    if (!fullName) return '';
+    const [first, ...rest] = fullName.trim().split(' ');
+    const last = rest.length ? rest[rest.length - 1] : '';
+    const year = regDate ? regDate.slice(2, 4) : new Date().getFullYear().toString().slice(2, 4);
+    const firstPart = (first || '').slice(0, 2).toUpperCase();
+    const lastPart = (last || '').slice(-2).toUpperCase();
+    const seq = (index + 1).toString().padStart(3, '0');
+    return `${year}-VOT-${firstPart}${lastPart}-${seq}`;
+  };
+
+  // 4. Update studentId when fullName or regDate changes
+  React.useEffect(() => {
+    setForm(f => ({
+      ...f,
+      studentId: generateStudentId(f.fullName, f.regDate, studentList.length)
+    }));
+  }, [form.fullName, form.regDate, studentList.length]);
+
+  // 5. Update handleFormChange to handle regDate
   const handleFormChange = e => {
     const { name, value, files } = e.target;
     setForm(f => ({ ...f, [name]: files ? files[0] : value }));
   };
 
+  // 6. Update handleRegister to add student to studentList
   const handleRegister = e => {
     e.preventDefault();
     setError('');
@@ -70,13 +107,36 @@ function AdminStudent() {
     setTimeout(() => {
       setRegistering(false);
       setSuccess('Student registered!');
+      setStudentList(list => [
+        ...list,
+        { ...form, photo: form.photo ? URL.createObjectURL(form.photo) : null }
+      ]);
       setTimeout(() => {
         setShowModal(false);
         setSuccess('');
-        setForm({ fullName: '', sex: '', dob: '', pob: '', father: '', mother: '', class: '', dept: '', contact: '', photo: null });
+        setForm({
+          studentId: '',
+          regDate: new Date().toISOString().slice(0, 10),
+          fullName: '',
+          sex: '',
+          dob: '',
+          pob: '',
+          father: '',
+          mother: '',
+          class: '',
+          dept: '',
+          contact: '',
+          photo: null
+        });
       }, 1200);
     }, 1200);
   };
+
+  // 7. Add edit/delete handlers
+  const handleDelete = idx => {
+    setStudentList(list => list.filter((_, i) => i !== idx));
+  };
+  // (Editing logic can be added similarly if needed)
 
   return (
     <div className="admin-container">
@@ -157,27 +217,33 @@ function AdminStudent() {
             <table className="student-table">
               <thead>
                 <tr>
+                  <th>Picture</th>
+                  <th>Student ID</th>
                   <th>Name</th>
                   <th>Sex</th>
                   <th>Class</th>
                   <th>DOB</th>
                   <th>POB</th>
                   <th>Department/Specialty</th>
+                  <th>Registration Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {students.map((s, i) => (
+                {studentList.map((s, i) => (
                   <tr key={i}>
-                    <td>{s.name}</td>
+                    <td>{s.photo ? <img src={s.photo} alt="pic" style={{borderRadius:'50%',width:40,height:40,objectFit:'cover'}} /> : '-'}</td>
+                    <td>{s.studentId}</td>
+                    <td>{s.fullName}</td>
                     <td>{s.sex}</td>
                     <td>{s.class}</td>
                     <td>{s.dob}</td>
                     <td>{s.pob}</td>
                     <td>{s.dept}</td>
+                    <td>{s.regDate}</td>
                     <td className="actions">
                       <button className="action-btn edit"><FaEdit /></button>
-                      <button className="action-btn delete"><FaTrash /></button>
+                      <button className="action-btn delete" onClick={() => handleDelete(i)}><FaTrash /></button>
                     </td>
                   </tr>
                 ))}
@@ -195,6 +261,10 @@ function AdminStudent() {
               <h2 className="form-title">Register Student</h2>
               <div className="modal-form-grid">
                 <div>
+                  <label className="input-label">Student ID *</label>
+                  <input className="input-field" type="text" name="studentId" value={form.studentId} onChange={handleFormChange} placeholder="Auto-generated" readOnly />
+                  <label className="input-label">Registration Date *</label>
+                  <input className="input-field" type="date" name="regDate" value={form.regDate} onChange={handleFormChange} required />
                   <label className="input-label">Full Name *</label>
                   <input className="input-field" type="text" name="fullName" value={form.fullName} onChange={handleFormChange} placeholder="Enter Full Name" required />
                   <label className="input-label">Sex *</label>
@@ -214,9 +284,15 @@ function AdminStudent() {
                   <label className="input-label">Mother's Name *</label>
                   <input className="input-field" type="text" name="mother" value={form.mother} onChange={handleFormChange} placeholder="Enter Mother's Name" required />
                   <label className="input-label">Class *</label>
-                  <input className="input-field" type="text" name="class" value={form.class} onChange={handleFormChange} placeholder="Enter Class" required />
+                  <select className="input-field" name="class" value={form.class} onChange={handleFormChange} required>
+                    <option value="">Select</option>
+                    {classOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
                   <label className="input-label">Department/Specialty *</label>
-                  <input className="input-field" type="text" name="dept" value={form.dept} onChange={handleFormChange} placeholder="Enter Department or Specialty" required />
+                  <select className="input-field" name="dept" value={form.dept} onChange={handleFormChange} required>
+                    <option value="">Select</option>
+                    {specialtyOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
                   <label className="input-label">Contact *</label>
                   <input className="input-field" type="text" name="contact" value={form.contact} onChange={handleFormChange} placeholder="Enter Contact" required />
                   <label className="input-label">Photo</label>

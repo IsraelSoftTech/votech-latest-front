@@ -242,195 +242,6 @@ class ApiService {
     }
   }
 
-  // Classes endpoints
-  async getClasses(year) {
-    try {
-      const url = year ? `${API_URL}/classes?year=${year}` : `${API_URL}/classes`;
-      const response = await fetch(url, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get classes error:', error);
-      throw error;
-    }
-  }
-
-  async createClass(classData) {
-    try {
-      const response = await fetch(`${API_URL}/classes`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(classData),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Create class error:', error);
-      throw error;
-    }
-  }
-
-  async updateClass(id, classData) {
-    try {
-      const response = await fetch(`${API_URL}/classes/${id}`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(classData),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Update class error:', error);
-      throw error;
-    }
-  }
-
-  async deleteClass(id) {
-    try {
-      const response = await fetch(`${API_URL}/classes/${id}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Delete class error:', error);
-      throw error;
-    }
-  }
-
-  // Vocational endpoints
-  async getVocational(year) {
-    try {
-      const url = year ? `${API_URL}/vocational?year=${year}` : `${API_URL}/vocational`;
-      const response = await fetch(url, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get vocational departments error:', error);
-      throw error;
-    }
-  }
-
-  async createVocational(vocationalData) {
-    try {
-      const headers = this.getAuthHeaders();
-      delete headers['Content-Type'];
-      const response = await fetch(`${API_URL}/vocational`, {
-        method: 'POST',
-        headers: headers,
-        body: vocationalData,
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Create vocational department error:', error);
-      throw error;
-    }
-  }
-
-  async updateVocational(id, vocationalData) {
-    try {
-      const headers = this.getAuthHeaders();
-      delete headers['Content-Type'];
-      const response = await fetch(`${API_URL}/vocational/${id}`, {
-        method: 'PUT',
-        headers: headers,
-        body: vocationalData,
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Update vocational department error:', error);
-      throw error;
-    }
-  }
-
-  async deleteVocational(id) {
-    try {
-      const response = await fetch(`${API_URL}/vocational/${id}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Delete vocational department error:', error);
-      throw error;
-    }
-  }
-
-  // Teachers endpoints
-  async getTeachers(year) {
-    try {
-      const url = year ? `${API_URL}/teachers?year=${year}` : `${API_URL}/teachers`;
-      const response = await fetch(url, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get teachers error:', error);
-      throw error;
-    }
-  }
-
-  async createTeacher(teacherData) {
-    try {
-      const response = await fetch(`${API_URL}/teachers`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(teacherData),
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Create teacher error:', error);
-      throw error;
-    }
-  }
-
-  async updateTeacher(id, teacherData) {
-    try {
-      const response = await fetch(`${API_URL}/teachers/${id}`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(teacherData),
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Update teacher error:', error);
-      throw error;
-    }
-  }
-
-  async deleteTeacher(id) {
-    try {
-      const response = await fetch(`${API_URL}/teachers/${id}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Delete teacher error:', error);
-      throw error;
-    }
-  }
-
-  async updateTeacherStatus(id, status) {
-    try {
-      const response = await fetch(`${API_URL}/teachers/${id}/status`, {
-        method: 'PUT',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ status }),
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Update teacher status error:', error);
-      throw error;
-    }
-  }
-
   // User management endpoints
   async getUsers() {
     try {
@@ -536,137 +347,85 @@ class ApiService {
     }
   }
 
-  // Fees & ID Cards endpoints
-  async searchStudents(query) {
+  // Specialties endpoints
+  async getSpecialties() {
+    const response = await fetch(`${API_URL}/specialties`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+  async createSpecialty(data) {
+    const response = await fetch(`${API_URL}/specialties`, {
+      method: 'POST',
+      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return await this.handleResponse(response);
+  }
+  async updateSpecialty(id, data) {
+    const response = await fetch(`${API_URL}/specialties/${id}`, {
+      method: 'PUT',
+      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return await this.handleResponse(response);
+  }
+  async deleteSpecialty(id) {
+    const response = await fetch(`${API_URL}/specialties/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  // Class endpoints
+  async getClasses() {
     try {
-      const response = await fetch(`${API_URL}/students/search?query=${encodeURIComponent(query)}`, {
+      const response = await fetch(`${API_URL}/classes`, {
         headers: this.getAuthHeaders(),
       });
       return await this.handleResponse(response);
     } catch (error) {
-      console.error('Search students error:', error);
+      console.error('Get classes error:', error);
       throw error;
     }
   }
 
-  async getStudentFees(studentId) {
+  async createClass(classData) {
     try {
-      const response = await fetch(`${API_URL}/student/${studentId}/fees`, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get student fees error:', error);
-      throw error;
-    }
-  }
-
-  async payFee({ student_id, class_id, fee_type, amount, paid_at }) {
-    try {
-      const body = { student_id, class_id, fee_type, amount };
-      if (paid_at) body.paid_at = paid_at;
-      const response = await fetch(`${API_URL}/fees`, {
+      const response = await fetch(`${API_URL}/classes`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(body),
+        body: JSON.stringify(classData),
       });
       return await this.handleResponse(response);
     } catch (error) {
-      console.error('Pay fee error:', error);
+      console.error('Create class error:', error);
       throw error;
     }
   }
 
-  async getClassFeeStats(classId, year) {
+  async updateClass(id, classData) {
     try {
-      const url = year ? `${API_URL}/fees/class/${classId}?year=${year}` : `${API_URL}/fees/class/${classId}`;
-      const response = await fetch(url, {
+      const response = await fetch(`${API_URL}/classes/${id}`, {
+        method: 'PUT',
         headers: this.getAuthHeaders(),
+        body: JSON.stringify(classData),
       });
       return await this.handleResponse(response);
     } catch (error) {
-      console.error('Get class fee stats error:', error);
+      console.error('Update class error:', error);
       throw error;
     }
   }
 
-  async getIdCardStudents() {
+  async deleteClass(id) {
     try {
-      const response = await fetch(`${API_URL}/idcards/students`, {
+      const response = await fetch(`${API_URL}/classes/${id}`, {
+        method: 'DELETE',
         headers: this.getAuthHeaders(),
       });
       return await this.handleResponse(response);
     } catch (error) {
-      console.error('Get ID card students error:', error);
-      throw error;
-    }
-  }
-
-  async getTeacherAnalyticsDaily(year) {
-    try {
-      const url = year ? `${API_URL}/teachers/analytics/daily?year=${year}` : `${API_URL}/teachers/analytics/daily`;
-      const response = await fetch(url, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get teacher analytics error:', error);
-      throw error;
-    }
-  }
-
-  async getFeeAnalyticsDaily(year) {
-    try {
-      const url = year ? `${API_URL}/fees/analytics/daily?year=${year}` : `${API_URL}/fees/analytics/daily`;
-      const response = await fetch(url, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get fee analytics error:', error);
-      throw error;
-    }
-  }
-
-  async getYearlyTotalFees(year) {
-    try {
-      const url = year ? `${API_URL}/fees/total/yearly?year=${year}` : `${API_URL}/fees/total/yearly`;
-      const response = await fetch(url, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get yearly total fees error:', error);
-      throw error;
-    }
-  }
-
-  async getPublicVocational() {
-    const response = await fetch(`${API_URL}/vocational/public`);
-    return await response.json();
-  }
-
-  // Debug methods
-  async getDebugClasses() {
-    try {
-      const response = await fetch(`${API_URL}/debug/classes`, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get debug classes error:', error);
-      throw error;
-    }
-  }
-
-  async getDebugStudents() {
-    try {
-      const response = await fetch(`${API_URL}/debug/students`, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get debug students error:', error);
+      console.error('Delete class error:', error);
       throw error;
     }
   }

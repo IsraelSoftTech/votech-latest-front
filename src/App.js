@@ -8,6 +8,7 @@ import AdminStudents from './components/AdminStudent.jsx';
 import AdminTeachers from './components/AdminTeacher.jsx';
 import AdminClass from './components/AdminClass.jsx';
 import Finance from './components/Finance.jsx';
+import Specialty from './components/Specialty.jsx';
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -22,6 +23,7 @@ function App() {
       <Route path="/admin-teacher" element={<AdminTeachers />} />
       <Route path="/admin-class" element={<AdminClass />} />
       <Route path="/admin-finance" element={<Finance />} />
+      <Route path="/admin-specialty" element={<Specialty />} />
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       <Route path="*" element={<Navigate to="/" replace />} />

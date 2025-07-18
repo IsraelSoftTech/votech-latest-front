@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AdminClass.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaEdit, FaTrash, FaChevronDown, FaMoneyBill, FaChevronRight } from 'react-icons/fa';
 import logo from '../assets/logo.png';
-import Programs from './Programs.jsx';
+
 import Finance from './Finance.jsx';
+import Specialty from './Specialty.jsx';
+import api from '../services/api';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
@@ -40,17 +42,24 @@ function AdminClass() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
   const [showModal, setShowModal] = useState(false);
+  const [classes, setClasses] = useState([]);
+  const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({
-    className: '',
-    subjects: [],
-    fee: ''
+    name: '',
+    registration_fee: '',
+    bus_fee: '',
+    internship_fee: '',
+    remedial_fee: '',
+    tuition_fee: '',
+    pta_fee: '',
+    total_fee: ''
   });
   const [registering, setRegistering] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [subjectsDropdownOpen, setSubjectsDropdownOpen] = useState(false);
-  const [showProgramsDropdown, setShowProgramsDropdown] = useState(false);
-  const [showPrograms, setShowPrograms] = useState(false);
+  const [showClass, setShowClass] = useState(true); // default to class management
+  const [showSpecialty, setShowSpecialty] = useState(false);
   const [showFinance, setShowFinance] = useState(false);
   const navigate = useNavigate();
 
@@ -66,6 +75,26 @@ function AdminClass() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [subjectsDropdownOpen]);
 
+  // Fetch classes on mount
+  useEffect(() => { fetchClasses(); }, []);
+  async function fetchClasses() {
+    const data = await api.getClasses();
+    setClasses(data);
+  }
+
+  // Auto-sum total_fee when any fee field changes
+  useEffect(() => {
+    const sum = [
+      form.registration_fee,
+      form.bus_fee,
+      form.internship_fee,
+      form.remedial_fee,
+      form.tuition_fee,
+      form.pta_fee
+    ].map(f => parseInt(f || 0, 10)).reduce((a, b) => a + b, 0);
+    setForm(f => ({ ...f, total_fee: sum ? sum.toString() : '' }));
+  }, [form.registration_fee, form.bus_fee, form.internship_fee, form.remedial_fee, form.tuition_fee, form.pta_fee]);
+
   const handleFormChange = e => {
     const { name, value, type, checked } = e.target;
     if (type === 'checkbox' && name === 'subjects') {
@@ -78,19 +107,52 @@ function AdminClass() {
     }
   };
 
-  const handleRegister = e => {
+  // Handle create/edit
+  const handleRegister = async e => {
     e.preventDefault();
     setError('');
     setRegistering(true);
-    setTimeout(() => {
+    try {
+      if (editId) {
+        await api.updateClass(editId, form);
+      } else {
+        await api.createClass(form);
+      }
       setRegistering(false);
-      setSuccess('Class created!');
+      setSuccess(editId ? 'Class updated!' : 'Class created!');
+      fetchClasses();
       setTimeout(() => {
         setShowModal(false);
         setSuccess('');
-        setForm({ className: '', subjects: [], fee: '' });
+        setForm({ name: '', registration_fee: '', bus_fee: '', internship_fee: '', remedial_fee: '', tuition_fee: '', pta_fee: '', total_fee: '' });
+        setEditId(null);
       }, 1200);
-    }, 1200);
+    } catch (err) {
+      setError('Failed to save class.');
+      setRegistering(false);
+    }
+  };
+
+  // Handle edit
+  const handleEdit = c => {
+    setEditId(c.id);
+    setForm({
+      name: c.name || '',
+      registration_fee: c.registration_fee || '',
+      bus_fee: c.bus_fee || '',
+      internship_fee: c.internship_fee || '',
+      remedial_fee: c.remedial_fee || '',
+      tuition_fee: c.tuition_fee || '',
+      pta_fee: c.pta_fee || '',
+      total_fee: c.total_fee || ''
+    });
+    setShowModal(true);
+  };
+
+  // Handle delete
+  const handleDelete = async id => {
+    await api.deleteClass(id);
+    fetchClasses();
   };
 
   return (
@@ -109,29 +171,24 @@ function AdminClass() {
               return [
                 <div
                   key={item.label}
-                  className={`menu-item${isActive ? ' active' : ''}`}
-                  onClick={e => { e.stopPropagation(); setShowProgramsDropdown(v => !v); }}
+                  className={`menu-item${(showClass && !showSpecialty) ? ' active' : ''}`}
+                  onClick={() => { setShowClass(true); setShowSpecialty(false); }}
                   style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '12px 24px' }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 12 }}>
                     <span className="icon">{item.icon}</span>
-                    <span className="label">{item.label}</span>
-                  </span>
-                  <span className="dropdown-icon" style={{ color: '#F59E0B', marginLeft: 8 }}>
-                    {showProgramsDropdown ? <FaChevronDown /> : <FaChevronRight />}
+                    <span className="label">Class</span>
                   </span>
                 </div>,
-                showProgramsDropdown && (
-                  <div
-                    key="Programs"
-                    className={`menu-item submenu-item-programs${showPrograms ? ' active' : ''}`}
-                    style={{ paddingLeft: 44, fontSize: '0.97rem', color: '#F59E0B', background: 'none', cursor: 'pointer', transition: 'all 0.2s', margin: '2px 12px', padding: '8px 20px 8px 44px', display: 'flex', alignItems: 'center', gap: 14 }}
-                    onClick={e => { e.stopPropagation(); setShowPrograms(true); setShowProgramsDropdown(false); }}
-                  >
-                    <span className="icon"><FaClipboardList /></span>
-                    <span className="label">Programs</span>
-                  </div>
-                )
+                <div
+                  key="Specialty"
+                  className={`menu-item${window.location.pathname === '/admin-specialty' ? ' active' : ''}`}
+                  style={{ paddingLeft: 44, fontSize: '0.97rem', color: '#F59E0B', background: 'none', cursor: 'pointer', transition: 'all 0.2s', margin: '2px 12px', padding: '8px 20px 8px 44px', display: 'flex', alignItems: 'center', gap: 14 }}
+                  onClick={() => { navigate('/admin-specialty'); }}
+                >
+                  <span className="icon"><FaClipboardList /></span>
+                  <span className="label">Specialty</span>
+                </div>
               ];
             }
             // Finances menu with always-visible React dropdown icon and perfect alignment
@@ -190,54 +247,62 @@ function AdminClass() {
             <span className="admin-name">Admin1</span>
           </div>
         </header>
-        {showFinance ? (
-          <Finance />
-        ) : showPrograms ? (
-          <Programs onBack={() => setShowPrograms(false)} />
-        ) : (
-          <>
-            <div className="dashboard-cards">
-              <div className="card classes">
-                <div className="icon"><FaBook /></div>
-                <div className="count">{classes.length}</div>
-                <div className="desc">Total Classes</div>
-              </div>
-              <div className="card suspended">
-                <div className="icon"><FaClipboardList /></div>
-                <div className="count">2</div>
-                <div className="desc">Suspended Classes</div>
-              </div>
-            </div>
-            <div className="class-section">
-              <div className="class-header-row">
-                <button className="add-class-btn" onClick={() => setShowModal(true)}><FaPlus /> Create Class</button>
-              </div>
-              <div className="class-table-wrapper" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
-                <table className="class-table">
-                  <thead>
-                    <tr>
-                      <th>Class Name</th>
-                      <th>Total Fee</th>
-                      <th>Actions</th>
+        <div className="dashboard-cards">
+          <div className="card classes">
+            <div className="icon"><FaBook /></div>
+            <div className="count">{classes.length}</div>
+            <div className="desc">Total Classes</div>
+          </div>
+          <div className="card suspended">
+            <div className="icon"><FaClipboardList /></div>
+            <div className="count">{classes.filter(c => c.suspended).length}</div>
+            <div className="desc">Suspended Classes</div>
+          </div>
+        </div>
+        <div className="class-section">
+          <div className="class-header-row">
+            <button className="add-class-btn" onClick={() => setShowModal(true)}><FaPlus /> Create Class</button>
+          </div>
+          <div className="class-table-wrapper">
+            <table className="class-table">
+              <thead>
+                <tr>
+                  <th>Class name</th>
+                  <th>Registration fee (XAF)</th>
+                  <th>Bus fee (XAF)</th>
+                  <th>Internship fee (XAF)</th>
+                  <th>Remedial classes fee (XAF)</th>
+                  <th>Tuition fee (XAF)</th>
+                  <th>PTA fee (XAF)</th>
+                  <th>Total fee (XAF)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {classes.length === 0 ? (
+                  <tr><td colSpan="9" style={{ textAlign: 'center' }}>No classes found.</td></tr>
+                ) : (
+                  classes.map(c => (
+                    <tr key={c.id}>
+                      <td>{c.name}</td>
+                      <td>{c.registration_fee}</td>
+                      <td>{c.bus_fee}</td>
+                      <td>{c.internship_fee}</td>
+                      <td>{c.remedial_fee}</td>
+                      <td>{c.tuition_fee}</td>
+                      <td>{c.pta_fee}</td>
+                      <td>{c.total_fee}</td>
+                      <td className="actions">
+                        <button className="action-btn edit" title="Edit" onClick={() => handleEdit(c)}><FaEdit /></button>
+                        <button className="action-btn delete" title="Delete" onClick={() => handleDelete(c.id)}><FaTrash /></button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {classes.map((c, i) => (
-                      <tr key={i}>
-                        <td>{c.name}</td>
-                        <td>{c.fee}</td>
-                        <td className="actions">
-                          <button className="action-btn edit"><FaEdit /></button>
-                          <button className="action-btn delete"><FaTrash /></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
-        )}
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
       {showModal && (
@@ -249,59 +314,21 @@ function AdminClass() {
               <div className="modal-form-grid">
                 <div>
                   <label className="input-label">Name of Class *</label>
-                  <input className="input-field" type="text" name="className" value={form.className} onChange={handleFormChange} placeholder="Enter Class Name" required />
-                  <label className="input-label">Subjects *</label>
-                  <div className="subjects-dropdown" style={{ position: 'relative', marginBottom: 16 }}>
-                    <div
-                      className="input-field"
-                      style={{ cursor: 'pointer', minHeight: 44, display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}
-                      onClick={() => setSubjectsDropdownOpen(v => !v)}
-                      tabIndex={0}
-                    >
-                      {form.subjects.length === 0 ? (
-                        <span style={{ color: '#888' }}>Select subjects</span>
-                      ) : (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                          {form.subjects.map(subj => (
-                            <span key={subj} style={{ background: '#eaf3ff', color: '#204080', borderRadius: 4, padding: '2px 8px', fontSize: 13 }}>{subj}</span>
-                          ))}
-                        </div>
-                      )}
-                      <span style={{ marginLeft: 'auto', color: '#888', fontSize: 18, pointerEvents: 'none' }}>▼</span>
-                    </div>
-                    {subjectsDropdownOpen && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '110%',
-                        left: 0,
-                        zIndex: 10,
-                        background: '#fff',
-                        border: '1px solid #d1d5db',
-                        borderRadius: 6,
-                        boxShadow: '0 2px 8px rgba(32,64,128,0.08)',
-                        minWidth: 220,
-                        maxHeight: 220,
-                        overflowY: 'auto',
-                        padding: 10
-                      }}>
-                        {subjects.map((subj, i) => (
-                          <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, color: '#204080', fontWeight: 500, marginBottom: 4, cursor: 'pointer' }}>
-                            <input
-                              type="checkbox"
-                              name="subjects"
-                              value={subj}
-                              checked={form.subjects.includes(subj)}
-                              onChange={handleFormChange}
-                              style={{ accentColor: '#204080' }}
-                            />
-                            {subj}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <label className="input-label">Total Fee *</label>
-                  <input className="input-field" type="text" name="fee" value={form.fee} onChange={handleFormChange} placeholder="Enter Total Fee" required />
+                  <input className="input-field" type="text" name="name" value={form.name} onChange={handleFormChange} placeholder="Enter Class Name" required />
+                  <label className="input-label">Registration Fee (XAF)</label>
+                  <input className="input-field" type="number" name="registration_fee" value={form.registration_fee} onChange={handleFormChange} />
+                  <label className="input-label">Bus Fee (XAF)</label>
+                  <input className="input-field" type="number" name="bus_fee" value={form.bus_fee} onChange={handleFormChange} />
+                  <label className="input-label">Internship Fee (XAF)</label>
+                  <input className="input-field" type="number" name="internship_fee" value={form.internship_fee} onChange={handleFormChange} />
+                  <label className="input-label">Remedial Classes Fee (XAF)</label>
+                  <input className="input-field" type="number" name="remedial_fee" value={form.remedial_fee} onChange={handleFormChange} />
+                  <label className="input-label">Tuition Fee (XAF)</label>
+                  <input className="input-field" type="number" name="tuition_fee" value={form.tuition_fee} onChange={handleFormChange} />
+                  <label className="input-label">PTA Fee (XAF)</label>
+                  <input className="input-field" type="number" name="pta_fee" value={form.pta_fee} onChange={handleFormChange} />
+                  <label className="input-label">Total Fee (XAF)</label>
+                  <input className="input-field" type="number" name="total_fee" value={form.total_fee} readOnly />
                 </div>
               </div>
               {error && <div className="error-message">{error}</div>}
