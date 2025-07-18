@@ -208,15 +208,10 @@ function AdminStudent() {
   };
 
   // Helper to get image URL
+  const baseApiUrl = (api.API_URL && api.API_URL.replace('/api','')) || 'http://localhost:5000';
   const getImageUrl = (pic) => {
     if (!pic) return null;
-    let base = '';
-    if (api.API_URL && api.API_URL.startsWith('http')) {
-      base = api.API_URL.replace(/\/api$/, '');
-    } else {
-      base = 'http://localhost:5000';
-    }
-    if (pic.startsWith('/')) return base + pic;
+    if (pic.startsWith('/')) return baseApiUrl + pic;
     return pic;
   };
 
@@ -314,9 +309,21 @@ function AdminStudent() {
               <tbody>
                 {studentList.map((s, i) => (
                   <tr key={s.id || i}>
-                    <td>{getImageUrl(s.student_picture)
-                      ? <img src={getImageUrl(s.student_picture)} alt="pic" style={{borderRadius:'50%',width:40,height:40,objectFit:'cover'}} />
-                      : '-'}</td>
+                    <td style={{ width: 48, minWidth: 48 }}>
+                      {s.id ? (
+                        <img
+                          src={getImageUrl(`/api/students/${s.id}/picture`)}
+                          alt="pic"
+                          style={{ borderRadius: '50%', width: 40, height: 40, objectFit: 'cover', background: '#f0f0f0' }}
+                          onError={e => {
+                            console.warn(`Image could not be displayed for student ID: ${s.id}. URL:`, getImageUrl(`/api/students/${s.id}/picture`));
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <span style={{ color: '#888' }}>-</span>
+                      )}
+                    </td>
                     <td>{s.student_id}</td>
                     <td>{s.full_name}</td>
                     <td>{s.sex}</td>

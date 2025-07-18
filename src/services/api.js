@@ -446,4 +446,6 @@ class ApiService {
   }
 }
 
-export default new ApiService(); 
+const api = new ApiService();
+api.API_URL = API_URL;
+export default api; 
