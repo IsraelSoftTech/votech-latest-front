@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 
+import api from '../services/api';
+
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt /> },
   { label: 'Students', icon: <FaUserGraduate /> },
@@ -37,16 +39,6 @@ const students = [
   { name: 'Nancy Drew', sex: 'F', class: 'Form 5', dob: '03/10/2011', pob: 'Kumba', dept: 'Commerce' },
 ];
 
-// Import classes from AdminClass (for now, copy the array)
-const classOptions = [
-  'Form 1', 'Form 2', 'Form 3', 'Form 4', 'Form 5',
-  'Lower Sixth', 'Upper Sixth', 'Science 1', 'Science 2', 'Commercial'
-];
-// Placeholder specialties array (to be replaced with real data from Specialties.jsx)
-const specialtyOptions = [
-  'ICT', 'Business', 'Science', 'Arts', 'Commerce', 'Elect.Engr', 'BC'
-];
-
 function AdminStudent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
@@ -72,6 +64,27 @@ function AdminStudent() {
 
   // 2. Add students state to store registered students
   const [studentList, setStudentList] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
+  const [editId, setEditId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteIdx, setDeleteIdx] = useState(null);
+
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        const classData = await api.getClasses();
+        setClasses(classData);
+        const specialtyData = await api.getSpecialties();
+        setSpecialties(specialtyData);
+        const students = await api.getStudents();
+        setStudentList(students);
+      } catch (err) {
+        // Optionally handle error
+      }
+    }
+    fetchData();
+  }, []);
 
   // 3. Helper to generate student ID
   const generateStudentId = (fullName, regDate, index) => {
@@ -99,18 +112,52 @@ function AdminStudent() {
     setForm(f => ({ ...f, [name]: files ? files[0] : value }));
   };
 
-  // 6. Update handleRegister to add student to studentList
-  const handleRegister = e => {
+  const handleEdit = (student) => {
+    setEditId(student.id);
+    setForm({
+      studentId: student.student_id || '',
+      regDate: student.created_at ? student.created_at.slice(0, 10) : '',
+      fullName: student.full_name || '',
+      sex: student.sex || '',
+      dob: student.date_of_birth || '',
+      pob: student.place_of_birth || '',
+      father: student.father_name || '',
+      mother: student.mother_name || '',
+      class: classes.find(c => c.id === student.class_id)?.name || '',
+      dept: specialties.find(s => s.id === student.specialty_id)?.name || '',
+      contact: student.guardian_contact || '',
+      photo: null
+    });
+    setShowModal(true);
+  };
+
+  const handleRegister = async e => {
     e.preventDefault();
     setError('');
     setRegistering(true);
-    setTimeout(() => {
-      setRegistering(false);
-      setSuccess('Student registered!');
-      setStudentList(list => [
-        ...list,
-        { ...form, photo: form.photo ? URL.createObjectURL(form.photo) : null }
-      ]);
+    try {
+      const formData = new FormData();
+      formData.append('full_name', form.fullName);
+      formData.append('sex', form.sex);
+      formData.append('date_of_birth', form.dob);
+      formData.append('place_of_birth', form.pob);
+      formData.append('father_name', form.father);
+      formData.append('mother_name', form.mother);
+      formData.append('class_id', classes.find(c => c.name === form.class)?.id || '');
+      formData.append('specialty_id', specialties.find(s => s.name === form.dept)?.id || '');
+      formData.append('vocational_training', '');
+      formData.append('guardian_contact', form.contact);
+      formData.append('year', selectedYear);
+      formData.append('registration_date', form.regDate);
+      if (form.photo) formData.append('student_picture', form.photo);
+      if (editId) {
+        await api.updateStudent(editId, formData);
+      } else {
+        await api.createStudent(formData);
+      }
+      setSuccess(editId ? 'Student updated!' : 'Student registered!');
+      const students = await api.getStudents();
+      setStudentList(students);
       setTimeout(() => {
         setShowModal(false);
         setSuccess('');
@@ -128,15 +175,50 @@ function AdminStudent() {
           contact: '',
           photo: null
         });
+        setEditId(null);
       }, 1200);
-    }, 1200);
+    } catch (err) {
+      setError(editId ? 'Failed to update student.' : 'Failed to register student.');
+    }
+    setRegistering(false);
   };
 
-  // 7. Add edit/delete handlers
-  const handleDelete = idx => {
-    setStudentList(list => list.filter((_, i) => i !== idx));
+  const handleDelete = (idx) => {
+    setDeleteIdx(idx);
+    setShowDeleteModal(true);
   };
-  // (Editing logic can be added similarly if needed)
+
+  const confirmDelete = async () => {
+    const studentToDelete = studentList[deleteIdx];
+    try {
+      await api.deleteStudent(studentToDelete.id);
+      setSuccess('Student deleted successfully!');
+      const students = await api.getStudents();
+      setStudentList(students);
+    } catch (err) {
+      setError('Failed to delete student.');
+    }
+    setShowDeleteModal(false);
+    setDeleteIdx(null);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteIdx(null);
+  };
+
+  // Helper to get image URL
+  const getImageUrl = (pic) => {
+    if (!pic) return null;
+    let base = '';
+    if (api.API_URL && api.API_URL.startsWith('http')) {
+      base = api.API_URL.replace(/\/api$/, '');
+    } else {
+      base = 'http://localhost:5000';
+    }
+    if (pic.startsWith('/')) return base + pic;
+    return pic;
+  };
 
   return (
     <div className="admin-container">
@@ -195,7 +277,7 @@ function AdminStudent() {
         <div className="dashboard-cards">
           <div className="card students">
             <div className="icon"><FaUserGraduate /></div>
-            <div className="count">2000</div>
+            <div className="count">{studentList.length}</div>
             <div className="desc">Registered Students</div>
           </div>
           <div className="card fees">
@@ -231,18 +313,20 @@ function AdminStudent() {
               </thead>
               <tbody>
                 {studentList.map((s, i) => (
-                  <tr key={i}>
-                    <td>{s.photo ? <img src={s.photo} alt="pic" style={{borderRadius:'50%',width:40,height:40,objectFit:'cover'}} /> : '-'}</td>
-                    <td>{s.studentId}</td>
-                    <td>{s.fullName}</td>
+                  <tr key={s.id || i}>
+                    <td>{getImageUrl(s.student_picture)
+                      ? <img src={getImageUrl(s.student_picture)} alt="pic" style={{borderRadius:'50%',width:40,height:40,objectFit:'cover'}} />
+                      : '-'}</td>
+                    <td>{s.student_id}</td>
+                    <td>{s.full_name}</td>
                     <td>{s.sex}</td>
-                    <td>{s.class}</td>
-                    <td>{s.dob}</td>
-                    <td>{s.pob}</td>
-                    <td>{s.dept}</td>
-                    <td>{s.regDate}</td>
+                    <td>{classes.find(c => c.id === s.class_id)?.name || ''}</td>
+                    <td>{s.date_of_birth}</td>
+                    <td>{s.place_of_birth}</td>
+                    <td>{s.specialty_name || ''}</td>
+                    <td>{s.created_at ? s.created_at.slice(0,10) : ''}</td>
                     <td className="actions">
-                      <button className="action-btn edit"><FaEdit /></button>
+                      <button className="action-btn edit" onClick={() => handleEdit(s)}><FaEdit /></button>
                       <button className="action-btn delete" onClick={() => handleDelete(i)}><FaTrash /></button>
                     </td>
                   </tr>
@@ -254,11 +338,11 @@ function AdminStudent() {
       </div>
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); setEditId(null); }}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowModal(false)}><FaTimes /></button>
+            <button className="modal-close" onClick={() => { setShowModal(false); setEditId(null); }}><FaTimes /></button>
             <form className="student-modal-form" onSubmit={handleRegister}>
-              <h2 className="form-title">Register Student</h2>
+              <h2 className="form-title">{editId ? 'Edit Student' : 'Register Student'}</h2>
               <div className="modal-form-grid">
                 <div>
                   <label className="input-label">Student ID *</label>
@@ -286,12 +370,12 @@ function AdminStudent() {
                   <label className="input-label">Class *</label>
                   <select className="input-field" name="class" value={form.class} onChange={handleFormChange} required>
                     <option value="">Select</option>
-                    {classOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    {classes.map(opt => <option key={opt.id} value={opt.name}>{opt.name}</option>)}
                   </select>
                   <label className="input-label">Department/Specialty *</label>
                   <select className="input-field" name="dept" value={form.dept} onChange={handleFormChange} required>
                     <option value="">Select</option>
-                    {specialtyOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    {specialties.map(opt => <option key={opt.id} value={opt.name}>{opt.name}</option>)}
                   </select>
                   <label className="input-label">Contact *</label>
                   <input className="input-field" type="text" name="contact" value={form.contact} onChange={handleFormChange} placeholder="Enter Contact" required />
@@ -303,6 +387,18 @@ function AdminStudent() {
               {success && <div className="success-message">{success}</div>}
               <button type="submit" className="signup-btn" disabled={registering}>{registering ? 'Registering...' : 'Register'}</button>
             </form>
+          </div>
+        </div>
+      )}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={cancelDelete}>
+          <div className="modal-content delete-modal" style={{maxWidth: 380, width: '90%', textAlign: 'center', background: '#fff', borderRadius: 12, boxShadow: '0 4px 32px rgba(32,64,128,0.13)', padding: '32px 20px 24px 20px', margin: '0 auto'}} onClick={e => e.stopPropagation()}>
+            <div style={{fontSize: 20, marginBottom: 22, color: '#204080', fontWeight: 600}}>Delete Student</div>
+            <div style={{fontSize: 16, marginBottom: 24, color: '#444'}}>Are you sure you want to delete this student? This action cannot be undone.</div>
+            <div style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 18}}>
+              <button className="signup-btn" style={{background:'#e53e3e', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); confirmDelete();}}>Delete</button>
+              <button className="signup-btn" style={{background:'#204080', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); cancelDelete();}}>Cancel</button>
+            </div>
           </div>
         </div>
       )}

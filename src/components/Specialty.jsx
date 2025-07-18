@@ -20,20 +20,10 @@ const menuItems = [
 
 const years = Array.from({length: 26}, (_, i) => `20${25+i}/20${26+i}`);
 
-const initialSpecialties = [
-  { id: 1, name: 'ICT', abbreviation: 'ICT' },
-  { id: 2, name: 'Business', abbreviation: 'BUS' },
-  { id: 3, name: 'Science', abbreviation: 'SCI' },
-  { id: 4, name: 'Arts', abbreviation: 'ART' },
-  { id: 5, name: 'Commerce', abbreviation: 'COM' },
-  { id: 6, name: 'Elect.Engr', abbreviation: 'EE' },
-  { id: 7, name: 'BC', abbreviation: 'BC' }
-];
-
 export default function Specialty({ isActiveSpecialty, onBack }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
-  const [specialties, setSpecialties] = useState(initialSpecialties);
+  const [specialties, setSpecialties] = useState([]); // Start empty
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ name: '', abbreviation: '' });
@@ -44,6 +34,7 @@ export default function Specialty({ isActiveSpecialty, onBack }) {
 
   // Fetch specialties and classes on mount
   useEffect(() => {
+    fetchClasses();
     fetchSpecialties();
   }, []);
   async function fetchSpecialties() {
@@ -60,7 +51,9 @@ export default function Specialty({ isActiveSpecialty, onBack }) {
     setEditId(s.id);
     setForm({ name: s.name, abbreviation: s.abbreviation });
     await fetchClasses();
-    setAssignedClasses(s.class_ids || []);
+    // Fetch assigned classes from backend
+    const assigned = await api.getClassesForSpecialty(s.id);
+    setAssignedClasses(assigned.map(id => Number(id)));
     setShowModal(true);
   };
 
@@ -85,7 +78,7 @@ export default function Specialty({ isActiveSpecialty, onBack }) {
     try {
       if (editId) {
         await api.updateSpecialty(editId, form);
-        await api.assignClassesToSpecialty(editId, assignedClasses);
+        await api.assignClassesToSpecialty(editId, assignedClasses.map(id => Number(id)));
       } else {
         await api.createSpecialty(form);
       }
@@ -93,7 +86,7 @@ export default function Specialty({ isActiveSpecialty, onBack }) {
       setEditId(null);
       setForm({ name: '', abbreviation: '' });
       setAssignedClasses([]);
-      fetchSpecialties();
+      await fetchSpecialties(); // Always refresh after save
       setSuccess('Specialty saved!');
       setTimeout(() => setSuccess(''), 1200);
     } catch (err) {

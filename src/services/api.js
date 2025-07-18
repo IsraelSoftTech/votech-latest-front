@@ -376,6 +376,21 @@ class ApiService {
     return await this.handleResponse(response);
   }
 
+  async assignClassesToSpecialty(specialtyId, classIds) {
+    const response = await fetch(`${API_URL}/specialties/${specialtyId}/classes`, {
+      method: 'PUT',
+      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ classIds })
+    });
+    return await this.handleResponse(response);
+  }
+  async getClassesForSpecialty(specialtyId) {
+    const response = await fetch(`${API_URL}/specialties/${specialtyId}/classes`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
   // Class endpoints
   async getClasses() {
     try {
