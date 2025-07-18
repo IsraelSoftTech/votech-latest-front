@@ -466,3 +466,10 @@
     margin: 0 auto;
   }
 } 
+
+.event-calendar {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-y: visible !important;
+} 

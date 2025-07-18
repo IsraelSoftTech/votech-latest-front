@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AdminStudent.css';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaEnvelope, FaIdCard } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 
 import api from '../services/api';
@@ -11,6 +11,8 @@ const menuItems = [
   { label: 'Students', icon: <FaUserGraduate /> },
   { label: 'Teachers', icon: <FaChalkboardTeacher /> },
   { label: 'Classes', icon: <FaBook /> },
+  { label: 'Messages', icon: <FaEnvelope /> },
+  { label: 'ID Cards', icon: <FaIdCard /> },
   { label: 'Subjects', icon: <FaBook /> },
   { label: 'Finances', icon: <FaMoneyBill /> },
   { label: 'Attendance', icon: <FaClipboardList /> },
@@ -70,7 +72,7 @@ function AdminStudent() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteIdx, setDeleteIdx] = useState(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     async function fetchData() {
       try {
         const classData = await api.getClasses();
@@ -86,6 +88,10 @@ function AdminStudent() {
     fetchData();
   }, []);
 
+  // Helper to count today's students
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayCount = studentList.filter(s => s.created_at && s.created_at.slice(0, 10) === todayStr).length;
+
   // 3. Helper to generate student ID
   const generateStudentId = (fullName, regDate, index) => {
     if (!fullName) return '';
@@ -99,7 +105,7 @@ function AdminStudent() {
   };
 
   // 4. Update studentId when fullName or regDate changes
-  React.useEffect(() => {
+  useEffect(() => {
     setForm(f => ({
       ...f,
       studentId: generateStudentId(f.fullName, f.regDate, studentList.length)
@@ -259,9 +265,6 @@ function AdminStudent() {
             <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <FaBars />
             </button>
-            <select className="year-select" value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
-              {years.map(year => <option key={year} value={year}>{year}</option>)}
-            </select>
           </div>
           <div className="admin-actions">
             <span className="icon notification"><span className="badge">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V4a2 2 0 1 0-4 0v1.341C7.67 7.165 6 9.388 6 12v2.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg></span>
@@ -270,10 +273,21 @@ function AdminStudent() {
           </div>
         </header>
         <div className="dashboard-cards">
-          <div className="card students">
+          <div className="card students" style={{ padding: '24px 18px 18px 18px' }}>
             <div className="icon"><FaUserGraduate /></div>
-            <div className="count">{studentList.length}</div>
-            <div className="desc">Registered Students</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 12 }}>
+              <div style={{ textAlign: 'left', flex: 1 }}>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>Today</div>
+                <div className="count" style={{ fontSize: 22 }}>{todayCount}</div>
+                <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Registered Students Today</div>
+              </div>
+              <div style={{ width: 1, background: 'rgba(255,255,255,0.3)', height: 48, margin: '0 10px' }}></div>
+              <div style={{ textAlign: 'right', flex: 1 }}>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>Total</div>
+                <div className="count" style={{ fontSize: 22 }}>{studentList.length}</div>
+                <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Registered Students</div>
+              </div>
+            </div>
           </div>
           <div className="card fees">
             <div className="icon"><FaMoneyBill /></div>

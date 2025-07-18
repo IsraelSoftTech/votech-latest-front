@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './AdminTeacher.css';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaMoneyBill, FaFileAlt, FaChartBar, FaPenFancy, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaMoneyBill, FaFileAlt, FaChartBar, FaPenFancy, FaEdit, FaTrash, FaEnvelope, FaIdCard } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 
 const menuItems = [
@@ -9,6 +9,8 @@ const menuItems = [
   { label: 'Students', icon: <FaUserGraduate /> },
   { label: 'Teachers', icon: <FaChalkboardTeacher /> },
   { label: 'Classes', icon: <FaBook /> },
+  { label: 'Messages', icon: <FaEnvelope /> },
+  { label: 'ID Cards', icon: <FaIdCard /> },
   { label: 'Subjects', icon: <FaBook /> },
   { label: 'Finances', icon: <FaMoneyBill /> },
   { label: 'Attendance', icon: <FaClipboardList /> },
@@ -120,9 +122,6 @@ function AdminTeacher() {
             <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <FaBars />
             </button>
-            <select className="year-select" value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
-              {years.map(year => <option key={year} value={year}>{year}</option>)}
-            </select>
           </div>
           <div className="admin-actions">
             <span className="icon notification"><span className="badge">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V4a2 2 0 1 0-4 0v1.341C7.67 7.165 6 9.388 6 12v2.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg></span>
