@@ -5,6 +5,7 @@ import logo from '../assets/logo.png';
 import './Message.css';
 import ReactDOM from 'react-dom';
 import api from '../services/api'; // Uncomment and use for real API
+import SideTop from './SideTop';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
@@ -26,7 +27,7 @@ const menuItems = [
 // const dummyChats = [...];
 // const dummyEvents = [...];
 
-function Message() {
+export default function Message() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
   const [showNewChat, setShowNewChat] = useState(false);
@@ -45,6 +46,15 @@ function Message() {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 700);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth <= 700);
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Placeholder for real API data
   const chats = [];
@@ -103,216 +113,154 @@ function Message() {
   const emojiList = ['😀','😂','😍','👍','🎉','🙏','😎','😢','🔥','❤️'];
 
   return (
-    <div className="admin-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
-      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', marginTop: 64 }}>
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          <nav className="menu">
-            {menuItems.map((item, idx) => {
-              let isActive = false;
-              if (item.path && location.pathname === item.path) isActive = true;
-              return (
-                <div
-                  className={`menu-item${item.label === 'ID Cards' ? location.pathname === '/admin-idcards' : location.pathname === item.path ? ' active' : ''}`}
-                  key={item.label}
-                  onClick={() => {
-                    if (item.label === 'ID Cards') navigate('/admin-idcards');
-                    else if (item.path) navigate(item.path);
-                  }}
-                  style={{ position: 'relative' }}
-                >
-                  <span className="icon">{item.icon}</span>
-                  <span className="label">{item.label}</span>
-                  {item.label === 'Messages' && (
-                    <span style={{ position: 'absolute', right: 18, top: 16, width: 9, height: 9, background: '#e53e3e', borderRadius: '50%', display: 'inline-block', boxShadow: '0 1px 4px rgba(32,64,128,0.13)' }}></span>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
+    <SideTop>
+      {/* Place the main content of Message here, excluding sidebar/topbar */}
+      <div style={{ display: 'flex', gap: 32, marginTop: 32, flexWrap: 'wrap' }}>
+        <div className="card" style={{ flex: 1, minWidth: 180, background: '#fff', boxShadow: '0 2px 8px rgba(32,64,128,0.06)', borderRadius: 12, padding: 24 }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: '#204080' }}>Unread Messages</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#e53e3e', marginTop: 8 }}>{unreadCount}</div>
         </div>
-      </aside>
-      <div className="main-content" style={{ paddingTop: 64, minHeight: 'calc(100vh - 0px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-        <header className="admin-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100, width: '100%' }}>
-          <div className="admin-header-left" style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              <FaBars />
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img src={logo} alt="logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
-              <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
-            </div>
+        <div className="card" style={{ flex: 1, minWidth: 180, background: '#fff', boxShadow: '0 2px 8px rgba(32,64,128,0.06)', borderRadius: 12, padding: 24 }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: '#204080' }}>Upcoming Events</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#204080', marginTop: 8 }}>{upcomingCount}</div>
+        </div>
+      </div>
+      <div style={{ marginTop: 32, background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(32,64,128,0.06)', padding: 24, minHeight: 400 }}>
+        {isMobile && (
+          <div className="new-chat-btn-row" style={{ width: '100%', margin: '0 0 10px 0' }}>
+            <button className="new-chat-btn new-chat-btn-small" onClick={() => setShowNewChat(true)}><FaPlus style={{ marginRight: 6 }} /> New Chat</button>
           </div>
-          <div className="admin-actions">
-            <span className="icon notification"><span className="badge">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V4a2 2 0 1 0-4 0v1.341C7.67 7.165 6 9.388 6 12v2.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg></span>
-            <span className="icon message"><span className="badge orange">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        )}
+        <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid #eee', marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
+          {['All', 'Unread', 'Group'].map(tab => (
             <button
-              style={{ background: 'none', border: 'none', color: '#204080', fontWeight: 600, fontSize: 17, cursor: 'pointer', position: 'relative', padding: '4px 12px', borderRadius: 6 }}
-              onClick={() => setUserMenuOpen(v => !v)}
-              onBlur={() => setTimeout(() => setUserMenuOpen(false), 180)}
+              key={tab}
+              className={`tab-btn${activeTab === tab ? ' active' : ''}`}
+              style={{
+                background: 'none',
+                border: 'none',
+                borderBottom: activeTab === tab ? '3px solid #204080' : '3px solid transparent',
+                color: activeTab === tab ? '#204080' : '#888',
+                fontWeight: 600,
+                fontSize: 17,
+                padding: '8px 18px',
+                cursor: 'pointer',
+                outline: 'none',
+                transition: 'all 0.2s',
+              }}
+              onClick={() => setActiveTab(tab)}
             >
-              {username}
+              {tab}
             </button>
-            {userMenuOpen && ReactDOM.createPortal(
-              <div style={{ position: 'fixed', top: 64, right: 24, background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px rgba(32,64,128,0.13)', minWidth: 160, zIndex: 99999, padding: '10px 0', display: 'flex', flexDirection: 'column', alignItems: 'stretch', overflow: 'visible' }}>
-                <button style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#204080', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}>
-                  <FaCog style={{ fontSize: 17 }} /> Settings
-                </button>
-                <button
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#e53e3e', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}
-                  onClick={() => {
-                    sessionStorage.removeItem('token');
-                    sessionStorage.removeItem('authUser');
-                    window.location.href = '/signin';
-                  }}
-                >
-                  <FaSignOutAlt style={{ fontSize: 17 }} /> Logout
-                </button>
-              </div>, document.body
-            )}
-          </div>
-        </header>
-        <div style={{ display: 'flex', gap: 32, marginTop: 32, flexWrap: 'wrap' }}>
-          <div className="card" style={{ flex: 1, minWidth: 180, background: '#fff', boxShadow: '0 2px 8px rgba(32,64,128,0.06)', borderRadius: 12, padding: 24 }}>
-            <div style={{ fontSize: 18, fontWeight: 600, color: '#204080' }}>Unread Messages</div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#e53e3e', marginTop: 8 }}>{unreadCount}</div>
-          </div>
-          <div className="card" style={{ flex: 1, minWidth: 180, background: '#fff', boxShadow: '0 2px 8px rgba(32,64,128,0.06)', borderRadius: 12, padding: 24 }}>
-            <div style={{ fontSize: 18, fontWeight: 600, color: '#204080' }}>Upcoming Events</div>
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#204080', marginTop: 8 }}>{upcomingCount}</div>
-          </div>
+          ))}
         </div>
-        <div style={{ marginTop: 32, background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(32,64,128,0.06)', padding: 24, minHeight: 400 }}>
-          <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid #eee', marginBottom: 18 }}>
-            {['All', 'Unread', 'Group'].map(tab => (
-              <button
-                key={tab}
-                className={`tab-btn${activeTab === tab ? ' active' : ''}`}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: activeTab === tab ? '3px solid #204080' : '3px solid transparent',
-                  color: activeTab === tab ? '#204080' : '#888',
-                  fontWeight: 600,
-                  fontSize: 17,
-                  padding: '8px 18px',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                }}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </button>
+        {!isMobile && (
+          <div className="new-chat-btn-row" style={{ width: '100%', margin: '0 0 12px 0' }}>
+            <button className="new-chat-btn" onClick={() => setShowNewChat(true)}><FaPlus style={{ marginRight: 8 }} /> New Chat</button>
+          </div>
+        )}
+        {/* Chat List or Chat Space */}
+        {!activeChat ? (
+          <div style={{ marginTop: 18 }}>
+            {filteredChats.map(chat => (
+              <div key={chat.id} style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '14px 0', borderBottom: '1px solid #f2f2f2', cursor: 'pointer' }} onClick={() => setActiveChat(chat)}>
+                <img src={chat.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(chat.sender)} alt="avatar" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', background: '#f0f0f0' }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, color: '#204080', fontSize: 16 }}>{chat.sender}</div>
+                  <div style={{ color: '#444', fontSize: 15, marginTop: 2 }}>{chat.message}</div>
+                </div>
+                {chat.unread && <span style={{ width: 12, height: 12, background: '#e53e3e', borderRadius: '50%', display: 'inline-block' }}></span>}
+              </div>
             ))}
-            <button style={{ marginLeft: 'auto', background: '#204080', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }} onClick={() => setShowNewChat(true)}><FaPlus style={{ marginRight: 8 }} /> New Chat</button>
           </div>
-          {/* Chat List or Chat Space */}
-          {!activeChat ? (
-            <div style={{ marginTop: 18 }}>
-              {filteredChats.map(chat => (
-                <div key={chat.id} style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '14px 0', borderBottom: '1px solid #f2f2f2', cursor: 'pointer' }} onClick={() => setActiveChat(chat)}>
-                  <img src={chat.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(chat.sender)} alt="avatar" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', background: '#f0f0f0' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, color: '#204080', fontSize: 16 }}>{chat.sender}</div>
-                    <div style={{ color: '#444', fontSize: 15, marginTop: 2 }}>{chat.message}</div>
-                  </div>
-                  {chat.unread && <span style={{ width: 12, height: 12, background: '#e53e3e', borderRadius: '50%', display: 'inline-block' }}></span>}
-                </div>
-              ))}
+        ) : (
+          <div style={{ marginTop: 18, minHeight: 320, display: 'flex', flexDirection: 'column', height: 400 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, borderBottom: '1px solid #eee', paddingBottom: 10 }}>
+              <img src={activeChat.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(activeChat.sender)} alt="avatar" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#f0f0f0' }} />
+              <div style={{ fontWeight: 600, color: '#204080', fontSize: 17 }}>{activeChat.sender}</div>
+              <button style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#204080', fontSize: 22, cursor: 'pointer' }} onClick={() => setActiveChat(null)}><FaTimes /></button>
             </div>
-          ) : (
-            <div style={{ marginTop: 18, minHeight: 320, display: 'flex', flexDirection: 'column', height: 400 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, borderBottom: '1px solid #eee', paddingBottom: 10 }}>
-                <img src={activeChat.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(activeChat.sender)} alt="avatar" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#f0f0f0' }} />
-                <div style={{ fontWeight: 600, color: '#204080', fontSize: 17 }}>{activeChat.sender}</div>
-                <button style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#204080', fontSize: 22, cursor: 'pointer' }} onClick={() => setActiveChat(null)}><FaTimes /></button>
-              </div>
-              <div style={{ flex: 1, overflowY: 'auto', margin: '18px 0', background: '#f7f8fa', borderRadius: 8, padding: 18 }}>
-                {/* Dummy chat messages */}
-                <div style={{ marginBottom: 12, display: 'flex', alignItems: 'flex-end', gap: 10 }}>
-                  <img src={activeChat.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(activeChat.sender)} alt="avatar" style={{ width: 36, height: 36, borderRadius: '50%' }} />
-                  <div style={{ background: '#fff', borderRadius: 8, padding: '10px 16px', boxShadow: '0 2px 8px rgba(32,64,128,0.06)', fontSize: 15, color: '#204080', maxWidth: 320 }}>
-                    {activeChat.message}
-                  </div>
-                </div>
-                {/* Your message */}
-                <div style={{ marginBottom: 12, display: 'flex', alignItems: 'flex-end', gap: 10, flexDirection: 'row-reverse' }}>
-                  <img src={'https://ui-avatars.com/api/?name=You'} alt="avatar" style={{ width: 36, height: 36, borderRadius: '50%' }} />
-                  <div style={{ background: '#204080', borderRadius: 8, padding: '10px 16px', color: '#fff', fontSize: 15, maxWidth: 320 }}>
-                    Sure, see you then!
-                  </div>
+            <div style={{ flex: 1, overflowY: 'auto', margin: '18px 0', background: '#f7f8fa', borderRadius: 8, padding: 18 }}>
+              {/* Dummy chat messages */}
+              <div style={{ marginBottom: 12, display: 'flex', alignItems: 'flex-end', gap: 10 }}>
+                <img src={activeChat.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(activeChat.sender)} alt="avatar" style={{ width: 36, height: 36, borderRadius: '50%' }} />
+                <div style={{ background: '#fff', borderRadius: 8, padding: '10px 16px', boxShadow: '0 2px 8px rgba(32,64,128,0.06)', fontSize: 15, color: '#204080', maxWidth: 320 }}>
+                  {activeChat.message}
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid #eee', paddingTop: 10 }}>
-                <button style={{ background: 'none', border: 'none', fontSize: 22, color: '#204080', cursor: 'pointer' }} onClick={() => setShowEmoji(v => !v)}><FaSmile /></button>
-                {showEmoji && (
-                  <div style={{ position: 'absolute', bottom: 60, left: 40, background: '#fff', border: '1px solid #eee', borderRadius: 8, boxShadow: '0 2px 8px rgba(32,64,128,0.13)', padding: 10, zIndex: 1000, display: 'flex', gap: 6 }}>
-                    {emojiList.map(e => (
-                      <span key={e} style={{ fontSize: 22, cursor: 'pointer' }} onClick={() => { setChatInput(chatInput + e); setShowEmoji(false); }}>{e}</span>
-                    ))}
-                  </div>
-                )}
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  placeholder="Type a message..."
-                  style={{ flex: 1, padding: 10, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }}
-                  onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
-                />
-                <input type="file" multiple style={{ display: 'none' }} id="chat-file-input" onChange={handleFileChange} />
-                <label htmlFor="chat-file-input" style={{ background: 'none', border: 'none', fontSize: 22, color: '#204080', cursor: 'pointer' }}><FaPaperclip /></label>
-                <button style={{ background: '#204080', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }} onClick={handleSend}><FaPaperPlane /></button>
+              {/* Your message */}
+              <div style={{ marginBottom: 12, display: 'flex', alignItems: 'flex-end', gap: 10, flexDirection: 'row-reverse' }}>
+                <img src={'https://ui-avatars.com/api/?name=You'} alt="avatar" style={{ width: 36, height: 36, borderRadius: '50%' }} />
+                <div style={{ background: '#204080', borderRadius: 8, padding: '10px 16px', color: '#fff', fontSize: 15, maxWidth: 320 }}>
+                  Sure, see you then!
+                </div>
               </div>
-              {/* Show selected files */}
-              {chatFiles.length > 0 && (
-                <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {chatFiles.map((file, idx) => (
-                    <div key={idx} style={{ background: '#f7f8fa', borderRadius: 6, padding: 6, fontSize: 13 }}>{file.name}</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid #eee', paddingTop: 10 }}>
+              <button style={{ background: 'none', border: 'none', fontSize: 22, color: '#204080', cursor: 'pointer' }} onClick={() => setShowEmoji(v => !v)}><FaSmile /></button>
+              {showEmoji && (
+                <div style={{ position: 'absolute', bottom: 60, left: 40, background: '#fff', border: '1px solid #eee', borderRadius: 8, boxShadow: '0 2px 8px rgba(32,64,128,0.13)', padding: 10, zIndex: 1000, display: 'flex', gap: 6 }}>
+                  {emojiList.map(e => (
+                    <span key={e} style={{ fontSize: 22, cursor: 'pointer' }} onClick={() => { setChatInput(chatInput + e); setShowEmoji(false); }}>{e}</span>
                   ))}
                 </div>
               )}
+              <input
+                type="text"
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                placeholder="Type a message..."
+                style={{ flex: 1, padding: 10, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }}
+                onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
+              />
+              <input type="file" multiple style={{ display: 'none' }} id="chat-file-input" onChange={handleFileChange} />
+              <label htmlFor="chat-file-input" style={{ background: 'none', border: 'none', fontSize: 22, color: '#204080', cursor: 'pointer' }}><FaPaperclip /></label>
+              <button style={{ background: '#204080', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }} onClick={handleSend}><FaPaperPlane /></button>
             </div>
-          )}
-        </div>
-        {/* New Chat Modal */}
-        {showNewChat && (
-          <div className="modal-overlay" onClick={handleCloseNewChat}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <button onClick={handleCloseNewChat} className="modal-close">&times;</button>
-              <div style={{ fontWeight: 600, fontSize: 18, color: '#204080', marginBottom: 10 }}>Start New Chat</div>
-              <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
-                <button onClick={() => setChatType('private')} style={{ flex: 1, background: chatType === 'private' ? '#204080' : '#f7f8fa', color: chatType === 'private' ? '#fff' : '#204080', border: 'none', borderRadius: 6, padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Private</button>
-                <button onClick={() => setChatType('group')} style={{ flex: 1, background: chatType === 'group' ? '#204080' : '#f7f8fa', color: chatType === 'group' ? '#fff' : '#204080', border: 'none', borderRadius: 6, padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}><FaUsers style={{ marginRight: 6 }} />Group</button>
+            {/* Show selected files */}
+            {chatFiles.length > 0 && (
+              <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {chatFiles.map((file, idx) => (
+                  <div key={idx} style={{ background: '#f7f8fa', borderRadius: 6, padding: 6, fontSize: 13 }}>{file.name}</div>
+                ))}
               </div>
-              {chatType === 'private' && (
-                <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-                  {usersLoading ? (
-                    <div>Loading users...</div>
-                  ) : usersError ? (
-                    <div style={{ color: '#e53e3e' }}>{usersError}</div>
-                  ) : users.length === 0 ? (
-                    <div>No users found.</div>
-                  ) : users.map(u => (
-                    <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0', borderBottom: '1px solid #f2f2f2', cursor: 'pointer' }} onClick={() => { setSelectedUser(u); setActiveChat({ id: u.id, sender: u.name || u.username, avatar: u.avatar, message: '', unread: false, group: false }); handleCloseNewChat(); }}>
-                      <img src={u.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name || u.username)} alt="avatar" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#f0f0f0' }} />
-                      <div style={{ fontWeight: 600, color: '#204080', fontSize: 16 }}>{u.name || u.username}</div>
-                      <div style={{ color: '#888', fontSize: 14 }}>{u.role}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {chatType === 'group' && (
-                <div style={{ color: '#888', fontSize: 15, marginTop: 12 }}>Group chat coming soon.</div>
-              )}
-            </div>
+            )}
           </div>
         )}
       </div>
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
-    </div>
+      {/* New Chat Modal */}
+      {showNewChat && (
+        <div className="modal-overlay" onClick={handleCloseNewChat}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button onClick={handleCloseNewChat} className="modal-close">&times;</button>
+            <div style={{ fontWeight: 600, fontSize: 18, color: '#204080', marginBottom: 10 }}>Start New Chat</div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+              <button onClick={() => setChatType('private')} style={{ flex: 1, background: chatType === 'private' ? '#204080' : '#f7f8fa', color: chatType === 'private' ? '#fff' : '#204080', border: 'none', borderRadius: 6, padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Private</button>
+              <button onClick={() => setChatType('group')} style={{ flex: 1, background: chatType === 'group' ? '#204080' : '#f7f8fa', color: chatType === 'group' ? '#fff' : '#204080', border: 'none', borderRadius: 6, padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}><FaUsers style={{ marginRight: 6 }} />Group</button>
+            </div>
+            {chatType === 'private' && (
+              <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                {usersLoading ? (
+                  <div>Loading users...</div>
+                ) : usersError ? (
+                  <div style={{ color: '#e53e3e' }}>{usersError}</div>
+                ) : users.length === 0 ? (
+                  <div>No users found.</div>
+                ) : users.map(u => (
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0', borderBottom: '1px solid #f2f2f2', cursor: 'pointer' }} onClick={() => { setSelectedUser(u); setActiveChat({ id: u.id, sender: u.name || u.username, avatar: u.avatar, message: '', unread: false, group: false }); handleCloseNewChat(); }}>
+                    <img src={u.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name || u.username)} alt="avatar" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', background: '#f0f0f0' }} />
+                    <div style={{ fontWeight: 600, color: '#204080', fontSize: 16 }}>{u.name || u.username}</div>
+                    <div style={{ color: '#888', fontSize: 14 }}>{u.role}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {chatType === 'group' && (
+              <div style={{ color: '#888', fontSize: 15, marginTop: 12 }}>Group chat coming soon.</div>
+            )}
+          </div>
+        </div>
+      )}
+    </SideTop>
   );
-}
-
-export default Message; 
+} 

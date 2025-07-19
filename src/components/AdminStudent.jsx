@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './AdminStudent.css';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaEnvelope, FaIdCard } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaEnvelope, FaIdCard, FaFileExcel } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
+import * as XLSX from 'xlsx';
+import { useLocation } from 'react-router-dom';
+import SideTop from './SideTop';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt /> },
@@ -42,7 +45,7 @@ const students = [
   { name: 'Nancy Drew', sex: 'F', class: 'Form 5', dob: '03/10/2011', pob: 'Kumba', dept: 'Commerce' },
 ];
 
-function AdminStudent() {
+export default function AdminStudent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
   const [showModal, setShowModal] = useState(false);
@@ -64,6 +67,7 @@ function AdminStudent() {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 2. Add students state to store registered students
   const [studentList, setStudentList] = useState([]);
@@ -72,6 +76,15 @@ function AdminStudent() {
   const [editId, setEditId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteIdx, setDeleteIdx] = useState(null);
+  const [excelModalOpen, setExcelModalOpen] = useState(false);
+  const [excelClass, setExcelClass] = useState('');
+  const [excelFile, setExcelFile] = useState(null);
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [excelError, setExcelError] = useState('');
+  const [excelSuccess, setExcelSuccess] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [excelPreview, setExcelPreview] = useState([]);
+  const [excelHeaders, setExcelHeaders] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -214,6 +227,84 @@ function AdminStudent() {
     setDeleteIdx(null);
   };
 
+  // Excel import handler
+  const handleExcelImport = async (e) => {
+    e.preventDefault();
+    setExcelError('');
+    setExcelSuccess('');
+    if (!excelFile) {
+      setExcelError('Please select an Excel file.');
+      return;
+    }
+    setExcelLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', excelFile);
+      formData.append('year', selectedYear); // if you want to keep year
+      // Debug: log FormData keys and values
+      for (let pair of formData.entries()) {
+        console.log('FormData:', pair[0], pair[1]);
+      }
+      await api.uploadStudents(formData);
+      setExcelSuccess('Students imported successfully!');
+      setExcelFile(null);
+      setTimeout(() => {
+        setExcelModalOpen(false);
+        setExcelSuccess('');
+      }, 1200);
+      // Refresh student list
+      const students = await api.getStudents();
+      setStudentList(students);
+    } catch (err) {
+      setExcelError(err.message || 'Failed to import students.');
+    }
+    setExcelLoading(false);
+  };
+
+  // Excel file change handler with preview
+  const handleExcelFileChange = (e) => {
+    setExcelFile(null);
+    setExcelPreview([]);
+    setExcelHeaders([]);
+    setExcelError('');
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        if (!rows.length) {
+          setExcelError('Excel file is empty.');
+          return;
+        }
+        // Validate headers
+        const expectedHeaders = [
+          'Full Names', 'Sex', 'Date of Birth', 'Place of Birth',
+          "Father's Name", "Mother's Name", 'Specialty', 'Contact', 'Class'
+        ];
+        const fileHeaders = rows[0].map(h => (h || '').toString().trim());
+        setExcelHeaders(fileHeaders);
+        const headersMatch = expectedHeaders.every((h, i) => h === fileHeaders[i]);
+        if (!headersMatch) {
+          setExcelError('Excel headers do not match expected format.');
+          return;
+        }
+        setExcelFile(file);
+        setExcelPreview(rows.slice(1, 11)); // Preview first 10 rows
+      } catch (err) {
+        setExcelError('Failed to parse Excel file.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+  // Filtered students for search
+  const filteredStudents = studentList.filter(s =>
+    s.full_name && s.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   // Helper to get image URL
   const baseApiUrl = (api.API_URL && api.API_URL.replace('/api','')) || 'http://localhost:5000';
   const getImageUrl = (pic) => {
@@ -223,146 +314,107 @@ function AdminStudent() {
   };
 
   return (
-    <div className="admin-container">
-      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
-        <div className="sidebar-header">
-          <img src={logo} alt="logo" className="sidebar-logo" />
-          <span className="logo-text">VOTECH</span>
-        </div>
-        <nav className="menu">
-          {menuItems.map((item, idx) => {
-            let isActive = false;
-            if (item.label === 'Dashboard' && window.location.pathname === '/admin') isActive = true;
-            if (item.label === 'Students' && window.location.pathname === '/admin-student') isActive = true;
-            if (item.label === 'Teachers' && window.location.pathname === '/admin-teacher') isActive = true;
-            if (item.label === 'Classes' && window.location.pathname === '/admin-class') isActive = true;
-            if (item.label === 'Finances' && window.location.pathname === '/admin-finance') isActive = true;
-            if (item.label === 'Messages' && window.location.pathname === '/admin-messages') isActive = true;
-            if (item.label === 'ID Cards' && window.location.pathname === '/admin-idcards') isActive = true;
-            return (
-              <div
-                className={`menu-item${isActive ? ' active' : ''}`}
-                key={item.label}
-                onClick={() => {
-                  if (item.label === 'Dashboard') navigate('/admin');
-                  else if (item.label === 'Students') navigate('/admin-student');
-                  else if (item.label === 'Teachers') navigate('/admin-teacher');
-                  else if (item.label === 'Classes') navigate('/admin-class');
-                  else if (item.label === 'Finances') navigate('/admin-finance');
-                  else if (item.label === 'Messages') navigate('/admin-messages');
-                  else if (item.label === 'ID Cards') navigate('/admin-idcards');
-                }}
-              >
-                <span className="icon">{item.icon}</span>
-                <span className="label">{item.label}</span>
-              </div>
-            );
-          })}
-        </nav>
-        <button className="logout-btn" onClick={() => navigate('/signin')}>
-          <FaSignOutAlt className="logout-icon" />
-          <span>Logout</span>
-        </button>
-      </aside>
-      <div className="main-content">
-        <header className="admin-header">
-          <div className="admin-header-left">
-            <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              <FaBars />
-            </button>
-          </div>
-          <div className="admin-actions">
-            <span className="icon notification"><span className="badge">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V4a2 2 0 1 0-4 0v1.341C7.67 7.165 6 9.388 6 12v2.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg></span>
-            <span className="icon message"><span className="badge orange">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-            <span className="admin-name">Admin1</span>
-          </div>
-        </header>
-        <div className="dashboard-cards">
-          <div className="card students" style={{ padding: '24px 18px 18px 18px' }}>
-            <div className="icon"><FaUserGraduate /></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 12 }}>
-              <div style={{ textAlign: 'left', flex: 1 }}>
-                <div style={{ fontSize: 18, fontWeight: 600 }}>Today</div>
-                <div className="count" style={{ fontSize: 22 }}>{todayCount}</div>
-                <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Registered Students Today</div>
-              </div>
-              <div style={{ width: 1, background: 'rgba(255,255,255,0.3)', height: 48, margin: '0 10px' }}></div>
-              <div style={{ textAlign: 'right', flex: 1 }}>
-                <div style={{ fontSize: 18, fontWeight: 600 }}>Total</div>
-                <div className="count" style={{ fontSize: 22 }}>{studentList.length}</div>
-                <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Registered Students</div>
-              </div>
+    <SideTop>
+      <div className="dashboard-cards">
+        <div className="card students" style={{ padding: '24px 18px 18px 18px' }}>
+          <div className="icon"><FaUserGraduate /></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 12 }}>
+            <div style={{ textAlign: 'left', flex: 1 }}>
+              <div style={{ fontSize: 18, fontWeight: 600 }}>Today</div>
+              <div className="count" style={{ fontSize: 22 }}>{todayCount}</div>
+              <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Registered Students Today</div>
+            </div>
+            <div style={{ width: 1, background: 'rgba(255,255,255,0.3)', height: 48, margin: '0 10px' }}></div>
+            <div style={{ textAlign: 'right', flex: 1 }}>
+              <div style={{ fontSize: 18, fontWeight: 600 }}>Total</div>
+              <div className="count" style={{ fontSize: 22 }}>{studentList.length}</div>
+              <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Registered Students</div>
             </div>
           </div>
-          <div className="card fees">
-            <div className="icon"><FaMoneyBill /></div>
-            <div className="count">1200</div>
-            <div className="desc">Completed Fees</div>
-          </div>
-          <div className="card discipline">
-            <div className="icon"><FaClipboardList /></div>
-            <div className="count">29</div>
-            <div className="desc">Students on Discipline</div>
-          </div>
         </div>
-        <div className="student-section">
-          <div className="student-header-row">
-            <button className="add-student-btn" onClick={() => setShowModal(true)}><FaPlus /> Add Student</button>
-          </div>
-          <div className="student-table-wrapper" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
-            <table className="student-table">
-              <thead>
-                <tr>
-                  <th>Picture</th>
-                  <th>Student ID</th>
-                  <th>Name</th>
-                  <th>Sex</th>
-                  <th>Class</th>
-                  <th>DOB</th>
-                  <th>POB</th>
-                  <th>Department/Specialty</th>
-                  <th>Registration Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentList.map((s, i) => (
-                  <tr key={s.id || i}>
-                    <td style={{ width: 48, minWidth: 48 }}>
-                      {s.id ? (
-                        <img
-                          src={getImageUrl(`/api/students/${s.id}/picture`)}
-                          alt="pic"
-                          style={{ borderRadius: '50%', width: 40, height: 40, objectFit: 'cover', background: '#f0f0f0' }}
-                          onError={e => {
-                            console.warn(`Image could not be displayed for student ID: ${s.id}. URL:`, getImageUrl(`/api/students/${s.id}/picture`));
-                            e.target.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <span style={{ color: '#888' }}>-</span>
-                      )}
-                    </td>
-                    <td>{s.student_id}</td>
-                    <td>{s.full_name}</td>
-                    <td>{s.sex}</td>
-                    <td>{classes.find(c => c.id === s.class_id)?.name || ''}</td>
-                    <td>{s.date_of_birth}</td>
-                    <td>{s.place_of_birth}</td>
-                    <td>{s.specialty_name || ''}</td>
-                    <td>{s.created_at ? s.created_at.slice(0,10) : ''}</td>
-                    <td className="actions">
-                      <button className="action-btn edit" onClick={() => handleEdit(s)}><FaEdit /></button>
-                      <button className="action-btn delete" onClick={() => handleDelete(i)}><FaTrash /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="card fees">
+          <div className="icon"><FaMoneyBill /></div>
+          <div className="count">1200</div>
+          <div className="desc">Completed Fees</div>
+        </div>
+        <div className="card discipline">
+          <div className="icon"><FaClipboardList /></div>
+          <div className="count">29</div>
+          <div className="desc">Students on Discipline</div>
         </div>
       </div>
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
+      <div className="student-section">
+        <div className="student-header-row" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="add-student-btn" onClick={() => setShowModal(true)}><FaPlus /> Add Student</button>
+          <button
+            className="excel-import-btn"
+            style={{ background: '#217346', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 12px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+            title="Import from Excel"
+            onClick={() => setExcelModalOpen(true)}
+          >
+            <FaFileExcel style={{ fontSize: 20, marginRight: 4 }} />
+          </button>
+          <input
+            type="text"
+            className="student-search-bar"
+            placeholder="Search student by name..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ marginLeft: 'auto', padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', minWidth: 180 }}
+          />
+        </div>
+        <div className="student-table-wrapper" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
+          <table className="student-table">
+            <thead>
+              <tr>
+                <th>Picture</th>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Sex</th>
+                <th>Class</th>
+                <th>DOB</th>
+                <th>POB</th>
+                <th>Department/Specialty</th>
+                <th>Registration Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.map((s, i) => (
+                <tr key={s.id || i}>
+                  <td style={{ width: 48, minWidth: 48 }}>
+                    {s.id ? (
+                      <img
+                        src={getImageUrl(`/api/students/${s.id}/picture`)}
+                        alt="pic"
+                        style={{ borderRadius: '50%', width: 40, height: 40, objectFit: 'cover', background: '#f0f0f0' }}
+                        onError={e => {
+                          console.warn(`Image could not be displayed for student ID: ${s.id}. URL:`, getImageUrl(`/api/students/${s.id}/picture`));
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <span style={{ color: '#888' }}>-</span>
+                    )}
+                  </td>
+                  <td>{s.student_id}</td>
+                  <td>{s.full_name}</td>
+                  <td>{s.sex}</td>
+                  <td>{classes.find(c => c.id === s.class_id)?.name || ''}</td>
+                  <td>{s.date_of_birth}</td>
+                  <td>{s.place_of_birth}</td>
+                  <td>{s.specialty_name || ''}</td>
+                  <td>{s.created_at ? s.created_at.slice(0,10) : ''}</td>
+                  <td className="actions">
+                    <button className="action-btn edit" onClick={() => handleEdit(s)}><FaEdit /></button>
+                    <button className="action-btn delete" onClick={() => handleDelete(i)}><FaTrash /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
       {showModal && (
         <div className="modal-overlay" onClick={() => { setShowModal(false); setEditId(null); }}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -416,6 +468,70 @@ function AdminStudent() {
           </div>
         </div>
       )}
+      {excelModalOpen && (
+        <div className="modal-overlay" onClick={() => setExcelModalOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: 500, width: '98vw' }} onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setExcelModalOpen(false)}><FaTimes /></button>
+            <form onSubmit={handleExcelImport}>
+              <h2 className="form-title">Import Students from Excel</h2>
+              <div style={{ marginBottom: 16 }}>
+                <label className="input-label">Excel File (.xlsx, .xls) *</label>
+                <input
+                  className="input-field"
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleExcelFileChange}
+                  required
+                />
+              </div>
+              <div style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>
+                <b>Expected columns:</b> Full Names, Sex, Date of Birth, Place of Birth, Father's Name, Mother's Name, Specialty, Contact, <b>Class</b><br />
+                (Row 1 = headers, data from row 2; <b>Class</b> must match a class name in your system)
+              </div>
+              <a
+                href={require('../assets/student_import_template.xlsx')}
+                download="student_import_template.xlsx"
+                style={{ display: 'inline-block', marginBottom: 12, color: '#217346', fontWeight: 600 }}
+              >
+                Download Excel Template
+              </a>
+              {excelPreview.length > 0 && (
+                <div style={{ marginBottom: 12, overflowX: 'auto' }}>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Preview (first 10 rows):</div>
+                  <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
+                    <thead>
+                      <tr>
+                        {excelHeaders.map((h, i) => (
+                          <th key={i} style={{ border: '1px solid #ccc', padding: 4, background: '#f7f7f7' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {excelPreview.map((row, i) => (
+                        <tr key={i}>
+                          {excelHeaders.map((_, j) => (
+                            <td key={j} style={{ border: '1px solid #eee', padding: 4 }}>{row[j]}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {excelError && <div className="error-message">{excelError}</div>}
+              {excelSuccess && <SuccessMessage message={excelSuccess} />}
+              <button
+                type="submit"
+                className="signup-btn"
+                style={{ background: '#217346', color: '#fff', minWidth: 120 }}
+                disabled={excelLoading || !excelFile || !!excelError}
+              >
+                {excelLoading ? 'Importing...' : 'Import'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
       {showDeleteModal && (
         <div className="modal-overlay" onClick={cancelDelete}>
           <div className="modal-content delete-modal" style={{maxWidth: 380, width: '90%', textAlign: 'center', background: '#fff', borderRadius: 12, boxShadow: '0 4px 32px rgba(32,64,128,0.13)', padding: '32px 20px 24px 20px', margin: '0 auto'}} onClick={e => e.stopPropagation()}>
@@ -428,8 +544,6 @@ function AdminStudent() {
           </div>
         </div>
       )}
-    </div>
+    </SideTop>
   );
-}
-
-export default AdminStudent; 
+} 

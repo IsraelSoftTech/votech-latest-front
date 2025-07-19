@@ -8,6 +8,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import api from '../services/api';
 import ReactDOM from 'react-dom';
+import SideTop from './SideTop';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
@@ -138,224 +139,155 @@ function Admin() {
   const todayCount = studentList.filter(s => s.created_at && s.created_at.slice(0, 10) === todayStr).length;
 
   return (
-    <div className="admin-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
-      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', marginTop: 64 }}>
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          <nav className="menu">
-            {menuItems.map((item, idx) => {
-              let isActive = false;
-              if (item.path && location.pathname === item.path) isActive = true;
-              return (
-                <div
-                  className={`menu-item${isActive ? ' active' : ''}`}
-                  key={item.label}
-                  onClick={() => {
-                    if (item.label === 'ID Cards') navigate('/admin-idcards');
-                    else if (item.path) navigate(item.path);
-                  }}
-                  style={{ position: 'relative' }}
-                >
-                  <span className="icon">{item.icon}</span>
-                  <span className="label">{item.label}</span>
-                  {item.label === 'Messages' && (
-                    <span style={{ position: 'absolute', right: 18, top: 16, width: 9, height: 9, background: '#e53e3e', borderRadius: '50%', display: 'inline-block', boxShadow: '0 1px 4px rgba(32,64,128,0.13)' }}></span>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-        </div>
-      </aside>
-      <div className="main-content" style={{ paddingTop: 64, minHeight: 'calc(100vh - 0px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-        <header className="admin-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100, width: '100%' }}>
-          <div className="admin-header-left" style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              <FaBars />
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img src={logo} alt="logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
-              <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
+    <SideTop>
+      {/* Place the dashboard and unique content of Admin.jsx here, excluding sidebar/topbar */}
+      <div className="dashboard-cards">
+        <div className="card students" style={{ padding: '24px 18px 18px 18px' }}>
+          <div className="icon"><FaUserGraduate /></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 12 }}>
+            <div style={{ textAlign: 'left', flex: 1 }}>
+              <div style={{ fontSize: 18, fontWeight: 600 }}>Today</div>
+              <div className="count" style={{ fontSize: 22 }}>{todayCount}</div>
+              <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Registered Students Today</div>
             </div>
-          </div>
-          <div className="admin-actions">
-            <span className="icon notification"><span className="badge">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V4a2 2 0 1 0-4 0v1.341C7.67 7.165 6 9.388 6 12v2.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg></span>
-            <span className="icon message"><span className="badge orange">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-            <button
-              style={{ background: 'none', border: 'none', color: '#204080', fontWeight: 600, fontSize: 17, cursor: 'pointer', position: 'relative', padding: '4px 12px', borderRadius: 6 }}
-              onClick={() => setUserMenuOpen(v => !v)}
-              onBlur={() => setTimeout(() => setUserMenuOpen(false), 180)}
-            >
-              {username}
-            </button>
-            {userMenuOpen && ReactDOM.createPortal(
-              <div style={{ position: 'fixed', top: 64, right: 24, background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px rgba(32,64,128,0.13)', minWidth: 160, zIndex: 99999, padding: '10px 0', display: 'flex', flexDirection: 'column', alignItems: 'stretch', overflow: 'visible' }}>
-                <button style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#204080', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}>
-                  <FaCog style={{ fontSize: 17 }} /> Settings
-                </button>
-                <button
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#e53e3e', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}
-                  onClick={() => {
-                    sessionStorage.removeItem('token');
-                    sessionStorage.removeItem('authUser');
-                    window.location.href = '/signin';
-                  }}
-                >
-                  <FaSignOutAlt style={{ fontSize: 17 }} /> Logout
-                </button>
-              </div>, document.body
-            )}
-          </div>
-        </header>
-        <div className="dashboard-cards">
-          <div className="card students" style={{ padding: '24px 18px 18px 18px' }}>
-            <div className="icon"><FaUserGraduate /></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 12 }}>
-              <div style={{ textAlign: 'left', flex: 1 }}>
-                <div style={{ fontSize: 18, fontWeight: 600 }}>Today</div>
-                <div className="count" style={{ fontSize: 22 }}>{todayCount}</div>
-                <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Registered Students Today</div>
-              </div>
-              <div style={{ width: 1, background: 'rgba(255,255,255,0.3)', height: 48, margin: '0 10px' }}></div>
-              <div style={{ textAlign: 'right', flex: 1 }}>
-                <div style={{ fontSize: 18, fontWeight: 600 }}>Total</div>
-                <div className="count" style={{ fontSize: 22 }}>{studentList.length}</div>
-                <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Registered Students</div>
-              </div>
+            <div style={{ width: 1, background: 'rgba(255,255,255,0.3)', height: 48, margin: '0 10px' }}></div>
+            <div style={{ textAlign: 'right', flex: 1 }}>
+              <div style={{ fontSize: 18, fontWeight: 600 }}>Total</div>
+              <div className="count" style={{ fontSize: 22 }}>{studentList.length}</div>
+              <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Registered Students</div>
             </div>
-          </div>
-          <div className="card teachers">
-            <div className="icon"><FaChalkboardTeacher /></div>
-            <div className="count">47</div>
-            <div className="desc">Registered Teachers</div>
-          </div>
-          <div className="card fees">
-            <div className="icon"><FaMoneyBill /></div>
-            <div className="count">2000000 XAF</div>
-            <div className="desc">Total Fee Paid</div>
           </div>
         </div>
-        <div className="dashboard-section" style={{ display: 'flex', flexWrap: 'wrap', gap: 32, marginTop: 0 }}>
-          <div style={{ flex: '1 1 320px', minWidth: 0, maxWidth: '100%', width: '100%', boxSizing: 'border-box' }}>
-            <h3 style={{ marginBottom: 16, fontWeight: 600, color: '#204080' }}>Student Registration</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={feeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorFee" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#204080" stopOpacity={0.6}/>
-                    <stop offset="95%" stopColor="#204080" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorSalary" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.5}/>
-                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} domain={[0, 8]} tickCount={9} />
-                <Tooltip />
-                <Area type="monotone" dataKey="fee" stroke="#204080" fillOpacity={1} fill="url(#colorFee)" />
-                <Area type="monotone" dataKey="salary" stroke="#F59E0B" fillOpacity={1} fill="url(#colorSalary)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          {/* Calendar Section */}
-          <div style={{ width: '100%', marginTop: 36, background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(32,64,128,0.06)', padding: '24px 12px 12px 12px', maxWidth: 420, minWidth: 0, boxSizing: 'border-box', overflowX: 'auto' }}>
-            <h3 style={{ marginBottom: 18, fontWeight: 600, color: '#204080', fontSize: 20 }}>Create Event</h3>
-            <div style={{ width: '100%', minWidth: 0, overflowX: 'auto' }}>
-              <Calendar
-                tileContent={({ date, view }) => {
-                  // Example event dots: orange for 1-5, green for 5+
-                  const eventMap = {};
-                  events.forEach(e => {
-                    eventMap[e.date] = (eventMap[e.date] || 0) + 1;
-                  });
-                  const key = date.toISOString().slice(0, 10);
-                  const count = eventMap[key];
-                  if (view === 'month' && count) {
-                    return (
-                      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 2 }}>
-                        <span style={{
-                          display: 'inline-block',
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: count > 5 ? '#34c759' : '#f59e0b',
-                          margin: '0 2px',
-                        }}></span>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-                className="event-calendar"
-                onClickDay={handleDateClick}
-              />
-            </div>
-            {/* Legend */}
-            <div style={{ display: 'flex', gap: 18, marginTop: 12, fontSize: 13, alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 10, height: 10, background: '#f59e0b', borderRadius: '50%', display: 'inline-block' }}></span> [1-5]</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 10, height: 10, background: '#34c759', borderRadius: '50%', display: 'inline-block' }}></span> [5 +]</span>
-            </div>
-          </div>
-          {/* Event Modal */}
-          {modalOpen && (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(32,64,128,0.18)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setModalOpen(false)}>
-              <div style={{ background: '#fff', borderRadius: 14, maxWidth: 420, width: '95vw', padding: 24, boxShadow: '0 4px 32px rgba(32,64,128,0.13)', position: 'relative', minHeight: 180 }} onClick={e => e.stopPropagation()}>
-                <button onClick={() => setModalOpen(false)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', fontSize: 22, color: '#204080', cursor: 'pointer' }}>&times;</button>
-                <div style={{ fontWeight: 600, fontSize: 18, color: '#204080', marginBottom: 10 }}>
-                  Events for {modalDate && modalDate.toLocaleDateString()}
-                </div>
-                {/* List events for the date */}
-                <div style={{ marginBottom: 18 }}>
-                  {getEventsForDate(modalDate).length === 0 ? (
-                    <div style={{ color: '#888', fontSize: 15 }}>No events for this date.</div>
-                  ) : (
-                    <ul style={{ padding: 0, margin: 0, listStyle: 'none' }}>
-                      {getEventsForDate(modalDate).map((evt, idx) => (
-                        <li key={idx} style={{ marginBottom: 10, background: '#f7f8fa', borderRadius: 8, padding: '10px 12px' }}>
-                          <div style={{ fontWeight: 600, color: '#204080', fontSize: 15 }}>{evt.title}</div>
-                          <div style={{ fontSize: 13, color: '#666' }}>{evt.type} &bull; {evt.time} &bull; {evt.participants}</div>
-                          <div style={{ fontSize: 13, color: '#444', marginTop: 2 }}>{evt.description}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                {/* Plus icon to add event */}
-                {!showEventForm && (
-                  <button onClick={() => { setShowEventForm(true); setForm({ ...form, date: modalDate.toISOString().slice(0, 10) }); }} style={{ background: '#204080', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, cursor: 'pointer', margin: '0 auto' }}>
-                    <FaPlus />
-                  </button>
-                )}
-                {/* Event form */}
-                {showEventForm && (
-                  <form onSubmit={handleAddEvent} style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <select name="type" value={form.type} onChange={handleFormChange} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }}>
-                        <option value="Meeting">Meeting</option>
-                        <option value="Class">Class</option>
-                        <option value="Others">Others</option>
-                      </select>
-                      <input type="date" name="date" value={form.date} onChange={handleFormChange} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-                    </div>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <input type="time" name="time" value={form.time} onChange={handleFormChange} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-                      <input type="text" name="participants" value={form.participants} onChange={handleFormChange} placeholder="Participants" style={{ flex: 2, padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-                    </div>
-                    <input type="text" name="title" value={form.title} onChange={handleFormChange} placeholder="Title" style={{ padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-                    <textarea name="description" value={form.description} onChange={handleFormChange} placeholder="Description" style={{ padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15, minHeight: 60 }} required />
-                    {formError && <div style={{ color: '#e53e3e', fontSize: 14 }}>{formError}</div>}
-                    <button type="submit" style={{ background: '#204080', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 0', fontSize: 16, fontWeight: 600, marginTop: 4 }}>Add Event</button>
-                    <button type="button" onClick={() => setShowEventForm(false)} style={{ background: '#e5e7eb', color: '#204080', border: 'none', borderRadius: 6, padding: '8px 0', fontSize: 15, fontWeight: 500, marginTop: 2 }}>Cancel</button>
-                  </form>
-                )}
-              </div>
-            </div>
-          )}
+        <div className="card teachers">
+          <div className="icon"><FaChalkboardTeacher /></div>
+          <div className="count">47</div>
+          <div className="desc">Registered Teachers</div>
+        </div>
+        <div className="card fees">
+          <div className="icon"><FaMoneyBill /></div>
+          <div className="count">2000000 XAF</div>
+          <div className="desc">Total Fee Paid</div>
         </div>
       </div>
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
-    </div>
+      <div className="dashboard-section" style={{ display: 'flex', flexWrap: 'wrap', gap: 32, marginTop: 0 }}>
+        <div style={{ flex: '1 1 320px', minWidth: 0, maxWidth: '100%', width: '100%', boxSizing: 'border-box' }}>
+          <h3 style={{ marginBottom: 16, fontWeight: 600, color: '#204080' }}>Student Registration</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={feeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorFee" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#204080" stopOpacity={0.6}/>
+                  <stop offset="95%" stopColor="#204080" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorSalary" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.5}/>
+                  <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} domain={[0, 8]} tickCount={9} />
+              <Tooltip />
+              <Area type="monotone" dataKey="fee" stroke="#204080" fillOpacity={1} fill="url(#colorFee)" />
+              <Area type="monotone" dataKey="salary" stroke="#F59E0B" fillOpacity={1} fill="url(#colorSalary)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        {/* Calendar Section */}
+        <div style={{ width: '100%', marginTop: 36, background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(32,64,128,0.06)', padding: '24px 12px 12px 12px', maxWidth: 420, minWidth: 0, boxSizing: 'border-box', overflowX: 'auto' }}>
+          <h3 style={{ marginBottom: 18, fontWeight: 600, color: '#204080', fontSize: 20 }}>Create Event</h3>
+          <div style={{ width: '100%', minWidth: 0, overflowX: 'auto' }}>
+            <Calendar
+              tileContent={({ date, view }) => {
+                // Example event dots: orange for 1-5, green for 5+
+                const eventMap = {};
+                events.forEach(e => {
+                  eventMap[e.date] = (eventMap[e.date] || 0) + 1;
+                });
+                const key = date.toISOString().slice(0, 10);
+                const count = eventMap[key];
+                if (view === 'month' && count) {
+                  return (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 2 }}>
+                      <span style={{
+                        display: 'inline-block',
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: count > 5 ? '#34c759' : '#f59e0b',
+                        margin: '0 2px',
+                      }}></span>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+              className="event-calendar"
+              onClickDay={handleDateClick}
+            />
+          </div>
+          {/* Legend */}
+          <div style={{ display: 'flex', gap: 18, marginTop: 12, fontSize: 13, alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 10, height: 10, background: '#f59e0b', borderRadius: '50%', display: 'inline-block' }}></span> [1-5]</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 10, height: 10, background: '#34c759', borderRadius: '50%', display: 'inline-block' }}></span> [5 +]</span>
+          </div>
+        </div>
+        {/* Event Modal */}
+        {modalOpen && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(32,64,128,0.18)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setModalOpen(false)}>
+            <div style={{ background: '#fff', borderRadius: 14, maxWidth: 420, width: '95vw', padding: 24, boxShadow: '0 4px 32px rgba(32,64,128,0.13)', position: 'relative', minHeight: 180 }} onClick={e => e.stopPropagation()}>
+              <button onClick={() => setModalOpen(false)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', fontSize: 22, color: '#204080', cursor: 'pointer' }}>&times;</button>
+              <div style={{ fontWeight: 600, fontSize: 18, color: '#204080', marginBottom: 10 }}>
+                Events for {modalDate && modalDate.toLocaleDateString()}
+              </div>
+              {/* List events for the date */}
+              <div style={{ marginBottom: 18 }}>
+                {getEventsForDate(modalDate).length === 0 ? (
+                  <div style={{ color: '#888', fontSize: 15 }}>No events for this date.</div>
+                ) : (
+                  <ul style={{ padding: 0, margin: 0, listStyle: 'none' }}>
+                    {getEventsForDate(modalDate).map((evt, idx) => (
+                      <li key={idx} style={{ marginBottom: 10, background: '#f7f8fa', borderRadius: 8, padding: '10px 12px' }}>
+                        <div style={{ fontWeight: 600, color: '#204080', fontSize: 15 }}>{evt.title}</div>
+                        <div style={{ fontSize: 13, color: '#666' }}>{evt.type} &bull; {evt.time} &bull; {evt.participants}</div>
+                        <div style={{ fontSize: 13, color: '#444', marginTop: 2 }}>{evt.description}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {/* Plus icon to add event */}
+              {!showEventForm && (
+                <button onClick={() => { setShowEventForm(true); setForm({ ...form, date: modalDate.toISOString().slice(0, 10) }); }} style={{ background: '#204080', color: '#fff', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, cursor: 'pointer', margin: '0 auto' }}>
+                  <FaPlus />
+                </button>
+              )}
+              {/* Event form */}
+              {showEventForm && (
+                <form onSubmit={handleAddEvent} style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <select name="type" value={form.type} onChange={handleFormChange} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }}>
+                      <option value="Meeting">Meeting</option>
+                      <option value="Class">Class</option>
+                      <option value="Others">Others</option>
+                    </select>
+                    <input type="date" name="date" value={form.date} onChange={handleFormChange} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
+                  </div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <input type="time" name="time" value={form.time} onChange={handleFormChange} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
+                    <input type="text" name="participants" value={form.participants} onChange={handleFormChange} placeholder="Participants" style={{ flex: 2, padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
+                  </div>
+                  <input type="text" name="title" value={form.title} onChange={handleFormChange} placeholder="Title" style={{ padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
+                  <textarea name="description" value={form.description} onChange={handleFormChange} placeholder="Description" style={{ padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15, minHeight: 60 }} required />
+                  {formError && <div style={{ color: '#e53e3e', fontSize: 14 }}>{formError}</div>}
+                  <button type="submit" style={{ background: '#204080', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 0', fontSize: 16, fontWeight: 600, marginTop: 4 }}>Add Event</button>
+                  <button type="button" onClick={() => setShowEventForm(false)} style={{ background: '#e5e7eb', color: '#204080', border: 'none', borderRadius: 6, padding: '8px 0', fontSize: 15, fontWeight: 500, marginTop: 2 }}>Cancel</button>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </SideTop>
   );
 }
 

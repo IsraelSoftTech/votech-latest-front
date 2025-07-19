@@ -3,11 +3,14 @@ import './AdminClass.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaEdit, FaTrash, FaChevronDown, FaMoneyBill, FaChevronRight, FaEnvelope, FaIdCard } from 'react-icons/fa';
 import logo from '../assets/logo.png';
+import ReactDOM from 'react-dom';
+import { FaCog } from 'react-icons/fa';
 
 import Finance from './Finance.jsx';
 import Specialty from './Specialty.jsx';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
+import SideTop from './SideTop';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
@@ -41,7 +44,7 @@ const classes = [
   { name: 'Commercial', fee: '190,000' },
 ];
 
-function AdminClass() {
+export default function AdminClass() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
   const [showModal, setShowModal] = useState(false);
@@ -65,6 +68,8 @@ function AdminClass() {
   const [showSpecialty, setShowSpecialty] = useState(false);
   const [showFinance, setShowFinance] = useState(false);
   const navigate = useNavigate();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
 
   // For closing dropdown on outside click
   React.useEffect(() => {
@@ -159,160 +164,64 @@ function AdminClass() {
   };
 
   return (
-    <div className="admin-container">
-      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
-        <div className="sidebar-header">
-          <img src={logo} alt="logo" className="sidebar-logo" />
-          <span className="logo-text">VOTECH</span>
+    <SideTop>
+      {/* Place the main content of AdminClass here, excluding sidebar/topbar */}
+      <div className="dashboard-cards">
+        <div className="card classes">
+          <div className="icon"><FaBook /></div>
+          <div className="count">{classes.length}</div>
+          <div className="desc">Total Classes</div>
         </div>
-        <nav className="menu">
-          {menuItems.map((item, idx) => {
-            let isActive = false;
-            if (item.path && window.location.pathname === item.path) isActive = true;
-            // Classes menu with always-visible React dropdown icon and perfect alignment
-            if (item.label === 'Classes') {
-              return [
-                <div
-                  key={item.label}
-                  className={`menu-item${(showClass && !showSpecialty) ? ' active' : ''}`}
-                  onClick={() => { setShowClass(true); setShowSpecialty(false); }}
-                  style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '12px 24px' }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 12 }}>
-                    <span className="icon">{item.icon}</span>
-                    <span className="label">Class</span>
-                  </span>
-                </div>,
-                <div
-                  key="Specialty"
-                  className={`menu-item${window.location.pathname === '/admin-specialty' ? ' active' : ''}`}
-                  style={{ paddingLeft: 44, fontSize: '0.97rem', color: '#F59E0B', background: 'none', cursor: 'pointer', transition: 'all 0.2s', margin: '2px 12px', padding: '8px 20px 8px 44px', display: 'flex', alignItems: 'center', gap: 14 }}
-                  onClick={() => { navigate('/admin-specialty'); }}
-                >
-                  <span className="icon"><FaClipboardList /></span>
-                  <span className="label">Specialty</span>
-                </div>
-              ];
-            }
-            // Finances menu with always-visible React dropdown icon and perfect alignment
-            if (item.label === 'Finances') {
-              return (
-                <div
-                  className={`menu-item${isActive ? ' active' : ''}`}
-                  key={item.label}
-                  onClick={() => {
-                    if (item.path) navigate(item.path);
-                  }}
-                  style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '12px 24px' }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 12 }}>
-                    <span className="icon">{item.icon}</span>
-                    <span className="label">{item.label}</span>
-                  </span>
-                  <span className="dropdown-icon" style={{ color: '#F59E0B', marginLeft: 8 }}>
-                    <FaChevronRight />
-                  </span>
-                </div>
-              );
-            }
-            return (
-              <div
-                className={`menu-item${isActive ? ' active' : ''}`}
-                key={item.label}
-                onClick={() => {
-                  if (item.label === 'ID Cards') navigate('/admin-idcards');
-                  else if (item.path) navigate(item.path);
-                }}
-                style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '12px 24px' }}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 12 }}>
-                  <span className="icon">{item.icon}</span>
-                  <span className="label">{item.label}</span>
-                </span>
-                {item.label === 'Messages' && (
-                  <span style={{ position: 'absolute', right: 18, top: 16, width: 9, height: 9, background: '#e53e3e', borderRadius: '50%', display: 'inline-block', boxShadow: '0 1px 4px rgba(32,64,128,0.13)' }}></span>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-        <button className="logout-btn" onClick={() => navigate('/signin')}>
-          <FaSignOutAlt className="logout-icon" />
-          <span>Logout</span>
-        </button>
-      </aside>
-      <div className="main-content">
-        <header className="admin-header">
-          <div className="admin-header-left">
-            <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              <FaBars />
-            </button>
-            {/* Removed year-select */}
-          </div>
-          <div className="admin-actions">
-            <span className="icon notification"><span className="badge">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V4a2 2 0 1 0-4 0v1.341C7.67 7.165 6 9.388 6 12v2.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg></span>
-            <span className="icon message"><span className="badge orange">2</span><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-            <span className="admin-name">Admin1</span>
-          </div>
-        </header>
-        <div className="dashboard-cards">
-          <div className="card classes">
-            <div className="icon"><FaBook /></div>
-            <div className="count">{classes.length}</div>
-            <div className="desc">Total Classes</div>
-          </div>
-          <div className="card suspended">
-            <div className="icon"><FaClipboardList /></div>
-            <div className="count">{classes.filter(c => c.suspended).length}</div>
-            <div className="desc">Suspended Classes</div>
-          </div>
-        </div>
-        <div className="class-section">
-          <div className="class-header-row">
-            <button className="add-class-btn" onClick={() => setShowModal(true)}><FaPlus /> Create Class</button>
-          </div>
-          <div className="class-table-wrapper">
-            <table className="class-table">
-              <thead>
-                <tr>
-                  <th>Class name</th>
-                  <th>Registration fee (XAF)</th>
-                  <th>Bus fee (XAF)</th>
-                  <th>Internship fee (XAF)</th>
-                  <th>Remedial classes fee (XAF)</th>
-                  <th>Tuition fee (XAF)</th>
-                  <th>PTA fee (XAF)</th>
-                  <th>Total fee (XAF)</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {classes.length === 0 ? (
-                  <tr><td colSpan="9" style={{ textAlign: 'center' }}>No classes found.</td></tr>
-                ) : (
-                  classes.map(c => (
-                    <tr key={c.id}>
-                      <td>{c.name}</td>
-                      <td>{c.registration_fee}</td>
-                      <td>{c.bus_fee}</td>
-                      <td>{c.internship_fee}</td>
-                      <td>{c.remedial_fee}</td>
-                      <td>{c.tuition_fee}</td>
-                      <td>{c.pta_fee}</td>
-                      <td>{c.total_fee}</td>
-                      <td className="actions">
-                        <button className="action-btn edit" title="Edit" onClick={() => handleEdit(c)}><FaEdit /></button>
-                        <button className="action-btn delete" title="Delete" onClick={() => handleDelete(c.id)}><FaTrash /></button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="card suspended">
+          <div className="icon"><FaClipboardList /></div>
+          <div className="count">{classes.filter(c => c.suspended).length}</div>
+          <div className="desc">Suspended Classes</div>
         </div>
       </div>
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
+      <div className="class-section">
+        <div className="class-header-row">
+          <button className="add-class-btn" onClick={() => setShowModal(true)}><FaPlus /> Create Class</button>
+        </div>
+        <div className="class-table-wrapper">
+          <table className="class-table">
+            <thead>
+              <tr>
+                <th>Class name</th>
+                <th>Registration fee (XAF)</th>
+                <th>Bus fee (XAF)</th>
+                <th>Internship fee (XAF)</th>
+                <th>Remedial classes fee (XAF)</th>
+                <th>Tuition fee (XAF)</th>
+                <th>PTA fee (XAF)</th>
+                <th>Total fee (XAF)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {classes.length === 0 ? (
+                <tr><td colSpan="9" style={{ textAlign: 'center' }}>No classes found.</td></tr>
+              ) : (
+                classes.map(c => (
+                  <tr key={c.id}>
+                    <td>{c.name}</td>
+                    <td>{c.registration_fee}</td>
+                    <td>{c.bus_fee}</td>
+                    <td>{c.internship_fee}</td>
+                    <td>{c.remedial_fee}</td>
+                    <td>{c.tuition_fee}</td>
+                    <td>{c.pta_fee}</td>
+                    <td>{c.total_fee}</td>
+                    <td className="actions">
+                      <button className="action-btn edit" title="Edit" onClick={() => handleEdit(c)}><FaEdit /></button>
+                      <button className="action-btn delete" title="Delete" onClick={() => handleDelete(c.id)}><FaTrash /></button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -346,8 +255,6 @@ function AdminClass() {
           </div>
         </div>
       )}
-    </div>
+    </SideTop>
   );
-}
-
-export default AdminClass; 
+} 
