@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import api from '../services/api';
+import SuccessMessage from './SuccessMessage';
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -123,7 +124,7 @@ const Signup = () => {
             Already have an account? <Link to="/signin" className="signup-link">Sign In</Link>
           </div>
           {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message" style={{color:'#1a7f37',background:'#e6f4ea',border:'1px solid #b7e0c2',padding:'10px',borderRadius:'6px',margin:'10px 0',fontWeight:600,textAlign:'center'}}>{success}</div>}
+          {success && <SuccessMessage message={success} />}
           <button type="submit" className="signup-btn" disabled={loading}>{loading ? 'Signing Up...' : 'Sign Up'}</button>
         </form>
       </main>

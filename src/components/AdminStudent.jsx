@@ -5,6 +5,7 @@ import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaCli
 import logo from '../assets/logo.png';
 
 import api from '../services/api';
+import SuccessMessage from './SuccessMessage';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt /> },
@@ -236,6 +237,8 @@ function AdminStudent() {
             if (item.label === 'Teachers' && window.location.pathname === '/admin-teacher') isActive = true;
             if (item.label === 'Classes' && window.location.pathname === '/admin-class') isActive = true;
             if (item.label === 'Finances' && window.location.pathname === '/admin-finance') isActive = true;
+            if (item.label === 'Messages' && window.location.pathname === '/admin-messages') isActive = true;
+            if (item.label === 'ID Cards' && window.location.pathname === '/admin-idcards') isActive = true;
             return (
               <div
                 className={`menu-item${isActive ? ' active' : ''}`}
@@ -246,6 +249,8 @@ function AdminStudent() {
                   else if (item.label === 'Teachers') navigate('/admin-teacher');
                   else if (item.label === 'Classes') navigate('/admin-class');
                   else if (item.label === 'Finances') navigate('/admin-finance');
+                  else if (item.label === 'Messages') navigate('/admin-messages');
+                  else if (item.label === 'ID Cards') navigate('/admin-idcards');
                 }}
               >
                 <span className="icon">{item.icon}</span>
@@ -405,7 +410,7 @@ function AdminStudent() {
                 </div>
               </div>
               {error && <div className="error-message">{error}</div>}
-              {success && <div className="success-message">{success}</div>}
+              {success && <SuccessMessage message={success} />}
               <button type="submit" className="signup-btn" disabled={registering}>{registering ? 'Registering...' : 'Register'}</button>
             </form>
           </div>

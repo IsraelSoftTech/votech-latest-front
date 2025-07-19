@@ -7,6 +7,7 @@ import logo from '../assets/logo.png';
 import Finance from './Finance.jsx';
 import Specialty from './Specialty.jsx';
 import api from '../services/api';
+import SuccessMessage from './SuccessMessage';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
@@ -219,11 +220,18 @@ function AdminClass() {
                 className={`menu-item${isActive ? ' active' : ''}`}
                 key={item.label}
                 onClick={() => {
-                  if (item.path) navigate(item.path);
+                  if (item.label === 'ID Cards') navigate('/admin-idcards');
+                  else if (item.path) navigate(item.path);
                 }}
+                style={{ position: 'relative', display: 'flex', alignItems: 'center', padding: '12px 24px' }}
               >
-                <span className="icon">{item.icon}</span>
-                <span className="label">{item.label}</span>
+                <span style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 12 }}>
+                  <span className="icon">{item.icon}</span>
+                  <span className="label">{item.label}</span>
+                </span>
+                {item.label === 'Messages' && (
+                  <span style={{ position: 'absolute', right: 18, top: 16, width: 9, height: 9, background: '#e53e3e', borderRadius: '50%', display: 'inline-block', boxShadow: '0 1px 4px rgba(32,64,128,0.13)' }}></span>
+                )}
               </div>
             );
           })}
@@ -332,7 +340,7 @@ function AdminClass() {
                 </div>
               </div>
               {error && <div className="error-message">{error}</div>}
-              {success && <div className="success-message">{success}</div>}
+              {success && <SuccessMessage message={success} />}
               <button type="submit" className="signup-btn" disabled={registering}>{registering ? 'Creating...' : 'Create'}</button>
             </form>
           </div>

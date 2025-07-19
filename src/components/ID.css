@@ -1,0 +1,254 @@
+.idcard-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: flex-start;
+  margin-bottom: 40px;
+}
+
+.idcard-template {
+  width: 320px;
+  height: 200px;
+  background: linear-gradient(135deg, #6ec6ff 0%, #2196f3 100%);
+  border: 2px solid #204080;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(32,64,128,0.13);
+  padding: 8px 10px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.idcard-template * {
+  box-sizing: border-box;
+}
+
+.idcard-top-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 1px;
+  z-index: 2;
+}
+.idcard-logo-small {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  margin-right: 4px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(32,64,128,0.08);
+}
+
+.idcard-watermark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 180px;
+  height: 180px;
+  opacity: 0.09;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.idcard-header {
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: #fff;
+  text-align: left;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  text-shadow: 0 1px 4px #20408033;
+  margin-bottom: 0;
+}
+
+.idcard-motto {
+  font-size: 0.93rem;
+  color: #e3f2fd;
+  text-align: left;
+  margin-bottom: 4px;
+  font-weight: 500;
+  z-index: 2;
+  text-shadow: 0 1px 4px #20408022;
+}
+
+.idcard-row-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  z-index: 2;
+  height: 130px;
+}
+.idcard-photo-stamp-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-width: 100px;
+  max-width: 100px;
+  position: relative;
+}
+.idcard-photo {
+  width: 90px;
+  height: 90px;
+  background: #fff;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 16px #1976d244;
+  position: relative;
+  margin-bottom: 0;
+}
+.idcard-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #f7f8fa;
+}
+.idcard-stamp {
+  position: absolute;
+  right: -12px;
+  bottom: -12px;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  opacity: 0.82;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px #1976d244;
+  background: #fff;
+  z-index: 4;
+}
+.idcard-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.72rem;
+  color: #222;
+  justify-content: flex-start;
+  z-index: 2;
+  margin-left: 16px;
+  min-width: 0;
+}
+.idcard-info-fields {
+  padding: 4px 4px 4px 6px;
+  min-width: 0;
+  word-break: break-word;
+  white-space: normal;
+  overflow: visible;
+  font-size: 0.72rem;
+  color: #0d2547;
+  background: rgba(255,255,255,0.85);
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(32,64,128,0.07);
+  border: 1.2px solid #e3f2fd;
+}
+.idcard-info-fields > div {
+  margin-bottom: 1.5px;
+  line-height: 1.13;
+  padding-right: 1px;
+}
+.idcard-info b {
+  color: #1976d2;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.idcard-template {
+  margin-bottom: 10px;
+}
+
+.card.idcard-today {
+  background: #4eaaff;
+  color: #fff;
+}
+.card.idcard-total {
+  background: #204080;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .idcard-grid {
+    gap: 12px;
+  }
+  .idcard-template {
+    width: 98vw;
+    max-width: 340px;
+    min-width: 180px;
+    height: auto;
+    padding: 6px 2px;
+  }
+}
+
+@media (max-width: 600px) {
+  .idcard-grid {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .idcard-template {
+    width: 98vw;
+    max-width: 340px;
+    min-width: 120px;
+    height: auto;
+    padding: 4px 1px;
+  }
+} 
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .idcard-print-area, .idcard-print-area * {
+    visibility: visible;
+  }
+  .idcard-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm;
+    min-height: 297mm;
+    background: #e3f2fd;
+    padding: 18mm 8mm 18mm 8mm;
+    box-sizing: border-box;
+    z-index: 9999;
+  }
+  .idcard-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+  .idcard-template {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    box-shadow: none !important;
+    margin-bottom: 0 !important;
+    background: #fff !important;
+  }
+  .idcard-header, .idcard-motto {
+    color: #1976d2 !important;
+  }
+  .idcard-template {
+    width: 320px !important;
+    height: 200px !important;
+    min-width: 320px !important;
+    max-width: 320px !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+    margin: 0 8px 18px 0 !important;
+  }
+  .idcard-print-area select, .idcard-print-area button {
+    display: none !important;
+  }
+} 

@@ -4,6 +4,7 @@ import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachome
 import logo from '../assets/logo.png';
 import './AdminClass.css';
 import api from '../services/api';
+import SuccessMessage from './SuccessMessage';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
@@ -154,7 +155,8 @@ export default function Specialty({ isActiveSpecialty, onBack }) {
                 className={`menu-item${isActive ? ' active' : ''}`}
                 key={item.label}
                 onClick={() => {
-                  if (item.path) navigate(item.path);
+                  if (item.label === 'ID Cards') navigate('/admin-idcards');
+                  else if (item.path) navigate(item.path);
                 }}
               >
                 <span className="icon">{item.icon}</span>
@@ -269,7 +271,7 @@ export default function Specialty({ isActiveSpecialty, onBack }) {
               </div>
             </div>
           )}
-          {success && <div className="success-message">{success}</div>}
+          {success && <SuccessMessage message={success} />}
         </div>
       </div>
     </div>

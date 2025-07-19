@@ -6,6 +6,7 @@ import { FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import api from '../services/api';
 import Loader from './Loader';
+import SuccessMessage from './SuccessMessage';
 
 const Signin = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -133,7 +134,7 @@ const Signin = () => {
                 <input className="input-field" type="text" value={resetUsername} onChange={e => setResetUsername(e.target.value)} required />
                 <label className="input-label">New Password</label>
                 <input className="input-field" type="password" value={resetPassword} onChange={e => setResetPassword(e.target.value)} required />
-                {resetMessage && <div className={resetMessage.includes('successful') ? 'success-message' : 'error-message'}>{resetMessage}</div>}
+                {resetMessage && (resetMessage.includes('successful') ? <SuccessMessage message={resetMessage} /> : <div className="error-message">{resetMessage}</div>)}
                 <button type="submit" className="signin-btn" disabled={resetLoading}>{resetLoading ? 'Resetting...' : 'Reset Password'}</button>
               </form>
             </div>

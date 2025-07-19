@@ -3,6 +3,7 @@ import './AdminTeacher.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaMoneyBill, FaFileAlt, FaChartBar, FaPenFancy, FaEdit, FaTrash, FaEnvelope, FaIdCard } from 'react-icons/fa';
 import logo from '../assets/logo.png';
+import SuccessMessage from './SuccessMessage';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt /> },
@@ -93,16 +94,20 @@ function AdminTeacher() {
             if (item.label === 'Teachers' && window.location.pathname === '/admin-teacher') isActive = true;
             if (item.label === 'Classes' && window.location.pathname === '/admin-class') isActive = true;
             if (item.label === 'Finances' && window.location.pathname === '/admin-finance') isActive = true;
+            if (item.label === 'Messages' && window.location.pathname === '/admin-messages') isActive = true;
+            if (item.label === 'ID Cards' && window.location.pathname === '/admin-idcards') isActive = true;
             return (
               <div
                 className={`menu-item${isActive ? ' active' : ''}`}
                 key={item.label}
                 onClick={() => {
-                  if (item.label === 'Dashboard') navigate('/admin');
+                  if (item.label === 'ID Cards') navigate('/admin-idcards');
+                  else if (item.label === 'Dashboard') navigate('/admin');
                   else if (item.label === 'Students') navigate('/admin-student');
                   else if (item.label === 'Teachers') navigate('/admin-teacher');
                   else if (item.label === 'Classes') navigate('/admin-class');
                   else if (item.label === 'Finances') navigate('/admin-finance');
+                  else if (item.label === 'Messages') navigate('/admin-messages');
                 }}
               >
                 <span className="icon">{item.icon}</span>
@@ -208,7 +213,7 @@ function AdminTeacher() {
                 </div>
               </div>
               {error && <div className="error-message">{error}</div>}
-              {success && <div className="success-message">{success}</div>}
+              {success && <SuccessMessage message={success} />}
               <button type="submit" className="signup-btn" disabled={registering}>{registering ? 'Registering...' : 'Register'}</button>
             </form>
           </div>

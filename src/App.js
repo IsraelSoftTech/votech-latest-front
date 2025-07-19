@@ -9,6 +9,8 @@ import AdminTeachers from './components/AdminTeacher.jsx';
 import AdminClass from './components/AdminClass.jsx';
 import Finance from './components/Finance.jsx';
 import Specialty from './components/Specialty.jsx';
+import Message from './components/Message.jsx';
+import ID from './components/ID.jsx';
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -24,6 +26,8 @@ function App() {
       <Route path="/admin-class" element={<AdminClass />} />
       <Route path="/admin-finance" element={<Finance />} />
       <Route path="/admin-specialty" element={<Specialty />} />
+      <Route path="/admin-messages" element={<Message />} />
+      <Route path="/admin-idcards" element={<ID />} />
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       <Route path="*" element={<Navigate to="/" replace />} />

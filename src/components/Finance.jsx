@@ -90,11 +90,13 @@ export default function Finance() {
             }
             return (
               <div
-                className={`menu-item${isActive ? ' active' : ''}`}
+                className={`menu-item${item.label === 'ID Cards' ? location.pathname === '/admin-idcards' : location.pathname === item.path ? ' active' : ''}`}
                 key={item.label}
                 onClick={() => {
-                  if (item.path) navigate(item.path);
+                  if (item.label === 'ID Cards') navigate('/admin-idcards');
+                  else if (item.path) navigate(item.path);
                 }}
+                style={{ position: 'relative' }}
               >
                 <span className="icon">{item.icon}</span>
                 <span className="label">{item.label}</span>

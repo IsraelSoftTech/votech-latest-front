@@ -150,7 +150,8 @@ function Admin() {
                   className={`menu-item${isActive ? ' active' : ''}`}
                   key={item.label}
                   onClick={() => {
-                    if (item.path) navigate(item.path);
+                    if (item.label === 'ID Cards') navigate('/admin-idcards');
+                    else if (item.path) navigate(item.path);
                   }}
                   style={{ position: 'relative' }}
                 >

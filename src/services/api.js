@@ -444,6 +444,38 @@ class ApiService {
       throw error;
     }
   }
+
+  // Message endpoints
+  async getMessages({ recipient_id, group_id } = {}) {
+    try {
+      let url = `${API_URL}/messages`;
+      const params = [];
+      if (recipient_id) params.push(`recipient_id=${recipient_id}`);
+      if (group_id) params.push(`group_id=${group_id}`);
+      if (params.length) url += '?' + params.join('&');
+      const response = await fetch(url, {
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Get messages error:', error);
+      throw error;
+    }
+  }
+
+  async sendMessage({ recipient_id, group_id, content, type, file_url }) {
+    try {
+      const response = await fetch(`${API_URL}/messages`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ recipient_id, group_id, content, type, file_url }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Send message error:', error);
+      throw error;
+    }
+  }
 }
 
 const api = new ApiService();
