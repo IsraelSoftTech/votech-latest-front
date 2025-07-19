@@ -76,12 +76,9 @@ const Signin = () => {
   return (
     <div className="signin-root">
       <header className="signin-header">
-        <div className="header-left">
-          <span className="back-arrow" onClick={() => navigate('/')}> <FaArrowLeft /> </span>
-          <img src={logo} alt="VOLTECH Logo" className="header-logo" />
-          <span className="header-voltech">VOLTECH</span>
-        </div>
-        <div className="header-right">
+        <div className="header-group">
+          <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
+          <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
           <Link className="header-link active" to="/signin">Sign In</Link>
           <Link className="header-link" to="/signup">Sign Up</Link>
         </div>
@@ -120,6 +117,9 @@ const Signin = () => {
             </div>
             {error && <div className="error-message">{error}</div>}
             <button type="submit" className="signin-btn" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
+            <div className="signin-form-back-arrow">
+              <span className="back-arrow" onClick={() => navigate('/')}> <FaArrowLeft /> </span>
+            </div>
           </form>
         )}
         {showForgot && (

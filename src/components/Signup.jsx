@@ -63,11 +63,9 @@ const Signup = () => {
   return (
     <div className="signup-root">
       <header className="signup-header">
-        <div className="header-left">
-          <img src={logo} alt="VOLTECH Logo" className="header-logo" />
-          <span className="header-voltech">VOLTECH</span>
-        </div>
-        <div className="header-right">
+        <div className="header-group">
+          <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
+          <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
           <Link className="header-link" to="/signin">Sign In</Link>
           <Link className="header-link active" to="/signup">Sign Up</Link>
         </div>

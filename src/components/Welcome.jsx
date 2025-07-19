@@ -14,8 +14,8 @@ const Welcome = () => {
     <div className="welcome-exact-root">
       <header className="welcome-header">
         <div className="header-left">
-          <img src={logo} alt="VOLTECH Logo" className="header-logo" />
-          <span className="header-voltech">VOLTECH</span>
+          <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
+          <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
         </div>
         <button className="footer-arrow-btn header-arrow-btn" onClick={() => navigate('/signin')}>
           <FaArrowRight />

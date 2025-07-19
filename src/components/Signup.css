@@ -226,15 +226,30 @@
   background: var(--link-hover);
 }
 
+.signup-header .header-group {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
 @media (max-width: 600px) {
   .signup-header {
-    padding: 16px 0 10px 0;
+    padding: 10px 0 10px 0;
     background: #F3F4F6;
     box-shadow: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .signup-header .header-group {
+    margin: 0 8px;
+    gap: 10px;
+    flex-wrap: wrap;
   }
   .header-left, .header-right {
-    margin-left: 10px;
-    margin-right: 10px;
+    margin: 0;
+    padding: 0;
+    display: none;
   }
   .header-logo {
     height: 24px;
