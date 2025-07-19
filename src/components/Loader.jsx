@@ -1,21 +1,15 @@
 import React, { useEffect } from 'react';
 import './Loader.css';
 
-const Loader = ({ onFinish }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onFinish) onFinish();
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [onFinish]);
-
-  return (
-    <div className="loader-root">
-      <div className="dot dot-blue"></div>
-      <div className="dot dot-darkblue"></div>
-      <div className="dot dot-orange"></div>
+const Loader = ({ poweredBy }) => (
+  <div className="loader-root">
+    <div className="loader-dots">
+      <span className="dot dot-blue"></span>
+      <span className="dot dot-darkblue"></span>
+      <span className="dot dot-orange"></span>
     </div>
-  );
-};
+    <div className={`loader-powered-by${poweredBy ? ' loader-powered-by--visible' : ''}`}>Powered by Izzy Tech Team...</div>
+  </div>
+);
 
 export default Loader; 

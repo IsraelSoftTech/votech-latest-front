@@ -62,12 +62,12 @@ const Signup = () => {
 
   return (
     <div className="signup-root">
-      <header className="signup-header">
+      <header className="signin-header">
         <div className="header-group">
           <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
           <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
-          <Link className="header-link" to="/signin">Sign In</Link>
-          <Link className="header-link active" to="/signup">Sign Up</Link>
+          <Link className={`header-link${window.location.pathname === '/signin' ? ' active' : ''}`} to="/signin">Sign In</Link>
+          <Link className={`header-link${window.location.pathname === '/signup' ? ' active' : ''}`} to="/signup">Sign Up</Link>
         </div>
       </header>
       <main className="signup-main">

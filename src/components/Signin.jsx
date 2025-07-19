@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Signin.css';
 import logo from '../assets/logo.png';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import api from '../services/api';
@@ -14,12 +14,14 @@ const Signin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const [showLoader, setShowLoader] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [resetUsername, setResetUsername] = useState('');
   const [resetPassword, setResetPassword] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -35,12 +37,15 @@ const Signin = () => {
       // Support both response.data.user and response.user
       const user = response.data?.user || response.user;
       if (user) {
-        // Role-based navigation only, no localStorage
-        if (["Admin1", "Admin2", "Admin3", "Admin4"].includes(user.role)) {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
+        setShowLoader(true);
+        setTimeout(() => {
+          setShowLoader(false);
+          if (["Admin1", "Admin2", "Admin3", "Admin4"].includes(user.role)) {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard');
+          }
+        }, 3000);
       } else {
         setError('Invalid username or password.');
       }
@@ -79,13 +84,13 @@ const Signin = () => {
         <div className="header-group">
           <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
           <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
-          <Link className="header-link active" to="/signin">Sign In</Link>
-          <Link className="header-link" to="/signup">Sign Up</Link>
+          <Link className={`header-link${location.pathname === '/signin' || location.pathname === '/' ? ' active' : ''}`} to="/signin">Sign In</Link>
+          <Link className={`header-link${location.pathname === '/signup' ? ' active' : ''}`} to="/signup">Sign Up</Link>
         </div>
       </header>
       <main className="signin-main">
         {showLoader ? (
-          <Loader />
+          <Loader poweredBy />
         ) : (
           <form className="signin-form" onSubmit={handleSubmit}>
             <h2 className="form-title">Sign In</h2>
@@ -117,9 +122,6 @@ const Signin = () => {
             </div>
             {error && <div className="error-message">{error}</div>}
             <button type="submit" className="signin-btn" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
-            <div className="signin-form-back-arrow">
-              <span className="back-arrow" onClick={() => navigate('/')}> <FaArrowLeft /> </span>
-            </div>
           </form>
         )}
         {showForgot && (
@@ -129,11 +131,16 @@ const Signin = () => {
                 <h2>Reset Password</h2>
                 <button className="close-button" onClick={() => setShowForgot(false)}>&times;</button>
               </div>
-              <form onSubmit={handleForgotPassword}>
+              <form onSubmit={handleForgotPassword} className="forgot-form">
                 <label className="input-label">Username</label>
                 <input className="input-field" type="text" value={resetUsername} onChange={e => setResetUsername(e.target.value)} required />
                 <label className="input-label">New Password</label>
-                <input className="input-field" type="password" value={resetPassword} onChange={e => setResetPassword(e.target.value)} required />
+                <div className="password-field-wrapper">
+                  <input className="input-field" type={showForgotPassword ? 'text' : 'password'} value={resetPassword} onChange={e => setResetPassword(e.target.value)} required />
+                  <span className="eye-icon" onClick={() => setShowForgotPassword(v => !v)}>
+                    {showForgotPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
                 {resetMessage && (resetMessage.includes('successful') ? <SuccessMessage message={resetMessage} /> : <div className="error-message">{resetMessage}</div>)}
                 <button type="submit" className="signin-btn" disabled={resetLoading}>{resetLoading ? 'Resetting...' : 'Reset Password'}</button>
               </form>

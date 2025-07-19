@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Welcome from './components/Welcome.jsx';
-import Signin from './components/Signin.jsx';
+import Loader from './components/Loader';
+import Signin from './components/Signin';
 import Signup from './components/Signup.jsx';
 import Admin from './components/Admin.jsx';
 import AdminStudents from './components/AdminStudent.jsx';
@@ -15,10 +15,17 @@ import ID from './components/ID.jsx';
 // import Dashboard from './components/Dashboard.jsx';
 
 function App() {
+  const [showLoader, setShowLoader] = React.useState(true);
+  const [showPoweredBy, setShowPoweredBy] = React.useState(false);
+  React.useEffect(() => {
+    const timer1 = setTimeout(() => setShowPoweredBy(true), 1500); // show text after 1.5s
+    const timer2 = setTimeout(() => setShowLoader(false), 2500); // total 2.5s
+    return () => { clearTimeout(timer1); clearTimeout(timer2); };
+  }, []);
+  if (showLoader) return <Loader poweredBy={showPoweredBy} />;
   return (
     <Routes>
-      <Route path="/" element={<Welcome />} />
-      <Route path="/signin" element={<Signin />} />
+      <Route path="/" element={<Signin />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/admin-student" element={<AdminStudents />} />
