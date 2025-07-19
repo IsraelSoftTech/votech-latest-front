@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "react-scripts": "^5.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
