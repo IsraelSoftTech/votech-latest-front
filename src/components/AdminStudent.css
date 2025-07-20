@@ -565,4 +565,25 @@
   .student-modal-form .input-label, .student-modal-form .input-field {
     font-size: 0.98rem;
   }
-} 
+}
+
+.add-student-fab {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #204080;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(32,64,128,0.18);
+  cursor: pointer;
+  font-size: 2rem;
+  transition: background 0.18s, box-shadow 0.18s;
+}
+.add-student-fab:hover, .add-student-fab:focus {
+  background: #4eaaff;
+  box-shadow: 0 6px 24px rgba(32,64,128,0.22);
+  color: #fff;
+}

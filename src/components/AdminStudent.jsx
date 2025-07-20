@@ -9,7 +9,6 @@ import SuccessMessage from './SuccessMessage';
 import * as XLSX from 'xlsx';
 import { useLocation } from 'react-router-dom';
 import SideTop from './SideTop';
-
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt /> },
   { label: 'Students', icon: <FaUserGraduate /> },
@@ -157,25 +156,20 @@ export default function AdminStudent() {
     setRegistering(true);
     try {
       const formData = new FormData();
-      formData.append('full_name', form.fullName);
+      formData.append('studentId', form.studentId);
+      formData.append('regDate', form.regDate);
+      formData.append('fullName', form.fullName);
       formData.append('sex', form.sex);
-      formData.append('date_of_birth', form.dob);
-      formData.append('place_of_birth', form.pob);
-      formData.append('father_name', form.father);
-      formData.append('mother_name', form.mother);
-      formData.append('class_id', classes.find(c => c.name === form.class)?.id || '');
-      formData.append('specialty_id', specialties.find(s => s.name === form.dept)?.id || '');
-      formData.append('vocational_training', '');
-      formData.append('guardian_contact', form.contact);
-      formData.append('year', selectedYear);
-      formData.append('registration_date', form.regDate);
-      if (form.photo) formData.append('student_picture', form.photo);
-      if (editId) {
-        await api.updateStudent(editId, formData);
-      } else {
-        await api.createStudent(formData);
-      }
-      setSuccess(editId ? 'Student updated!' : 'Student registered!');
+      formData.append('dob', form.dob);
+      formData.append('pob', form.pob);
+      formData.append('father', form.father);
+      formData.append('mother', form.mother);
+      formData.append('class', form.class);
+      formData.append('dept', form.dept);
+      formData.append('contact', form.contact);
+      if (form.photo) formData.append('photo', form.photo);
+      await api.createStudent(formData);
+      setSuccess('Student registered!');
       const students = await api.getStudents();
       setStudentList(students);
       setTimeout(() => {
@@ -198,7 +192,7 @@ export default function AdminStudent() {
         setEditId(null);
       }, 1200);
     } catch (err) {
-      setError(editId ? 'Failed to update student.' : 'Failed to register student.');
+      setError('Failed to register student.');
     }
     setRegistering(false);
   };
@@ -336,89 +330,77 @@ export default function AdminStudent() {
             </div>
           </div>
         </div>
+        <div className="card teachers">
+          <div className="icon"><FaChalkboardTeacher /></div>
+          <div className="count">47</div>
+          <div className="desc">Registered Teachers</div>
+        </div>
         <div className="card fees">
           <div className="icon"><FaMoneyBill /></div>
-          <div className="count">1200</div>
-          <div className="desc">Completed Fees</div>
-        </div>
-        <div className="card discipline">
-          <div className="icon"><FaClipboardList /></div>
-          <div className="count">29</div>
-          <div className="desc">Students on Discipline</div>
+          <div className="count">2000000 XAF</div>
+          <div className="desc">Total Fee Paid</div>
         </div>
       </div>
-      <div className="student-section">
-        <div className="student-header-row" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="add-student-btn" onClick={() => setShowModal(true)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Add Student'}><FaPlus /> Add Student</button>
-          <button
-            className="excel-import-btn"
-            style={{ background: '#217346', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 12px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-            title="Import from Excel"
-            onClick={() => setExcelModalOpen(true)}
-            disabled={isAdmin1}
-          >
-            <FaFileExcel style={{ fontSize: 20, marginRight: 4 }} />
-          </button>
-          <input
-            type="text"
-            className="student-search-bar"
-            placeholder="Search student by name..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            style={{ marginLeft: 'auto', padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc', minWidth: 180 }}
-          />
-        </div>
-        <div className="student-table-wrapper" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
-          <table className="student-table">
-            <thead>
-              <tr>
-                <th>Picture</th>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Sex</th>
-                <th>Class</th>
-                <th>DOB</th>
-                <th>POB</th>
-                <th>Department/Specialty</th>
-                <th>Registration Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.map((s, i) => (
-                <tr key={s.id || i}>
-                  <td style={{ width: 48, minWidth: 48 }}>
-                    {s.id ? (
-                      <img
-                        src={getImageUrl(`/api/students/${s.id}/picture`)}
-                        alt="pic"
-                        style={{ borderRadius: '50%', width: 40, height: 40, objectFit: 'cover', background: '#f0f0f0' }}
-                        onError={e => {
-                          console.warn(`Image could not be displayed for student ID: ${s.id}. URL:`, getImageUrl(`/api/students/${s.id}/picture`));
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <span style={{ color: '#888' }}>-</span>
-                    )}
-                  </td>
+      {/* Add Button below cards, aligned left */}
+      <div style={{ margin: '0 0 18px 0', display: 'flex', justifyContent: 'flex-start' }}>
+        <button
+          className="add-student-fab"
+          onClick={() => { setShowModal(true); setEditId(null); }}
+          title="Register Student"
+          style={{ position: 'static', marginLeft: 0 }}
+        >
+          <FaPlus style={{ fontSize: 28, color: '#fff' }} />
+        </button>
+      </div>
+      {/* Student Table */}
+      <div className="student-table-wrapper">
+        <table className="student-table">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Registration Date</th>
+              <th>Full Name</th>
+              <th>Sex</th>
+              <th>Date of Birth</th>
+              <th>Place of Birth</th>
+              <th>Father's Name</th>
+              <th>Mother's Name</th>
+              <th>Class</th>
+              <th>Department/Specialty</th>
+              <th>Contact</th>
+              <th>Photo</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {studentList.length === 0 ? (
+              <tr><td colSpan="13" style={{ textAlign: 'center' }}>No students found.</td></tr>
+            ) : (
+              studentList.map((s, idx) => (
+                <tr key={s.id || idx}>
                   <td>{s.student_id}</td>
+                  <td>{s.created_at ? s.created_at.slice(0, 10) : ''}</td>
                   <td>{s.full_name}</td>
                   <td>{s.sex}</td>
-                  <td>{classes.find(c => c.id === s.class_id)?.name || ''}</td>
                   <td>{s.date_of_birth}</td>
                   <td>{s.place_of_birth}</td>
-                  <td>{s.specialty_name || ''}</td>
-                  <td>{s.created_at ? s.created_at.slice(0,10) : ''}</td>
+                  <td>{s.father_name}</td>
+                  <td>{s.mother_name}</td>
+                  <td>{s.class_name || s.class || ''}</td>
+                  <td>{s.specialty_name || s.dept || ''}</td>
+                  <td>{s.guardian_contact}</td>
+                  <td>{s.photo_url ? (
+                    <img src={s.photo_url.startsWith('http') ? s.photo_url : `${api.API_URL.replace('/api','')}${s.photo_url}`} alt="student" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : ''}</td>
                   <td className="actions">
-                    <button className="action-btn edit" onClick={() => handleEdit(s)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}><FaEdit /></button>
-                    <button className="action-btn delete" onClick={() => handleDelete(i)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}><FaTrash /></button>
+                    <button className="action-btn edit" title="Edit" onClick={() => handleEdit(s)}><FaEdit /></button>
+                    <button className="action-btn delete" title="Delete" onClick={() => handleDelete(idx)}><FaTrash /></button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
       {showModal && (
         <div className="modal-overlay" onClick={() => { setShowModal(false); setEditId(null); }}>

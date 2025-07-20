@@ -1,7 +1,7 @@
 // For local development, use the local backend API:
-// const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5000/api';
 // For production, use the Render backend API:
-const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
+// const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
 console.log('API URL:', API_URL);
 
 class ApiService {
@@ -134,116 +134,7 @@ class ApiService {
     }
   }
 
-  // Students endpoints
-  async getStudents(year) {
-    try {
-      const url = year ? `${API_URL}/students?year=${year}` : `${API_URL}/students`;
-      const response = await fetch(url, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get students error:', error);
-      throw error;
-    }
-  }
-
-  async createStudent(studentData) {
-    try {
-      const headers = this.getAuthHeaders();
-      // Remove Content-Type for FormData to let browser set it with boundary
-      delete headers['Content-Type'];
-      
-      const response = await fetch(`${API_URL}/students`, {
-        method: 'POST',
-        headers: headers,
-        body: studentData, // FormData object
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Create student error:', error);
-      throw error;
-    }
-  }
-
-  async updateStudent(id, studentData) {
-    try {
-      const headers = this.getAuthHeaders();
-      // Remove Content-Type for FormData to let browser set it with boundary
-      delete headers['Content-Type'];
-      
-      const response = await fetch(`${API_URL}/students/${id}`, {
-        method: 'PUT',
-        headers: headers,
-        body: studentData, // FormData object
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Update student error:', error);
-      throw error;
-    }
-  }
-
-  async deleteStudent(id) {
-    try {
-      const response = await fetch(`${API_URL}/students/${id}`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Delete student error:', error);
-      throw error;
-    }
-  }
-
-  async deleteAllStudents() {
-    try {
-      const response = await fetch(`${API_URL}/students/delete-all`, {
-        method: 'DELETE',
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Delete all students error:', error);
-      throw error;
-    }
-  }
-
-  async approveAllStudents() {
-    try {
-      const response = await fetch(`${API_URL}/students/approve-all`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Approve all students error:', error);
-      throw error;
-    }
-  }
-
-  async uploadStudents(fileData) {
-    try {
-      const headers = this.getAuthHeaders();
-      // Remove Content-Type for FormData to let browser set it with boundary
-      delete headers['Content-Type'];
-      
-      const response = await fetch(`${API_URL}/students/upload`, {
-        method: 'POST',
-        headers: headers,
-        body: fileData, // FormData object containing the Excel file
-      });
-
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Upload students error:', error);
-      throw error;
-    }
-  }
+  // Remove all methods related to students (getStudents, createStudent, updateStudent, deleteStudent, uploadStudents, etc.)
 
   // User management endpoints
   async getUsers() {
@@ -522,6 +413,25 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     return await this.handleResponse(response);
+  }
+
+  async createStudent(formData) {
+    const response = await fetch(`${API_URL}/students`, {
+      method: 'POST',
+      body: formData
+    });
+    if (!response.ok) {
+      let error;
+      try { error = await response.json(); } catch (e) { error = { error: 'Failed to register student' }; }
+      throw new Error(error.error || 'Failed to register student');
+    }
+    return await response.json();
+  }
+
+  async getStudents() {
+    const response = await fetch(`${API_URL}/students`);
+    if (!response.ok) throw new Error('Failed to fetch students');
+    return await response.json();
   }
 }
 
