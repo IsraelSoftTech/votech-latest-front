@@ -1,3 +1,6 @@
+// For local development, use the local backend API:
+// const API_URL = 'http://localhost:5000/api';
+// For production, use the Render backend API:
 const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
 console.log('API URL:', API_URL);
 
@@ -475,6 +478,50 @@ class ApiService {
       console.error('Send message error:', error);
       throw error;
     }
+  }
+
+  async checkUserDetails(username, contact) {
+    try {
+      const response = await fetch(`${API_URL}/check-user-details`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, contact })
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Check user details error:', error);
+      throw error;
+    }
+  }
+
+  // User management for Admin3
+  async getAllUsers() {
+    const response = await fetch(`${API_URL}/users/all`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+  async updateUser(id, data) {
+    const response = await fetch(`${API_URL}/users/${id}`, {
+      method: 'PUT',
+      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return await this.handleResponse(response);
+  }
+  async deleteUser(id) {
+    const response = await fetch(`${API_URL}/users/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+  async suspendUser(id) {
+    const response = await fetch(`${API_URL}/users/${id}/suspend`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
   }
 }
 

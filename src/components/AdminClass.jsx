@@ -70,6 +70,7 @@ export default function AdminClass() {
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
+  const isAdmin1 = authUser?.role === 'Admin1';
 
   // For closing dropdown on outside click
   React.useEffect(() => {
@@ -180,7 +181,7 @@ export default function AdminClass() {
       </div>
       <div className="class-section">
         <div className="class-header-row">
-          <button className="add-class-btn" onClick={() => setShowModal(true)}><FaPlus /> Create Class</button>
+          <button className="add-class-btn" onClick={() => setShowModal(true)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Create Class'}><FaPlus /> Create Class</button>
         </div>
         <div className="class-table-wrapper">
           <table className="class-table">
@@ -212,8 +213,8 @@ export default function AdminClass() {
                     <td>{c.pta_fee}</td>
                     <td>{c.total_fee}</td>
                     <td className="actions">
-                      <button className="action-btn edit" title="Edit" onClick={() => handleEdit(c)}><FaEdit /></button>
-                      <button className="action-btn delete" title="Delete" onClick={() => handleDelete(c.id)}><FaTrash /></button>
+                      <button className="action-btn edit" title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'} onClick={() => handleEdit(c)} disabled={isAdmin1}><FaEdit /></button>
+                      <button className="action-btn delete" title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'} onClick={() => handleDelete(c.id)} disabled={isAdmin1}><FaTrash /></button>
                     </td>
                   </tr>
                 ))
@@ -250,7 +251,7 @@ export default function AdminClass() {
               </div>
               {error && <div className="error-message">{error}</div>}
               {success && <SuccessMessage message={success} />}
-              <button type="submit" className="signup-btn" disabled={registering}>{registering ? 'Creating...' : 'Create'}</button>
+              <button type="submit" className="signup-btn" disabled={registering || isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : (editId ? 'Update' : 'Create')}>{registering ? (editId ? 'Updating...' : 'Creating...') : (editId ? 'Update' : 'Create')}</button>
             </form>
           </div>
         </div>

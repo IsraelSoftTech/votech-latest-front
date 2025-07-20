@@ -1,0 +1,27 @@
+.modal-text-btn {
+  background: none !important;
+  border: none !important;
+  color: orange !important;
+  cursor: pointer;
+  outline: none;
+  box-shadow: none;
+  font-size: inherit;
+  font-weight: inherit;
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+  transition: color 0.2s, text-decoration 0.2s;
+}
+.modal-text-btn:hover, .modal-text-btn:focus {
+  color: #ff8800 !important;
+  text-decoration: underline;
+}
+
+.close-button.modal-text-btn {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: orange !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 10px;
+} 

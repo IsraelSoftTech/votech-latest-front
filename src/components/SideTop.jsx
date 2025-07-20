@@ -51,6 +51,10 @@ export default function SideTop({ children }) {
         </div>
         <nav className="menu">
           {visibleMenuItems.map((item, idx) => {
+            // Hide 'Finances' tab unless Admin1 or Admin2
+            if (item.label === 'Finances' && !(authUser?.role === 'Admin1' || authUser?.role === 'Admin2')) {
+              return null;
+            }
             let isActive = false;
             if (item.path && location.pathname === item.path) isActive = true;
             return (
@@ -71,6 +75,17 @@ export default function SideTop({ children }) {
               </div>
             );
           })}
+          {/* Display Users tab for Admin3 only */}
+          {authUser?.role === 'Admin3' && (
+            <div
+              className={`menu-item${location.pathname === '/admin-users' ? ' active' : ''}`}
+              onClick={() => navigate('/admin-users')}
+              style={{ position: 'relative' }}
+            >
+              <span className="icon"><FaUserGraduate /></span>
+              <span className="label">Display Users</span>
+            </div>
+          )}
           {showSeeMore && (
             <button
               className="menu-item see-more-btn"

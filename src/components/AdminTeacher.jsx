@@ -63,6 +63,10 @@ export default function AdminTeacher() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Add isAdmin1 logic
+  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
+  const isAdmin1 = authUser?.role === 'Admin1';
+
   const handleFormChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
@@ -100,7 +104,7 @@ export default function AdminTeacher() {
       </div>
       <div className="teacher-section">
         <div className="teacher-header-row">
-          <button className="add-teacher-btn" onClick={() => setShowModal(true)}><FaPlus /> Add Teacher</button>
+          <button className="add-teacher-btn" onClick={() => setShowModal(true)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Add Teacher'}><FaPlus /> Add Teacher</button>
         </div>
         <div className="teacher-table-wrapper" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
           <table className="teacher-table">
@@ -121,8 +125,8 @@ export default function AdminTeacher() {
                   <td>{t.id}</td>
                   <td>{t.contact}</td>
                   <td className="actions">
-                    <button className="action-btn edit"><FaPlus style={{visibility:'hidden'}} /><FaBars style={{visibility:'hidden'}} /><FaTimes style={{visibility:'hidden'}} /><FaUserGraduate style={{visibility:'hidden'}} /><FaChalkboardTeacher style={{visibility:'hidden'}} /><FaClipboardList style={{visibility:'hidden'}} /><FaTachometerAlt style={{visibility:'hidden'}} /><FaSignOutAlt style={{visibility:'hidden'}} /><FaEdit /></button>
-                    <button className="action-btn delete"><FaTrash /></button>
+                    <button className="action-btn edit" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}><FaEdit /></button>
+                    <button className="action-btn delete" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}><FaTrash /></button>
                   </td>
                 </tr>
               ))}
@@ -164,7 +168,7 @@ export default function AdminTeacher() {
               </div>
               {error && <div className="error-message">{error}</div>}
               {success && <SuccessMessage message={success} />}
-              <button type="submit" className="signup-btn" disabled={registering}>{registering ? 'Registering...' : 'Register'}</button>
+              <button type="submit" className="signup-btn" disabled={registering || isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Register'}>{registering ? 'Registering...' : 'Register'}</button>
             </form>
           </div>
         </div>

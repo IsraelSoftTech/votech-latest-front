@@ -37,6 +37,10 @@ export default function Specialty(props) {
   const [classes, setClasses] = useState([]);
   const location = useLocation();
 
+  // Add isAdmin1 logic
+  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
+  const isAdmin1 = authUser?.role === 'Admin1';
+
   // Fetch specialties and classes on mount
   useEffect(() => {
     fetchClasses();
@@ -105,7 +109,7 @@ export default function Specialty(props) {
       <div className="programs-section" style={{ maxWidth: 900, margin: '0 auto', padding: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <h2 style={{ margin: 0, flex: 1 }}>Specialties</h2>
-          <button className="add-class-btn" onClick={() => { setShowModal(true); setEditId(null); setForm({ name: '', abbreviation: '' }); }}><FaPlus /> Add Specialty</button>
+          <button className="add-class-btn" onClick={() => { setShowModal(true); setEditId(null); setForm({ name: '', abbreviation: '' }); }} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Add Specialty'}><FaPlus /> Add Specialty</button>
         </div>
         <div className="dashboard-cards" style={{ marginBottom: 24 }}>
           <div className="card classes" style={{ minWidth: 200, flex: 1 }}>
@@ -139,8 +143,8 @@ export default function Specialty(props) {
                     </div>
                   </td>
                   <td>
-                    <button className="action-btn edit" onClick={() => handleEdit(s)}><FaEdit /></button>
-                    <button className="action-btn delete" onClick={() => handleDelete(s.id)}><FaTrash /></button>
+                    <button className="action-btn edit" onClick={() => handleEdit(s)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}><FaEdit /></button>
+                    <button className="action-btn delete" onClick={() => handleDelete(s.id)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}><FaTrash /></button>
                   </td>
                 </tr>
               ))}
@@ -173,6 +177,7 @@ export default function Specialty(props) {
                                 if (e.target.checked) setAssignedClasses(prev => [...prev, c.id]);
                                 else setAssignedClasses(prev => prev.filter(id => id !== c.id));
                               }}
+                              disabled={isAdmin1}
                             /> {c.name}
                           </label>
                         ))}
@@ -181,7 +186,7 @@ export default function Specialty(props) {
                   )}
                 </div>
                 {error && <div className="error-message">{error}</div>}
-                <button type="submit" className="signup-btn">{editId ? 'Update' : 'Save'}</button>
+                <button type="submit" className="signup-btn" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : (editId ? 'Update' : 'Save')}>{editId ? 'Update' : 'Save'}</button>
               </form>
             </div>
           </div>

@@ -313,6 +313,10 @@ export default function AdminStudent() {
     return pic;
   };
 
+  // Add isAdmin1 logic
+  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
+  const isAdmin1 = authUser?.role === 'Admin1';
+
   return (
     <SideTop>
       <div className="dashboard-cards">
@@ -345,12 +349,13 @@ export default function AdminStudent() {
       </div>
       <div className="student-section">
         <div className="student-header-row" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="add-student-btn" onClick={() => setShowModal(true)}><FaPlus /> Add Student</button>
+          <button className="add-student-btn" onClick={() => setShowModal(true)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Add Student'}><FaPlus /> Add Student</button>
           <button
             className="excel-import-btn"
             style={{ background: '#217346', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 12px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
             title="Import from Excel"
             onClick={() => setExcelModalOpen(true)}
+            disabled={isAdmin1}
           >
             <FaFileExcel style={{ fontSize: 20, marginRight: 4 }} />
           </button>
@@ -406,8 +411,8 @@ export default function AdminStudent() {
                   <td>{s.specialty_name || ''}</td>
                   <td>{s.created_at ? s.created_at.slice(0,10) : ''}</td>
                   <td className="actions">
-                    <button className="action-btn edit" onClick={() => handleEdit(s)}><FaEdit /></button>
-                    <button className="action-btn delete" onClick={() => handleDelete(i)}><FaTrash /></button>
+                    <button className="action-btn edit" onClick={() => handleEdit(s)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}><FaEdit /></button>
+                    <button className="action-btn delete" onClick={() => handleDelete(i)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}><FaTrash /></button>
                   </td>
                 </tr>
               ))}
@@ -463,7 +468,7 @@ export default function AdminStudent() {
               </div>
               {error && <div className="error-message">{error}</div>}
               {success && <SuccessMessage message={success} />}
-              <button type="submit" className="signup-btn" disabled={registering}>{registering ? 'Registering...' : 'Register'}</button>
+              <button type="submit" className="signup-btn" disabled={registering || isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : (editId ? 'Update' : 'Register')}>{registering ? (editId ? 'Updating...' : 'Registering...') : (editId ? 'Update' : 'Register')}</button>
             </form>
           </div>
         </div>
@@ -482,6 +487,7 @@ export default function AdminStudent() {
                   accept=".xlsx,.xls"
                   onChange={handleExcelFileChange}
                   required
+                  disabled={isAdmin1}
                 />
               </div>
               <div style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>
@@ -524,7 +530,7 @@ export default function AdminStudent() {
                 type="submit"
                 className="signup-btn"
                 style={{ background: '#217346', color: '#fff', minWidth: 120 }}
-                disabled={excelLoading || !excelFile || !!excelError}
+                disabled={excelLoading || !excelFile || !!excelError || isAdmin1}
               >
                 {excelLoading ? 'Importing...' : 'Import'}
               </button>
@@ -538,7 +544,7 @@ export default function AdminStudent() {
             <div style={{fontSize: 20, marginBottom: 22, color: '#204080', fontWeight: 600}}>Delete Student</div>
             <div style={{fontSize: 16, marginBottom: 24, color: '#444'}}>Are you sure you want to delete this student? This action cannot be undone.</div>
             <div style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 18}}>
-              <button className="signup-btn" style={{background:'#e53e3e', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); confirmDelete();}}>Delete</button>
+              <button className="signup-btn" style={{background:'#e53e3e', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); confirmDelete();}} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}>Delete</button>
               <button className="signup-btn" style={{background:'#204080', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); cancelDelete();}}>Cancel</button>
             </div>
           </div>
