@@ -433,6 +433,65 @@ class ApiService {
     if (!response.ok) throw new Error('Failed to fetch students');
     return await response.json();
   }
+
+  async deleteStudent(id) {
+    const response = await fetch(`${API_URL}/students/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      let error;
+      try { error = await response.json(); } catch (e) { error = { error: 'Failed to delete student' }; }
+      throw new Error(error.error || 'Failed to delete student');
+    }
+    return await response.json();
+  }
+
+  async uploadManyStudents(formData) {
+    const response = await fetch(`${API_URL}/students/upload-many`, {
+      method: 'POST',
+      body: formData
+    });
+    if (!response.ok) {
+      let error;
+      try { error = await response.json(); } catch (e) { error = { error: 'Failed to upload students' }; }
+      throw new Error(error.error || 'Failed to upload students');
+    }
+    return await response.json();
+  }
+
+  async getClassFeeStats(classId) {
+    const response = await fetch(`${API_URL}/fees/class/${classId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch class fee stats');
+    return await response.json();
+  }
+
+  async searchStudents(query) {
+    const response = await fetch(`${API_URL}/students/search?query=${encodeURIComponent(query)}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to search students');
+    return await response.json();
+  }
+
+  async getStudentFeeStats(studentId) {
+    const response = await fetch(`${API_URL}/student/${studentId}/fees`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch student fee stats');
+    return await response.json();
+  }
+
+  async payStudentFee({ student_id, class_id, fee_type, amount }) {
+    const response = await fetch(`${API_URL}/fees`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ student_id, class_id, fee_type, amount })
+    });
+    if (!response.ok) throw new Error('Failed to record payment');
+    return await response.json();
+  }
 }
 
 const api = new ApiService();

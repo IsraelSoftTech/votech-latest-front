@@ -12,6 +12,7 @@ import Specialty from './components/Specialty.jsx';
 import Message from './components/Message.jsx';
 import ID from './components/ID.jsx';
 import Users from './components/Users.jsx';
+import Fee from './components/Fee';
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -37,6 +38,7 @@ function App() {
       <Route path="/admin-messages" element={<Message />} />
       <Route path="/admin-idcards" element={<ID />} />
       <Route path="/admin-users" element={<Users />} />
+      <Route path="/admin-fee" element={<Fee />} />
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       <Route path="*" element={<Navigate to="/" replace />} />

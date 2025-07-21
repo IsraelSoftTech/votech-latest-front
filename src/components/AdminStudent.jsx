@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './AdminStudent.css';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaEnvelope, FaIdCard, FaFileExcel } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaEnvelope, FaIdCard, FaFileExcel, FaUpload, FaPrint } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 
 import api from '../services/api';
@@ -84,6 +84,17 @@ export default function AdminStudent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [excelPreview, setExcelPreview] = useState([]);
   const [excelHeaders, setExcelHeaders] = useState([]);
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [printClass, setPrintClass] = useState('');
+  const [printing, setPrinting] = useState(false);
+  const printRef = React.useRef();
+  const [uploadManyModalOpen, setUploadManyModalOpen] = useState(false);
+  const [uploadManyFile, setUploadManyFile] = useState(null);
+  const [uploadManyPreview, setUploadManyPreview] = useState([]);
+  const [uploadManyHeaders, setUploadManyHeaders] = useState([]);
+  const [uploadManyLoading, setUploadManyLoading] = useState(false);
+  const [uploadManyError, setUploadManyError] = useState('');
+  const [uploadManySuccess, setUploadManySuccess] = useState('');
 
   useEffect(() => {
     async function fetchData() {
@@ -294,10 +305,26 @@ export default function AdminStudent() {
     };
     reader.readAsArrayBuffer(file);
   };
-  // Filtered students for search
-  const filteredStudents = studentList.filter(s =>
-    s.full_name && s.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Responsive search bar handler
+  const handleSearchChange = e => setSearchQuery(e.target.value);
+
+  // Print handler
+  const handlePrintList = () => {
+    setPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setPrinting(false);
+    }, 100);
+  };
+
+  // Filtered students for search and print
+  const filteredStudents = studentList
+    .filter(s => s.full_name && s.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+
+  const classStudents = printClass
+    ? filteredStudents.filter(s => (s.class_name || s.class || '') === printClass)
+    : [];
 
   // Helper to get image URL
   const baseApiUrl = (api.API_URL && api.API_URL.replace('/api','')) || 'http://localhost:5000';
@@ -310,6 +337,75 @@ export default function AdminStudent() {
   // Add isAdmin1 logic
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const isAdmin1 = authUser?.role === 'Admin1';
+
+  // Upload Many file change handler with preview
+  const handleUploadManyFileChange = (e) => {
+    setUploadManyFile(null);
+    setUploadManyPreview([]);
+    setUploadManyHeaders([]);
+    setUploadManyError('');
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        if (!rows.length) {
+          setUploadManyError('Excel file is empty.');
+          return;
+        }
+        // Validate headers
+        const expectedHeaders = [
+          'Full Name', 'Sex', 'Date of Birth', 'Place of Birth',
+          "Father's Name", "Mother's Name", 'Class', 'Department/Specialty', 'Contact'
+        ];
+        const fileHeaders = rows[0].map(h => (h || '').toString().trim());
+        setUploadManyHeaders(fileHeaders);
+        const headersMatch = expectedHeaders.every((h, i) => h === fileHeaders[i]);
+        if (!headersMatch) {
+          setUploadManyError('Excel headers do not match expected format.');
+          return;
+        }
+        setUploadManyFile(file);
+        setUploadManyPreview(rows.slice(1, 11)); // Preview first 10 rows
+      } catch (err) {
+        setUploadManyError('Failed to parse Excel file.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  // Upload Many submit handler
+  const handleUploadManySubmit = async (e) => {
+    e.preventDefault();
+    setUploadManyError('');
+    setUploadManySuccess('');
+    if (!uploadManyFile) {
+      setUploadManyError('Please select an Excel file.');
+      return;
+    }
+    setUploadManyLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadManyFile);
+      await api.uploadManyStudents(formData);
+      setUploadManySuccess('Students uploaded successfully!');
+      setUploadManyFile(null);
+      setTimeout(() => {
+        setUploadManyModalOpen(false);
+        setUploadManySuccess('');
+      }, 1200);
+      // Refresh student list
+      const students = await api.getStudents();
+      setStudentList(students);
+    } catch (err) {
+      setUploadManyError(err.message || 'Failed to upload students.');
+    }
+    setUploadManyLoading(false);
+  };
 
   return (
     <SideTop>
@@ -342,7 +438,7 @@ export default function AdminStudent() {
         </div>
       </div>
       {/* Add Button below cards, aligned left */}
-      <div style={{ margin: '0 0 18px 0', display: 'flex', justifyContent: 'flex-start' }}>
+      <div style={{ margin: '0 0 18px 0', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
         <button
           className="add-student-fab"
           onClick={() => { setShowModal(true); setEditId(null); }}
@@ -351,6 +447,111 @@ export default function AdminStudent() {
         >
           <FaPlus style={{ fontSize: 28, color: '#fff' }} />
         </button>
+        {/* Responsive Search Bar */}
+        <input
+          type="text"
+          className="student-search-bar"
+          placeholder="Search student by name..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          style={{ flex: 1, minWidth: 180, maxWidth: 340, padding: '8px 14px', borderRadius: 6, border: '1.5px solid #1976d2', fontSize: 15 }}
+        />
+        {/* Upload Many Button */}
+        <button
+          className="upload-many-btn"
+          style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+          title="Upload Many"
+          onClick={() => setUploadManyModalOpen(true)}
+        >
+          <FaUpload /> Upload Many
+        </button>
+        {/* Print List Button */}
+        <button
+          className="print-list-btn"
+          style={{ background: '#388e3c', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+          title="Print Class List"
+          onClick={() => setPrintModalOpen(true)}
+        >
+          <FaPrint /> Print List
+        </button>
+      </div>
+      {/* Print Modal */}
+      {printModalOpen && (
+        <div className="modal-overlay" onClick={() => setPrintModalOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: 400, width: '98vw', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setPrintModalOpen(false)}><FaTimes /></button>
+            <h2 className="form-title">Print Class List</h2>
+            <div style={{ margin: '18px 0' }}>
+              <label className="input-label">Select Class</label>
+              <select
+                className="input-field"
+                value={printClass}
+                onChange={e => setPrintClass(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1.5px solid #1976d2', fontSize: 15 }}
+              >
+                <option value=''>Select Class</option>
+                {classes.map(opt => <option key={opt.id} value={opt.name}>{opt.name}</option>)}
+              </select>
+            </div>
+            <button
+              className="signup-btn"
+              style={{ background: '#388e3c', color: '#fff', minWidth: 120, fontSize: 16, borderRadius: 6, padding: '12px 0', marginBottom: 8 }}
+              onClick={handlePrintList}
+              disabled={!printClass}
+            >
+              Print
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Print Area (hidden except for print) */}
+      <div style={{ display: printing ? 'block' : 'none' }}>
+        <div ref={printRef} className="print-class-list-area">
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
+            <img src={logo} alt="logo" style={{ width: 70, height: 70, objectFit: 'contain', marginRight: 18 }} />
+            <div style={{ fontSize: 32, fontWeight: 700, color: '#204080', flex: 1, textAlign: 'left' }}>VOTECH (S7) ACADEMY</div>
+            <div style={{ fontSize: 22, fontWeight: 600, color: '#1976d2', textAlign: 'right' }}>Academic Year: 2025/2026</div>
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 600, marginBottom: 18, color: '#333' }}>Class List: {printClass}</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+            <thead>
+              <tr style={{ background: '#f7f8fa' }}>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>#</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Photo</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Student ID</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Full Name</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Sex</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Date of Birth</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Place of Birth</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Father's Name</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Mother's Name</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Department/Specialty</th>
+                <th style={{ border: '1px solid #ccc', padding: 8 }}>Contact</th>
+              </tr>
+            </thead>
+            <tbody>
+              {classStudents.map((s, idx) => (
+                <tr key={s.id || idx}>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{idx + 1}</td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>
+                    {s.photo_url ? (
+                      <img src={s.photo_url.startsWith('http') ? s.photo_url : `${api.API_URL.replace('/api','')}${s.photo_url}`} alt="student" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : ''}
+                  </td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.student_id}</td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.full_name}</td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.sex}</td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.date_of_birth}</td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.place_of_birth}</td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.father_name}</td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.mother_name}</td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.specialty_name || s.dept || ''}</td>
+                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.guardian_contact}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       {/* Student Table */}
       <div className="student-table-wrapper">
@@ -373,10 +574,10 @@ export default function AdminStudent() {
             </tr>
           </thead>
           <tbody>
-            {studentList.length === 0 ? (
+            {filteredStudents.length === 0 ? (
               <tr><td colSpan="13" style={{ textAlign: 'center' }}>No students found.</td></tr>
             ) : (
-              studentList.map((s, idx) => (
+              filteredStudents.map((s, idx) => (
                 <tr key={s.id || idx}>
                   <td>{s.student_id}</td>
                   <td>{s.created_at ? s.created_at.slice(0, 10) : ''}</td>
@@ -529,6 +730,65 @@ export default function AdminStudent() {
               <button className="signup-btn" style={{background:'#e53e3e', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); confirmDelete();}} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}>Delete</button>
               <button className="signup-btn" style={{background:'#204080', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); cancelDelete();}}>Cancel</button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Upload Many Modal */}
+      {uploadManyModalOpen && (
+        <div className="modal-overlay" onClick={() => setUploadManyModalOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: 500, width: '98vw' }} onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setUploadManyModalOpen(false)}><FaTimes /></button>
+            <form onSubmit={handleUploadManySubmit}>
+              <h2 className="form-title">Upload Many Students from Excel</h2>
+              <div style={{ marginBottom: 16 }}>
+                <label className="input-label">Excel File (.xlsx, .xls) *</label>
+                <input
+                  className="input-field"
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleUploadManyFileChange}
+                  required
+                  disabled={uploadManyLoading}
+                />
+              </div>
+              <div style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>
+                <b>Expected columns:</b> Full Name, Sex, Date of Birth, Place of Birth, Father's Name, Mother's Name, Class, Department/Specialty, Contact<br />
+                (Row 1 = headers, data from row 2; <b>Class</b> and <b>Department/Specialty</b> must match names in your system)
+              </div>
+              {uploadManyPreview.length > 0 && (
+                <div style={{ marginBottom: 12, overflowX: 'auto' }}>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Preview (first 10 rows):</div>
+                  <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
+                    <thead>
+                      <tr>
+                        {uploadManyHeaders.map((h, i) => (
+                          <th key={i} style={{ border: '1px solid #ccc', padding: 4, background: '#f7f7f7' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {uploadManyPreview.map((row, i) => (
+                        <tr key={i}>
+                          {uploadManyHeaders.map((_, j) => (
+                            <td key={j} style={{ border: '1px solid #eee', padding: 4 }}>{row[j]}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {uploadManyError && <div className="error-message">{uploadManyError}</div>}
+              {uploadManySuccess && <SuccessMessage message={uploadManySuccess} />}
+              <button
+                type="submit"
+                className="signup-btn"
+                style={{ background: '#1976d2', color: '#fff', minWidth: 120 }}
+                disabled={uploadManyLoading || !uploadManyFile || !!uploadManyError}
+              >
+                {uploadManyLoading ? 'Uploading...' : 'Upload'}
+              </button>
+            </form>
           </div>
         </div>
       )}

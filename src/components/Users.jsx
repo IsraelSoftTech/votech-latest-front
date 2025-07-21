@@ -130,39 +130,56 @@ export default function Users() {
                     <td>••••••••</td>
                     <td>{user.role}</td>
                     <td style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        className="users-action-btn"
-                        aria-label="Edit"
-                        data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}
-                        onClick={() => handleEdit(user)}
-                        type="button"
-                        disabled={isAdmin1}
-                        style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
-                      >
-                        <FaEdit />
-                      </button>
-                      <button
-                        className="users-action-btn suspend"
-                        aria-label={user.suspended ? 'Unsuspend' : 'Suspend'}
-                        data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : (user.suspended ? 'Unsuspend' : 'Suspend')}
-                        onClick={() => handleSuspend(user)}
-                        type="button"
-                        disabled={isAdmin1}
-                        style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
-                      >
-                        {user.suspended ? <FaCheckCircle /> : <FaBan />}
-                      </button>
-                      <button
-                        className="users-action-btn delete"
-                        aria-label="Delete"
-                        data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}
-                        onClick={() => handleDelete(user)}
-                        type="button"
-                        disabled={isAdmin1}
-                        style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
-                      >
-                        <FaTrash />
-                      </button>
+                      {/* Only show edit for Admin3, else show all actions */}
+                      {user.role === 'Admin3' ? (
+                        <button
+                          className="users-action-btn"
+                          aria-label="Edit"
+                          data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}
+                          onClick={() => handleEdit(user)}
+                          type="button"
+                          disabled={isAdmin1}
+                          style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
+                        >
+                          <FaEdit />
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            className="users-action-btn"
+                            aria-label="Edit"
+                            data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}
+                            onClick={() => handleEdit(user)}
+                            type="button"
+                            disabled={isAdmin1}
+                            style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            className="users-action-btn delete"
+                            aria-label="Delete"
+                            data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}
+                            onClick={() => handleDelete(user)}
+                            type="button"
+                            disabled={isAdmin1}
+                            style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
+                          >
+                            <FaTrash />
+                          </button>
+                          <button
+                            className="users-action-btn suspend"
+                            aria-label={user.suspended ? 'Unsuspend' : 'Suspend'}
+                            data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : (user.suspended ? 'Unsuspend' : 'Suspend')}
+                            onClick={() => handleSuspend(user)}
+                            type="button"
+                            disabled={isAdmin1}
+                            style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
+                          >
+                            {user.suspended ? <FaCheckCircle /> : <FaBan />}
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}

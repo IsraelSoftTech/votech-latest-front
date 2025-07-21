@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import ReactDOM from 'react-dom';
 import './SideTop.css';
@@ -14,7 +14,13 @@ const menuItems = [
   { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
   { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
   { label: 'Subjects', icon: <FaBook /> },
-  { label: 'Finances', icon: <FaMoneyBill />, path: '/admin-finance' },
+  { label: 'Finances', icon: <FaMoneyBill />, path: '/admin-finance',
+    submenu: [
+      { label: 'Fee Payment', icon: <FaCreditCard />, path: '/admin-fee' },
+      { label: 'Salary,Invoice', icon: <FaFileInvoiceDollar />, path: '/admin-salary' },
+      { label: 'Inventory', icon: <FaBoxes />, path: '/admin-inventory' },
+    ]
+  },
   { label: 'Attendance', icon: <FaClipboardList /> },
   { label: 'Reports', icon: <FaFileAlt /> },
   { label: 'Exam/Marks', icon: <FaChartBar /> },
@@ -26,6 +32,7 @@ export default function SideTop({ children }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [menuExpanded, setMenuExpanded] = useState(false);
   const [visibleMenuCount, setVisibleMenuCount] = useState(window.innerWidth <= 700 ? 10 : 11);
+  const [expandedMenu, setExpandedMenu] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
@@ -39,6 +46,14 @@ export default function SideTop({ children }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Automatically expand parent menu if a submenu route is active
+  useEffect(() => {
+    const activeSubmenu = menuItems.find(item => item.submenu && item.submenu.some(sub => location.pathname.startsWith(sub.path)));
+    if (activeSubmenu) {
+      setExpandedMenu(activeSubmenu.label);
+    }
+  }, [location.pathname]);
+
   const showSeeMore = menuItems.length > visibleMenuCount;
   const visibleMenuItems = menuExpanded ? menuItems : menuItems.slice(0, visibleMenuCount);
 
@@ -51,28 +66,45 @@ export default function SideTop({ children }) {
         </div>
         <nav className="menu">
           {visibleMenuItems.map((item, idx) => {
-            // Hide 'Finances' tab unless Admin1 or Admin2
-            if (item.label === 'Finances' && !(authUser?.role === 'Admin1' || authUser?.role === 'Admin2')) {
+            // If a submenu is open, hide all normal menus below it, but keep 'See More' button visible
+            if (expandedMenu && menuItems.findIndex(m => m.label === expandedMenu) < idx && item.label !== 'See More') {
               return null;
             }
-            let isActive = false;
-            if (item.path && location.pathname === item.path) isActive = true;
             return (
-              <div
-                className={`menu-item${isActive ? ' active' : ''}`}
-                key={item.label}
-                onClick={() => {
-                  if (item.label === 'ID Cards') navigate('/admin-idcards');
-                  else if (item.path) navigate(item.path);
-                }}
-                style={{ position: 'relative' }}
-              >
-                <span className="icon">{item.icon}</span>
-                <span className="label">{item.label}</span>
-                {item.label === 'Messages' && (
-                  <span style={{ position: 'absolute', right: 18, top: 16, width: 9, height: 9, background: '#e53e3e', borderRadius: '50%', display: 'inline-block', boxShadow: '0 1px 4px rgba(32,64,128,0.13)' }}></span>
+              <React.Fragment key={item.label}>
+                <div
+                  className={`menu-item${location.pathname.startsWith(item.path) ? ' active' : ''}`}
+                  onClick={() => {
+                    if (item.submenu) {
+                      setExpandedMenu(expandedMenu === item.label ? null : item.label);
+                    } else if (item.path) {
+                      navigate(item.path);
+                    }
+                  }}
+                  style={{ fontWeight: item.submenu ? 600 : undefined }}
+                >
+                  <span className="icon">{item.icon}</span>
+                  {item.label}
+                  {item.submenu && (
+                    <span style={{ marginLeft: 'auto', fontSize: 14 }}>{expandedMenu === item.label ? '▲' : '▼'}</span>
+                  )}
+                </div>
+                {item.submenu && expandedMenu === item.label && (
+                  <div className="submenu-list" style={{ marginLeft: 32 }}>
+                    {item.submenu.map(sub => (
+                      <div
+                        key={sub.label}
+                        className={`submenu-item${location.pathname.startsWith(sub.path) ? ' active' : ''}`}
+                        onClick={() => navigate(sub.path)}
+                        style={{ color: '#ff9800', background: 'none', fontSize: '0.97em', borderRadius: 0, display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 0, marginLeft: 0, cursor: 'pointer' }}
+                      >
+                        <span className="icon">{sub.icon}</span>
+                        <span>{sub.label}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </div>
+              </React.Fragment>
             );
           })}
           {/* Display Users tab for Admin3 only */}
@@ -86,7 +118,7 @@ export default function SideTop({ children }) {
               <span className="label">Display Users</span>
             </div>
           )}
-          {showSeeMore && (
+          {showSeeMore && !expandedMenu && (
             <button
               className="menu-item see-more-btn"
               style={{ background: '#4669b3', color: '#fff', margin: '8px 12px', border: 'none', borderRadius: 6, fontWeight: 600, cursor: 'pointer', fontSize: '1.05rem', padding: '12px 0' }}

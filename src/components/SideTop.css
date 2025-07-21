@@ -254,3 +254,27 @@
     margin-left: 4px;
   }
 } 
+
+.submenu-list { margin-left: 32px; }
+.submenu-item {
+  color: #ff9800;
+  background: none !important;
+  font-size: 0.97em;
+  border-radius: 5px !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 18px 6px 18px !important;
+  cursor: pointer;
+  transition: color 0.16s, background 0.16s;
+  max-width: 100%;
+  min-width: 120px;
+  box-sizing: border-box;
+}
+.submenu-item.active, .submenu-item:hover {
+  color: #204080 !important;
+  background: #fff !important;
+  border-radius: 5px !important;
+  box-shadow: 0 1px 4px rgba(32,64,128,0.04);
+  padding: 6px 18px 6px 18px !important;
+} 
