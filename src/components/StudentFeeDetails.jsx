@@ -211,8 +211,8 @@ export default function StudentFeeDetails() {
         )}
         {/* Receipt Modal */}
         {receiptModalOpen && receipt && (
-          <div className="student-fee-modal-overlay">
-            <div className="student-fee-modal-content" style={{maxWidth: '900px', padding: '20px', position: 'relative'}} onClick={e => e.stopPropagation()}>
+          <div className="fee-receipt-modal-overlay">
+            <div className="fee-receipt-modal-content" onClick={e => e.stopPropagation()}>
               {/* Black (x) close button, always visible, navigates to Fee.jsx */}
               <button className="text-button close-btn black-x always-visible" onClick={() => { setReceiptModalOpen(false); navigate('/admin-fee'); }} style={{position:'absolute',top:10,right:20,zIndex:10000, color:'#111', background:'none', border:'none'}} aria-label="Close">&#10005;</button>
               <div className="print-area" style={{display:'block'}}>
