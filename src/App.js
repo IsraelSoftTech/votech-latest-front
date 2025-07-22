@@ -14,6 +14,7 @@ import ID from './components/ID.jsx';
 import Users from './components/Users.jsx';
 import Fee from './components/Fee';
 import StudentFeeDetails from './components/StudentFeeDetails';
+import UserChat from './components/UserChat';
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -37,6 +38,7 @@ function App() {
       <Route path="/admin-finance" element={<Finance />} />
       <Route path="/admin-specialty" element={<Specialty />} />
       <Route path="/admin-messages" element={<Message />} />
+      <Route path="/admin-messages/:userId" element={<UserChat />} />
       <Route path="/admin-idcards" element={<ID />} />
       <Route path="/admin-users" element={<Users />} />
       <Route path="/admin-fee" element={<Fee />} />

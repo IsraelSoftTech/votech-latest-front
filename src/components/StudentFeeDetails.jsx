@@ -220,24 +220,51 @@ export default function StudentFeeDetails() {
               </div>
               {/* Download PDF and Close buttons below the receipt */}
               <div style={{textAlign:'center',marginTop:24,display:'flex',justifyContent:'center',alignItems:'center',gap:16}}>
-                <button className="text-button download-btn" onClick={async () => {
-                  const input = document.querySelector('.print-area');
-                  // Temporarily increase font size for PDF
-                  const originalFontSize = input.style.fontSize;
-                  input.style.fontSize = '20px';
-                  const canvas = await html2canvas(input, { scale: 2 });
-                  const imgData = canvas.toDataURL('image/png');
-                  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                  const pageWidth = pdf.internal.pageSize.getWidth();
-                  const imgProps = pdf.getImageProperties(imgData);
-                  const pdfWidth = pageWidth;
-                  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                  const fileName = `Fee_Receipt_${receipt.student.full_name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`;
-                  pdf.save(fileName);
-                  // Revert font size
-                  input.style.fontSize = originalFontSize;
-                }}>Download PDF</button>
+                {window.innerWidth > 600 ? (
+                  <button className="text-button download-btn" onClick={async () => {
+                    const input = document.querySelector('.print-area');
+                    // Temporarily increase font size for PDF
+                    const originalFontSize = input.style.fontSize;
+                    input.style.fontSize = '20px';
+                    const canvas = await html2canvas(input, { scale: 2 });
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const imgProps = pdf.getImageProperties(imgData);
+                    const pdfWidth = pageWidth;
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    const fileName = `Fee_Receipt_${receipt.student.full_name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`;
+                    pdf.save(fileName);
+                    // Revert font size
+                    input.style.fontSize = originalFontSize;
+                  }}>Download Receipt</button>
+                ) : (
+                  <button className="text-button download-btn" onClick={async () => {
+                    // Fetch FeeReceipt.css content
+                    const cssResp = await fetch('/src/components/FeeReceipt.css');
+                    const cssText = await cssResp.text();
+                    let printContents = document.querySelector('.print-area').innerHTML;
+                    // Remove the logo for mobile print
+                    printContents = printContents.replace(/<img[^>]*class=["']receipt-logo["'][^>]*>/i, '');
+                    const win = window.open('', '', 'width=800,height=900');
+                    win.document.write(`
+                      <html>
+                        <head>
+                          <title>Fee Receipt</title>
+                          <style>${cssText}</style>
+                          <style>body { background: #fff; margin: 0; }</style>
+                        </head>
+                        <body>${printContents}</body>
+                      </html>
+                    `);
+                    win.document.close();
+                    setTimeout(() => {
+                      win.print();
+                      win.close();
+                    }, 300);
+                  }}>Save Receipt</button>
+                )}
                 <button className="text-button close-btn black-x always-visible" onClick={() => { setReceiptModalOpen(false); navigate('/admin-fee'); }} style={{fontSize:'0.9rem',fontWeight:400,background:'none',border:'none',color:'#111',padding:'12px 18px',cursor:'pointer'}} aria-label="Close">Close</button>
               </div>
             </div>

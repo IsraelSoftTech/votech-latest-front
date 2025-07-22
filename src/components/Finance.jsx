@@ -7,6 +7,8 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import ReactDOM from 'react-dom';
 import { FaCog } from 'react-icons/fa';
 import SideTop from './SideTop';
+import api from '../services/api';
+import { useEffect } from 'react';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
@@ -42,10 +44,75 @@ export default function Finance() {
   const [selectedYear, setSelectedYear] = useState(years[0]);
   const [showFinanceDropdown, setShowFinanceDropdown] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [totalPaid, setTotalPaid] = useState(0);
+  const [totalOwed, setTotalOwed] = useState(0);
+  const [loadingTotals, setLoadingTotals] = useState(true);
+  const [feeChartData, setFeeChartData] = useState([]);
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const username = authUser?.username || 'User';
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    async function fetchTotalsAndChart() {
+      setLoadingTotals(true);
+      try {
+        const students = await api.getStudents();
+        const classes = await api.getClasses();
+        // Build a map of classId -> class total_fee
+        const classMap = {};
+        classes.forEach(cls => {
+          classMap[cls.id] = parseFloat(cls.total_fee) || 0;
+        });
+        let paidSum = 0;
+        let overallFee = 0;
+        // For chart: aggregate by date
+        const dateMap = {};
+        const feeStatsArr = await Promise.all(students.map(async student => {
+          try {
+            const stats = await api.getStudentFeeStats(student.id);
+            return { student, stats };
+          } catch (e) {
+            return { student, stats: null };
+          }
+        }));
+        for (const { student, stats } of feeStatsArr) {
+          const classTotalFee = classMap[student.class_id] || 0;
+          overallFee += classTotalFee;
+          let paid = 0;
+          let paidDate = student.created_at ? student.created_at.slice(0, 10) : null;
+          if (stats && stats.balance) {
+            const sumBalance = Object.values(stats.balance).reduce((a, b) => a + (b || 0), 0);
+            paid = classTotalFee - sumBalance;
+          }
+          paidSum += paid;
+          // For chart: group by registration date
+          if (paidDate) {
+            if (!dateMap[paidDate]) dateMap[paidDate] = { date: paidDate, paid: 0, owed: 0 };
+            dateMap[paidDate].paid += paid;
+            dateMap[paidDate].owed += (classTotalFee - paid);
+          }
+        }
+        setTotalPaid(paidSum);
+        setTotalOwed(overallFee - paidSum);
+        // Prepare chart data sorted by date
+        const chartData = Object.values(dateMap)
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .map(d => ({
+            date: d.date,
+            paid: d.paid,
+            owed: d.owed
+          }));
+        setFeeChartData(chartData);
+      } catch (e) {
+        setTotalPaid(0);
+        setTotalOwed(0);
+        setFeeChartData([]);
+      }
+      setLoadingTotals(false);
+    }
+    fetchTotalsAndChart();
+  }, []);
 
   return (
     <SideTop>
@@ -53,12 +120,12 @@ export default function Finance() {
       <div className="dashboard-cards">
         <div className="card paid">
           <div className="icon"><FaMoneyBillWave /></div>
-          <div className="count">XAF2,000,000</div>
+          <div className="count">{loadingTotals ? '...' : totalPaid.toLocaleString()} XAF</div>
           <div className="desc">Total Fee Paid</div>
         </div>
         <div className="card owed">
           <div className="icon"><FaMoneyCheckAlt /></div>
-          <div className="count">XAF500,000</div>
+          <div className="count">{loadingTotals ? '...' : totalOwed.toLocaleString()} XAF</div>
           <div className="desc">Total Fee Owed</div>
         </div>
         <div className="card salary">
@@ -68,24 +135,24 @@ export default function Finance() {
         </div>
       </div>
       <div className="finance-metrics">
-        <h3>Fee & Salary Payment Rate</h3>
+        <h3>Fee Paid and Fee Owed Rate</h3>
         <ResponsiveContainer width="100%" height={220}>
-          <AreaChart data={feeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <AreaChart data={feeChartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <defs>
-              <linearGradient id="colorFee" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#204080" stopOpacity={0.6}/>
                 <stop offset="95%" stopColor="#204080" stopOpacity={0}/>
               </linearGradient>
-              <linearGradient id="colorSalary" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.5}/>
-                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+              <linearGradient id="colorOwed" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#e53e3e" stopOpacity={0.5}/>
+                <stop offset="95%" stopColor="#e53e3e" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} domain={[0, 8]} tickCount={9} />
+            <YAxis tick={{ fontSize: 12 }} />
             <Tooltip />
-            <Area type="monotone" dataKey="fee" stroke="#204080" fillOpacity={1} fill="url(#colorFee)" />
-            <Area type="monotone" dataKey="salary" stroke="#F59E0B" fillOpacity={1} fill="url(#colorSalary)" />
+            <Area type="monotone" dataKey="paid" stroke="#204080" fillOpacity={1} fill="url(#colorPaid)" name="Fee Paid" />
+            <Area type="monotone" dataKey="owed" stroke="#e53e3e" fillOpacity={1} fill="url(#colorOwed)" name="Fee Owed" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

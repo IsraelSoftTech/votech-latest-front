@@ -138,6 +138,28 @@ function Admin() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayCount = studentList.filter(s => s.created_at && s.created_at.slice(0, 10) === todayStr).length;
 
+  // Chart data: aggregate by registration date
+  const [studentChartData, setStudentChartData] = useState([]);
+  useEffect(() => {
+    // Build date map: {date: {date, today: count, total: cumulative}}
+    const dateMap = {};
+    let cumulative = 0;
+    // Sort students by created_at
+    const sorted = [...studentList].filter(s => s.created_at).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    for (const s of sorted) {
+      const date = s.created_at.slice(0, 10);
+      if (!dateMap[date]) dateMap[date] = { date, today: 0, total: 0 };
+      dateMap[date].today += 1;
+    }
+    // Now build cumulative total
+    const chartArr = Object.values(dateMap).sort((a, b) => new Date(a.date) - new Date(b.date));
+    for (const d of chartArr) {
+      cumulative += d.today;
+      d.total = cumulative;
+    }
+    setStudentChartData(chartArr);
+  }, [studentList]);
+
   return (
     <SideTop>
       {/* Place the dashboard and unique content of Admin.jsx here, excluding sidebar/topbar */}
@@ -171,24 +193,24 @@ function Admin() {
       </div>
       <div className="dashboard-section" style={{ display: 'flex', flexWrap: 'wrap', gap: 32, marginTop: 0 }}>
         <div style={{ flex: '1 1 320px', minWidth: 0, maxWidth: '100%', width: '100%', boxSizing: 'border-box' }}>
-          <h3 style={{ marginBottom: 16, fontWeight: 600, color: '#204080' }}>Student Registration</h3>
+          <h3 style={{ marginBottom: 16, fontWeight: 600, color: '#204080' }}>Student Registration Rate</h3>
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={feeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <AreaChart data={studentChartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorFee" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#204080" stopOpacity={0.6}/>
-                  <stop offset="95%" stopColor="#204080" stopOpacity={0}/>
+                <linearGradient id="colorToday" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#388e3c" stopOpacity={0.6}/>
+                  <stop offset="95%" stopColor="#388e3c" stopOpacity={0}/>
                 </linearGradient>
-                <linearGradient id="colorSalary" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.5}/>
-                  <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#204080" stopOpacity={0.5}/>
+                  <stop offset="95%" stopColor="#204080" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} domain={[0, 8]} tickCount={9} />
+              <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Area type="monotone" dataKey="fee" stroke="#204080" fillOpacity={1} fill="url(#colorFee)" />
-              <Area type="monotone" dataKey="salary" stroke="#F59E0B" fillOpacity={1} fill="url(#colorSalary)" />
+              <Area type="monotone" dataKey="today" stroke="#388e3c" fillOpacity={1} fill="url(#colorToday)" name="Registered Today" />
+              <Area type="monotone" dataKey="total" stroke="#204080" fillOpacity={1} fill="url(#colorTotal)" name="Total Registered" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

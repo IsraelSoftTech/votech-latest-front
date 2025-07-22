@@ -339,38 +339,6 @@ class ApiService {
     }
   }
 
-  // Message endpoints
-  async getMessages({ recipient_id, group_id } = {}) {
-    try {
-      let url = `${API_URL}/messages`;
-      const params = [];
-      if (recipient_id) params.push(`recipient_id=${recipient_id}`);
-      if (group_id) params.push(`group_id=${group_id}`);
-      if (params.length) url += '?' + params.join('&');
-      const response = await fetch(url, {
-        headers: this.getAuthHeaders(),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Get messages error:', error);
-      throw error;
-    }
-  }
-
-  async sendMessage({ recipient_id, group_id, content, type, file_url }) {
-    try {
-      const response = await fetch(`${API_URL}/messages`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ recipient_id, group_id, content, type, file_url }),
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Send message error:', error);
-      throw error;
-    }
-  }
-
   async checkUserDetails(username, contact) {
     try {
       const response = await fetch(`${API_URL}/check-user-details`, {
@@ -490,6 +458,52 @@ class ApiService {
       body: JSON.stringify({ student_id, class_id, fee_type, amount })
     });
     if (!response.ok) throw new Error('Failed to record payment');
+    return await response.json();
+  }
+
+  // Message endpoints
+  async getMessages(userId) {
+    const response = await fetch(`${API_URL}/messages/${userId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch messages');
+    return await response.json();
+  }
+  async sendMessage(receiver_id, content) {
+    const response = await fetch(`${API_URL}/messages`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ receiver_id, content })
+    });
+    if (!response.ok) throw new Error('Failed to send message');
+    return await response.json();
+  }
+
+  // Mark all messages from userId as read
+  async markMessagesRead(userId) {
+    const response = await fetch(`${API_URL}/messages/${userId}/read`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to mark messages as read');
+    return await response.json();
+  }
+
+  // Get all users for chat (all roles)
+  async getAllUsersForChat() {
+    const response = await fetch(`${API_URL}/users/all-chat`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch users');
+    return await response.json();
+  }
+
+  // Get chat list for sidebar (last message, unread count, etc.)
+  async getChatList() {
+    const response = await fetch(`${API_URL}/users/chat-list`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch chat list');
     return await response.json();
   }
 }

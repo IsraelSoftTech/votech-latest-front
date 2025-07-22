@@ -27,7 +27,7 @@ const menuItems = [
   { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
 ];
 
-export default function SideTop({ children }) {
+export default function SideTop({ children, hasUnread }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [menuExpanded, setMenuExpanded] = useState(false);
@@ -78,17 +78,16 @@ export default function SideTop({ children }) {
         </div>
         <nav className="menu">
           {visibleMenuItems.map((item, idx) => {
-            // If a submenu is open, hide all normal menus below it, but keep 'See More' button visible
+            // Hide menus below expanded submenu
             if (expandedMenu && menuItems.findIndex(m => m.label === expandedMenu) < idx && item.label !== 'See More') {
               return null;
             }
-            // Special logic for /admin-fee: only Fee Payment submenu is active
             let isActive = false;
             if (item.submenu) {
-              // Only mark parent as active if not on /admin-fee
-              isActive = item.submenu.some(sub => location.pathname.startsWith(sub.path)) && !location.pathname.startsWith('/admin-fee');
+              // Finance is active only if on /admin-finance exactly and not on any submenu
+              isActive = location.pathname === '/admin-finance';
             } else if (item.path) {
-              isActive = location.pathname === item.path && !location.pathname.startsWith('/admin-fee');
+              isActive = location.pathname === item.path;
             }
             return (
               <React.Fragment key={item.label}>
@@ -96,17 +95,39 @@ export default function SideTop({ children }) {
                   className={`menu-item${isActive ? ' active' : ''}`}
                   onClick={() => {
                     if (item.submenu) {
-                      setExpandedMenu(expandedMenu === item.label ? null : item.label);
+                      // If not already on /admin-finance, navigate to it
+                      if (location.pathname !== '/admin-finance') {
+                        navigate('/admin-finance');
+                        setExpandedMenu(null); // collapse submenu on direct Finance click
+                      }
                     } else if (item.path) {
                       navigate(item.path);
+                      setExpandedMenu(null); // collapse any submenu when navigating to a non-submenu tab
                     }
                   }}
-                  style={{ fontWeight: item.submenu ? 600 : undefined }}
+                  style={{ fontWeight: item.submenu ? 600 : undefined, display: 'flex', alignItems: 'center' }}
                 >
                   <span className="icon">{item.icon}</span>
                   {item.label}
+                  {item.label === 'Messages' && hasUnread && (
+                    <span style={{
+                      display: 'inline-block',
+                      width: 10,
+                      height: 10,
+                      background: '#e53e3e',
+                      borderRadius: '50%',
+                      marginLeft: 6,
+                      marginBottom: 2
+                    }} />
+                  )}
                   {item.submenu && (
-                    <span style={{ marginLeft: 'auto', fontSize: 14 }}>{expandedMenu === item.label ? '▲' : '▼'}</span>
+                    <span
+                      style={{ marginLeft: 'auto', fontSize: 14, cursor: 'pointer', userSelect: 'none' }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setExpandedMenu(expandedMenu === item.label ? null : item.label);
+                      }}
+                    >{expandedMenu === item.label ? '▲' : '▼'}</span>
                   )}
                 </div>
                 {item.submenu && expandedMenu === item.label && (
