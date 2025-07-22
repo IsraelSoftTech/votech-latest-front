@@ -604,10 +604,10 @@ export default function AdminStudent() {
         </table>
       </div>
       {showModal && (
-        <div className="modal-overlay" onClick={() => { setShowModal(false); setEditId(null); }}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => { setShowModal(false); setEditId(null); }}><FaTimes /></button>
-            <form className="student-modal-form" onSubmit={handleRegister}>
+        <div className="student-register-modal-overlay" onClick={() => { setShowModal(false); setEditId(null); }}>
+          <div className="student-register-modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close thin-x" onClick={() => { setShowModal(false); setEditId(null); }} aria-label="Close">&#10005;</button>
+            <form className="student-modal-form" onSubmit={handleRegister} style={{marginTop: '24px'}}>
               <h2 className="form-title">{editId ? 'Edit Student' : 'Register Student'}</h2>
               <div className="modal-form-grid">
                 <div>
@@ -792,6 +792,47 @@ export default function AdminStudent() {
           </div>
         </div>
       )}
+      <style>{`
+        .student-register-modal-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(32,64,128,0.13);
+          z-index: 1000;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          overflow-y: auto;
+        }
+        .student-register-modal-content {
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 8px 40px rgba(32,64,128,0.18);
+          padding: 56px 28px 28px 28px;
+          max-width: 600px;
+          width: 98vw;
+          min-width: 0;
+          position: relative;
+          margin-top: 64px;
+        }
+        .modal-close.thin-x {
+          position: absolute;
+          top: 16px;
+          right: 22px;
+          background: none;
+          border: none;
+          color: #222;
+          font-size: 1.5rem;
+          font-weight: 200;
+          line-height: 1;
+          cursor: pointer;
+          z-index: 1001;
+          padding: 0 6px;
+          transition: color 0.15s;
+        }
+        .modal-close.thin-x:hover {
+          color: #1976d2;
+        }
+      `}</style>
     </SideTop>
   );
 } 

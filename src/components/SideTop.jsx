@@ -48,14 +48,26 @@ export default function SideTop({ children }) {
 
   // Automatically expand parent menu if a submenu route is active
   useEffect(() => {
-    const activeSubmenu = menuItems.find(item => item.submenu && item.submenu.some(sub => location.pathname.startsWith(sub.path)));
-    if (activeSubmenu) {
-      setExpandedMenu(activeSubmenu.label);
+    // If on /admin-fee, expand Finances and do not activate Dashboard
+    if (location.pathname.startsWith('/admin-fee')) {
+      setExpandedMenu('Finances');
+    } else {
+      const activeSubmenu = menuItems.find(item => item.submenu && item.submenu.some(sub => location.pathname.startsWith(sub.path)));
+      if (activeSubmenu) {
+        setExpandedMenu(activeSubmenu.label);
+      }
     }
   }, [location.pathname]);
 
-  const showSeeMore = menuItems.length > visibleMenuCount;
-  const visibleMenuItems = menuExpanded ? menuItems : menuItems.slice(0, visibleMenuCount);
+  // Only show Finances for Admin2
+  const filteredMenuItems = menuItems.filter(item => {
+    if (item.label === 'Finances') {
+      return authUser?.role === 'Admin2';
+    }
+    return true;
+  });
+  const showSeeMore = filteredMenuItems.length > visibleMenuCount;
+  const visibleMenuItems = menuExpanded ? filteredMenuItems : filteredMenuItems.slice(0, visibleMenuCount);
 
   return (
     <div className="admin-container">
@@ -70,10 +82,18 @@ export default function SideTop({ children }) {
             if (expandedMenu && menuItems.findIndex(m => m.label === expandedMenu) < idx && item.label !== 'See More') {
               return null;
             }
+            // Special logic for /admin-fee: only Fee Payment submenu is active
+            let isActive = false;
+            if (item.submenu) {
+              // Only mark parent as active if not on /admin-fee
+              isActive = item.submenu.some(sub => location.pathname.startsWith(sub.path)) && !location.pathname.startsWith('/admin-fee');
+            } else if (item.path) {
+              isActive = location.pathname === item.path && !location.pathname.startsWith('/admin-fee');
+            }
             return (
               <React.Fragment key={item.label}>
                 <div
-                  className={`menu-item${location.pathname.startsWith(item.path) ? ' active' : ''}`}
+                  className={`menu-item${isActive ? ' active' : ''}`}
                   onClick={() => {
                     if (item.submenu) {
                       setExpandedMenu(expandedMenu === item.label ? null : item.label);

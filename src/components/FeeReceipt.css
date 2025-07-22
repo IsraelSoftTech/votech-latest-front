@@ -1,0 +1,125 @@
+/* FeeReceipt.css */
+.receipt-container {
+    background: white;
+    padding: 20mm;
+    margin: 0 auto;
+    width: 210mm; /* A4 width */
+    height: 297mm; /* A4 height */
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+    color: black;
+}
+.receipt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid skyblue;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+.receipt-logo {
+    width: 80px;
+    height: 80px;
+}
+.receipt-title-group {
+    text-align: right;
+}
+.receipt-title-group h1 {
+    margin: 0;
+    color: skyblue;
+    font-size: 24px;
+}
+.receipt-title-group h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: normal;
+}
+.receipt-student-info {
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+.receipt-table th, .receipt-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+.receipt-table th {
+    background-color: skyblue;
+    color: white;
+}
+.receipt-table tfoot {
+    font-weight: bold;
+    background-color: #f2f2f2;
+}
+.receipt-footer {
+    text-align: center;
+    margin-top: 50px;
+}
+.signature-area {
+    margin-top: 70px;
+    display: inline-block;
+}
+.signature-line {
+    border-top: 1px solid black;
+    width: 200px;
+}
+.signature-area p {
+    margin-top: 5px;
+}
+
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+    body, html {
+        margin: 0;
+        padding: 0;
+        background: white !important;
+    }
+    .receipt-container {
+        width: 100% !important;
+        height: auto !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        page-break-after: always;
+        background: white !important;
+        padding: 0 !important;
+    }
+    .modal-overlay, .modal-content, .sidebar, .admin-header, .fee-main-content > *:not(.print-area), .print-button, .text-button:not(.print-button) {
+        display: none !important;
+    }
+    .print-area {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+.print-button {
+  background: #204080;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(32,64,128,0.08);
+  transition: background 0.15s;
+  display: block;
+  margin: 20px auto;
+}
+.print-button:hover {
+  background: #388e3c;
+} 
