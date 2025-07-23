@@ -21,7 +21,7 @@ const menuItems = [
       { label: 'Inventory', icon: <FaBoxes />, path: '/admin-inventory' },
     ]
   },
-  { label: 'Attendance', icon: <FaClipboardList /> },
+  { label: 'Attendance', icon: <FaClipboardList />, path: '/admin-attendance' },
   { label: 'Reports', icon: <FaFileAlt /> },
   { label: 'Exam/Marks', icon: <FaChartBar /> },
   { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },

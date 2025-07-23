@@ -15,6 +15,7 @@ import Users from './components/Users.jsx';
 import Fee from './components/Fee';
 import StudentFeeDetails from './components/StudentFeeDetails';
 import UserChat from './components/UserChat';
+import Attendance from './components/Attendance.jsx';
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -43,6 +44,7 @@ function App() {
       <Route path="/admin-users" element={<Users />} />
       <Route path="/admin-fee" element={<Fee />} />
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
+      <Route path="/admin-attendance" element={<Attendance />} />
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       <Route path="*" element={<Navigate to="/" replace />} />

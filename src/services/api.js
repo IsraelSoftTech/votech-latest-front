@@ -506,6 +506,58 @@ class ApiService {
     if (!response.ok) throw new Error('Failed to fetch chat list');
     return await response.json();
   }
+
+  // Attendance endpoints
+  async startAttendanceSession(class_id) {
+    const response = await fetch(`${API_URL}/attendance/start`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ class_id })
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getAttendanceClasses() {
+    const response = await fetch(`${API_URL}/attendance/classes`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getAttendanceStudents(classId) {
+    const response = await fetch(`${API_URL}/attendance/${classId}/students`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getAttendanceSessions(classId, date) {
+    const url = `${API_URL}/attendance/sessions?classId=${classId}&date=${date}`;
+    const response = await fetch(url, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getAttendanceSessionsWeekly(classId, week) {
+    const url = `${API_URL}/attendance/sessions?classId=${classId}&week=${week}`;
+    const response = await fetch(url, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async markAttendance(sessionId, student_id, status) {
+    const response = await fetch(`${API_URL}/attendance/${sessionId}/mark`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ student_id, status })
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getTodayAttendanceSummary() {
+    const response = await fetch(`${API_URL}/attendance/today-summary`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
 }
 
 const api = new ApiService();
