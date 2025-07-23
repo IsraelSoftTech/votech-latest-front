@@ -51,6 +51,8 @@ const Signin = () => {
           setShowLoader(false);
           if (["Admin1", "Admin2", "Admin3", "Admin4"].includes(user.role)) {
             navigate('/admin');
+          } else if (user.role === "Discipline") {
+            navigate('/discipline');
           } else {
             navigate('/dashboard');
           }

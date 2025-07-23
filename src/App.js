@@ -16,6 +16,9 @@ import Fee from './components/Fee';
 import StudentFeeDetails from './components/StudentFeeDetails';
 import UserChat from './components/UserChat';
 import Attendance from './components/Attendance.jsx';
+
+import DisciplineSideTop from './components/DisciplineSideTop';
+import DisciplineDashboard from './components/DisciplineDashboard';
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -44,7 +47,44 @@ function App() {
       <Route path="/admin-users" element={<Users />} />
       <Route path="/admin-fee" element={<Fee />} />
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
-      <Route path="/admin-attendance" element={<Attendance />} />
+ 
+      <Route path="/discipline" element={<DisciplineDashboard />} />
+      <Route path="/discipline-messages" element={
+        <DisciplineSideTop>
+          <div>Messages Page</div>
+        </DisciplineSideTop>
+      } />
+      <Route path="/discipline-students" element={
+        <DisciplineSideTop>
+          <div>Students Page</div>
+        </DisciplineSideTop>
+      } />
+      <Route path="/attendance" element={<DisciplineSideTop><Attendance /></DisciplineSideTop>} />
+      <Route path="/discipline-cases" element={
+        <DisciplineSideTop>
+          <div>Disciplinary Cases Page</div>
+        </DisciplineSideTop>
+      } />
+      <Route path="/discipline-reports" element={
+        <DisciplineSideTop>
+          <div>Reports Page</div>
+        </DisciplineSideTop>
+      } />
+      <Route path="/discipline-counseling" element={
+        <DisciplineSideTop>
+          <div>Counseling Records Page</div>
+        </DisciplineSideTop>
+      } />
+      <Route path="/discipline-security" element={
+        <DisciplineSideTop>
+          <div>Security Incidents Page</div>
+        </DisciplineSideTop>
+      } />
+      <Route path="/discipline-settings" element={
+        <DisciplineSideTop>
+          <div>Settings Page</div>
+        </DisciplineSideTop>
+      } />
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       <Route path="*" element={<Navigate to="/" replace />} />

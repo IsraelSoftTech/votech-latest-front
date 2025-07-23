@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
-import SideTop from './SideTop';
-import { FaTrash, FaExclamationCircle, FaPrint, FaChevronRight } from 'react-icons/fa';
+import { FaTrash, FaExclamationCircle, FaPrint, FaChevronRight, FaTimes, FaClock } from 'react-icons/fa';
 import './Attendance.css';
+import { useNavigate } from 'react-router-dom';
 
 export default function Attendance() {
+  const navigate = useNavigate();
+  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
+  if (!authUser || authUser.role !== 'Discipline') {
+    // Optionally, redirect to dashboard or show nothing
+    return null;
+  }
   const [summary, setSummary] = useState({ present: 0, absent: 0 });
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState('');
@@ -17,26 +23,47 @@ export default function Attendance() {
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastAbsent, setLastAbsent] = useState([]);
-  const [printStep, setPrintStep] = useState(0); // 0: none, 1: class, 2: period, 3: stats
-  const [printClass, setPrintClass] = useState('');
-  const [printPeriod, setPrintPeriod] = useState('daily');
-  const [printDate, setPrintDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [printWeek, setPrintWeek] = useState('');
-  const [printData, setPrintData] = useState(null);
-  const [printSessionTimes, setPrintSessionTimes] = useState([]);
-  const [printLoading, setPrintLoading] = useState(false);
+  // Remove all print attendance state and handlers
+  // Remove all print attendance modals and UI
+  // Only leave the Print Attendance button, but make it inactive
+  const [selectedTime, setSelectedTime] = useState('');
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [showClassModal, setShowClassModal] = useState(false);
+  const [showTimeModal, setShowTimeModal] = useState(false);
 
   useEffect(() => {
     api.getTodayAttendanceSummary().then(setSummary).catch(() => {});
     api.getAttendanceClasses().then(setClasses).catch(() => {});
   }, []);
 
+  // Modal flow for taking attendance
+  const openTakeAttendance = () => {
+    setShowClassModal(true);
+    setSelectedClass('');
+    setSelectedTime('');
+  };
+  const handleClassSelect = (cls) => {
+    setSelectedClass(cls);
+    setShowClassModal(false);
+    setShowTimeModal(true);
+  };
+  const handleTimeSelect = (time) => {
+    setSelectedTime(time);
+    setShowTimeModal(false);
+    handleStart();
+  };
+
+  // Update handleStart to not show class/time selection UI, just start session
   const handleStart = async () => {
     if (!selectedClass) return setError('Please select a class');
+    if (!selectedTime) return setError('Please select a time');
     setLoading(true);
     setError('');
     try {
-      const sessionData = await api.startAttendanceSession(selectedClass);
+      const today = new Date();
+      const [hours, minutes] = selectedTime.split(':');
+      today.setHours(Number(hours), Number(minutes), 0, 0);
+      const sessionData = await api.startAttendanceSession(selectedClass, today.toISOString());
       setSession(sessionData);
       const studentsList = await api.getAttendanceStudents(selectedClass);
       setStudents(studentsList);
@@ -90,86 +117,29 @@ export default function Attendance() {
     setLastAbsent(prev => prev.filter(s => s.id !== studentId));
   };
 
-  // Print Attendance logic (step-by-step modals)
-  const handlePrintAttendance = () => {
-    setPrintStep(1);
-    setPrintClass('');
-    setPrintPeriod('daily');
-    setPrintDate(new Date().toISOString().slice(0, 10));
-    setPrintWeek('');
-    setPrintData(null);
-    setPrintSessionTimes([]);
+  const handleDeleteAllAttendance = () => {
+    setShowDeleteAllConfirm(true);
   };
 
-  // Step 2: After class selected
-  const handleSelectPrintClass = () => {
-    if (printClass) setPrintStep(2);
-  };
-
-  // Step 3: After period/date selected, fetch real data
-  const handleSelectPrintPeriod = async () => {
-    setPrintLoading(true);
-    setPrintData(null);
-    setPrintSessionTimes([]);
-    let studentsList = [];
-    let sessionTimes = [];
-    let records = [];
-    if (printClass) {
-      studentsList = await api.getAttendanceStudents(printClass);
-      if (printPeriod === 'daily') {
-        // Fetch all sessions for the class and date
-        const sessions = await api.getAttendanceSessions(printClass, printDate);
-        sessionTimes = sessions.map(s => {
-          const d = new Date(s.session_time);
-          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        });
-        // For each student, get their attendance for each session
-        records = studentsList.map((s, idx) => {
-          let attendance = {};
-          sessions.forEach(sess => {
-            const d = new Date(sess.session_time);
-            const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const rec = sess.records.find(r => r.student_id === s.id);
-            attendance[time] = rec ? (rec.status === 'present' ? 'P' : 'A') : '';
-          });
-          return {
-            sn: idx + 1,
-            name: s.full_name,
-            studentId: s.student_id,
-            attendance
-          };
-        });
-      } else {
-        // Weekly: fetch all sessions for the week, sum P/A for each student
-        const weekSessions = await api.getAttendanceSessionsWeekly(printClass, printWeek);
-        records = studentsList.map((s, idx) => {
-          let totalP = 0, totalA = 0;
-          weekSessions.forEach(sess => {
-            const rec = sess.records.find(r => r.student_id === s.id);
-            if (rec?.status === 'present') totalP++;
-            else if (rec?.status === 'absent') totalA++;
-          });
-          return {
-            sn: idx + 1,
-            name: s.full_name,
-            studentId: s.student_id,
-            attendance: { P: totalP, A: totalA }
-          };
-        });
-      }
+  const confirmDeleteAllAttendance = async () => {
+    setShowDeleteAllConfirm(false);
+    try {
+      await api.deleteAllAttendance();
+      setShowSuccess(true);
+      setSummary({ present: 0, absent: 0 });
+      setLastAbsent([]);
+      setTimeout(() => setShowSuccess(false), 2500);
+    } catch (e) {
+      setError('Failed to delete all attendance records.');
     }
-    setPrintData(records);
-    setPrintSessionTimes(sessionTimes);
-    setPrintLoading(false);
-    setPrintStep(3);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  // Remove all print attendance logic (step-by-step modals)
+  // Remove all print attendance handlers
+  // Remove all print attendance UI
 
   return (
-    <SideTop>
+    <>
       {showSuccess && <SuccessMessage message="Attendance submitted successfully!" />}
       {step === 'summary' && (
         <>
@@ -185,108 +155,64 @@ export default function Attendance() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-            <span className="text-btn take-attendance-btn" onClick={() => setStep('select-class')}>Take Attendance</span>
-            <button className="text-btn print-attendance-btn" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#204080', fontWeight: 600, fontSize: 15, background: 'none', border: 'none', cursor: 'pointer' }} onClick={handlePrintAttendance}>
-              <FaPrint style={{ fontSize: 17 }} /> Print Attendance
+            <span className="text-btn take-attendance-btn" onClick={openTakeAttendance}>Take Attendance</span>
+            <span style={{ color: '#204080', fontWeight: 600, fontSize: 15 }}>Print Attendance</span>
+            <button className="text-btn delete-all-btn" style={{ color: '#e53e3e', fontWeight: 600, fontSize: 15, background: 'none', border: '1px solid #e53e3e', borderRadius: 6, padding: '6px 18px', cursor: 'pointer' }} onClick={handleDeleteAllAttendance}>
+              Delete All
             </button>
           </div>
-          {/* Print Attendance Step 1: Select Class */}
-          {printStep === 1 && (
+          {showDeleteAllConfirm && (
+            <div className="delete-all-modal">
+              <div className="delete-all-box">
+                <div style={{ fontWeight: 600, fontSize: 17, color: '#e53e3e', marginBottom: 12 }}>Delete All Attendance Records?</div>
+                <div style={{ marginBottom: 18, color: '#444' }}>Are you sure you want to delete <b>ALL</b> attendance records? This cannot be undone.</div>
+                {summary.present === 0 && summary.absent === 0 ? (
+                  <>
+                    <button
+                      onClick={() => setShowDeleteAllConfirm(false)}
+                      className="delete-all-close"
+                      aria-label="Close"
+                    >
+                      <FaTimes />
+                    </button>
+                    <div style={{ color: '#204080', fontWeight: 600, fontSize: 16, margin: '18px 0' }}>No attendance to delete</div>
+                  </>
+                ) : (
+                  <div style={{ display: 'flex', gap: 18, justifyContent: 'center' }}>
+                    <button className="text-btn" style={{ background: '#e53e3e', color: '#b91c1c', borderRadius: 6, padding: '8px 24px', fontWeight: 600, border: 'none' }} onClick={confirmDeleteAllAttendance}>Yes, Delete All</button>
+                    <button className="text-btn" style={{ background: '#eaf3ff', color: '#204080', borderRadius: 6, padding: '8px 24px', fontWeight: 600, border: 'none' }} onClick={() => setShowDeleteAllConfirm(false)}>Cancel</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          {/* Modal for class selection */}
+          {showClassModal && (
             <div className="print-attendance-modal">
               <div className="print-attendance-form">
                 <h3>Select Class</h3>
-                <select value={printClass} onChange={e => setPrintClass(e.target.value)}>
+                <select value={selectedClass} onChange={e => handleClassSelect(e.target.value)}>
                   <option value="">-- Select Class --</option>
                   {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <button className="text-btn" style={{ marginTop: 16, color: '#204080', fontWeight: 600, fontSize: 15, background: '#eaf3ff', border: '1px solid #bfc8e2', borderRadius: 6, padding: '6px 18px', cursor: 'pointer' }} onClick={handleSelectPrintClass} disabled={!printClass}>
-                  Next <FaChevronRight style={{ marginLeft: 6 }} />
-                </button>
-                <button className="text-btn" style={{ color: '#e53e3e', fontWeight: 600, fontSize: 15, background: 'none', border: 'none', cursor: 'pointer', marginTop: 8 }} onClick={() => setPrintStep(0)}>Cancel</button>
+                <button className="text-btn" style={{ marginTop: 16, color: '#e53e3e', fontWeight: 600, fontSize: 15, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setShowClassModal(false)}>Cancel</button>
               </div>
             </div>
           )}
+          {/* Modal for time selection */}
+          {showTimeModal && (
+            <div className="print-attendance-modal">
+              <div className="print-attendance-form">
+                <h3>Select Time</h3>
+                <input type="time" value={selectedTime} onChange={e => setSelectedTime(e.target.value)} style={{marginBottom: 8}} />
+                <button className="text-btn" style={{ marginTop: 16, color: '#204080', fontWeight: 600, fontSize: 15, background: '#eaf3ff', border: '1px solid #bfc8e2', borderRadius: 6, padding: '6px 18px', cursor: 'pointer' }} onClick={() => handleTimeSelect(selectedTime)} disabled={!selectedTime}>Next <FaChevronRight style={{ marginLeft: 6 }} /></button>
+                <button className="text-btn" style={{ color: '#e53e3e', fontWeight: 600, fontSize: 15, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setShowTimeModal(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
+          {/* Print Attendance Step 1: Select Class */}
           {/* Print Attendance Step 2: Select Period */}
-          {printStep === 2 && (
-            <div className="print-attendance-modal">
-              <div className="print-attendance-form">
-                <h3>Select Period</h3>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
-                  <label>Period:</label>
-                  <select value={printPeriod} onChange={e => setPrintPeriod(e.target.value)}>
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                  </select>
-                  {printPeriod === 'daily' ? (
-                    <input type="date" value={printDate} onChange={e => setPrintDate(e.target.value)} />
-                  ) : (
-                    <input type="week" value={printWeek} onChange={e => setPrintWeek(e.target.value)} />
-                  )}
-                  <button className="text-btn" style={{ color: '#204080', fontWeight: 600, fontSize: 15, background: '#eaf3ff', border: '1px solid #bfc8e2', borderRadius: 6, padding: '6px 18px', cursor: 'pointer' }} onClick={handleSelectPrintPeriod} disabled={printLoading}>
-                    {printLoading ? 'Loading...' : 'Show Statistics'}
-                  </button>
-                  <button className="text-btn" style={{ color: '#e53e3e', fontWeight: 600, fontSize: 15, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setPrintStep(0)}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          )}
           {/* Print Attendance Step 3: Show Statistics and Print */}
-          {printStep === 3 && (
-            <div className="print-attendance-modal">
-              <div className="print-attendance-form">
-                <h3>Attendance Statistics</h3>
-                <div className="printable-area">
-                  <div className="print-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 22, color: '#204080', letterSpacing: 1 }}>VOTECH(S7) ACADEMY</div>
-                      <div style={{ fontWeight: 600, fontSize: 18, color: '#204080', marginTop: 2 }}>{printPeriod === 'daily' ? 'Attendance Record for ' + (classes.find(c => c.id === Number(printClass))?.name || '') + ' - ' + printDate : 'Attendance Record for ' + (classes.find(c => c.id === Number(printClass))?.name || '') + ' (Weekly)'}</div>
-                    </div>
-                    <img src={require('../assets/logo.png')} alt="logo" style={{ width: 80, height: 80, objectFit: 'contain' }} />
-                  </div>
-                  <table className="attendance-table print-table" style={{ width: '100%', borderCollapse: 'collapse', background: '#fff' }}>
-                    <thead>
-                      <tr>
-                        <th>S/N</th>
-                        <th>Full Name</th>
-                        <th>Student ID</th>
-                        {printPeriod === 'daily' && printSessionTimes.map(time => (
-                          <th key={time} style={{ minWidth: 80 }}> {time} </th>
-                        ))}
-                        {printPeriod === 'weekly' && (
-                          <>
-                            <th>Total P</th>
-                            <th>Total A</th>
-                          </>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {printData && printData.map((row, idx) => (
-                        <tr key={row.studentId}>
-                          <td>{row.sn}</td>
-                          <td>{row.name}</td>
-                          <td>{row.studentId}</td>
-                          {printPeriod === 'daily' && printSessionTimes.map(time => (
-                            <td key={time}>{row.attendance[time]}</td>
-                          ))}
-                          {printPeriod === 'weekly' && (
-                            <>
-                              <td>{row.attendance.P}</td>
-                              <td>{row.attendance.A}</td>
-                            </>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <button className="text-btn" style={{ marginTop: 18, color: '#204080', fontWeight: 600, fontSize: 16, background: '#eaf3ff', border: '1px solid #bfc8e2', borderRadius: 6, padding: '8px 28px', cursor: 'pointer' }} onClick={handlePrint}>
-                    <FaPrint style={{ fontSize: 18, marginRight: 8 }} /> Print
-                  </button>
-                  <button className="text-btn" style={{ color: '#e53e3e', fontWeight: 600, fontSize: 15, background: 'none', border: 'none', cursor: 'pointer', marginLeft: 16 }} onClick={() => setPrintStep(0)}>Close</button>
-                </div>
-              </div>
-            </div>
-          )}
           {lastAbsent.length > 0 && (
             <div style={{ marginTop: 32 }}>
               <div className="absence-table-header-row">
@@ -329,18 +255,6 @@ export default function Attendance() {
           )}
         </>
       )}
-      {step === 'select-class' && (
-        <div className="attendance-select-class">
-          <label>Select Class:</label>
-          <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
-            <option value="">-- Select --</option>
-            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          <span className="text-btn start-session-btn" onClick={handleStart} style={{marginRight: 12, marginTop: 8, display: 'inline-block'}}>{loading ? 'Starting...' : 'Start'}</span>
-          <span className="text-btn cancel-btn" onClick={() => setStep('summary')}>Cancel</span>
-          {error && <div className="attendance-error">{error}</div>}
-        </div>
-      )}
       {step === 'take-attendance' && (
         <div className="attendance-table-section">
           <h3>Class Attendance</h3>
@@ -381,6 +295,6 @@ export default function Attendance() {
           </button>
         </div>
       )}
-    </SideTop>
+    </>
   );
 }

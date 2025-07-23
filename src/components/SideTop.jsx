@@ -5,28 +5,6 @@ import logo from '../assets/logo.png';
 import ReactDOM from 'react-dom';
 import './SideTop.css';
 
-const menuItems = [
-  { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
-  { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
-  { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
-  { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
-  { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
-  { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
-  { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
-  { label: 'Subjects', icon: <FaBook /> },
-  { label: 'Finances', icon: <FaMoneyBill />, path: '/admin-finance',
-    submenu: [
-      { label: 'Fee Payment', icon: <FaCreditCard />, path: '/admin-fee' },
-      { label: 'Salary,Invoice', icon: <FaFileInvoiceDollar />, path: '/admin-salary' },
-      { label: 'Inventory', icon: <FaBoxes />, path: '/admin-inventory' },
-    ]
-  },
-  { label: 'Attendance', icon: <FaClipboardList />, path: '/admin-attendance' },
-  { label: 'Reports', icon: <FaFileAlt /> },
-  { label: 'Exam/Marks', icon: <FaChartBar /> },
-  { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
-];
-
 export default function SideTop({ children, hasUnread }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -37,6 +15,34 @@ export default function SideTop({ children, hasUnread }) {
   const location = useLocation();
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const username = authUser?.username || 'User';
+
+  let menuItems = [
+    { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+    { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
+    { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
+    { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
+    { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
+    { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
+    { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
+    { label: 'Subjects', icon: <FaBook /> },
+    { label: 'Reports', icon: <FaFileAlt /> },
+    { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+  ];
+  if (authUser?.role === 'Discipline') {
+    // Remove Finance, Exam/Marks, Display Users, add Attendance
+    menuItems = menuItems.filter(item => !['Finances', 'Exam/Marks'].includes(item.label));
+    menuItems.splice(5, 0, { label: 'Attendance', icon: <FaClipboardList />, path: '/admin-attendance' });
+  } else {
+    // For other roles, add Finance, Exam/Marks, and Attendance only for Discipline
+    menuItems.splice(8, 0, { label: 'Finances', icon: <FaMoneyBill />, path: '/admin-finance',
+      submenu: [
+        { label: 'Fee Payment', icon: <FaCreditCard />, path: '/admin-fee' },
+        { label: 'Salary,Invoice', icon: <FaFileInvoiceDollar />, path: '/admin-salary' },
+        { label: 'Inventory', icon: <FaBoxes />, path: '/admin-inventory' },
+      ]
+    });
+    menuItems.splice(10, 0, { label: 'Exam/Marks', icon: <FaChartBar /> });
+  }
 
   useEffect(() => {
     function handleResize() {
