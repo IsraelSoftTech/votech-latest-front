@@ -13,11 +13,10 @@ const menuItems = [
   { label: 'Disciplinary Cases', icon: <FaGavel />, path: '/discipline-cases' },
   { label: 'Reports', icon: <FaFileAlt />, path: '/discipline-reports' },
   { label: 'Counseling Records', icon: <FaComments />, path: '/discipline-counseling' },
-  { label: 'Security Incidents', icon: <FaShieldAlt />, path: '/discipline-security' },
-  { label: 'Settings', icon: <FaCog />, path: '/discipline-settings' },
+  { label: 'Security Incidents', icon: <FaShieldAlt />, path: '/discipline-security' }
 ];
 
-export default function DisciplineSideTop({ children }) {
+export default function DisciplineSideTop({ children, hasUnread = false }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -26,29 +25,33 @@ export default function DisciplineSideTop({ children }) {
   const username = authUser?.username || 'User';
 
   return (
-    <div className="discipline-container">
-      <aside className={`discipline-sidebar${sidebarOpen ? ' open' : ''}`}> 
-        <div className="discipline-logo">
+    <div className="ds-container">
+      <aside className={`ds-sidebar${sidebarOpen ? ' open' : ''}`}> 
+        <div className="ds-logo">
           <img src={logo} alt="logo" style={{ width: 32, height: 32, objectFit: 'contain', marginRight: 8 }} />
-          <span className="logo-text">VOTECH</span>
+          <span className="ds-logo-text">VOTECH</span>
         </div>
-        <nav className="discipline-menu">
+        <nav className="ds-menu">
           {menuItems.map(item => (
             <div
               key={item.label}
-              className={`discipline-menu-item${location.pathname === item.path ? ' active' : ''}`}
+              className={`ds-menu-item${location.pathname === item.path ? ' active' : ''}`}
               onClick={() => navigate(item.path)}
+              style={{ position: 'relative' }}
             >
               {item.icon}
+              {item.label === 'Messages' && hasUnread && (
+                <span style={{ position: 'absolute', top: 8, right: 8, width: 10, height: 10, background: '#e53e3e', borderRadius: '50%', display: 'inline-block' }}></span>
+              )}
               <span>{item.label}</span>
             </div>
           ))}
         </nav>
       </aside>
-      <div className="discipline-main">
-        <header className="admin-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100, width: '100%' }}>
-          <div className="admin-header-left" style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+      <div className="ds-main">
+        <header className="ds-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100, width: '100%' }}>
+          <div className="ds-header-left" style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <button className="ds-menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <FaBars />
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -56,7 +59,7 @@ export default function DisciplineSideTop({ children }) {
               <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
             </div>
           </div>
-          <div className="admin-actions">
+          <div className="ds-actions">
             <button
               style={{ background: 'none', border: 'none', color: '#204080', fontWeight: 600, fontSize: 17, cursor: 'pointer', position: 'relative', padding: '4px 12px', borderRadius: 6 }}
               onClick={() => setUserMenuOpen(v => !v)}
@@ -85,7 +88,7 @@ export default function DisciplineSideTop({ children }) {
         </header>
         <div style={{ marginTop: 32 }}>{children}</div>
       </div>
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
+      {sidebarOpen && <div className="ds-sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
     </div>
   );
 }

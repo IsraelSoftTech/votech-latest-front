@@ -200,6 +200,12 @@
     gap: 18px;
   }
 }
+@media (min-width: 701px) {
+  .admin-header {
+    padding-left: 240px;
+    padding-right: 24px;
+  }
+}
 @media (max-width: 700px) {
   .sidebar {
     transform: translateX(-100%);
@@ -253,6 +259,10 @@
     font-size: 0.98rem;
     margin-left: 4px;
   }
+  .admin-header {
+    padding-left: 8px;
+    padding-right: 4px;
+  }
 } 
 
 .submenu-list { margin-left: 32px; }
@@ -278,3 +288,49 @@
   box-shadow: 0 1px 4px rgba(32,64,128,0.04);
   padding: 6px 18px 6px 18px !important;
 } 
+
+/* --- Teacher sidebar/topbar styles (from deleted TeacherSideTop.css) --- */
+.teacher-container { display: flex; min-height: 100vh; background: #f7f8fa; }
+.teacher-sidebar { width: 220px; background: #204080; color: #fff; min-height: 100vh; position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; transition: width 0.2s; }
+.teacher-sidebar.open { width: 220px; }
+.teacher-sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 24px 18px 12px 18px;
+}
+.teacher-sidebar-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  margin-right: 8px;
+}
+.teacher-logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #fff;
+}
+.teacher-menu { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+.teacher-menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 18px; cursor: pointer; border-radius: 8px; font-size: 1.08rem; font-weight: 500; transition: background 0.13s; position: relative; }
+.teacher-menu-item.active, .teacher-menu-item:hover { background: #fff; color: #204080; }
+.teacher-menu-item .icon { font-size: 1.2em; }
+.teacher-main { flex: 1; margin-left: 220px; min-height: 100vh; background: #f7f8fa; transition: margin-left 0.2s; }
+.teacher-header { display: flex; align-items: center; justify-content: space-between; background: #fff; box-shadow: 0 2px 8px rgba(32,64,128,0.06); padding: 18px 32px 18px 18px; position: sticky; top: 0; z-index: 1100; border-bottom: 1px solid #e5e7eb; }
+.teacher-header-left { display: flex; align-items: center; gap: 18px; }
+.teacher-menu-toggle { background: none; border: none; color: #204080; font-size: 1.5rem; cursor: pointer; margin-right: 8px; }
+.teacher-actions { display: flex; align-items: center; gap: 12px; }
+.teacher-sidebar-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(32,64,128,0.13); z-index: 999; }
+
+/* Responsive adjustments for teacher sidebar/topbar */
+@media (max-width: 900px) {
+  .teacher-main { margin-left: 0; }
+  .teacher-sidebar { position: fixed; left: 0; top: 0; height: 100vh; box-shadow: 2px 0 8px rgba(32,64,128,0.08); }
+  .teacher-sidebar.open { transform: translateX(0); }
+  .teacher-menu-toggle { display: block; }
+}
+@media (max-width: 700px) {
+  .teacher-main { margin-left: 0; padding: 0 8px 12px 8px; }
+  .teacher-header { padding: 8px 4px 0 4px; }
+  .teacher-header-left { gap: 6px; }
+}
+/* --- End teacher sidebar/topbar styles --- */ 

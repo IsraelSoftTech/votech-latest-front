@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import ReactDOM from 'react-dom';
 import './SideTop.css';
@@ -24,7 +24,7 @@ export default function SideTop({ children, hasUnread }) {
     { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
     { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
-    { label: 'Subjects', icon: <FaBook /> },
+    { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
     { label: 'Reports', icon: <FaFileAlt /> },
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
   ];
@@ -75,6 +75,39 @@ export default function SideTop({ children, hasUnread }) {
   const showSeeMore = filteredMenuItems.length > visibleMenuCount;
   const visibleMenuItems = menuExpanded ? filteredMenuItems : filteredMenuItems.slice(0, visibleMenuCount);
 
+  // Determine if user is a teacher
+  const isTeacher = authUser?.role === 'Teacher';
+
+  // Teacher menu items (from deleted TeacherSideTop)
+  const teacherMenuItems = [
+    { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/teacher-dashboard' },
+    { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
+    { label: 'My Classes', icon: <FaBook />, path: '/teacher-classes' },
+    { label: 'Students', icon: <FaUserGraduate />, path: '/teacher-students' },
+    { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
+    { label: 'Attendance', icon: <FaClipboardList />, path: '/teacher-attendance' },
+    { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/teacher-lesson-plans' },
+    { label: 'Reports', icon: <FaFileAlt />, path: '/teacher-reports' },
+  ];
+
+  // Dean/Admin4 menu items (from provided image)
+  const deanMenuItems = [
+    { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/dean' },
+    { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
+    { label: 'Events', icon: <FaClipboardList />, path: '/dean-events' },
+    { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
+    { label: 'Operations Report', icon: <FaFileAlt />, path: '/dean-operations' },
+    { label: 'Inventory', icon: <FaBoxes />, path: '/dean-inventory' },
+    { label: 'Scheduling', icon: <FaChartPie />, path: '/dean-scheduling' },
+    { label: 'Academic Planning', icon: <FaBook />, path: '/dean-academic' },
+    { label: 'Timetables', icon: <FaClipboardList />, path: '/dean-timetables' },
+  ];
+
+  // Use correct menu for each role
+  let menuToShow = visibleMenuItems;
+  if (isTeacher) menuToShow = teacherMenuItems;
+  if (authUser?.role === 'Admin4') menuToShow = deanMenuItems;
+
   return (
     <div className="admin-container">
       <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
@@ -83,79 +116,22 @@ export default function SideTop({ children, hasUnread }) {
           <span className="logo-text">VOTECH</span>
         </div>
         <nav className="menu">
-          {visibleMenuItems.map((item, idx) => {
-            // Hide menus below expanded submenu
-            if (expandedMenu && menuItems.findIndex(m => m.label === expandedMenu) < idx && item.label !== 'See More') {
-              return null;
-            }
-            let isActive = false;
-            if (item.submenu) {
-              // Finance is active only if on /admin-finance exactly and not on any submenu
-              isActive = location.pathname === '/admin-finance';
-            } else if (item.path) {
-              isActive = location.pathname === item.path;
-            }
-            return (
-              <React.Fragment key={item.label}>
-                <div
-                  className={`menu-item${isActive ? ' active' : ''}`}
-                  onClick={() => {
-                    if (item.submenu) {
-                      // If not already on /admin-finance, navigate to it
-                      if (location.pathname !== '/admin-finance') {
-                        navigate('/admin-finance');
-                        setExpandedMenu(null); // collapse submenu on direct Finance click
-                      }
-                    } else if (item.path) {
-                      navigate(item.path);
-                      setExpandedMenu(null); // collapse any submenu when navigating to a non-submenu tab
-                    }
-                  }}
-                  style={{ fontWeight: item.submenu ? 600 : undefined, display: 'flex', alignItems: 'center' }}
-                >
-                  <span className="icon">{item.icon}</span>
-                  {item.label}
-                  {item.label === 'Messages' && hasUnread && (
-                    <span style={{
-                      display: 'inline-block',
-                      width: 10,
-                      height: 10,
-                      background: '#e53e3e',
-                      borderRadius: '50%',
-                      marginLeft: 6,
-                      marginBottom: 2
-                    }} />
-                  )}
-                  {item.submenu && (
-                    <span
-                      style={{ marginLeft: 'auto', fontSize: 14, cursor: 'pointer', userSelect: 'none' }}
-                      onClick={e => {
-                        e.stopPropagation();
-                        setExpandedMenu(expandedMenu === item.label ? null : item.label);
-                      }}
-                    >{expandedMenu === item.label ? '▲' : '▼'}</span>
-                  )}
-                </div>
-                {item.submenu && expandedMenu === item.label && (
-                  <div className="submenu-list" style={{ marginLeft: 32 }}>
-                    {item.submenu.map(sub => (
-                      <div
-                        key={sub.label}
-                        className={`submenu-item${location.pathname.startsWith(sub.path) ? ' active' : ''}`}
-                        onClick={() => navigate(sub.path)}
-                        style={{ color: '#ff9800', background: 'none', fontSize: '0.97em', borderRadius: 0, display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 0, marginLeft: 0, cursor: 'pointer' }}
-                      >
-                        <span className="icon">{sub.icon}</span>
-                        <span>{sub.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
+          {menuToShow.map(item => (
+            <div
+              key={item.label}
+              className={`menu-item${location.pathname === item.path ? ' active' : ''}`}
+              onClick={() => item.path && navigate(item.path)}
+              style={{ position: 'relative' }}
+            >
+              <span className="icon">{item.icon}</span>
+              {item.label === 'Messages' && hasUnread && (
+                <span style={{ position: 'absolute', top: 8, right: 8, width: 10, height: 10, background: '#e53e3e', borderRadius: '50%', display: 'inline-block' }}></span>
+              )}
+              <span>{item.label}</span>
+            </div>
+          ))}
           {/* Display Users tab for Admin3 only */}
-          {authUser?.role === 'Admin3' && (
+          {!isTeacher && authUser?.role === 'Admin3' && (
             <div
               className={`menu-item${location.pathname === '/admin-users' ? ' active' : ''}`}
               onClick={() => navigate('/admin-users')}
@@ -165,7 +141,7 @@ export default function SideTop({ children, hasUnread }) {
               <span className="label">Display Users</span>
             </div>
           )}
-          {showSeeMore && !expandedMenu && (
+          {!isTeacher && showSeeMore && !expandedMenu && (
             <button
               className="menu-item see-more-btn"
               style={{ background: '#4669b3', color: '#fff', margin: '8px 12px', border: 'none', borderRadius: 6, fontWeight: 600, cursor: 'pointer', fontSize: '1.05rem', padding: '12px 0' }}

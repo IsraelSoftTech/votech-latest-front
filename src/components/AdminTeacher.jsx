@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AdminTeacher.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaMoneyBill, FaFileAlt, FaChartBar, FaPenFancy, FaEdit, FaTrash, FaEnvelope, FaIdCard, FaCog } from 'react-icons/fa';
@@ -7,50 +7,18 @@ import SuccessMessage from './SuccessMessage';
 import { useLocation } from 'react-router-dom';
 import ReactDOM from 'react-dom';
 import SideTop from './SideTop';
-
-const menuItems = [
-  { label: 'Dashboard', icon: <FaTachometerAlt /> },
-  { label: 'Students', icon: <FaUserGraduate /> },
-  { label: 'Teachers', icon: <FaChalkboardTeacher /> },
-  { label: 'Classes', icon: <FaBook /> },
-  { label: 'Messages', icon: <FaEnvelope /> },
-  { label: 'ID Cards', icon: <FaIdCard /> },
-  { label: 'Subjects', icon: <FaBook /> },
-  { label: 'Finances', icon: <FaMoneyBill /> },
-  { label: 'Attendance', icon: <FaClipboardList /> },
-  { label: 'Reports', icon: <FaFileAlt /> },
-  { label: 'Exam/Marks', icon: <FaChartBar /> },
-  { label: 'Lesson Plans', icon: <FaPenFancy /> },
-];
+import api from '../services/api';
 
 const years = Array.from({length: 26}, (_, i) => `20${25+i}/20${26+i}`);
-
-const teachers = [
-  { name: 'Jane Doe', sex: 'F', id: 'T12345', contact: '678900001' },
-  { name: 'John Smith', sex: 'M', id: 'T54321', contact: '678900002' },
-  { name: 'Mary Johnson', sex: 'F', id: 'T11111', contact: '678900003' },
-  { name: 'James Brown', sex: 'M', id: 'T22222', contact: '678900004' },
-  { name: 'Patricia Miller', sex: 'F', id: 'T33333', contact: '678900005' },
-  { name: 'Robert Wilson', sex: 'M', id: 'T44444', contact: '678900006' },
-  { name: 'Linda Moore', sex: 'F', id: 'T55555', contact: '678900007' },
-  { name: 'Michael Taylor', sex: 'M', id: 'T66666', contact: '678900008' },
-  { name: 'Barbara Anderson', sex: 'F', id: 'T77777', contact: '678900009' },
-  { name: 'William Thomas', sex: 'M', id: 'T88888', contact: '678900010' },
-  { name: 'Elizabeth Jackson', sex: 'F', id: 'T99999', contact: '678900011' },
-  { name: 'David White', sex: 'M', id: 'T10101', contact: '678900012' },
-  { name: 'Susan Harris', sex: 'F', id: 'T20202', contact: '678900013' },
-  { name: 'Richard Martin', sex: 'M', id: 'T30303', contact: '678900014' },
-  { name: 'Jessica Thompson', sex: 'F', id: 'T40404', contact: '678900015' },
-];
 
 export default function AdminTeacher() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
-    fullName: '',
+    full_name: '',
     sex: '',
-    idCard: '',
+    id_card: '',
     dob: '',
     pob: '',
     subjects: '',
@@ -60,36 +28,128 @@ export default function AdminTeacher() {
   const [registering, setRegistering] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [teachers, setTeachers] = useState([]);
+  const [editingId, setEditingId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Add isAdmin1 logic
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const isAdmin1 = authUser?.role === 'Admin1';
+  const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [showSubjectsDropdown, setShowSubjectsDropdown] = useState(false);
+  const [showClassesDropdown, setShowClassesDropdown] = useState(false);
+  const [approveStates, setApproveStates] = useState({});
 
-  const handleFormChange = e => {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+  // Fetch teachers from backend
+  useEffect(() => {
+    fetchTeachers();
+    fetchClasses();
+    fetchSubjects();
+  }, []);
+
+  useEffect(() => {
+    // Sync approveStates with teachers list (local only)
+    setApproveStates(Object.fromEntries(teachers.map(t => [t.id, t.status])));
+  }, [teachers]);
+
+  const fetchTeachers = async () => {
+    try {
+      const res = await api.getAllTeachers();
+      setTeachers(res);
+    } catch (err) {
+      setError('Failed to fetch teachers');
+    }
   };
 
-  const handleRegister = e => {
+  const fetchClasses = async () => {
+    try {
+      const res = await api.getClasses();
+      setClasses(res);
+    } catch (err) {}
+  };
+  const fetchSubjects = async () => {
+    try {
+      const res = await api.getSubjects();
+      setSubjects(res);
+    } catch (err) {}
+  };
+
+  const handleFormChange = e => {
+    const { name, value, type, checked } = e.target;
+    if (name === 'classes') {
+      setForm(f => {
+        const arr = Array.isArray(f.classes) ? f.classes : (f.classes ? f.classes.split(',') : []);
+        return {
+          ...f,
+          classes: checked ? [...arr, value] : arr.filter(c => c !== value)
+        };
+      });
+    } else if (name === 'subjects') {
+      setForm(f => {
+        const arr = Array.isArray(f.subjects) ? f.subjects : (f.subjects ? f.subjects.split(',') : []);
+        return {
+          ...f,
+          subjects: checked ? [...arr, value] : arr.filter(s => s !== value)
+        };
+      });
+    } else {
+      setForm(f => ({ ...f, [name]: value }));
+    }
+  };
+
+  const handleRegister = async e => {
     e.preventDefault();
     setError('');
     setRegistering(true);
-    setTimeout(() => {
-      setRegistering(false);
-      setSuccess('Teacher registered!');
-      setTimeout(() => {
-        setShowModal(false);
-        setSuccess('');
-        setForm({ fullName: '', sex: '', idCard: '', dob: '', pob: '', subjects: '', classes: '', contact: '' });
-      }, 1200);
-    }, 1200);
+    try {
+      const submitForm = {
+        ...form,
+        classes: Array.isArray(form.classes) ? form.classes.join(',') : form.classes,
+        subjects: Array.isArray(form.subjects) ? form.subjects.join(',') : form.subjects
+      };
+      if (editingId) {
+        await api.updateTeacher(editingId, submitForm);
+        setSuccess('Teacher updated!');
+      } else {
+        await api.addTeacher(submitForm);
+        setSuccess('Teacher registered!');
+      }
+      setShowModal(false);
+      setForm({ full_name: '', sex: '', id_card: '', dob: '', pob: '', subjects: '', classes: '', contact: '' });
+      setEditingId(null);
+      fetchTeachers();
+    } catch (err) {
+      setError('Failed to save teacher');
+    }
+    setRegistering(false);
+    setTimeout(() => setSuccess(''), 1200);
+  };
+
+  const handleEdit = t => {
+    setForm({ ...t });
+    setEditingId(t.id);
+    setShowModal(true);
+  };
+
+  const handleDelete = async id => {
+    if (!window.confirm('Delete this teacher?')) return;
+    try {
+      await api.deleteTeacher(id);
+      fetchTeachers();
+    } catch (err) {
+      setError('Failed to delete teacher');
+    }
+  };
+
+  const handleToggleApprove = id => {
+    setApproveStates(prev => ({
+      ...prev,
+      [id]: prev[id] === 'approved' ? 'pending' : 'approved'
+    }));
   };
 
   return (
     <SideTop>
-      {/* Place the main content of AdminTeacher here, excluding sidebar/topbar */}
       <div className="dashboard-cards">
         <div className="card teachers">
           <div className="icon"><FaChalkboardTeacher /></div>
@@ -104,7 +164,7 @@ export default function AdminTeacher() {
       </div>
       <div className="teacher-section">
         <div className="teacher-header-row">
-          <button className="add-teacher-btn" onClick={() => setShowModal(true)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Add Teacher'}><FaPlus /> Add Teacher</button>
+          <button className="add-teacher-btn" onClick={() => { setShowModal(true); setEditingId(null); setForm({ full_name: '', sex: '', id_card: '', dob: '', pob: '', subjects: '', classes: '', contact: '' }); }} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Add Teacher'}><FaPlus /> Add Teacher</button>
         </div>
         <div className="teacher-table-wrapper" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
           <table className="teacher-table">
@@ -113,20 +173,49 @@ export default function AdminTeacher() {
                 <th>Full Name</th>
                 <th>Sex</th>
                 <th>ID Card number</th>
+                <th>Date of Birth</th>
+                <th>Place of Birth</th>
+                <th>Subject(s)</th>
+                <th>Class(es) Taught</th>
                 <th>Contact</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {teachers.map((t, i) => (
-                <tr key={i}>
-                  <td>{t.name}</td>
+                <tr key={t.id || i}>
+                  <td>{t.full_name}</td>
                   <td>{t.sex}</td>
-                  <td>{t.id}</td>
+                  <td>{t.id_card}</td>
+                  <td>{t.dob}</td>
+                  <td>{t.pob}</td>
+                  <td>{t.subjects}</td>
+                  <td>{t.classes}</td>
                   <td>{t.contact}</td>
                   <td className="actions">
-                    <button className="action-btn edit" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}><FaEdit /></button>
-                    <button className="action-btn delete" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}><FaTrash /></button>
+                    <button className="action-btn edit" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'} onClick={() => handleEdit(t)}><FaEdit /></button>
+                    <button className="action-btn delete" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'} onClick={() => handleDelete(t.id)}><FaTrash /></button>
+                    <span
+                      className="approve-badge"
+                      style={{
+                        marginLeft: 8,
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                        background: approveStates[t.id] === 'approved' ? '#22bb33' : '#e53e3e',
+                        color: '#fff',
+                        fontWeight: 600,
+                        fontSize: '0.98rem',
+                        cursor: 'pointer',
+                        transition: 'background 0.18s',
+                        userSelect: 'none',
+                        border: 'none',
+                        outline: 'none',
+                        display: 'inline-block',
+                      }}
+                      onClick={() => handleToggleApprove(t.id)}
+                    >
+                      {approveStates[t.id] === 'approved' ? 'Approved' : 'Approve'}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -139,11 +228,11 @@ export default function AdminTeacher() {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowModal(false)}><FaTimes /></button>
             <form className="student-modal-form" onSubmit={handleRegister}>
-              <h2 className="form-title">Register Teacher</h2>
+              <h2 className="form-title">{editingId ? 'Edit Teacher' : 'Register Teacher'}</h2>
               <div className="modal-form-grid">
                 <div>
                   <label className="input-label">Full Name *</label>
-                  <input className="input-field" type="text" name="fullName" value={form.fullName} onChange={handleFormChange} placeholder="Enter Full Name" required />
+                  <input className="input-field" type="text" name="full_name" value={form.full_name} onChange={handleFormChange} placeholder="Enter Full Name" required />
                   <label className="input-label">Sex *</label>
                   <select className="input-field" name="sex" value={form.sex} onChange={handleFormChange} required>
                     <option value="">Select</option>
@@ -151,7 +240,7 @@ export default function AdminTeacher() {
                     <option value="F">Female</option>
                   </select>
                   <label className="input-label">ID Card Number *</label>
-                  <input className="input-field" type="text" name="idCard" value={form.idCard} onChange={handleFormChange} placeholder="Enter ID Card Number" required />
+                  <input className="input-field" type="text" name="id_card" value={form.id_card} onChange={handleFormChange} placeholder="Enter ID Card Number" required />
                   <label className="input-label">Date of Birth *</label>
                   <input className="input-field" type="date" name="dob" value={form.dob} onChange={handleFormChange} required />
                 </div>
@@ -159,16 +248,62 @@ export default function AdminTeacher() {
                   <label className="input-label">Place of Birth *</label>
                   <input className="input-field" type="text" name="pob" value={form.pob} onChange={handleFormChange} placeholder="Enter Place of Birth" required />
                   <label className="input-label">Subject(s) *</label>
-                  <input className="input-field" type="text" name="subjects" value={form.subjects} onChange={handleFormChange} placeholder="Enter Subject(s)" required />
-                  <label className="input-label">Class(s) Taught *</label>
-                  <input className="input-field" type="text" name="classes" value={form.classes} onChange={handleFormChange} placeholder="Enter Class(s) Taught" required />
+                  <div className="dropdown-multiselect" style={{ position: 'relative' }}>
+                    <div className="dropdown-input" style={{ display: 'flex', alignItems: 'center' }}>
+                      <input
+                        className="input-field"
+                        type="text"
+                        name="subjects"
+                        value={Array.isArray(form.subjects) ? form.subjects.join(', ') : (form.subjects || '')}
+                        readOnly
+                        placeholder="Select Subject(s)"
+                        onClick={() => setShowSubjectsDropdown(v => !v)}
+                        style={{ cursor: 'pointer', background: '#f7f8fa' }}
+                      />
+                      <button type="button" style={{ marginLeft: 6 }} onClick={() => setShowSubjectsDropdown(v => !v)} tabIndex={-1}>▼</button>
+                    </div>
+                    {showSubjectsDropdown && (
+                      <div className="dropdown-list" style={{ position: 'absolute', zIndex: 10, background: '#fff', border: '1px solid #ccc', borderRadius: 6, boxShadow: '0 2px 8px rgba(32,64,128,0.07)', padding: 8, minWidth: 180, maxHeight: 180, overflowY: 'auto' }}>
+                        {subjects.map(s => (
+                          <label key={s.id} style={{ display: 'block', marginBottom: 4 }}>
+                            <input type="checkbox" name="subjects" value={s.name} checked={Array.isArray(form.subjects) ? form.subjects.includes(s.name) : (form.subjects || '').split(',').includes(s.name)} onChange={handleFormChange} /> {s.name}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <label className="input-label">Class(es) Taught *</label>
+                  <div className="dropdown-multiselect" style={{ position: 'relative' }}>
+                    <div className="dropdown-input" style={{ display: 'flex', alignItems: 'center' }}>
+                      <input
+                        className="input-field"
+                        type="text"
+                        name="classes"
+                        value={Array.isArray(form.classes) ? form.classes.join(', ') : (form.classes || '')}
+                        readOnly
+                        placeholder="Select Class(es)"
+                        onClick={() => setShowClassesDropdown(v => !v)}
+                        style={{ cursor: 'pointer', background: '#f7f8fa' }}
+                      />
+                      <button type="button" style={{ marginLeft: 6 }} onClick={() => setShowClassesDropdown(v => !v)} tabIndex={-1}>▼</button>
+                    </div>
+                    {showClassesDropdown && (
+                      <div className="dropdown-list" style={{ position: 'absolute', zIndex: 10, background: '#fff', border: '1px solid #ccc', borderRadius: 6, boxShadow: '0 2px 8px rgba(32,64,128,0.07)', padding: 8, minWidth: 180, maxHeight: 180, overflowY: 'auto' }}>
+                        {classes.map(c => (
+                          <label key={c.id} style={{ display: 'block', marginBottom: 4 }}>
+                            <input type="checkbox" name="classes" value={c.name} checked={Array.isArray(form.classes) ? form.classes.includes(c.name) : (form.classes || '').split(',').includes(c.name)} onChange={handleFormChange} /> {c.name}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <label className="input-label">Contact *</label>
                   <input className="input-field" type="text" name="contact" value={form.contact} onChange={handleFormChange} placeholder="Enter Contact" required />
                 </div>
               </div>
               {error && <div className="error-message">{error}</div>}
               {success && <SuccessMessage message={success} />}
-              <button type="submit" className="signup-btn" disabled={registering || isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Register'}>{registering ? 'Registering...' : 'Register'}</button>
+              <button type="submit" className="signup-btn" disabled={registering || isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : (editingId ? 'Update' : 'Register')}>{registering ? (editingId ? 'Updating...' : 'Registering...') : (editingId ? 'Update' : 'Register')}</button>
             </form>
           </div>
         </div>

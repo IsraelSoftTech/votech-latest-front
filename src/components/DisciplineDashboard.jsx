@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import DisciplineSideTop from './DisciplineSideTop';
-import './Admin.css'; // For card/table styling
 import './DisciplineSideTop.css';
 import { FaExclamationTriangle, FaUserGraduate, FaClipboardList, FaFileAlt } from 'react-icons/fa';
 import api from '../services/api';
@@ -34,62 +33,39 @@ export default function DisciplineDashboard() {
 
   return (
     <DisciplineSideTop>
-      <div className="dashboard-cards">
-        <div className="card students" style={{ background: '#22b6ff', color: '#fff' }}>
-          <div className="icon"><FaExclamationTriangle style={{ color: '#fff' }} /></div>
+      <div className="ds-dashboard-cards" style={{ display: 'flex', gap: 24, marginBottom: 32 }}>
+        <div className="ds-card ds-card-students" style={{ background: '#22b6ff', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 140 }}>
+          <div className="ds-icon" style={{ fontSize: 36, marginBottom: 8 }}><FaExclamationTriangle style={{ color: '#fff' }} /></div>
           <div style={{ fontSize: 28, fontWeight: 700 }}>{activeCases}</div>
-          <div className="desc">Active Cases</div>
+          <div className="ds-desc">Active Cases</div>
         </div>
-        <div className="card" style={{ background: '#0b2e4e', color: '#fff' }}>
-          <div className="icon"><FaUserGraduate style={{ color: '#fff' }} /></div>
+        <div className="ds-card" style={{ background: '#0b2e4e', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 140 }}>
+          <div className="ds-icon" style={{ fontSize: 36, marginBottom: 8 }}><FaUserGraduate style={{ color: '#fff' }} /></div>
           <div style={{ fontSize: 28, fontWeight: 700 }}>{studentsMonitored.toLocaleString()}</div>
-          <div className="desc">Students Monitored</div>
+          <div className="ds-desc">Students Monitored</div>
         </div>
-        <div className="card" style={{ background: '#0e7c3a', color: '#fff' }}>
-          <div className="icon"><FaClipboardList style={{ color: '#fff' }} /></div>
+        <div className="ds-card" style={{ background: '#0e7c3a', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 140 }}>
+          <div className="ds-icon" style={{ fontSize: 36, marginBottom: 8 }}><FaClipboardList style={{ color: '#fff' }} /></div>
           <div style={{ fontSize: 28, fontWeight: 700 }}>{attendanceRate}%</div>
-          <div className="desc">Attendance Rate</div>
+          <div className="ds-desc">Attendance Rate</div>
         </div>
-        <div className="card" style={{ background: '#0b3a4e', color: '#fff' }}>
-          <div className="icon"><FaFileAlt style={{ color: '#fff' }} /></div>
+        <div className="ds-card" style={{ background: '#0b3a4e', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 140 }}>
+          <div className="ds-icon" style={{ fontSize: 36, marginBottom: 8 }}><FaFileAlt style={{ color: '#fff' }} /></div>
           <div style={{ fontSize: 28, fontWeight: 700 }}>{reportsThisMonth}</div>
-          <div className="desc">Reports This Month</div>
+          <div className="ds-desc">Reports This Month</div>
         </div>
       </div>
-      <div className="dashboard-section" style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 320, background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(32,64,128,0.06)', padding: 24, marginBottom: 24 }}>
-          <div style={{ fontWeight: 600, fontSize: 18, color: '#204080', marginBottom: 16 }}>Urgent Disciplinary Cases</div>
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Class</th>
-                  <th>Case</th>
-                </tr>
-              </thead>
-              <tbody>
-                {urgentCases.map((row, idx) => (
-                  <tr key={idx}>
-                    <td>{row.name}</td>
-                    <td>{row.type}</td>
-                    <td>{row.class}</td>
-                    <td>{row.case}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div style={{ flex: 1, minWidth: 320, background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(32,64,128,0.06)', padding: 24, marginBottom: 24 }}>
-          <div style={{ fontWeight: 600, fontSize: 18, color: '#204080', marginBottom: 16 }}>Attendance Monitoring</div>
-          <div className="table-scroll" style={{ overflowX: 'auto', minWidth: 0 }}>
+      <div className="ds-dashboard-section" style={{ display: 'flex', gap: 24, flexWrap: 'nowrap' }}>
+        {/* Urgent Disciplinary Cases section removed */}
+        <div style={{ flex: 1, minWidth: 0, background: '#fff', borderRadius: 14, boxShadow: '0 2px 8px rgba(32,64,128,0.06)', padding: 24, marginBottom: 24, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontWeight: 600, fontSize: 20, color: '#204080', marginBottom: 16 }}>Attendance Monitoring</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {attendanceMonitoring.map((row, idx) => (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: idx !== attendanceMonitoring.length - 1 ? '1px solid #e5e7eb' : 'none', minWidth: 400 }}>
-                <div style={{ fontWeight: 500 }}>{row.name}</div>
-                <div style={{ color: '#888', fontSize: 13 }}>{row.present}/{row.total} present</div>
-                <div style={{ fontWeight: 600, color: row.rate >= 90 ? '#0e7c3a' : row.rate >= 80 ? '#f59e0b' : '#e53e3e' }}>{row.rate}%</div>
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: idx % 2 === 0 ? '#f7f8fa' : '#fff', borderRadius: 8, padding: '12px 16px', fontSize: 16 }}>
+                <div style={{ fontWeight: 500 }}>{row.name}
+                  <div style={{ color: '#888', fontSize: 13 }}>{row.present}/{row.total} present</div>
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 16, color: row.rate >= 90 ? '#0e7c3a' : row.rate >= 80 ? '#f59e0b' : '#e53e3e' }}>{row.rate}%</div>
               </div>
             ))}
           </div>

@@ -1,7 +1,7 @@
 // For local development, use the local backend API:
-// const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5000/api';
 // For production, use the Render backend API:
-const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
+// const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
 console.log('API URL:', API_URL);
 
 class ApiService {
@@ -553,6 +553,87 @@ class ApiService {
       headers: this.getAuthHeaders()
     });
     return await this.handleResponse(response);
+  }
+
+  // Teacher endpoints
+  async getAllTeachers() {
+    const response = await fetch(`${API_URL}/teachers`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch teachers');
+    return await response.json();
+  }
+  async addTeacher(data) {
+    const response = await fetch(`${API_URL}/teachers`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to add teacher');
+    return await response.json();
+  }
+  async updateTeacher(id, data) {
+    const response = await fetch(`${API_URL}/teachers/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update teacher');
+    return await response.json();
+  }
+  async deleteTeacher(id) {
+    const response = await fetch(`${API_URL}/teachers/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete teacher');
+    return await response.json();
+  }
+
+  // Subject endpoints
+  async getSubjects() {
+    const response = await fetch(`${API_URL}/subjects`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch subjects');
+    return await response.json();
+  }
+  async createSubject(data) {
+    const response = await fetch(`${API_URL}/subjects`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create subject');
+    return await response.json();
+  }
+  async updateSubject(id, data) {
+    const response = await fetch(`${API_URL}/subjects/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update subject');
+    return await response.json();
+  }
+  async deleteSubject(id) {
+    const response = await fetch(`${API_URL}/subjects/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete subject');
+    return await response.json();
+  }
+
+  // Teacher self-application endpoint
+  async submitTeacherApplication(data) {
+    const response = await fetch(`${API_URL}/teacher-application`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to submit teacher application');
+    return await response.json();
   }
 }
 

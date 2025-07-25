@@ -16,9 +16,16 @@ import Fee from './components/Fee';
 import StudentFeeDetails from './components/StudentFeeDetails';
 import UserChat from './components/UserChat';
 import Attendance from './components/Attendance.jsx';
+import TeacherDash from './components/TeacherDash';
+import TeacherMessage from './components/TeacherMessage.jsx';
+import Dean from './components/Dean.jsx';
+import DeanMessage from './components/DeanMessage.jsx';
+import Subjects from './components/Subjects.jsx';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
+import DiscMessage from './components/DiscMessage.jsx';
+import DiscUserChat from './components/DiscUserChat.jsx';
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -47,13 +54,11 @@ function App() {
       <Route path="/admin-users" element={<Users />} />
       <Route path="/admin-fee" element={<Fee />} />
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
+      <Route path="/admin-subjects" element={<Subjects />} />
  
       <Route path="/discipline" element={<DisciplineDashboard />} />
-      <Route path="/discipline-messages" element={
-        <DisciplineSideTop>
-          <div>Messages Page</div>
-        </DisciplineSideTop>
-      } />
+      <Route path="/discipline-messages" element={<DiscMessage />} />
+      <Route path="/discipline-messages/:userId" element={<DiscUserChat />} />
       <Route path="/discipline-students" element={
         <DisciplineSideTop>
           <div>Students Page</div>
@@ -80,11 +85,19 @@ function App() {
           <div>Security Incidents Page</div>
         </DisciplineSideTop>
       } />
-      <Route path="/discipline-settings" element={
-        <DisciplineSideTop>
-          <div>Settings Page</div>
-        </DisciplineSideTop>
-      } />
+      <Route path="/teacher-dashboard" element={<TeacherDash />} />
+      <Route path="/teacher-messages" element={<TeacherMessage />} />
+      <Route path="/teacher-messages/:userId" element={<TeacherMessage />} />
+      <Route path="/dean" element={<Dean />} />
+      <Route path="/dean-messages" element={<DeanMessage />} />
+      <Route path="/dean-messages/:userId" element={<DeanMessage />} />
+      <Route path="/dean-events" element={<Dean />} />
+      <Route path="/dean-staff" element={<Dean />} />
+      <Route path="/dean-operations" element={<Dean />} />
+      <Route path="/dean-inventory" element={<Dean />} />
+      <Route path="/dean-scheduling" element={<Dean />} />
+      <Route path="/dean-academic" element={<Dean />} />
+    
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       <Route path="*" element={<Navigate to="/" replace />} />

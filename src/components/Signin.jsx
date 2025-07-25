@@ -49,10 +49,14 @@ const Signin = () => {
         setShowLoader(true);
         setTimeout(() => {
           setShowLoader(false);
-          if (["Admin1", "Admin2", "Admin3", "Admin4"].includes(user.role)) {
+          if (["Admin1", "Admin2", "Admin3"].includes(user.role)) {
             navigate('/admin');
+          } else if (user.role === "Admin4") {
+            navigate('/dean');
           } else if (user.role === "Discipline") {
             navigate('/discipline');
+          } else if (user.role === "Teacher") {
+            navigate('/teacher-dashboard');
           } else {
             navigate('/dashboard');
           }

@@ -300,3 +300,19 @@
 .teacher-table th:last-child, .teacher-table td:last-child {
   text-align: center;
 } 
+
+.dropdown-multiselect .dropdown-input button {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 0em;
+  padding: 0 4px;
+  cursor: pointer;
+  color: #888;
+  height: 22px;
+  width: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} 
