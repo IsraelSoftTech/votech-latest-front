@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './AdminTeacher.css';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaMoneyBill, FaFileAlt, FaChartBar, FaPenFancy, FaEdit, FaTrash, FaEnvelope, FaIdCard, FaCog } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaMoneyBill, FaFileAlt, FaChartBar, FaPenFancy, FaEdit, FaTrash, FaEnvelope, FaIdCard, FaCog, FaSpinner } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import SuccessMessage from './SuccessMessage';
 import { useLocation } from 'react-router-dom';
@@ -39,6 +39,12 @@ export default function AdminTeacher() {
   const [showSubjectsDropdown, setShowSubjectsDropdown] = useState(false);
   const [showClassesDropdown, setShowClassesDropdown] = useState(false);
   const [approveStates, setApproveStates] = useState({});
+  const [approveLoading, setApproveLoading] = useState({});
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const canApprove = authUser?.role === 'Admin3';
+  const [disapproveId, setDisapproveId] = useState(null);
+  const [disapproveLoading, setDisapproveLoading] = useState(false);
 
   // Fetch teachers from backend
   useEffect(() => {
@@ -132,13 +138,21 @@ export default function AdminTeacher() {
   };
 
   const handleDelete = async id => {
-    if (!window.confirm('Delete this teacher?')) return;
+    setDeleteId(id);
+  };
+  const confirmDelete = async () => {
+    setDeleteLoading(true);
     try {
-      await api.deleteTeacher(id);
+      await api.deleteTeacher(deleteId);
+      setDeleteId(null);
       fetchTeachers();
     } catch (err) {
       setError('Failed to delete teacher');
     }
+    setDeleteLoading(false);
+  };
+  const cancelDelete = () => {
+    setDeleteId(null);
   };
 
   const handleToggleApprove = id => {
@@ -164,7 +178,7 @@ export default function AdminTeacher() {
       </div>
       <div className="teacher-section">
         <div className="teacher-header-row">
-          <button className="add-teacher-btn" onClick={() => { setShowModal(true); setEditingId(null); setForm({ full_name: '', sex: '', id_card: '', dob: '', pob: '', subjects: '', classes: '', contact: '' }); }} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Add Teacher'}><FaPlus /> Add Teacher</button>
+          {/* Removed Add Teacher button */}
         </div>
         <div className="teacher-table-wrapper" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
           <table className="teacher-table">
@@ -201,20 +215,44 @@ export default function AdminTeacher() {
                         marginLeft: 8,
                         padding: '4px 10px',
                         borderRadius: 6,
-                        background: approveStates[t.id] === 'approved' ? '#22bb33' : '#e53e3e',
+                        background: t.status === 'approved' ? '#22bb33' : '#e53e3e',
                         color: '#fff',
                         fontWeight: 600,
                         fontSize: '0.98rem',
-                        cursor: 'pointer',
+                        cursor: approveLoading[t.id] || !canApprove ? 'not-allowed' : 'pointer',
+                        opacity: approveLoading[t.id] || !canApprove ? 0.6 : 1,
                         transition: 'background 0.18s',
                         userSelect: 'none',
                         border: 'none',
                         outline: 'none',
                         display: 'inline-block',
                       }}
-                      onClick={() => handleToggleApprove(t.id)}
+                      title={canApprove ? '' : 'Only Admin3 can approve'}
+                      onClick={async () => {
+                        if (!canApprove) {
+                          setError('Only Admin3 can approve teachers.');
+                          return;
+                        }
+                        if (approveLoading[t.id]) return;
+                        if (t.status === 'approved') {
+                          setDisapproveId(t.id);
+                          return;
+                        }
+                        setApproveLoading(prev => ({ ...prev, [t.id]: true }));
+                        setError('');
+                        try {
+                          await api.approveTeacher(t.id, 'approved');
+                          setSuccess('Approved!');
+                          window.dispatchEvent(new Event('teacher-status-updated'));
+                          fetchTeachers();
+                        } catch (err) {
+                          setError('Failed to update status');
+                        }
+                        setApproveLoading(prev => ({ ...prev, [t.id]: false }));
+                      }}
                     >
-                      {approveStates[t.id] === 'approved' ? 'Approved' : 'Approve'}
+                      {approveLoading[t.id] ? <FaSpinner className="fa-spin" style={{ marginRight: 6 }} /> : null}
+                      {t.status === 'approved' ? 'Approved' : 'Approve'}
                     </span>
                   </td>
                 </tr>
@@ -228,7 +266,7 @@ export default function AdminTeacher() {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setShowModal(false)}><FaTimes /></button>
             <form className="student-modal-form" onSubmit={handleRegister}>
-              <h2 className="form-title">{editingId ? 'Edit Teacher' : 'Register Teacher'}</h2>
+              <h2 className="form-title">Edit Teacher</h2>
               <div className="modal-form-grid">
                 <div>
                   <label className="input-label">Full Name *</label>
@@ -242,7 +280,7 @@ export default function AdminTeacher() {
                   <label className="input-label">ID Card Number *</label>
                   <input className="input-field" type="text" name="id_card" value={form.id_card} onChange={handleFormChange} placeholder="Enter ID Card Number" required />
                   <label className="input-label">Date of Birth *</label>
-                  <input className="input-field" type="date" name="dob" value={form.dob} onChange={handleFormChange} required />
+                  <input className="input-field" type="date" name="dob" value={form.dob ? form.dob.slice(0,10) : ''} onChange={handleFormChange} required />
                 </div>
                 <div>
                   <label className="input-label">Place of Birth *</label>
@@ -305,6 +343,54 @@ export default function AdminTeacher() {
               {success && <SuccessMessage message={success} />}
               <button type="submit" className="signup-btn" disabled={registering || isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : (editingId ? 'Update' : 'Register')}>{registering ? (editingId ? 'Updating...' : 'Registering...') : (editingId ? 'Update' : 'Register')}</button>
             </form>
+          </div>
+        </div>
+      )}
+      {deleteId && (
+        <div className="modal-overlay" onClick={cancelDelete}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={cancelDelete}><FaTimes /></button>
+            <div style={{ padding: '18px 0', textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 500, marginBottom: 18 }}>Are you sure you want to delete this teacher?</div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 18 }}>
+                <button className="signup-btn" style={{ background: '#e53e3e', minWidth: 90 }} onClick={confirmDelete} disabled={deleteLoading}>
+                  {deleteLoading ? <FaSpinner className="fa-spin" style={{ marginRight: 6 }} /> : null} Delete
+                </button>
+                <button className="signup-btn" style={{ background: '#204080', minWidth: 90 }} onClick={cancelDelete} disabled={deleteLoading}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {disapproveId && (
+        <div className="modal-overlay" onClick={() => setDisapproveId(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setDisapproveId(null)}><FaTimes /></button>
+            <div style={{ padding: '18px 0', textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 500, marginBottom: 18 }}>Do you want to disapprove?</div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 18 }}>
+                <button className="signup-btn" style={{ background: '#e53e3e', minWidth: 90 }}
+                  onClick={async () => {
+                    setDisapproveLoading(true);
+                    setError('');
+                    try {
+                      await api.approveTeacher(disapproveId, 'pending');
+                      setSuccess('Disapproved!');
+                      setDisapproveId(null);
+                      window.dispatchEvent(new Event('teacher-status-updated'));
+                      fetchTeachers();
+                    } catch (err) {
+                      setError('Failed to update status');
+                    }
+                    setDisapproveLoading(false);
+                  }}
+                  disabled={disapproveLoading}
+                >
+                  {disapproveLoading ? <FaSpinner className="fa-spin" style={{ marginRight: 6 }} /> : null} Yes
+                </button>
+                <button className="signup-btn" style={{ background: '#204080', minWidth: 90 }} onClick={() => setDisapproveId(null)} disabled={disapproveLoading}>No</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

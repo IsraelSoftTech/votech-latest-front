@@ -4,6 +4,7 @@ import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaCli
 import logo from '../assets/logo.png';
 import ReactDOM from 'react-dom';
 import './SideTop.css';
+import api from '../services/api';
 
 export default function SideTop({ children, hasUnread }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -28,7 +29,19 @@ export default function SideTop({ children, hasUnread }) {
     { label: 'Reports', icon: <FaFileAlt /> },
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
   ];
-  if (authUser?.role === 'Discipline') {
+
+  if (authUser?.role === 'Admin2') {
+    menuItems = [
+      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Financial Summary', icon: <FaMoneyBill />, path: '/admin-finance' },
+      { label: 'Fee', icon: <FaCreditCard />, path: '/admin-fee' },
+      { label: 'Salary', icon: <FaFileInvoiceDollar />, path: '/admin-salary' },
+      { label: 'Inventory', icon: <FaBoxes />, path: '/admin-inventory' },
+      { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
+      { label: 'Exam/Marks', icon: <FaChartBar /> },
+      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+    ];
+  } else if (authUser?.role === 'Discipline') {
     // Remove Finance, Exam/Marks, Display Users, add Attendance
     menuItems = menuItems.filter(item => !['Finances', 'Exam/Marks'].includes(item.label));
     menuItems.splice(5, 0, { label: 'Attendance', icon: <FaClipboardList />, path: '/admin-attendance' });
@@ -77,6 +90,27 @@ export default function SideTop({ children, hasUnread }) {
 
   // Determine if user is a teacher
   const isTeacher = authUser?.role === 'Teacher';
+  const [teacherStatus, setTeacherStatus] = useState(null);
+
+  useEffect(() => {
+    if (isTeacher) {
+      (async () => {
+        try {
+          const all = await api.getAllTeachers();
+          let rec = null;
+          if (authUser?.id) {
+            rec = all.find(t => t.user_id === authUser.id);
+          }
+          if (!rec) {
+            rec = all.find(t => t.contact === authUser?.contact || t.full_name === authUser?.name);
+          }
+          setTeacherStatus(rec?.status || 'pending');
+        } catch (err) {
+          setTeacherStatus('pending');
+        }
+      })();
+    }
+  }, [isTeacher, authUser]);
 
   // Teacher menu items (from deleted TeacherSideTop)
   const teacherMenuItems = [
@@ -96,9 +130,7 @@ export default function SideTop({ children, hasUnread }) {
     { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
     { label: 'Events', icon: <FaClipboardList />, path: '/dean-events' },
     { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
-    { label: 'Operations Report', icon: <FaFileAlt />, path: '/dean-operations' },
     { label: 'Inventory', icon: <FaBoxes />, path: '/dean-inventory' },
-    { label: 'Scheduling', icon: <FaChartPie />, path: '/dean-scheduling' },
     { label: 'Academic Planning', icon: <FaBook />, path: '/dean-academic' },
     { label: 'Timetables', icon: <FaClipboardList />, path: '/dean-timetables' },
   ];
@@ -170,6 +202,19 @@ export default function SideTop({ children, hasUnread }) {
               onBlur={() => setTimeout(() => setUserMenuOpen(false), 180)}
             >
               {username}
+              {isTeacher && (
+                <span style={{
+                  display: 'inline-block',
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  marginLeft: 8,
+                  background: teacherStatus === 'approved' ? '#22bb33' : '#e53e3e',
+                  border: '1.5px solid #fff',
+                  boxShadow: '0 1px 4px rgba(32,64,128,0.10)',
+                  verticalAlign: 'middle',
+                }} title={teacherStatus === 'approved' ? 'Application Approved' : 'Application Pending'} />
+              )}
             </button>
             {userMenuOpen && ReactDOM.createPortal(
               <div style={{ position: 'fixed', top: 64, right: 24, background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px rgba(32,64,128,0.13)', minWidth: 160, zIndex: 99999, padding: '10px 0', display: 'flex', flexDirection: 'column', alignItems: 'stretch', overflow: 'visible' }}>

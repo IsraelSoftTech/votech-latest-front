@@ -589,6 +589,15 @@ class ApiService {
     if (!response.ok) throw new Error('Failed to delete teacher');
     return await response.json();
   }
+  async approveTeacher(id, status) {
+    const response = await fetch(`${API_URL}/teachers/${id}/status`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) throw new Error('Failed to update teacher status');
+    return await response.json();
+  }
 
   // Subject endpoints
   async getSubjects() {
@@ -634,6 +643,55 @@ class ApiService {
     });
     if (!response.ok) throw new Error('Failed to submit teacher application');
     return await response.json();
+  }
+
+  // SALARY API
+  async getSalaries() {
+    const response = await fetch(`${API_URL}/salaries`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getSalaryByTeacher(teacherId) {
+    const response = await fetch(`${API_URL}/salaries/${teacherId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async setSalary({ teacher_id, amount }) {
+    const response = await fetch(`${API_URL}/salaries`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ teacher_id, amount })
+    });
+    return this.handleResponse(response);
+  }
+
+  async paySalary({ salary_id }) {
+    const response = await fetch(`${API_URL}/salaries/pay`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ salary_id })
+    });
+    return this.handleResponse(response);
+  }
+
+  async deleteSalary(id) {
+    const response = await fetch(`${API_URL}/salaries/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  // Get all teacher user accounts (for salary management)
+  async getTeacherUsers() {
+    const response = await fetch(`${API_URL}/teachers/users`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
   }
 }
 

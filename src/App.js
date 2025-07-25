@@ -21,6 +21,10 @@ import TeacherMessage from './components/TeacherMessage.jsx';
 import Dean from './components/Dean.jsx';
 import DeanMessage from './components/DeanMessage.jsx';
 import Subjects from './components/Subjects.jsx';
+import DeanManager from './components/DeanManager';
+import DeanEvent from './components/DeanEvent';
+import Admin2Dash from './components/Admin2Dash.jsx';
+import Salary from './components/Salary.jsx';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -38,11 +42,12 @@ function App() {
     return () => { clearTimeout(timer1); clearTimeout(timer2); };
   }, []);
   if (showLoader) return <Loader poweredBy={showPoweredBy} />;
+  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   return (
     <Routes>
       <Route path="/" element={<Signin />} />
       <Route path="/signup" element={<Signup />} />
-      <Route path="/admin" element={<Admin />} />
+      <Route path="/admin" element={authUser?.role === 'Admin2' ? <Admin2Dash /> : <Admin />} />
       <Route path="/admin-student" element={<AdminStudents />} />
       <Route path="/admin-teacher" element={<AdminTeachers />} />
       <Route path="/admin-class" element={<AdminClass />} />
@@ -54,6 +59,7 @@ function App() {
       <Route path="/admin-users" element={<Users />} />
       <Route path="/admin-fee" element={<Fee />} />
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
+      <Route path="/admin-salary" element={<Salary />} />
       <Route path="/admin-subjects" element={<Subjects />} />
  
       <Route path="/discipline" element={<DisciplineDashboard />} />
@@ -91,8 +97,8 @@ function App() {
       <Route path="/dean" element={<Dean />} />
       <Route path="/dean-messages" element={<DeanMessage />} />
       <Route path="/dean-messages/:userId" element={<DeanMessage />} />
-      <Route path="/dean-events" element={<Dean />} />
-      <Route path="/dean-staff" element={<Dean />} />
+      <Route path="/dean-events" element={<DeanEvent />} />
+      <Route path="/dean-staff" element={<DeanManager />} />
       <Route path="/dean-operations" element={<Dean />} />
       <Route path="/dean-inventory" element={<Dean />} />
       <Route path="/dean-scheduling" element={<Dean />} />

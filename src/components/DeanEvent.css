@@ -1,0 +1,173 @@
+.dean-event-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.dean-event-cards {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.dean-event-card {
+  flex: 1 1 220px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(34, 60, 108, 0.08);
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 220px;
+  transition: box-shadow 0.2s;
+}
+.dean-event-card.total { border-left: 6px solid #1E3A8A; }
+.dean-event-card.upcoming { border-left: 6px solid #F59E0B; }
+.dean-event-card-title {
+  font-size: 1.1rem;
+  color: #888;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.dean-event-card-value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #1E3A8A;
+}
+
+.dean-event-calendar-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(34, 60, 108, 0.08);
+  padding: 24px;
+  margin-bottom: 32px;
+  overflow-x: auto;
+}
+.react-calendar {
+  border: none;
+  width: 100%;
+  font-family: inherit;
+}
+.event-date {
+  background: #F59E0B !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+}
+
+.dean-event-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(34, 60, 108, 0.18);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dean-event-modal {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(34, 60, 108, 0.18);
+  padding: 32px 24px;
+  max-width: 420px;
+  width: 100%;
+  position: relative;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.dean-event-modal h3 {
+  margin-top: 0;
+  color: #1E3A8A;
+  font-size: 1.3rem;
+  margin-bottom: 18px;
+}
+.dean-event-modal label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 500;
+  color: #1E3A8A;
+}
+.dean-event-modal input,
+.dean-event-modal textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #b0b0b0;
+  border-radius: 6px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #f7f8fa;
+}
+.dean-event-modal textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+.dean-event-participants-list {
+  max-height: 120px;
+  overflow-y: auto;
+  background: #f7f8fa;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.dean-event-participant {
+  font-size: 0.98rem;
+  color: #204080;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dean-event-create-btn {
+  width: 100%;
+  background: #1E3A8A;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dean-event-create-btn:disabled {
+  background: #b0b0b0;
+  cursor: not-allowed;
+}
+.dean-event-success {
+  margin-top: 18px;
+  color: #22bb33;
+  font-weight: 600;
+  text-align: center;
+  font-size: 1.1rem;
+}
+@media (max-width: 900px) {
+  .dean-event-cards {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .dean-event-calendar-wrapper {
+    padding: 12px;
+  }
+}
+@media (max-width: 600px) {
+  .dean-event-container {
+    padding: 12px 2px;
+  }
+  .dean-event-card {
+    padding: 16px 8px;
+    min-width: 140px;
+  }
+  .dean-event-modal {
+    padding: 16px 6px;
+    max-width: 98vw;
+  }
+} 
