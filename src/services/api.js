@@ -2,7 +2,7 @@
 // const API_URL = 'http://localhost:5000/api';
 // For production, use the Render backend API:
 const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
-console.log('API URL:', API_URL);
+// console.log('API URL:', API_URL);
 
 class ApiService {
   constructor() {
@@ -660,20 +660,20 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  async setSalary({ teacher_id, amount }) {
+  async setSalary({ teacher_id, amount, month }) {
     const response = await fetch(`${API_URL}/salaries`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
-      body: JSON.stringify({ teacher_id, amount })
+      body: JSON.stringify({ teacher_id, amount, month })
     });
     return this.handleResponse(response);
   }
 
-  async paySalary({ salary_id }) {
+  async paySalary({ salary_id, month }) {
     const response = await fetch(`${API_URL}/salaries/pay`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
-      body: JSON.stringify({ salary_id })
+      body: JSON.stringify({ salary_id, month })
     });
     return this.handleResponse(response);
   }
@@ -692,6 +692,52 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     return this.handleResponse(response);
+  }
+
+  // Inventory API
+  async getInventory(type = 'income') {
+    const response = await fetch(`${API_URL}/inventory?type=${type}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch inventory');
+    return await response.json();
+  }
+
+  async registerInventoryItem(data) {
+    const response = await fetch(`${API_URL}/inventory`, {
+      method: 'POST',
+      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to register item');
+    return await response.json();
+  }
+
+  async deleteInventoryItem(id) {
+    const response = await fetch(`${API_URL}/inventory/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete item');
+    return await response.json();
+  }
+
+  async editInventoryItem(id, data) {
+    const response = await fetch(`${API_URL}/inventory/${id}`, {
+      method: 'PUT',
+      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update item');
+    return await response.json();
+  }
+
+  async getDepartments() {
+    const response = await fetch(`${API_URL}/departments`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch departments');
+    return await response.json();
   }
 }
 

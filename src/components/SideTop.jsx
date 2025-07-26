@@ -93,23 +93,56 @@ export default function SideTop({ children, hasUnread }) {
   const [teacherStatus, setTeacherStatus] = useState(null);
 
   useEffect(() => {
-    if (isTeacher) {
-      (async () => {
+    let isMounted = true;
+    async function fetchStatus() {
+      if (isTeacher) {
         try {
           const all = await api.getAllTeachers();
           let rec = null;
+          
+          // Try to match by user_id first (most reliable)
           if (authUser?.id) {
             rec = all.find(t => t.user_id === authUser.id);
           }
-          if (!rec) {
-            rec = all.find(t => t.contact === authUser?.contact || t.full_name === authUser?.name);
+          
+          // If not found, try to match by contact (same as DeanManager logic)
+          if (!rec && authUser?.contact) {
+            rec = all.find(t => t.contact === authUser.contact);
           }
-          setTeacherStatus(rec?.status || 'pending');
+          
+          // If still not found, try to match by full_name (same as DeanManager logic)
+          if (!rec && authUser?.name) {
+            rec = all.find(t => t.full_name === authUser.name);
+          }
+          
+          // If still not found, try to match by username (fallback)
+          if (!rec && authUser?.username) {
+            rec = all.find(t => t.full_name?.toLowerCase().includes(authUser.username.toLowerCase()) || 
+                               t.contact?.toLowerCase().includes(authUser.username.toLowerCase()));
+          }
+          
+          console.log('Teacher matching:', { 
+            authUser: { id: authUser?.id, contact: authUser?.contact, name: authUser?.name, username: authUser?.username },
+            foundRecord: rec,
+            allTeachers: all.length
+          });
+          
+          if (isMounted) {
+            setTeacherStatus(rec?.status || 'pending');
+          }
         } catch (err) {
-          setTeacherStatus('pending');
+          console.error('Error fetching teacher status:', err);
+          if (isMounted) setTeacherStatus('pending');
         }
-      })();
+      }
     }
+    fetchStatus();
+    // Listen for status update events
+    window.addEventListener('teacher-status-updated', fetchStatus);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('teacher-status-updated', fetchStatus);
+    };
   }, [isTeacher, authUser]);
 
   // Teacher menu items (from deleted TeacherSideTop)
@@ -130,7 +163,6 @@ export default function SideTop({ children, hasUnread }) {
     { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
     { label: 'Events', icon: <FaClipboardList />, path: '/dean-events' },
     { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
-    { label: 'Inventory', icon: <FaBoxes />, path: '/dean-inventory' },
     { label: 'Academic Planning', icon: <FaBook />, path: '/dean-academic' },
     { label: 'Timetables', icon: <FaClipboardList />, path: '/dean-timetables' },
   ];
@@ -201,20 +233,24 @@ export default function SideTop({ children, hasUnread }) {
               onClick={() => setUserMenuOpen(v => !v)}
               onBlur={() => setTimeout(() => setUserMenuOpen(false), 180)}
             >
-              {username}
-              {isTeacher && (
-                <span style={{
-                  display: 'inline-block',
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  marginLeft: 8,
-                  background: teacherStatus === 'approved' ? '#22bb33' : '#e53e3e',
-                  border: '1.5px solid #fff',
-                  boxShadow: '0 1px 4px rgba(32,64,128,0.10)',
-                  verticalAlign: 'middle',
-                }} title={teacherStatus === 'approved' ? 'Application Approved' : 'Application Pending'} />
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {username}
+                {isTeacher && (
+                  <div 
+                    className={`status-dot ${teacherStatus === 'approved' ? 'approved' : teacherStatus === 'pending' ? 'pending' : 'rejected'}`}
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                      backgroundColor: teacherStatus === 'approved' ? '#22bb33' : teacherStatus === 'pending' ? '#e53e3e' : '#888',
+                      boxShadow: teacherStatus === 'approved' ? '0 0 0 2px rgba(34, 187, 51, 0.2)' : teacherStatus === 'pending' ? '0 0 0 2px rgba(229, 62, 62, 0.2)' : '0 0 0 2px rgba(136, 136, 136, 0.2)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    title={teacherStatus === 'approved' ? 'Application Approved' : teacherStatus === 'pending' ? 'Application Pending' : 'Application Rejected'}
+                  ></div>
+                )}
+              </div>
             </button>
             {userMenuOpen && ReactDOM.createPortal(
               <div style={{ position: 'fixed', top: 64, right: 24, background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px rgba(32,64,128,0.13)', minWidth: 160, zIndex: 99999, padding: '10px 0', display: 'flex', flexDirection: 'column', alignItems: 'stretch', overflow: 'visible' }}>

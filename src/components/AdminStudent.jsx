@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import './AdminStudent.css';
+import './StudentListReport.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaEnvelope, FaIdCard, FaFileExcel, FaUpload, FaPrint } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
+import StudentListReport from './StudentListReport';
 import * as XLSX from 'xlsx';
 import { useLocation } from 'react-router-dom';
 import SideTop from './SideTop';
@@ -86,8 +88,9 @@ export default function AdminStudent() {
   const [excelHeaders, setExcelHeaders] = useState([]);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [printClass, setPrintClass] = useState('');
-  const [printing, setPrinting] = useState(false);
-  const printRef = React.useRef();
+  const [showStudentListReportModal, setShowStudentListReportModal] = useState(false);
+  const [generatedStudentListReport, setGeneratedStudentListReport] = useState(null);
+  const studentListReportRef = React.useRef();
   const [uploadManyModalOpen, setUploadManyModalOpen] = useState(false);
   const [uploadManyFile, setUploadManyFile] = useState(null);
   const [uploadManyPreview, setUploadManyPreview] = useState([]);
@@ -308,13 +311,36 @@ export default function AdminStudent() {
   // Responsive search bar handler
   const handleSearchChange = e => setSearchQuery(e.target.value);
 
-  // Print handler
-  const handlePrintList = () => {
-    setPrinting(true);
-    setTimeout(() => {
-      window.print();
-      setPrinting(false);
-    }, 100);
+  // Print handler - replaced with PDF generation
+  const generateStudentListReport = () => {
+    if (!printClass) {
+      setError('Please select a class first.');
+      return;
+    }
+
+    const classStudents = studentList.filter(s => (s.class_name || s.class || '') === printClass);
+    
+    if (classStudents.length === 0) {
+      setError('No students found for the selected class.');
+      return;
+    }
+
+    const report = {
+      className: printClass,
+      totalStudents: classStudents.length,
+      students: classStudents,
+      academicYear: selectedYear,
+      generatedAt: new Date().toLocaleString()
+    };
+
+    setGeneratedStudentListReport(report);
+    setShowStudentListReportModal(true);
+    setPrintModalOpen(false);
+  };
+
+  const closeStudentListReportModal = () => {
+    setShowStudentListReportModal(false);
+    setGeneratedStudentListReport(null);
   };
 
   // Filtered students for search and print
@@ -496,63 +522,14 @@ export default function AdminStudent() {
             <button
               className="signup-btn"
               style={{ background: '#388e3c', color: '#fff', minWidth: 120, fontSize: 16, borderRadius: 6, padding: '12px 0', marginBottom: 8 }}
-              onClick={handlePrintList}
+              onClick={generateStudentListReport}
               disabled={!printClass}
             >
-              Print
+              Generate Report
             </button>
           </div>
         </div>
       )}
-      {/* Print Area (hidden except for print) */}
-      <div style={{ display: printing ? 'block' : 'none' }}>
-        <div ref={printRef} className="print-class-list-area">
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
-            <img src={logo} alt="logo" style={{ width: 70, height: 70, objectFit: 'contain', marginRight: 18 }} />
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#204080', flex: 1, textAlign: 'left' }}>VOTECH (S7) ACADEMY</div>
-            <div style={{ fontSize: 22, fontWeight: 600, color: '#1976d2', textAlign: 'right' }}>Academic Year: 2025/2026</div>
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 600, marginBottom: 18, color: '#333' }}>Class List: {printClass}</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-            <thead>
-              <tr style={{ background: '#f7f8fa' }}>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>#</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Photo</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Student ID</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Full Name</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Sex</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Date of Birth</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Place of Birth</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Father's Name</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Mother's Name</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Department/Specialty</th>
-                <th style={{ border: '1px solid #ccc', padding: 8 }}>Contact</th>
-              </tr>
-            </thead>
-            <tbody>
-              {classStudents.map((s, idx) => (
-                <tr key={s.id || idx}>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{idx + 1}</td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>
-                    {s.photo_url ? (
-                      <img src={s.photo_url.startsWith('http') ? s.photo_url : `${api.API_URL.replace('/api','')}${s.photo_url}`} alt="student" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
-                    ) : ''}
-                  </td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.student_id}</td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.full_name}</td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.sex}</td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.date_of_birth}</td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.place_of_birth}</td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.father_name}</td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.mother_name}</td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.specialty_name || s.dept || ''}</td>
-                  <td style={{ border: '1px solid #ccc', padding: 8 }}>{s.guardian_contact}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
       {/* Student Table */}
       <div className="student-table-wrapper">
         <table className="student-table">
@@ -727,7 +704,7 @@ export default function AdminStudent() {
             <div style={{fontSize: 20, marginBottom: 22, color: '#204080', fontWeight: 600}}>Delete Student</div>
             <div style={{fontSize: 16, marginBottom: 24, color: '#444'}}>Are you sure you want to delete this student? This action cannot be undone.</div>
             <div style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 18}}>
-              <button className="signup-btn" style={{background:'#e53e3e', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); confirmDelete();}} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}>Delete</button>
+              <button className="signup-btn" style={{background:'#e53e3e', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); confirmDelete();}}>Delete</button>
               <button className="signup-btn" style={{background:'#204080', color:'#fff', minWidth: 110, fontSize: 17, borderRadius: 6, padding: '12px 0', marginBottom: 8}} onClick={e => {e.preventDefault(); cancelDelete();}}>Cancel</button>
             </div>
           </div>
@@ -789,6 +766,14 @@ export default function AdminStudent() {
                 {uploadManyLoading ? 'Uploading...' : 'Upload'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Student List Report Modal */}
+      {showStudentListReportModal && generatedStudentListReport && (
+        <div className="student-list-report-modal-overlay" onClick={closeStudentListReportModal}>
+          <div className="student-list-report-modal-content" onClick={e => e.stopPropagation()}>
+            <StudentListReport ref={studentListReportRef} report={generatedStudentListReport} />
           </div>
         </div>
       )}

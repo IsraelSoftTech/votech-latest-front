@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import SideTop from './SideTop';
 import './Fee.css';
 import './FeeReceipt.css';
+import './FeeReport.css';
 import api from '../services/api';
 import { useLocation, useNavigate } from 'react-router-dom';
+import FeeReport from './FeeReport';
 
 export default function Fee() {
   const location = useLocation();
@@ -32,7 +34,9 @@ export default function Fee() {
   const [classStatsError, setClassStatsError] = useState('');
   const [classStats, setClassStats] = useState(null);
   const [proceedClicked, setProceedClicked] = useState(false);
-  const printAreaRef = React.useRef();
+  const [showFeeReportModal, setShowFeeReportModal] = useState(false);
+  const [generatedFeeReport, setGeneratedFeeReport] = useState(null);
+  const feeReportRef = React.useRef();
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState({ className: '', classId: '', backendResponse: null });
 
@@ -116,21 +120,89 @@ export default function Fee() {
     }
   }, [proceedClicked, selectedClassName, classes]);
 
-  // Print handler for statistics
-  const handlePrintStats = () => {
-    if (!printAreaRef.current) return;
-    const printContents = printAreaRef.current.innerHTML;
-    const win = window.open('', '', 'width=1200,height=900');
-    win.document.write(`
-      <html><head><title>Fee Statistics</title>
-      <link rel="stylesheet" href="/FeeReceipt.css" />
-      <style>
-        @media print {@page { size: A4 landscape; margin: 10mm; } body { background: white !important; } .stats-print-area { width: 100vw !important; min-width: 0 !important; } }
-        .stats-print-area { width: 100vw; min-width: 0; background: white; }
-      </style>
-      </head><body>` + printContents + '</body></html>');
-    win.document.close();
-    setTimeout(() => { win.print(); win.close(); }, 300);
+  // Generate fee report
+  const generateFeeReport = () => {
+    if (!classStats || !Array.isArray(classStats)) {
+      console.error('No class stats available');
+      return;
+    }
+
+    // Calculate totals
+    const totalStudents = classStats.length;
+    const totalExpected = classStats.reduce((sum, student) => {
+      const expected = (student.Registration || 0) + (student.Bus || 0) + (student.Tuition || 0) + 
+                      (student.Internship || 0) + (student.Remedial || 0) + (student.PTA || 0);
+      return sum + expected;
+    }, 0);
+    
+    const totalPaid = classStats.reduce((sum, student) => sum + (student.Total || 0), 0);
+    const totalOwed = classStats.reduce((sum, student) => sum + (student.Balance || 0), 0);
+    const paymentRate = totalExpected > 0 ? totalPaid / totalExpected : 0;
+
+    // Process students data
+    const students = classStats.map(student => {
+      const expectedFees = (student.Registration || 0) + (student.Bus || 0) + (student.Tuition || 0) + 
+                          (student.Internship || 0) + (student.Remedial || 0) + (student.PTA || 0);
+      const paidFees = student.Total || 0;
+      const owedFees = student.Balance || 0;
+      
+      let paymentStatus = 'uncompleted';
+      if (owedFees === 0) paymentStatus = 'completed';
+      else if (paidFees > 0) paymentStatus = 'partial';
+      
+      return {
+        id: student.student_id || Math.random().toString(),
+        student_id: student.student_id || 'N/A',
+        full_name: student.name,
+        expectedFees,
+        paidFees,
+        owedFees,
+        paymentStatus
+      };
+    });
+
+    // Calculate fee breakdown by type
+    const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
+    const feeBreakdown = feeTypes.map(type => {
+      const expected = classStats.reduce((sum, student) => sum + (student[type] || 0), 0);
+      const paid = classStats.reduce((sum, student) => {
+        const studentPaid = student.Total || 0;
+        const studentExpected = (student.Registration || 0) + (student.Bus || 0) + (student.Tuition || 0) + 
+                               (student.Internship || 0) + (student.Remedial || 0) + (student.PTA || 0);
+        const ratio = studentExpected > 0 ? studentPaid / studentExpected : 0;
+        return sum + ((student[type] || 0) * ratio);
+      }, 0);
+      const owed = expected - paid;
+      const paymentRate = expected > 0 ? paid / expected : 0;
+      
+      return {
+        type,
+        expected,
+        paid,
+        owed,
+        paymentRate
+      };
+    });
+
+    const report = {
+      className: selectedClassName,
+      totalStudents,
+      totalExpected,
+      totalPaid,
+      totalOwed,
+      paymentRate,
+      students,
+      feeBreakdown,
+      generatedAt: new Date().toLocaleString()
+    };
+
+    setGeneratedFeeReport(report);
+    setShowFeeReportModal(true);
+  };
+
+  const closeFeeReportModal = () => {
+    setShowFeeReportModal(false);
+    setGeneratedFeeReport(null);
   };
 
   // Debounced search
@@ -280,51 +352,58 @@ export default function Fee() {
                   {classStatsError && <div className="fee-stats-error">{classStatsError}</div>}
                   {classStats && Array.isArray(classStats) && (
                     <div className="fee-stats-table-wrapper">
-                      <div ref={printAreaRef} className="stats-print-area fee-stats-print-area">
-                        <table className="fee-stats-table-pro" style={{fontSize:15}}>
-                          <thead>
-                            <tr>
-                              <th>S/N</th>
-                              <th>Full Name</th>
-                              <th>Student ID</th>
-                              <th>Registration</th>
-                              <th>Bus</th>
-                              <th>Tuition</th>
-                              <th>Internship</th>
-                              <th>Remedial</th>
-                              <th>PTA</th>
-                              <th>Total Paid</th>
-                              <th>Total Left</th>
-                              <th>Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {classStats
-                              .slice()
-                              .sort((a,b)=>a.name.localeCompare(b.name))
-                              .map((s,idx)=>{
-                                return (
-                                  <tr key={s.name+idx}>
-                                    <td>{idx+1}</td>
-                                    <td>{s.name}</td>
-                                    <td>{s.student_id || ''}</td>
-                                    <td>{(s.Registration||0).toLocaleString()}</td>
-                                    <td>{(s.Bus||0).toLocaleString()}</td>
-                                    <td>{(s.Tuition||0).toLocaleString()}</td>
-                                    <td>{(s.Internship||0).toLocaleString()}</td>
-                                    <td>{(s.Remedial||0).toLocaleString()}</td>
-                                    <td>{(s.PTA||0).toLocaleString()}</td>
-                                    <td>{(s.Total||0).toLocaleString()}</td>
-                                    <td>{(s.Balance||0).toLocaleString()}</td>
-                                    <td style={{color:s.Status==='Paid'?'#2ecc71':'#e53e3e',fontWeight:700}}>{s.Status}</td>
-                                  </tr>
-                                );
-                              })}
-                          </tbody>
-                        </table>
-                      </div>
+                      <table className="fee-stats-table-pro" style={{fontSize:15}}>
+                        <thead>
+                          <tr>
+                            <th>S/N</th>
+                            <th>Full Name</th>
+                            <th>Student ID</th>
+                            <th>Registration</th>
+                            <th>Bus</th>
+                            <th>Tuition</th>
+                            <th>Internship</th>
+                            <th>Remedial</th>
+                            <th>PTA</th>
+                            <th>Total Paid</th>
+                            <th>Total Left</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {classStats
+                            .slice()
+                            .sort((a,b)=>a.name.localeCompare(b.name))
+                            .map((s,idx)=>{
+                              return (
+                                <tr key={s.name+idx}>
+                                  <td>{idx+1}</td>
+                                  <td>{s.name}</td>
+                                  <td>{s.student_id || ''}</td>
+                                  <td>{(s.Registration||0).toLocaleString()}</td>
+                                  <td>{(s.Bus||0).toLocaleString()}</td>
+                                  <td>{(s.Tuition||0).toLocaleString()}</td>
+                                  <td>{(s.Internship||0).toLocaleString()}</td>
+                                  <td>{(s.Remedial||0).toLocaleString()}</td>
+                                  <td>{(s.PTA||0).toLocaleString()}</td>
+                                  <td>{(s.Total||0).toLocaleString()}</td>
+                                  <td>{(s.Balance||0).toLocaleString()}</td>
+                                  <td style={{color:s.Status==='Paid'?'#2ecc71':'#e53e3e',fontWeight:700}}>{s.Status}</td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
                       <div className="fee-stats-modal-actions">
-                        <button className="print-button fee-stats-print-btn" onClick={handlePrintStats}>Print</button>
+                        <button className="print-button fee-stats-print-btn" onClick={generateFeeReport}>Generate Report</button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Fee Report Modal */}
+                  {showFeeReportModal && generatedFeeReport && (
+                    <div className="fee-report-modal-overlay" onClick={closeFeeReportModal}>
+                      <div className="fee-report-modal-content" onClick={e => e.stopPropagation()}>
+                        <FeeReport ref={feeReportRef} report={generatedFeeReport} />
                       </div>
                     </div>
                   )}

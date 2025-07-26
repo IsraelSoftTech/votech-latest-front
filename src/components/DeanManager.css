@@ -75,6 +75,18 @@
   color: #e53e3e;
   font-weight: 600;
 }
+
+table, .dean-table, .dean-table-wrapper {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+@media (max-width: 700px) {
+  .dean-table, .dean-table-wrapper, table {
+    min-width: 0 !important;
+    width: 100vw !important;
+    overflow-x: auto !important;
+  }
+}
 @media (max-width: 900px) {
   .dean-manager-table {
     min-width: 600px;
@@ -96,4 +108,7 @@
     padding: 16px 8px;
     min-width: 140px;
   }
+}
+body, html {
+  overflow-x: hidden;
 } 

@@ -25,6 +25,7 @@ import DeanManager from './components/DeanManager';
 import DeanEvent from './components/DeanEvent';
 import Admin2Dash from './components/Admin2Dash.jsx';
 import Salary from './components/Salary.jsx';
+import Inventory from './components/Inventory.jsx';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -61,6 +62,7 @@ function App() {
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
       <Route path="/admin-salary" element={<Salary />} />
       <Route path="/admin-subjects" element={<Subjects />} />
+      <Route path="/admin-inventory" element={<Inventory />} />
  
       <Route path="/discipline" element={<DisciplineDashboard />} />
       <Route path="/discipline-messages" element={<DiscMessage />} />

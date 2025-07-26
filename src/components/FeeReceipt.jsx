@@ -1,5 +1,8 @@
 import React from 'react';
 import './FeeReceipt.css';
+import { FaDownload } from 'react-icons/fa';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import logo from '../assets/logo.png'; // Assuming you have a logo
 
 function getAcademicYear() {
@@ -24,6 +27,42 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
   const total = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
   const left = total - paid;
   const status = left <= 0 ? 'Completed' : 'Uncompleted';
+
+  const downloadPDF = async () => {
+    if (!ref.current) return;
+    
+    try {
+      const canvas = await html2canvas(ref.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = `fee_receipt_${student.student_id}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
 
   return (
     <div className="receipt-container" ref={ref}>
@@ -94,6 +133,10 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
           <p>Cashier's Signature</p>
         </div>
       </div>
+
+      <button className="download-pdf-btn" onClick={downloadPDF}>
+        <FaDownload /> Download PDF
+      </button>
     </div>
   );
 });
