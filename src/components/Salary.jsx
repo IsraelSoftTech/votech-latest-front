@@ -5,6 +5,7 @@ import { FaMoneyCheckAlt, FaMoneyBillWave, FaSearch, FaEdit, FaUserTie, FaTimes,
 import api from '../services/api';
 import SalaryReceiptReport from './SalaryReceiptReport';
 import './SalaryReceiptReport.css';
+import SuccessMessage from './SuccessMessage';
 
 export default function Salary() {
   const [teacherUsers, setTeacherUsers] = useState([]);
@@ -24,6 +25,7 @@ export default function Salary() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [payTeacherName, setPayTeacherName] = useState('');
   const [payTeacherSuggestions, setPayTeacherSuggestions] = useState([]);
@@ -150,7 +152,7 @@ export default function Salary() {
       setEditRow(null);
       setSalaryAmount('');
       setSuccess('Salaries refreshed successfully');
-      setTimeout(() => setSuccess(''), 1200);
+      setShowSuccess(true);
     } catch (e) {
       setError('Failed to refresh salaries');
     }
@@ -191,7 +193,7 @@ export default function Salary() {
       }
       if (atLeastOneSuccess) {
         setSuccess('Salary set successfully');
-        setTimeout(() => setSuccess(''), 1200);
+        setShowSuccess(true);
         setTotalsRefreshTrigger(prev => prev + 1);
         setEditRow(null);
         setSalaryAmount('');
@@ -237,7 +239,7 @@ export default function Salary() {
       } : s));
       setSalaryModal(null);
       setSuccess('Salary paid successfully');
-      setTimeout(() => setSuccess(''), 1200);
+      setShowSuccess(true);
       // Trigger totals recalculation
       setTotalsRefreshTrigger(prev => prev + 1);
     } catch (e) {
@@ -410,7 +412,7 @@ export default function Salary() {
         await api.deleteSalary(record.id);
       }
       setSuccess('All salary records have been deleted');
-      setTimeout(() => setSuccess(''), 3000);
+      setShowSuccess(true);
       setShowUpsetAllModal(false);
       // Refresh the table
       handleSetSalaries();
@@ -421,6 +423,7 @@ export default function Salary() {
 
   return (
     <SideTop>
+      {showSuccess && <SuccessMessage message={success} onClose={() => setShowSuccess(false)} />}
       <div className="salary-cards-row">
         <div className="salary-card paid">
           <div className="icon"><FaMoneyBillWave /></div>
@@ -542,7 +545,6 @@ export default function Salary() {
         </table>
       </div>
       {error && <div style={{color:'#e53e3e', marginBottom:12}}>{error}</div>}
-      {success && <div style={{color:'#388e3c', marginBottom:12}}>{success}</div>}
       {/* Suggestions dropdown */}
       {search && suggestions.length > 0 && (
         <div className="salary-search-results">
@@ -651,6 +653,7 @@ export default function Salary() {
           </div>
         </div>
       )}
+      {/* Upset All confirmation modal */}
       {showUpsetAllModal && (
         <div className="salary-modal-overlay" onClick={() => setShowUpsetAllModal(false)}>
           <div className="salary-modal" onClick={e => e.stopPropagation()}>

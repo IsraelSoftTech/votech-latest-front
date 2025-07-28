@@ -5,20 +5,23 @@ import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
 
 export default function TeacherApp({ authUser }) {
+  const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
-    full_name: '',
-    sex: '',
-    id_card: '',
-    dob: '',
-    pob: '',
-    subjects: [],
-    classes: '',
-    contact: ''
+    fullName: '',
+    contact: '',
+    email: '',
+    specialty: '',
+    experience: '',
+    education: '',
+    skills: '',
+    availability: '',
+    motivation: ''
   });
-  const [registering, setRegistering] = useState(false);
-  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [subjects, setSubjects] = useState([]);
+  const [success, setSuccess] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [specialties, setSpecialties] = useState([]);
   const [teacherRecord, setTeacherRecord] = useState(null);
   const [showSubjectsDropdown, setShowSubjectsDropdown] = useState(false);
 
@@ -86,12 +89,12 @@ export default function TeacherApp({ authUser }) {
       };
       await api.submitTeacherApplication(submitForm);
       setSuccess('Application submitted!');
+      setShowSuccess(true);
       fetchTeacherRecord();
     } catch (err) {
       setError(err.message || 'You have already submitted your application');
     }
     setRegistering(false);
-    setTimeout(() => setSuccess(''), 1200);
   };
 
   let statusColor = '#e53e3e', statusIcon = <FaTimes />, statusTitle = 'Not Approved';
@@ -201,7 +204,7 @@ export default function TeacherApp({ authUser }) {
             </div>
           </div>
           {error && <div className="error-message" style={{ textAlign: 'center', marginBottom: 12 }}>{error}</div>}
-          {success && <SuccessMessage message={success} />}
+          {showSuccess && <SuccessMessage message={success} onClose={() => setShowSuccess(false)} />}
           <button type="submit" className="signup-btn" disabled={registering}>{registering ? 'Registering...' : 'Register'}</button>
         </form>
       )}

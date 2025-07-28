@@ -978,17 +978,463 @@
   }
 } 
 
+/* Enhanced Professional Responsive Design for Inventory */
+
+/* Base responsive improvements */
 .inventory-table, .inventory-table-wrapper {
   max-width: 100vw;
   box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
-@media (max-width: 700px) {
-  .inventory-table, .inventory-table-wrapper {
-    min-width: 0 !important;
-    width: 100vw !important;
-    overflow-x: auto !important;
+
+/* Professional Mobile Breakpoints */
+@media (max-width: 1200px) {
+  .inventory-container {
+    padding: 24px 12px;
+  }
+  
+  .inventory-cards {
+    gap: 20px;
+  }
+  
+  .inventory-card {
+    min-width: 260px;
+    padding: 28px 24px;
+  }
+  
+  .card-value {
+    font-size: 2.2rem;
+  }
+  
+  .summary-stats {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
   }
 }
+
+@media (max-width: 900px) {
+  .inventory-container {
+    padding: 20px 10px;
+  }
+  
+  .inventory-container h2 {
+    font-size: 1.8rem;
+    margin-bottom: 28px;
+  }
+  
+  .inventory-cards {
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  
+  .inventory-card {
+    min-width: 240px;
+    padding: 24px 20px;
+  }
+  
+  .card-value {
+    font-size: 2rem;
+  }
+  
+  .inventory-tabs {
+    gap: 6px;
+    padding: 6px;
+  }
+  
+  .tab-button {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+  
+  .tab-content {
+    padding: 24px;
+  }
+  
+  .summary-stats {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  
+  .stat-value {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .inventory-container {
+    padding: 16px 8px;
+  }
+  
+  .inventory-container h2 {
+    font-size: 1.6rem;
+    margin-bottom: 24px;
+  }
+  
+  .inventory-cards {
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .inventory-card {
+    padding: 20px 16px;
+    min-width: auto;
+    width: 100%;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(34, 60, 108, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .inventory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(34, 60, 108, 0.12);
+  }
+  
+  .card-value {
+    font-size: 1.8rem;
+  }
+  
+  .inventory-tabs {
+    flex-direction: column;
+    gap: 4px;
+    background: #f0f2f5;
+    border-radius: 10px;
+    padding: 8px;
+  }
+  
+  .tab-button {
+    justify-content: center;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  
+  .tab-content {
+    padding: 20px;
+    border-radius: 12px;
+  }
+  
+  .modal-content {
+    padding: 20px;
+    margin: 10px;
+    border-radius: 12px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .register-btn {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 1rem;
+    border-radius: 8px;
+  }
+  
+  .inventory-table {
+    font-size: 0.9rem;
+    min-width: 600px;
+  }
+  
+  .inventory-table th,
+  .inventory-table td {
+    padding: 12px 8px;
+    white-space: nowrap;
+  }
+  
+  .action-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .stat-item {
+    padding: 18px;
+  }
+  
+  .stat-value {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .inventory-container {
+    padding: 12px 6px;
+  }
+  
+  .inventory-container h2 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+  
+  .inventory-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+    padding: 18px 14px;
+    border-radius: 10px;
+  }
+  
+  .card-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  .card-value {
+    font-size: 1.6rem;
+  }
+  
+  .card-title {
+    font-size: 1rem;
+  }
+  
+  .modal-content {
+    padding: 16px;
+    margin: 8px;
+    border-radius: 10px;
+  }
+  
+  .register-form {
+    gap: 16px;
+  }
+  
+  .register-form input,
+  .register-form select {
+    padding: 10px 12px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    border-radius: 6px;
+  }
+  
+  .inventory-table {
+    min-width: 500px;
+    font-size: 0.85rem;
+  }
+  
+  .inventory-table th,
+  .inventory-table td {
+    padding: 10px 6px;
+  }
+  
+  .action-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+  }
+  
+  .stat-item {
+    padding: 16px;
+  }
+  
+  .stat-value {
+    font-size: 1.2rem;
+  }
+  
+  .stat-label {
+    font-size: 0.85rem;
+  }
+  
+  /* Optimize form inputs for mobile */
+  .form-group input,
+  .form-group select {
+    font-size: 16px;
+    padding: 10px 8px;
+  }
+  
+  /* Improve button spacing */
+  .form-actions button {
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .inventory-container {
+    padding: 10px 4px;
+  }
+  
+  .inventory-container h2 {
+    font-size: 1.3rem;
+    margin-bottom: 18px;
+  }
+  
+  .inventory-card {
+    padding: 16px 12px;
+    gap: 12px;
+  }
+  
+  .card-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
+  }
+  
+  .card-value {
+    font-size: 1.4rem;
+  }
+  
+  .card-title {
+    font-size: 0.9rem;
+  }
+  
+  .tab-button {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .tab-content {
+    padding: 16px;
+  }
+  
+  .modal-content {
+    padding: 14px;
+    margin: 6px;
+  }
+  
+  .inventory-table {
+    min-width: 450px;
+    font-size: 0.8rem;
+  }
+  
+  .inventory-table th,
+  .inventory-table td {
+    padding: 8px 4px;
+  }
+  
+  .action-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+  
+  .stat-item {
+    padding: 14px;
+  }
+  
+  .stat-value {
+    font-size: 1.1rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+}
+
+/* Enhanced table responsiveness for very small screens */
+@media (max-width: 480px) {
+  .inventory-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-radius: 8px;
+  }
+  
+  .inventory-table thead,
+  .inventory-table tbody,
+  .inventory-table tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+  
+  .inventory-table th,
+  .inventory-table td {
+    min-width: 80px;
+  }
+  
+  /* Make specific columns wider for better readability */
+  .inventory-table th:nth-child(2),
+  .inventory-table td:nth-child(2) {
+    min-width: 120px;
+  }
+  
+  .inventory-table th:nth-child(3),
+  .inventory-table td:nth-child(3) {
+    min-width: 100px;
+  }
+  
+  .inventory-table th:last-child,
+  .inventory-table td:last-child {
+    min-width: 100px;
+  }
+}
+
+/* Professional scrollbar styling */
+.inventory-table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.inventory-table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.inventory-table-wrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.inventory-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Enhanced modal responsiveness */
+@media (max-width: 700px) {
+  .modal-overlay {
+    padding: 10px;
+  }
+  
+  .modal-content {
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .inventory-report-modal-content {
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Ensure no horizontal scroll on body */
 body, html {
   overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Professional focus states for accessibility */
+.register-form input:focus,
+.register-form select:focus,
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #1E3A8A;
+  box-shadow: 0 0 0 3px rgba(32, 64, 128, 0.1);
+}
+
+/* Enhanced button states */
+.register-btn:active,
+.set-salaries-btn:active,
+.action-btn:active {
+  transform: translateY(1px);
+}
+
+/* Professional loading states */
+.inventory-table-wrapper:empty::before {
+  content: "Loading...";
+  display: block;
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
 } 

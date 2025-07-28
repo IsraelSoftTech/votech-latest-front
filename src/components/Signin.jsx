@@ -13,6 +13,8 @@ const Signin = () => {
   const [form, setForm] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [showLoader, setShowLoader] = useState(false);
@@ -46,6 +48,8 @@ const Signin = () => {
       // Support both response.data.user and response.user
       const user = response.data?.user || response.user;
       if (user) {
+        setSuccess('Sign in successful!');
+        setShowSuccess(true);
         setShowLoader(true);
         setTimeout(() => {
           setShowLoader(false);
@@ -146,6 +150,7 @@ const Signin = () => {
 
   return (
     <div className="signin-root">
+      {showSuccess && <SuccessMessage message={success} onClose={() => setShowSuccess(false)} />}
       <header className="signin-header">
         <div className="header-group">
           <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />

@@ -4,6 +4,7 @@ import SideTop from './SideTop';
 import { FaMoneyBill, FaChartLine, FaCalculator, FaPlus, FaTrash, FaEdit } from 'react-icons/fa';
 import api from '../services/api';
 import InventoryReport from './InventoryReport';
+import SuccessMessage from './SuccessMessage';
 
 export default function Inventory() {
   const [activeTab, setActiveTab] = useState('Income Management');
@@ -29,6 +30,7 @@ export default function Inventory() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
   const [editId, setEditId] = useState(null);
   const [expenditureEditId, setExpenditureEditId] = useState(null);
   const [showExpenditureModal, setShowExpenditureModal] = useState(false);
@@ -166,6 +168,7 @@ export default function Inventory() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setShowSuccess(false);
     if (!form.date || !form.item_name || !form.department || !form.quantity || !form.estimated_cost) {
       setError('All fields are required');
       return;
@@ -174,9 +177,11 @@ export default function Inventory() {
       if (editId) {
         await api.editInventoryItem(editId, { ...form, type: 'income' });
         setSuccess('Item updated successfully!');
+        setShowSuccess(true);
       } else {
         await api.registerInventoryItem({ ...form, type: 'income' });
         setSuccess('Item registered successfully!');
+        setShowSuccess(true);
       }
       setShowModal(false);
       setForm({ date: '', item_name: '', department: '', quantity: '', estimated_cost: '' });
@@ -208,6 +213,7 @@ export default function Inventory() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setShowSuccess(false);
     if (!expenditureForm.date || !expenditureForm.item_name || !expenditureForm.department || !expenditureForm.quantity || !expenditureForm.estimated_cost) {
       setError('All fields are required');
       return;
@@ -216,9 +222,11 @@ export default function Inventory() {
       if (expenditureEditId) {
         await api.editInventoryItem(expenditureEditId, { ...expenditureForm, type: 'expenditure' });
         setSuccess('Expenditure item updated successfully!');
+        setShowSuccess(true);
       } else {
         await api.registerInventoryItem({ ...expenditureForm, type: 'expenditure' });
         setSuccess('Expenditure item registered successfully!');
+        setShowSuccess(true);
       }
       setShowExpenditureModal(false);
       setExpenditureForm({ date: '', item_name: '', department: '', quantity: '', estimated_cost: '' });
@@ -239,6 +247,7 @@ export default function Inventory() {
     try {
       await api.deleteInventoryItem(itemToDelete);
       setSuccess('Item deleted successfully!');
+      setShowSuccess(true);
       if (deleteType === 'income') fetchItems();
       else fetchExpenditureItems();
     } catch (e) {
@@ -445,6 +454,7 @@ export default function Inventory() {
       const item = items.find(i => i.id === id);
       await api.editInventoryItem(id, { ...item, depreciation_rate: depreciationEdits[id], type: 'income' });
       setSuccess('Depreciation rate saved!');
+      setShowSuccess(true);
       fetchItems();
     } catch (e) {
       setError('Failed to save depreciation rate');
@@ -535,7 +545,7 @@ export default function Inventory() {
                 <button className="register-btn" onClick={() => setShowModal(true)}><FaPlus /> Register Item</button>
               </div>
               {error && <div className="error-message">{error}</div>}
-              {success && <div className="success-message">{success}</div>}
+              {showSuccess && <SuccessMessage message={success} onClose={() => setShowSuccess(false)} />}
               {/* Modal */}
               {showModal && (
                 <div className="modal-overlay" onClick={handleModalClose}>
@@ -617,7 +627,7 @@ export default function Inventory() {
                 <button className="register-btn" onClick={() => setShowExpenditureModal(true)}><FaPlus /> Register Item</button>
               </div>
               {error && <div className="error-message">{error}</div>}
-              {success && <div className="success-message">{success}</div>}
+              {showSuccess && <SuccessMessage message={success} onClose={() => setShowSuccess(false)} />}
               {/* Expenditure Modal */}
               {showExpenditureModal && (
                 <div className="modal-overlay" onClick={handleExpenditureModalClose}>
