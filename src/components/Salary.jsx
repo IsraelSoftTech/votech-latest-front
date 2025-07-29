@@ -105,24 +105,24 @@ export default function Salary() {
       const records = await api.getSalaries();
       console.log('All salary records from API:', records);
       
-      // Group salary records by teacher
-      const teacherSalaryMap = {};
+      // Group salary records by user
+      const userSalaryMap = {};
       records.forEach(record => {
-        if (!teacherSalaryMap[record.teacher_id]) {
-          teacherSalaryMap[record.teacher_id] = [];
+        if (!userSalaryMap[record.user_id]) {
+          userSalaryMap[record.user_id] = [];
         }
-        teacherSalaryMap[record.teacher_id].push(record);
+        userSalaryMap[record.user_id].push(record);
       });
       
-      // Create table rows - one per teacher, showing latest paid month
+      // Create table rows - one per user, showing latest paid month
       const table = [];
-      teacherUsers.forEach(teacher => {
-        const teacherSalaries = teacherSalaryMap[teacher.id] || [];
+      teacherUsers.forEach(user => {
+        const userSalaries = userSalaryMap[user.id] || [];
         
-        if (teacherSalaries.length === 0) {
+        if (userSalaries.length === 0) {
           // If no salary records, show one row with empty data
           table.push({
-            ...teacher,
+            ...user,
             salary: '',
             salary_id: null,
             paid: false,
@@ -131,18 +131,18 @@ export default function Salary() {
           });
         } else {
           // Find the latest paid month, or use the most recent month if none paid
-          const paidSalaries = teacherSalaries.filter(s => s.paid);
+          const paidSalaries = userSalaries.filter(s => s.paid);
           const latestPaid = paidSalaries.length > 0 
             ? paidSalaries.sort((a, b) => new Date(b.paid_at) - new Date(a.paid_at))[0]
-            : teacherSalaries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            : userSalaries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
           
           table.push({
-            ...teacher,
+            ...user,
             salary: latestPaid.amount,
             salary_id: latestPaid.id,
             paid: latestPaid.paid,
             month: latestPaid.month,
-            allSalaries: teacherSalaries // Store all salaries for expanded view
+            allSalaries: userSalaries // Store all salaries for expanded view
           });
         }
       });
@@ -185,7 +185,7 @@ export default function Salary() {
           if (row.salary_id) {
             await api.deleteSalary(row.salary_id);
           }
-          await api.setSalary({ teacher_id: row.id, amount: salaryAmount, month });
+          await api.setSalary({ user_id: row.id, amount: salaryAmount, month });
           atLeastOneSuccess = true;
         } catch (e) {
           duplicateMonths.push(month);

@@ -16,7 +16,7 @@ const menuItems = [
   { label: 'Security Incidents', icon: <FaShieldAlt />, path: '/discipline-security' }
 ];
 
-export default function DisciplineSideTop({ children, hasUnread = false }) {
+export default function DisciplineSideTop({ children, hasUnread = false, activeTab }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ export default function DisciplineSideTop({ children, hasUnread = false }) {
           {menuItems.map(item => (
             <div
               key={item.label}
-              className={`ds-menu-item${location.pathname === item.path ? ' active' : ''}`}
+              className={`ds-menu-item${(activeTab && item.label === activeTab) || location.pathname === item.path || (item.path && location.pathname.startsWith(item.path + '/')) ? ' active' : ''}`}
               onClick={() => navigate(item.path)}
               style={{ position: 'relative' }}
             >

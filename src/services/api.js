@@ -1,7 +1,7 @@
 // For local development, use the local backend API:
-// const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5000/api';
 // For production, use the Render backend API:
-const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
+// const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
 // console.log('API URL:', API_URL);
 
 class ApiService {
@@ -479,6 +479,97 @@ class ApiService {
     return await response.json();
   }
 
+  async sendMessageWithFile(receiver_id, content, file) {
+    const formData = new FormData();
+    formData.append('receiver_id', receiver_id);
+    if (content) formData.append('content', content);
+    if (file) formData.append('file', file);
+
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    headers['Authorization'] = authHeaders['Authorization'];
+
+    const response = await fetch(`${API_URL}/messages/with-file`, {
+      method: 'POST',
+      headers: headers,
+      body: formData
+    });
+    if (!response.ok) throw new Error('Failed to send message with file');
+    return await response.json();
+  }
+
+  // Group chat methods
+  async createGroup(name, participant_ids) {
+    const response = await fetch(`${API_URL}/groups`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ name, participant_ids })
+    });
+    if (!response.ok) throw new Error('Failed to create group');
+    return await response.json();
+  }
+
+  async deleteGroup(groupId) {
+    const response = await fetch(`${API_URL}/groups/${groupId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete group');
+    return await response.json();
+  }
+
+  async getGroups() {
+    const response = await fetch(`${API_URL}/groups`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch groups');
+    return await response.json();
+  }
+
+  async getGroupMessages(groupId) {
+    const response = await fetch(`${API_URL}/groups/${groupId}/messages`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch group messages');
+    return await response.json();
+  }
+
+  async sendGroupMessage(groupId, content) {
+    const response = await fetch(`${API_URL}/groups/${groupId}/messages`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ content })
+    });
+    if (!response.ok) throw new Error('Failed to send group message');
+    return await response.json();
+  }
+
+  async sendGroupMessageWithFile(groupId, content, file) {
+    const formData = new FormData();
+    if (content) formData.append('content', content);
+    if (file) formData.append('file', file);
+
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    headers['Authorization'] = authHeaders['Authorization'];
+
+    const response = await fetch(`${API_URL}/groups/${groupId}/messages/with-file`, {
+      method: 'POST',
+      headers: headers,
+      body: formData
+    });
+    if (!response.ok) throw new Error('Failed to send group message with file');
+    return await response.json();
+  }
+
+  async getGroupParticipants(groupId) {
+    const response = await fetch(`${API_URL}/groups/${groupId}/participants`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch group participants');
+    return await response.json();
+  }
+
   // Mark all messages from userId as read
   async markMessagesRead(userId) {
     const response = await fetch(`${API_URL}/messages/${userId}/read`, {
@@ -486,6 +577,16 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to mark messages as read');
+    return await response.json();
+  }
+
+  // Mark all group messages as read
+  async markMessagesReadGroup(groupId) {
+    const response = await fetch(`${API_URL}/groups/${groupId}/read`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to mark group messages as read');
     return await response.json();
   }
 
@@ -703,11 +804,11 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  async setSalary({ teacher_id, amount, month }) {
+  async setSalary({ user_id, amount, month }) {
     const response = await fetch(`${API_URL}/salaries`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
-      body: JSON.stringify({ teacher_id, amount, month })
+      body: JSON.stringify({ user_id, amount, month })
     });
     return this.handleResponse(response);
   }

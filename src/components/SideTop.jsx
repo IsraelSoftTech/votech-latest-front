@@ -6,7 +6,7 @@ import ReactDOM from 'react-dom';
 import './SideTop.css';
 import api from '../services/api';
 
-export default function SideTop({ children, hasUnread }) {
+export default function SideTop({ children, hasUnread, activeTab }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [menuExpanded, setMenuExpanded] = useState(false);
@@ -238,7 +238,7 @@ export default function SideTop({ children, hasUnread }) {
           {menuToShow.map(item => (
             <div
               key={item.label}
-              className={`menu-item${location.pathname === item.path ? ' active' : ''}`}
+              className={`menu-item${(activeTab && item.label === activeTab) || location.pathname === item.path || (item.path && location.pathname.startsWith(item.path + '/')) ? ' active' : ''}`}
               onClick={() => item.path && navigate(item.path)}
               style={{ position: 'relative' }}
             >

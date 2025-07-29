@@ -28,6 +28,7 @@ import Admin2App from './components/Admin2App.jsx';
 import MyClasses from './components/MyClasses.jsx';
 import Salary from './components/Salary.jsx';
 import Inventory from './components/Inventory.jsx';
+import GroupChat from './components/GroupChat';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -65,6 +66,7 @@ function App() {
       <Route path="/admin-salary" element={<Salary />} />
       <Route path="/admin-subjects" element={<Subjects />} />
       <Route path="/admin-inventory" element={<Inventory />} />
+      <Route path="/admin-group-messages/:groupId" element={<GroupChat />} />
  
       <Route path="/discipline" element={<DisciplineDashboard />} />
       <Route path="/discipline-messages" element={<DiscMessage />} />
