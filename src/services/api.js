@@ -636,12 +636,55 @@ class ApiService {
 
   // Teacher self-application endpoint
   async submitTeacherApplication(data) {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    
+    if (data instanceof FormData) {
+      // For FormData, only include Authorization header, not Content-Type
+      headers['Authorization'] = authHeaders['Authorization'];
+    } else {
+      // For JSON, include all auth headers including Content-Type
+      Object.assign(headers, authHeaders);
+    }
+    
     const response = await fetch(`${API_URL}/teacher-application`, {
       method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data),
+      headers: headers,
+      body: data instanceof FormData ? data : JSON.stringify(data),
     });
     if (!response.ok) throw new Error('Failed to submit teacher application');
+    return await response.json();
+  }
+
+  // Teacher edit their own application
+  async editTeacherApplication(id, data) {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    
+    if (data instanceof FormData) {
+      // For FormData, only include Authorization header, not Content-Type
+      headers['Authorization'] = authHeaders['Authorization'];
+    } else {
+      // For JSON, include all auth headers including Content-Type
+      Object.assign(headers, authHeaders);
+    }
+    
+    const response = await fetch(`${API_URL}/teacher-application/${id}`, {
+      method: 'PUT',
+      headers: headers,
+      body: data instanceof FormData ? data : JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to edit teacher application');
+    return await response.json();
+  }
+
+  // Teacher delete their own application
+  async deleteTeacherApplication(id) {
+    const response = await fetch(`${API_URL}/teacher-application/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete teacher application');
     return await response.json();
   }
 
@@ -737,6 +780,15 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch departments');
+    return await response.json();
+  }
+
+  // Get all students
+  async getAllStudents() {
+    const response = await fetch(`${API_URL}/students`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch students');
     return await response.json();
   }
 }

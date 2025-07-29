@@ -492,31 +492,34 @@ export default function Inventory() {
         {/* Sub Tabs */}
         {isMobile ? (
           <div style={{ marginBottom: 32 }}>
-            <button className="register-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setShowTabModal(true)}>
-              View Tabs
+            <button className="mobile-tab-trigger" onClick={() => setShowTabModal(true)}>
+              <FaChartLine /> View Tabs
             </button>
             {showTabModal && (
               <div className="modal-overlay" onClick={() => setShowTabModal(false)}>
-                <div className="modal-content" style={{ maxWidth: 320, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                  <h3>Select Tab</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 24 }}>
+                <div className="mobile-tab-content" onClick={e => e.stopPropagation()}>
+                  <div className="mobile-tab-header">
+                    <h3>Select Tab</h3>
+                  </div>
+                  <div className="mobile-tab-list">
                     {tabs.map(tab => (
-                      <button
-                        key={tab.id}
-                        className={`tab-button${activeTab === tab.id ? ' active' : ''}`}
-                        style={{ width: '100%', justifyContent: 'center', fontSize: 18, padding: '16px 0' }}
-                        onClick={() => { setActiveTab(tab.id); setShowTabModal(false); }}
-                      >
-                        {tab.label}
-                      </button>
+                      <div key={tab.id} className="mobile-tab-item">
+                        <button
+                          className={`tab-button${activeTab === tab.id ? ' active' : ''}`}
+                          onClick={() => { setActiveTab(tab.id); setShowTabModal(false); }}
+                        >
+                          <span className="tab-icon">{tab.icon}</span>
+                          <span className="tab-label">{tab.label}</span>
+                        </button>
+                      </div>
                     ))}
                   </div>
-                  <span
-                    className="close-modal-link"
+                  <button
+                    className="mobile-tab-close"
                     onClick={() => setShowTabModal(false)}
                   >
                     Close
-                  </span>
+                  </button>
                 </div>
               </div>
             )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import SideTop from './SideTop';
 import './TeacherDash.css';
 import { FaBook, FaUserGraduate, FaClipboardList, FaChartBar, FaCheck, FaTimes, FaArrowLeft } from 'react-icons/fa';
@@ -6,11 +7,12 @@ import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
 import TeacherApp from './TeacherApp';
 
-export default function TeacherDash() {
+export default function TeacherDash({ initialTab }) {
+  const location = useLocation();
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const username = authUser?.username || 'User';
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState(initialTab || 'Dashboard');
   const [form, setForm] = useState({
     full_name: '',
     sex: '',
@@ -33,6 +35,19 @@ export default function TeacherDash() {
     api.getSubjects().then(setSubjects).catch(() => setSubjects([]));
     fetchTeacherRecord();
   }, []);
+
+  // Listen to URL changes to update activeTab
+  useEffect(() => {
+    if (location.pathname === '/teacher-application') {
+      setActiveTab('Application');
+    } else if (location.pathname === '/teacher-dashboard') {
+      setActiveTab('Dashboard');
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
 
   const fetchTeacherRecord = async () => {
     try {
@@ -100,25 +115,6 @@ export default function TeacherDash() {
 
   return (
     <SideTop>
-      {/* Tab/arrow navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 18, marginTop: 8 }}>
-        {activeTab === 'Application' ? (
-          <button
-            style={{ background: 'none', color: '#204080', fontWeight: 600, fontSize: 22, cursor: 'pointer', position: 'relative', padding: '4px 12px', borderRadius: 6, border: 'none', marginRight: 8, display: 'flex', alignItems: 'center' }}
-            onClick={() => setActiveTab('Dashboard')}
-            title="Back to Dashboard"
-          >
-            <FaArrowLeft />
-          </button>
-        ) : (
-          <button
-            style={{ background: activeTab === 'Dashboard' ? '#204080' : 'none', color: activeTab === 'Dashboard' ? '#fff' : '#204080', fontWeight: 600, fontSize: 17, cursor: 'pointer', position: 'relative', padding: '4px 12px', borderRadius: 6, border: 'none', marginRight: 8 }}
-            onClick={() => setActiveTab('Application')}
-          >
-            Application
-          </button>
-        )}
-      </div>
       {activeTab === 'Dashboard' && (
         <>
           {/* ... existing dashboard cards and content ... */}

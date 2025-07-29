@@ -24,6 +24,8 @@ import Subjects from './components/Subjects.jsx';
 import DeanManager from './components/DeanManager';
 import DeanEvent from './components/DeanEvent';
 import Admin2Dash from './components/Admin2Dash.jsx';
+import Admin2App from './components/Admin2App.jsx';
+import MyClasses from './components/MyClasses.jsx';
 import Salary from './components/Salary.jsx';
 import Inventory from './components/Inventory.jsx';
 
@@ -94,6 +96,7 @@ function App() {
         </DisciplineSideTop>
       } />
       <Route path="/teacher-dashboard" element={<TeacherDash />} />
+      <Route path="/teacher-application" element={<TeacherDash initialTab="Application" />} />
       <Route path="/teacher-messages" element={<TeacherMessage />} />
       <Route path="/teacher-messages/:userId" element={<TeacherMessage />} />
       <Route path="/dean" element={<Dean />} />
@@ -105,6 +108,9 @@ function App() {
       <Route path="/dean-inventory" element={<Dean />} />
       <Route path="/dean-scheduling" element={<Dean />} />
       <Route path="/dean-academic" element={<Dean />} />
+      <Route path="/admin2-application" element={<Admin2App authUser={authUser} />} />
+      <Route path="/application" element={<Admin2App authUser={authUser} />} />
+      <Route path="/my-classes" element={<MyClasses authUser={authUser} />} />
     
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './AdminTeacher.css';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaMoneyBill, FaFileAlt, FaChartBar, FaPenFancy, FaEdit, FaTrash, FaEnvelope, FaIdCard, FaCog, FaSpinner } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaTimes, FaBook, FaMoneyBill, FaFileAlt, FaChartBar, FaPenFancy, FaEdit, FaTrash, FaEnvelope, FaIdCard, FaCog, FaSpinner, FaEye } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import SuccessMessage from './SuccessMessage';
 import { useLocation } from 'react-router-dom';
@@ -45,6 +45,8 @@ export default function AdminTeacher() {
   const canApprove = authUser?.role === 'Admin3';
   const [disapproveId, setDisapproveId] = useState(null);
   const [disapproveLoading, setDisapproveLoading] = useState(false);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [selectedCertificate, setSelectedCertificate] = useState(null);
 
   // Fetch teachers from backend
   useEffect(() => {
@@ -162,6 +164,16 @@ export default function AdminTeacher() {
     }));
   };
 
+  const handleViewCertificate = (certificate) => {
+    setSelectedCertificate(certificate);
+    setShowCertificateModal(true);
+  };
+
+  const closeCertificateModal = () => {
+    setShowCertificateModal(false);
+    setSelectedCertificate(null);
+  };
+
   return (
     <SideTop>
       <div className="dashboard-cards">
@@ -192,6 +204,7 @@ export default function AdminTeacher() {
                 <th>Subject(s)</th>
                 <th>Class(es) Taught</th>
                 <th>Contact</th>
+                <th>Certificate</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -201,59 +214,68 @@ export default function AdminTeacher() {
                   <td>{t.full_name}</td>
                   <td>{t.sex}</td>
                   <td>{t.id_card}</td>
-                  <td>{t.dob}</td>
+                  <td>{t.dob ? new Date(t.dob).toLocaleDateString() : ''}</td>
                   <td>{t.pob}</td>
                   <td>{t.subjects}</td>
-                  <td>{t.classes}</td>
+                  <td>{t.classes ? t.classes.split(',').filter(c => c.trim() !== 'undefined').join(', ') : ''}</td>
                   <td>{t.contact}</td>
+                  <td>
+                    {t.certificate_url ? (
+                      <button className="action-btn view-certificate" title="View Certificate" onClick={() => handleViewCertificate(t)}><FaEye /></button>
+                    ) : (
+                      <span style={{ color: '#999', fontSize: '12px' }}>No certificate</span>
+                    )}
+                  </td>
                   <td className="actions">
-                    <button className="action-btn edit" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'} onClick={() => handleEdit(t)}><FaEdit /></button>
-                    <button className="action-btn delete" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'} onClick={() => handleDelete(t.id)}><FaTrash /></button>
-                    <span
-                      className="approve-badge"
-                      style={{
-                        marginLeft: 8,
-                        padding: '4px 10px',
-                        borderRadius: 6,
-                        background: t.status === 'approved' ? '#22bb33' : '#e53e3e',
-                        color: '#fff',
-                        fontWeight: 600,
-                        fontSize: '0.98rem',
-                        cursor: approveLoading[t.id] || !canApprove ? 'not-allowed' : 'pointer',
-                        opacity: approveLoading[t.id] || !canApprove ? 0.6 : 1,
-                        transition: 'background 0.18s',
-                        userSelect: 'none',
-                        border: 'none',
-                        outline: 'none',
-                        display: 'inline-block',
-                      }}
-                      title={canApprove ? '' : 'Only Admin3 can approve'}
-                      onClick={async () => {
-                        if (!canApprove) {
-                          setError('Only Admin3 can approve teachers.');
-                          return;
-                        }
-                        if (approveLoading[t.id]) return;
-                        if (t.status === 'approved') {
-                          setDisapproveId(t.id);
-                          return;
-                        }
-                        setApproveLoading(prev => ({ ...prev, [t.id]: true }));
-                        setError('');
-                        try {
-                          await api.approveTeacher(t.id, 'approved');
-                          setSuccess('Approved!');
-                          window.dispatchEvent(new Event('teacher-status-updated'));
-                          fetchTeachers();
-                        } catch (err) {
-                          setError('Failed to update status');
-                        }
-                        setApproveLoading(prev => ({ ...prev, [t.id]: false }));
-                      }}
-                    >
-                      {approveLoading[t.id] ? <FaSpinner className="fa-spin" style={{ marginRight: 6 }} /> : null}
-                      {t.status === 'approved' ? 'Approved' : 'Approve'}
-                    </span>
+                    <div className="action-buttons-container">
+                      <button className="action-btn edit" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'} onClick={() => handleEdit(t)}><FaEdit /></button>
+                      <button className="action-btn delete" disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'} onClick={() => handleDelete(t.id)}><FaTrash /></button>
+                      <span
+                        className="approve-badge"
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: 4,
+                          background: t.status === 'approved' ? '#22bb33' : '#e53e3e',
+                          color: '#fff',
+                          fontWeight: 500,
+                          fontSize: '0.85rem',
+                          cursor: approveLoading[t.id] || !canApprove ? 'not-allowed' : 'pointer',
+                          opacity: approveLoading[t.id] || !canApprove ? 0.6 : 1,
+                          transition: 'background 0.18s',
+                          userSelect: 'none',
+                          border: 'none',
+                          outline: 'none',
+                          display: 'inline-block',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title={canApprove ? '' : 'Only Admin3 can approve'}
+                        onClick={async () => {
+                          if (!canApprove) {
+                            setError('Only Admin3 can approve teachers.');
+                            return;
+                          }
+                          if (approveLoading[t.id]) return;
+                          if (t.status === 'approved') {
+                            setDisapproveId(t.id);
+                            return;
+                          }
+                          setApproveLoading(prev => ({ ...prev, [t.id]: true }));
+                          setError('');
+                          try {
+                            await api.approveTeacher(t.id, 'approved');
+                            setSuccess('Approved!');
+                            window.dispatchEvent(new Event('teacher-status-updated'));
+                            fetchTeachers();
+                          } catch (err) {
+                            setError('Failed to update status');
+                          }
+                          setApproveLoading(prev => ({ ...prev, [t.id]: false }));
+                        }}
+                      >
+                        {approveLoading[t.id] ? <FaSpinner className="fa-spin" style={{ marginRight: 4 }} /> : null}
+                        {t.status === 'approved' ? 'Approved' : 'Approve'}
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -389,6 +411,75 @@ export default function AdminTeacher() {
                   {disapproveLoading ? <FaSpinner className="fa-spin" style={{ marginRight: 6 }} /> : null} Yes
                 </button>
                 <button className="signup-btn" style={{ background: '#204080', minWidth: 90 }} onClick={() => setDisapproveId(null)} disabled={disapproveLoading}>No</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showCertificateModal && selectedCertificate && (
+        <div className="modal-overlay" onClick={closeCertificateModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '90vh', width: 'auto', height: 'auto' }}>
+            <button className="modal-close" onClick={closeCertificateModal}><FaTimes /></button>
+            <div style={{ padding: '20px 0', textAlign: 'center' }}>
+              <h3 style={{ color: '#204080', marginBottom: 16, fontSize: 20 }}>
+                Certificate - {selectedCertificate.full_name}
+              </h3>
+              <div style={{ border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden', background: '#f8f9fa', minHeight: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                {selectedCertificate.certificate_url ? (
+                  (() => {
+                    const fileExtension = selectedCertificate.certificate_url.split('.').pop()?.toLowerCase();
+                    const certificateUrl = selectedCertificate.certificate_url.startsWith('http') 
+                      ? selectedCertificate.certificate_url 
+                      : `http://localhost:5000${selectedCertificate.certificate_url}`;
+                    
+                    if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                      // Display image
+                      return (
+                        <img 
+                          src={certificateUrl}
+                          alt="Certificate"
+                          style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                      );
+                    } else if (fileExtension === 'pdf') {
+                      // Display PDF
+                      return (
+                        <iframe
+                          src={certificateUrl}
+                          title="Certificate PDF"
+                          style={{ width: '100%', height: '70vh', border: 'none', borderRadius: 4 }}
+                        />
+                      );
+                    } else {
+                      // Fallback for unknown file types
+                      return (
+                        <div style={{ padding: 20, textAlign: 'center' }}>
+                          <FaFileAlt style={{ fontSize: 48, color: '#666', marginBottom: 16 }} />
+                          <p style={{ color: '#666', marginBottom: 16 }}>
+                            Certificate file: {selectedCertificate.certificate_url.split('/').pop()}
+                          </p>
+                          <a 
+                            href={certificateUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: 'inline-block', padding: '10px 20px', background: '#204080', color: '#fff', textDecoration: 'none', borderRadius: 4, fontWeight: 500, transition: 'background 0.18s' }}
+                          >
+                            Download Certificate
+                          </a>
+                        </div>
+                      );
+                    }
+                  })()
+                ) : (
+                  <div style={{ padding: 20, textAlign: 'center' }}>
+                    <FaFileAlt style={{ fontSize: 48, color: '#666', marginBottom: 16 }} />
+                    <p style={{ color: '#666' }}>No certificate available</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -17,22 +17,27 @@ export default function SideTop({ children, hasUnread }) {
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const username = authUser?.username || 'User';
 
-  let menuItems = [
-    { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
-    { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
-    { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
-    { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
-    { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
-    { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
-    { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
-    { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
-    { label: 'Reports', icon: <FaFileAlt /> },
-    { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
-  ];
+  let menuItems = [];
 
-  if (authUser?.role === 'Admin2') {
+  if (authUser?.role === 'Admin1') {
     menuItems = [
       { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
+      { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
+      { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
+      { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
+      { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
+      { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
+      { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
+      { label: 'Reports', icon: <FaFileAlt /> },
+      { label: 'Exam/Marks', icon: <FaChartBar /> },
+      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+    ];
+  } else if (authUser?.role === 'Admin2') {
+    menuItems = [
+      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+      { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Financial Summary', icon: <FaMoneyBill />, path: '/admin-finance' },
       { label: 'Fee', icon: <FaCreditCard />, path: '/admin-fee' },
       { label: 'Salary', icon: <FaFileInvoiceDollar />, path: '/admin-salary' },
@@ -41,20 +46,58 @@ export default function SideTop({ children, hasUnread }) {
       { label: 'Exam/Marks', icon: <FaChartBar /> },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
     ];
+  } else if (authUser?.role === 'Admin3') {
+    menuItems = [
+      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+      { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
+      { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
+      { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
+      { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
+      { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
+      { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
+      { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
+      { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
+      { label: 'Reports', icon: <FaFileAlt /> },
+      { label: 'Exam/Marks', icon: <FaChartBar /> },
+      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+      { label: 'Display Users', icon: <FaUserGraduate />, path: '/admin-users' },
+    ];
   } else if (authUser?.role === 'Discipline') {
-    // Remove Finance, Exam/Marks, Display Users, add Attendance
-    menuItems = menuItems.filter(item => !['Finances', 'Exam/Marks'].includes(item.label));
-    menuItems.splice(5, 0, { label: 'Attendance', icon: <FaClipboardList />, path: '/admin-attendance' });
-  } else {
-    // For other roles, add Finance, Exam/Marks, and Attendance only for Discipline
-    menuItems.splice(8, 0, { label: 'Finances', icon: <FaMoneyBill />, path: '/admin-finance',
-      submenu: [
-        { label: 'Fee Payment', icon: <FaCreditCard />, path: '/admin-fee' },
-        { label: 'Salary,Invoice', icon: <FaFileInvoiceDollar />, path: '/admin-salary' },
-        { label: 'Inventory', icon: <FaBoxes />, path: '/admin-inventory' },
-      ]
-    });
-    menuItems.splice(10, 0, { label: 'Exam/Marks', icon: <FaChartBar /> });
+    menuItems = [
+      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+      { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
+      { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
+      { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
+      { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
+      { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
+      { label: 'Attendance', icon: <FaClipboardList />, path: '/admin-attendance' },
+      { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
+      { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
+      { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
+      { label: 'Reports', icon: <FaFileAlt /> },
+      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+    ];
+  } else if (authUser?.role === 'Psychosocialist') {
+    menuItems = [
+      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+      { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
+      { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
+      { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
+      { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
+      { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
+      { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
+      { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
+      { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
+      { label: 'Reports', icon: <FaFileAlt /> },
+      { label: 'Exam/Marks', icon: <FaChartBar /> },
+      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+    ];
+  } else if (authUser?.role === 'Admin4') {
+    // Use deanMenuItems for Admin4
+    menuItems = [];
   }
 
   useEffect(() => {
@@ -87,6 +130,16 @@ export default function SideTop({ children, hasUnread }) {
   });
   const showSeeMore = filteredMenuItems.length > visibleMenuCount;
   const visibleMenuItems = menuExpanded ? filteredMenuItems : filteredMenuItems.slice(0, visibleMenuCount);
+
+  // Filter out My Classes and Application for Admin1 users
+  const filterMenuItems = (items) => {
+    if (authUser?.role === 'Admin1') {
+      return items.filter(item => item.label !== 'My Classes' && item.label !== 'Application');
+    }
+    return items;
+  };
+
+  let menuToShow = filterMenuItems(menuItems);
 
   // Determine if user is a teacher
   const isTeacher = authUser?.role === 'Teacher';
@@ -148,8 +201,9 @@ export default function SideTop({ children, hasUnread }) {
   // Teacher menu items (from deleted TeacherSideTop)
   const teacherMenuItems = [
     { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/teacher-dashboard' },
+    { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+    { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
-    { label: 'My Classes', icon: <FaBook />, path: '/teacher-classes' },
     { label: 'Students', icon: <FaUserGraduate />, path: '/teacher-students' },
     { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
     { label: 'Attendance', icon: <FaClipboardList />, path: '/teacher-attendance' },
@@ -160,6 +214,8 @@ export default function SideTop({ children, hasUnread }) {
   // Dean/Admin4 menu items (from provided image)
   const deanMenuItems = [
     { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/dean' },
+    { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+    { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
     { label: 'Events', icon: <FaClipboardList />, path: '/dean-events' },
     { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
@@ -168,9 +224,8 @@ export default function SideTop({ children, hasUnread }) {
   ];
 
   // Use correct menu for each role
-  let menuToShow = visibleMenuItems;
-  if (isTeacher) menuToShow = teacherMenuItems;
-  if (authUser?.role === 'Admin4') menuToShow = deanMenuItems;
+  if (isTeacher) menuToShow = filterMenuItems(teacherMenuItems);
+  if (authUser?.role === 'Admin4') menuToShow = filterMenuItems(deanMenuItems);
 
   return (
     <div className="admin-container">
@@ -194,17 +249,6 @@ export default function SideTop({ children, hasUnread }) {
               <span>{item.label}</span>
             </div>
           ))}
-          {/* Display Users tab for Admin3 only */}
-          {!isTeacher && authUser?.role === 'Admin3' && (
-            <div
-              className={`menu-item${location.pathname === '/admin-users' ? ' active' : ''}`}
-              onClick={() => navigate('/admin-users')}
-              style={{ position: 'relative' }}
-            >
-              <span className="icon"><FaUserGraduate /></span>
-              <span className="label">Display Users</span>
-            </div>
-          )}
           {!isTeacher && showSeeMore && !expandedMenu && (
             <button
               className="menu-item see-more-btn"
