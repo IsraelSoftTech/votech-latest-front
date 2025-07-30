@@ -8,7 +8,7 @@ import api from '../services/api';
 export default function Subjects() {
   const [subjects, setSubjects] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: '' });
+  const [form, setForm] = useState({ name: '', code: '' });
   const [editingId, setEditingId] = useState(null);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -36,11 +36,11 @@ export default function Subjects() {
         await api.updateSubject(editingId, form);
         setSuccess('Subject updated!');
       } else {
-        await api.createSubject({ name: form.name });
+        await api.createSubject(form);
         setSuccess('Subject created!');
       }
       setShowModal(false);
-      setForm({ name: '' });
+      setForm({ name: '', code: '' });
       setEditingId(null);
       fetchSubjects();
     } catch (err) {
@@ -79,7 +79,7 @@ export default function Subjects() {
       </div>
       <div className="teacher-section">
         <div className="teacher-header-row">
-          <button className="add-teacher-btn" onClick={() => { setShowModal(true); setEditingId(null); setForm({ name: '' }); }}><FaPlus /> Create Subject</button>
+          <button className="add-teacher-btn" onClick={() => { setShowModal(true); setEditingId(null); setForm({ name: '', code: '' }); }}><FaPlus /> Create Subject</button>
         </div>
         <div className="teacher-table-wrapper">
           <table className="teacher-table">
@@ -93,7 +93,7 @@ export default function Subjects() {
             <tbody>
               {subjects.map((s, i) => (
                 <tr key={s.id || i}>
-                  <td>{s.name}</td>
+                  <td>{typeof s.name === 'string' ? s.name : 'Unknown Subject'}</td>
                   <td>{s.code}</td>
                   <td className="actions">
                     <button className="action-btn edit" onClick={() => handleEdit(s)}><FaEdit /></button>
@@ -114,7 +114,11 @@ export default function Subjects() {
               <div className="modal-form-grid">
                 <div>
                   <label className="input-label">Name of Subject *</label>
-                  <input className="input-field" type="text" name="name" value={form.name} onChange={handleFormChange} placeholder="Enter Subject Name" required />
+                  <input className="input-field" type="text" name="name" value={typeof form.name === 'string' ? form.name : ''} onChange={handleFormChange} placeholder="Enter Subject Name" required />
+                </div>
+                <div>
+                  <label className="input-label">Subject Code *</label>
+                  <input className="input-field" type="text" name="code" value={form.code} onChange={handleFormChange} placeholder="Enter Subject Code" required />
                 </div>
               </div>
               {error && <div className="error-message">{error}</div>}

@@ -172,11 +172,13 @@ export default function CreateGroupModal({ isOpen, onClose, onGroupCreated }) {
                     color: '#204080',
                     marginRight: 12
                   }}>
-                    {user.name ? user.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() : user.username[0].toUpperCase()}
+                    {typeof user.name === 'string' && user.name ? 
+                      user.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() : 
+                      (typeof user.username === 'string' && user.username ? user.username[0].toUpperCase() : '?')}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, color: '#333' }}>
-                      {user.name || user.username}
+                      {(typeof user.name === 'string' ? user.name : '') || (typeof user.username === 'string' ? user.username : 'Unknown User')}
                     </div>
                     <div style={{ fontSize: 14, color: '#666' }}>
                       {user.role}

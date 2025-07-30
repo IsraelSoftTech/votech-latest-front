@@ -436,13 +436,21 @@ export default function TeacherMessage() {
                 console.log('TeacherMessage - Group chat data:', chat);
                 console.log('TeacherMessage - chat.groupName:', chat.groupName);
                 console.log('TeacherMessage - chat.name:', chat.name);
-                displayName = chat.groupName || chat.name || 'Unknown Group';
+                // Ensure we get a string value for displayName
+                const groupName = typeof chat.groupName === 'string' ? chat.groupName : 
+                                 (typeof chat.name === 'string' ? chat.name : 'Unknown Group');
+                displayName = groupName || 'Unknown Group';
                 initials = displayName ? displayName.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() : 'GR';
                 isGroup = true;
                 console.log('TeacherMessage - Final display name:', displayName);
               } else {
-                displayName = chat.name || chat.username;
-                initials = chat.name ? chat.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() : (chat.username ? chat.username[0].toUpperCase() : '?');
+                // Ensure we get a string value for displayName
+                const userName = typeof chat.name === 'string' ? chat.name : 
+                               (typeof chat.username === 'string' ? chat.username : 'Unknown User');
+                displayName = userName || 'Unknown User';
+                initials = typeof chat.name === 'string' && chat.name ? 
+                          chat.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() : 
+                          (typeof chat.username === 'string' && chat.username ? chat.username[0].toUpperCase() : '?');
               }
               const lastMsg = chat.lastMessage?.content || '';
               const lastTime = chat.lastMessage?.time ? new Date(chat.lastMessage.time) : null;

@@ -173,7 +173,7 @@ function ID() {
           >
             <option value=''>Select Class to Print</option>
             {classes.map(c => (
-              <option key={c.id} value={c.name}>{c.name}</option>
+              <option key={c.id} value={typeof c.name === 'string' ? c.name : ''}>{typeof c.name === 'string' ? c.name : 'Unknown Class'}</option>
             ))}
           </select>
           <button

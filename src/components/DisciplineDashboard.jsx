@@ -62,7 +62,7 @@ export default function DisciplineDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {attendanceMonitoring.map((row, idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: idx % 2 === 0 ? '#f7f8fa' : '#fff', borderRadius: 8, padding: '12px 16px', fontSize: 16 }}>
-                <div style={{ fontWeight: 500 }}>{row.name}
+                <div style={{ fontWeight: 500 }}>{typeof row.name === 'string' ? row.name : 'Unknown'}
                   <div style={{ color: '#888', fontSize: 13 }}>{row.present}/{row.total} present</div>
                 </div>
                 <div style={{ fontWeight: 700, fontSize: 16, color: row.rate >= 90 ? '#0e7c3a' : row.rate >= 80 ? '#f59e0b' : '#e53e3e' }}>{row.rate}%</div>

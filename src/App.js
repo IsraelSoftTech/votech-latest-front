@@ -21,6 +21,7 @@ import TeacherMessage from './components/TeacherMessage.jsx';
 import Dean from './components/Dean.jsx';
 import DeanMessage from './components/DeanMessage.jsx';
 import Subjects from './components/Subjects.jsx';
+import LessonPlan from './components/LessonPlan.jsx';
 import DeanManager from './components/DeanManager';
 import DeanEvent from './components/DeanEvent';
 import Admin2Dash from './components/Admin2Dash.jsx';
@@ -65,6 +66,7 @@ function App() {
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
       <Route path="/admin-salary" element={<Salary />} />
       <Route path="/admin-subjects" element={<Subjects />} />
+      <Route path="/admin-lesson-plans" element={<LessonPlan />} />
       <Route path="/admin-inventory" element={<Inventory />} />
       <Route path="/admin-group-messages/:groupId" element={<GroupChat />} />
  
@@ -97,10 +99,12 @@ function App() {
           <div>Security Incidents Page</div>
         </DisciplineSideTop>
       } />
+      <Route path="/discipline-lesson-plans" element={<LessonPlan />} />
       <Route path="/teacher-dashboard" element={<TeacherDash />} />
       <Route path="/teacher-application" element={<TeacherDash initialTab="Application" />} />
       <Route path="/teacher-messages" element={<TeacherMessage />} />
       <Route path="/teacher-messages/:userId" element={<TeacherMessage />} />
+      <Route path="/teacher-lesson-plans" element={<LessonPlan />} />
       <Route path="/dean" element={<Dean />} />
       <Route path="/dean-messages" element={<DeanMessage />} />
       <Route path="/dean-messages/:userId" element={<DeanMessage />} />
@@ -110,6 +114,8 @@ function App() {
       <Route path="/dean-inventory" element={<Dean />} />
       <Route path="/dean-scheduling" element={<Dean />} />
       <Route path="/dean-academic" element={<Dean />} />
+      <Route path="/dean-lesson-plans" element={<LessonPlan />} />
+      <Route path="/psychosocialist-lesson-plans" element={<LessonPlan />} />
       <Route path="/admin2-application" element={<Admin2App authUser={authUser} />} />
       <Route path="/application" element={<Admin2App authUser={authUser} />} />
       <Route path="/my-classes" element={<MyClasses authUser={authUser} />} />

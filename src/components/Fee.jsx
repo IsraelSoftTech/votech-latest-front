@@ -315,7 +315,7 @@ export default function Fee() {
                     className="fee-stats-modal-select"
                   >
                     <option value=''>-- Select Class --</option>
-                    {classes.map(cls => <option key={cls.id} value={cls.name}>{cls.name}</option>)}
+                    {classes.map(cls => <option key={cls.id} value={typeof cls.name === 'string' ? cls.name : ''}>{typeof cls.name === 'string' ? cls.name : 'Unknown Class'}</option>)}
                   </select>
                   <button
                     className="fee-stats-proceed-btn"
@@ -377,7 +377,7 @@ export default function Fee() {
                               return (
                                 <tr key={s.name+idx}>
                                   <td>{idx+1}</td>
-                                  <td>{s.name}</td>
+                                  <td>{typeof s.name === 'string' ? s.name : 'Unknown Student'}</td>
                                   <td>{s.student_id || ''}</td>
                                   <td>{(s.Registration||0).toLocaleString()}</td>
                                   <td>{(s.Bus||0).toLocaleString()}</td>

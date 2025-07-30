@@ -516,7 +516,7 @@ export default function AdminStudent() {
                 style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1.5px solid #1976d2', fontSize: 15 }}
               >
                 <option value=''>Select Class</option>
-                {classes.map(opt => <option key={opt.id} value={opt.name}>{opt.name}</option>)}
+                {classes.map(opt => <option key={opt.id} value={typeof opt.name === 'string' ? opt.name : ''}>{typeof opt.name === 'string' ? opt.name : 'Unknown Class'}</option>)}
               </select>
             </div>
             <button
@@ -613,12 +613,12 @@ export default function AdminStudent() {
                   <label className="input-label">Class *</label>
                   <select className="input-field" name="class" value={form.class} onChange={handleFormChange} required>
                     <option value="">Select</option>
-                    {classes.map(opt => <option key={opt.id} value={opt.name}>{opt.name}</option>)}
+                    {classes.map(opt => <option key={opt.id} value={typeof opt.name === 'string' ? opt.name : ''}>{typeof opt.name === 'string' ? opt.name : 'Unknown Class'}</option>)}
                   </select>
                   <label className="input-label">Department/Specialty *</label>
                   <select className="input-field" name="dept" value={form.dept} onChange={handleFormChange} required>
                     <option value="">Select</option>
-                    {specialties.map(opt => <option key={opt.id} value={opt.name}>{opt.name}</option>)}
+                    {specialties.map(opt => <option key={opt.id} value={typeof opt.name === 'string' ? opt.name : ''}>{typeof opt.name === 'string' ? opt.name : 'Unknown Specialty'}</option>)}
                   </select>
                   <label className="input-label">Contact *</label>
                   <input className="input-field" type="text" name="contact" value={form.contact} onChange={handleFormChange} placeholder="Enter Contact" required />

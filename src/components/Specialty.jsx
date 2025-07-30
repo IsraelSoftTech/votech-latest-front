@@ -131,13 +131,13 @@ export default function Specialty(props) {
             <tbody>
               {specialties.map(s => (
                 <tr key={s.id}>
-                  <td>{s.name}</td>
+                  <td>{typeof s.name === 'string' ? s.name : 'Unknown Specialty'}</td>
                   <td>{s.abbreviation}</td>
                   <td>
                     <div style={{ maxHeight: 120, overflowY: 'auto', border: '1px solid #eee', borderRadius: 4, padding: 8 }}>
                       {classes.filter(c => s.class_ids && s.class_ids.includes(c.id)).map(c => (
                         <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          <input type="checkbox" checked={true} disabled /> {c.name}
+                          <input type="checkbox" checked={true} disabled /> {typeof c.name === 'string' ? c.name : 'Unknown Class'}
                         </div>
                       ))}
                     </div>
@@ -160,7 +160,7 @@ export default function Specialty(props) {
                 <div className="modal-form-grid">
                   <div>
                     <label className="input-label">Specialty Name *</label>
-                    <input className="input-field" type="text" name="name" value={form.name} onChange={handleFormChange} placeholder="Enter Specialty Name" required />
+                    <input className="input-field" type="text" name="name" value={typeof form.name === 'string' ? form.name : ''} onChange={handleFormChange} placeholder="Enter Specialty Name" required />
                     <label className="input-label">Abbreviation *</label>
                     <input className="input-field" type="text" name="abbreviation" value={form.abbreviation} onChange={handleFormChange} placeholder="Enter Abbreviation" required />
                   </div>
@@ -178,7 +178,7 @@ export default function Specialty(props) {
                                 else setAssignedClasses(prev => prev.filter(id => id !== c.id));
                               }}
                               disabled={isAdmin1}
-                            /> {c.name}
+                            /> {typeof c.name === 'string' ? c.name : 'Unknown Class'}
                           </label>
                         ))}
                       </div>

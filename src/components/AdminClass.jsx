@@ -204,7 +204,7 @@ export default function AdminClass() {
               ) : (
                 classes.map(c => (
                   <tr key={c.id}>
-                    <td>{c.name}</td>
+                    <td>{typeof c.name === 'string' ? c.name : 'Unknown Class'}</td>
                     <td>{c.registration_fee}</td>
                     <td>{c.bus_fee}</td>
                     <td>{c.internship_fee}</td>
@@ -232,7 +232,7 @@ export default function AdminClass() {
               <div className="modal-form-grid">
                 <div>
                   <label className="input-label">Name of Class *</label>
-                  <input className="input-field" type="text" name="name" value={form.name} onChange={handleFormChange} placeholder="Enter Class Name" required />
+                  <input className="input-field" type="text" name="name" value={typeof form.name === 'string' ? form.name : ''} onChange={handleFormChange} placeholder="Enter Class Name" required />
                   <label className="input-label">Registration Fee (XAF)</label>
                   <input className="input-field" type="number" name="registration_fee" value={form.registration_fee} onChange={handleFormChange} />
                   <label className="input-label">Bus Fee (XAF)</label>

@@ -150,7 +150,7 @@ export default function MyClasses({ authUser }) {
                   {assignedClasses.map((cls, index) => (
                     <tr key={cls.id || index}>
                       <td>{index + 1}</td>
-                      <td className="class-name">{cls.name}</td>
+                      <td className="class-name">{typeof cls.name === 'string' ? cls.name : 'Unknown Class'}</td>
                       <td className="student-count">
                         <span className="count-badge">{cls.studentCount}</span>
                         <span className="student-text">

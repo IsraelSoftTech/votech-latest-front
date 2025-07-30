@@ -326,7 +326,7 @@ export default function AdminTeacher() {
                       <div className="dropdown-list" style={{ position: 'absolute', zIndex: 10, background: '#fff', border: '1px solid #ccc', borderRadius: 6, boxShadow: '0 2px 8px rgba(32,64,128,0.07)', padding: 8, minWidth: 180, maxHeight: 180, overflowY: 'auto' }}>
                         {subjects.map(s => (
                           <label key={s.id} style={{ display: 'block', marginBottom: 4 }}>
-                            <input type="checkbox" name="subjects" value={s.name} checked={Array.isArray(form.subjects) ? form.subjects.includes(s.name) : (form.subjects || '').split(',').includes(s.name)} onChange={handleFormChange} /> {s.name}
+                            <input type="checkbox" name="subjects" value={typeof s.name === 'string' ? s.name : ''} checked={Array.isArray(form.subjects) ? form.subjects.includes(typeof s.name === 'string' ? s.name : '') : (form.subjects || '').split(',').includes(typeof s.name === 'string' ? s.name : '')} onChange={handleFormChange} /> {typeof s.name === 'string' ? s.name : 'Unknown Subject'}
                           </label>
                         ))}
                       </div>
@@ -351,7 +351,7 @@ export default function AdminTeacher() {
                       <div className="dropdown-list" style={{ position: 'absolute', zIndex: 10, background: '#fff', border: '1px solid #ccc', borderRadius: 6, boxShadow: '0 2px 8px rgba(32,64,128,0.07)', padding: 8, minWidth: 180, maxHeight: 180, overflowY: 'auto' }}>
                         {classes.map(c => (
                           <label key={c.id} style={{ display: 'block', marginBottom: 4 }}>
-                            <input type="checkbox" name="classes" value={c.name} checked={Array.isArray(form.classes) ? form.classes.includes(c.name) : (form.classes || '').split(',').includes(c.name)} onChange={handleFormChange} /> {c.name}
+                            <input type="checkbox" name="classes" value={typeof c.name === 'string' ? c.name : ''} checked={Array.isArray(form.classes) ? form.classes.includes(typeof c.name === 'string' ? c.name : '') : (form.classes || '').split(',').includes(typeof c.name === 'string' ? c.name : '')} onChange={handleFormChange} /> {typeof c.name === 'string' ? c.name : 'Unknown Class'}
                           </label>
                         ))}
                       </div>

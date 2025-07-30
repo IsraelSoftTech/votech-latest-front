@@ -193,7 +193,7 @@ export default function Attendance() {
                 <h3>Select Class</h3>
                 <select value={selectedClass} onChange={e => handleClassSelect(e.target.value)}>
                   <option value="">-- Select Class --</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {classes.map(c => <option key={c.id} value={c.id}>{typeof c.name === 'string' ? c.name : 'Unknown Class'}</option>)}
                 </select>
                 <button className="text-btn" style={{ marginTop: 16, color: '#e53e3e', fontWeight: 600, fontSize: 15, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setShowClassModal(false)}>Cancel</button>
               </div>
@@ -238,7 +238,7 @@ export default function Attendance() {
                       <tr key={s.id}>
                         <td>{idx + 1}</td>
                         <td>{s.class}</td>
-                        <td>{s.name}</td>
+                        <td>{typeof s.name === 'string' ? s.name : 'Unknown Student'}</td>
                         <td>{s.studentId}</td>
                         <td>{s.date}</td>
                         <td>

@@ -889,7 +889,84 @@ class ApiService {
     const response = await fetch(`${API_URL}/students`, {
       headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch students');
+    return this.handleResponse(response);
+  }
+
+  // === Lesson Plans API ===
+  
+  async uploadLessonPlan(formData) {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    
+    // For FormData, only include Authorization header, not Content-Type
+    headers['Authorization'] = authHeaders['Authorization'];
+    
+    const response = await fetch(`${API_URL}/lesson-plans`, {
+      method: 'POST',
+      headers: headers,
+      body: formData,
+    });
+    if (!response.ok) throw new Error('Failed to upload lesson plan');
+    return await response.json();
+  }
+
+  async getMyLessonPlans() {
+    const response = await fetch(`${API_URL}/lesson-plans/my`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch lesson plans');
+    return await response.json();
+  }
+
+  async getAllLessonPlans() {
+    const response = await fetch(`${API_URL}/lesson-plans/all`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch all lesson plans');
+    return await response.json();
+  }
+
+  async updateLessonPlan(id, formData) {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    
+    // For FormData, only include Authorization header, not Content-Type
+    headers['Authorization'] = authHeaders['Authorization'];
+    
+    const response = await fetch(`${API_URL}/lesson-plans/${id}`, {
+      method: 'PUT',
+      headers: headers,
+      body: formData,
+    });
+    if (!response.ok) throw new Error('Failed to update lesson plan');
+    return await response.json();
+  }
+
+  async deleteLessonPlan(id) {
+    const response = await fetch(`${API_URL}/lesson-plans/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete lesson plan');
+    return await response.json();
+  }
+
+  async reviewLessonPlan(id, status, adminComment) {
+    const response = await fetch(`${API_URL}/lesson-plans/${id}/review`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ status, admin_comment: adminComment }),
+    });
+    if (!response.ok) throw new Error('Failed to review lesson plan');
+    return await response.json();
+  }
+
+  async deleteLessonPlanAdmin(id) {
+    const response = await fetch(`${API_URL}/lesson-plans/${id}/admin`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete lesson plan');
     return await response.json();
   }
 }

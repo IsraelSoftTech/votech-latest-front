@@ -560,7 +560,7 @@ export default function Inventory() {
                       <label>Department
                         <select name="department" value={form.department} onChange={handleFormChange} required>
                           <option value="">Select Department</option>
-                          {departments.map((d, i) => <option key={i} value={d}>{d}</option>)}
+                          {departments.map((d, i) => <option key={i} value={typeof d === 'string' ? d : (d.name || 'Unknown Department')}>{typeof d === 'string' ? d : (d.name || 'Unknown Department')}</option>)}
                         </select>
                       </label>
                       <label>Quantity or Number<input type="number" name="quantity" value={form.quantity} onChange={handleFormChange} min="1" required /></label>
@@ -642,7 +642,7 @@ export default function Inventory() {
                       <label>Department
                         <select name="department" value={expenditureForm.department} onChange={handleExpenditureFormChange} required>
                           <option value="">Select Department</option>
-                          {departments.map((d, i) => <option key={i} value={d}>{d}</option>)}
+                          {departments.map((d, i) => <option key={i} value={typeof d === 'string' ? d : (d.name || 'Unknown Department')}>{typeof d === 'string' ? d : (d.name || 'Unknown Department')}</option>)}
                         </select>
                       </label>
                       <label>Quantity or Number<input type="number" name="quantity" value={expenditureForm.quantity} onChange={handleExpenditureFormChange} min="1" required /></label>

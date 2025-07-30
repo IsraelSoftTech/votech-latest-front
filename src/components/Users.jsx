@@ -124,7 +124,7 @@ export default function Users() {
               <tbody>
                 {users.map((user, idx) => (
                   <tr key={user.id} className={user.suspended ? 'suspended' : ''}>
-                    <td>{user.name}</td>
+                    <td>{typeof user.name === 'string' ? user.name : 'Unknown User'}</td>
                     <td>{user.username}</td>
                     <td>{user.contact}</td>
                     <td>••••••••</td>
@@ -193,7 +193,7 @@ export default function Users() {
               <h3>Edit User</h3>
               <form onSubmit={handleEditSubmit} className="users-edit-form">
                 <label>Name</label>
-                <input name="name" value={editForm.name} onChange={handleEditChange} />
+                <input name="name" value={typeof editForm.name === 'string' ? editForm.name : ''} onChange={handleEditChange} />
                 <label>Username</label>
                 <input name="username" value={editForm.username} onChange={handleEditChange} />
                 <label>Phone</label>

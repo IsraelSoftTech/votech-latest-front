@@ -77,7 +77,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
       { label: 'Reports', icon: <FaFileAlt /> },
-      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/discipline-lesson-plans' },
     ];
   } else if (authUser?.role === 'Psychosocialist') {
     menuItems = [
@@ -93,7 +93,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
       { label: 'Reports', icon: <FaFileAlt /> },
       { label: 'Exam/Marks', icon: <FaChartBar /> },
-      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/psychosocialist-lesson-plans' },
     ];
   } else if (authUser?.role === 'Admin4') {
     // Use deanMenuItems for Admin4
@@ -221,6 +221,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
     { label: 'Academic Planning', icon: <FaBook />, path: '/dean-academic' },
     { label: 'Timetables', icon: <FaClipboardList />, path: '/dean-timetables' },
+    { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/dean-lesson-plans' },
   ];
 
   // Use correct menu for each role
