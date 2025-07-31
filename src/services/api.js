@@ -896,6 +896,109 @@ class ApiService {
     if (!response.ok) throw new Error('Failed to test lesson plans');
     return await response.json();
   }
+
+  // === Marks Management API ===
+  
+  async getUploadedMarks() {
+    const response = await fetch(`${API_URL}/marks`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch uploaded marks');
+    return await response.json();
+  }
+
+  async uploadMarks(formData) {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    
+    // For FormData, only include Authorization header, not Content-Type
+    headers['Authorization'] = authHeaders['Authorization'];
+    
+    const response = await fetch(`${API_URL}/marks/upload`, {
+      method: 'POST',
+      headers: headers,
+      body: formData,
+    });
+    if (!response.ok) throw new Error('Failed to upload marks');
+    return await response.json();
+  }
+
+  async deleteMarks(marksId) {
+    const response = await fetch(`${API_URL}/marks/${marksId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete marks');
+    return await response.json();
+  }
+
+  async updateMarks(marksId, formData) {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    
+    // For FormData, only include Authorization header, not Content-Type
+    headers['Authorization'] = authHeaders['Authorization'];
+    
+    const response = await fetch(`${API_URL}/marks/${marksId}`, {
+      method: 'PUT',
+      headers: headers,
+      body: formData,
+    });
+    if (!response.ok) throw new Error('Failed to update marks');
+    return await response.json();
+  }
+
+  async getMarksByClassAndSequence(classId, sequenceId) {
+    const response = await fetch(`${API_URL}/marks/${classId}/${sequenceId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch marks');
+    return await response.json();
+  }
+
+  async getMarksStatistics() {
+    const response = await fetch(`${API_URL}/marks/statistics`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch marks statistics');
+    return await response.json();
+  }
+
+  // Get students by class
+  async getStudentsByClass(classId) {
+    const response = await fetch(`${API_URL}/students/class/${classId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch students for class');
+    return await response.json();
+  }
+
+  // Test students table access
+  async testStudentsTable() {
+    const response = await fetch(`${API_URL}/students/test`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to test students table');
+    return await response.json();
+  }
+
+  // Test marks table access
+  async testMarksTable() {
+    const response = await fetch(`${API_URL}/marks/test`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to test marks table');
+    return await response.json();
+  }
+
+  // Test specific marks record access
+  async testMarksRecord(marksId) {
+    const response = await fetch(`${API_URL}/marks/test/${marksId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to test marks record');
+    return await response.json();
+  }
 }
 
 const api = new ApiService();
