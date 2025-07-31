@@ -1,7 +1,9 @@
+import config from '../config';
+
 // For local development, use the local backend API:
 // const API_URL = 'http://localhost:5000/api';
-// For production, use the Render backend API:
-const API_URL = process.env.REACT_APP_API_URL || 'https://votech-back-new.onrender.com/api';
+// For production, use the production backend API:
+const API_URL = config.API_URL;
 // console.log('API URL:', API_URL);
 
 class ApiService {
@@ -494,7 +496,13 @@ class ApiService {
       headers: headers,
       body: formData
     });
-    if (!response.ok) throw new Error('Failed to send message with file');
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Message with file failed:', response.status, errorText);
+      throw new Error(`Failed to send message with file: ${response.status} ${errorText}`);
+    }
+    
     return await response.json();
   }
 
@@ -553,13 +561,23 @@ class ApiService {
     const headers = {};
     headers['Authorization'] = authHeaders['Authorization'];
 
+    console.log('Sending group message with file:', { groupId, content, fileName: file.name, fileSize: file.size, fileType: file.type });
+
     const response = await fetch(`${API_URL}/groups/${groupId}/messages/with-file`, {
       method: 'POST',
       headers: headers,
       body: formData
     });
-    if (!response.ok) throw new Error('Failed to send group message with file');
-    return await response.json();
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Group message with file failed:', response.status, errorText);
+      throw new Error(`Failed to send group message with file: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log('Group message with file success:', result);
+    return result;
   }
 
   async getGroupParticipants(groupId) {
@@ -735,109 +753,6 @@ class ApiService {
     return await response.json();
   }
 
-  // Teacher self-application endpoint
-  async submitTeacherApplication(data) {
-    const authHeaders = this.getAuthHeaders();
-    const headers = {};
-    
-    if (data instanceof FormData) {
-      // For FormData, only include Authorization header, not Content-Type
-      headers['Authorization'] = authHeaders['Authorization'];
-    } else {
-      // For JSON, include all auth headers including Content-Type
-      Object.assign(headers, authHeaders);
-    }
-    
-    const response = await fetch(`${API_URL}/teacher-application`, {
-      method: 'POST',
-      headers: headers,
-      body: data instanceof FormData ? data : JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to submit teacher application');
-    return await response.json();
-  }
-
-  // Teacher edit their own application
-  async editTeacherApplication(id, data) {
-    const authHeaders = this.getAuthHeaders();
-    const headers = {};
-    
-    if (data instanceof FormData) {
-      // For FormData, only include Authorization header, not Content-Type
-      headers['Authorization'] = authHeaders['Authorization'];
-    } else {
-      // For JSON, include all auth headers including Content-Type
-      Object.assign(headers, authHeaders);
-    }
-    
-    const response = await fetch(`${API_URL}/teacher-application/${id}`, {
-      method: 'PUT',
-      headers: headers,
-      body: data instanceof FormData ? data : JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to edit teacher application');
-    return await response.json();
-  }
-
-  // Teacher delete their own application
-  async deleteTeacherApplication(id) {
-    const response = await fetch(`${API_URL}/teacher-application/${id}`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to delete teacher application');
-    return await response.json();
-  }
-
-  // SALARY API
-  async getSalaries() {
-    const response = await fetch(`${API_URL}/salaries`, {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
-  }
-
-  async getSalaryByTeacher(teacherId) {
-    const response = await fetch(`${API_URL}/salaries/${teacherId}`, {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
-  }
-
-  async setSalary({ user_id, amount, month }) {
-    const response = await fetch(`${API_URL}/salaries`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ user_id, amount, month })
-    });
-    return this.handleResponse(response);
-  }
-
-  async paySalary({ salary_id, month }) {
-    const response = await fetch(`${API_URL}/salaries/pay`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ salary_id, month })
-    });
-    return this.handleResponse(response);
-  }
-
-  async deleteSalary(id) {
-    const response = await fetch(`${API_URL}/salaries/${id}`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
-  }
-
-  // Get all teacher user accounts (for salary management)
-  async getTeacherUsers() {
-    const response = await fetch(`${API_URL}/teachers/users`, {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
-  }
-
   // Inventory API
   async getInventory(type = 'income') {
     const response = await fetch(`${API_URL}/inventory?type=${type}`, {
@@ -954,7 +869,10 @@ class ApiService {
   async reviewLessonPlan(id, status, adminComment) {
     const response = await fetch(`${API_URL}/lesson-plans/${id}/review`, {
       method: 'PUT',
-      headers: this.getAuthHeaders(),
+      headers: {
+        ...this.getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ status, admin_comment: adminComment }),
     });
     if (!response.ok) throw new Error('Failed to review lesson plan');
@@ -967,6 +885,15 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete lesson plan');
+    return await response.json();
+  }
+
+  // Test method to check if lesson plans are working
+  async testLessonPlans() {
+    const response = await fetch(`${API_URL}/lesson-plans/test`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to test lesson plans');
     return await response.json();
   }
 }

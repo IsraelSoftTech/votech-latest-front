@@ -99,7 +99,6 @@ const Signup = () => {
             <option value="Admin2">Admin2</option>
             <option value="Admin3">Admin3</option>
             <option value="Admin4">Admin4</option>
-            <option value="Secretary">Secretary</option>
             <option value="Teacher">Teacher</option>
             <option value="Discipline">Discipline</option>
             <option value="Psychosocialist">Psychosocialist</option>

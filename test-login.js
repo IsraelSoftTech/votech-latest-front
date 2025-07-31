@@ -1,9 +1,12 @@
 const fetch = require('node-fetch');
 
+// Import config (for Node.js, we'll use the URL directly)
+const API_URL = 'https://api.votechs7academygroup.com/api';
+
 async function testLogin() {
   try {
     console.log('Testing login...');
-    const response = await fetch('https://votech-back-new.onrender.com/api/login', {
+    const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

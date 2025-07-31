@@ -26,10 +26,14 @@ import DeanManager from './components/DeanManager';
 import DeanEvent from './components/DeanEvent';
 import Admin2Dash from './components/Admin2Dash.jsx';
 import Admin2App from './components/Admin2App.jsx';
+import TeacherApp from './components/TeacherApp.jsx';
+import DeanLessonPlan from './components/DeanLessonPlan.jsx';
+import Marks from './components/Marks.jsx';
 import MyClasses from './components/MyClasses.jsx';
 import Salary from './components/Salary.jsx';
 import Inventory from './components/Inventory.jsx';
 import GroupChat from './components/GroupChat';
+import PsycoDash from './components/PsycoDash.jsx';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -69,7 +73,12 @@ function App() {
       <Route path="/admin-lesson-plans" element={<LessonPlan />} />
       <Route path="/admin-inventory" element={<Inventory />} />
       <Route path="/admin-group-messages/:groupId" element={<GroupChat />} />
- 
+      <Route path="/user-messages/:userId" element={<UserChat />} />
+      <Route path="/lesson-plans" element={<LessonPlan />} />
+      <Route path="/admin2-application" element={<Admin2App authUser={authUser} />} />
+      <Route path="/application" element={<Admin2App authUser={authUser} />} />
+      <Route path="/my-classes" element={<MyClasses authUser={authUser} />} />
+
       <Route path="/discipline" element={<DisciplineDashboard />} />
       <Route path="/discipline-messages" element={<DiscMessage />} />
       <Route path="/discipline-messages/:userId" element={<DiscUserChat />} />
@@ -101,7 +110,7 @@ function App() {
       } />
       <Route path="/discipline-lesson-plans" element={<LessonPlan />} />
       <Route path="/teacher-dashboard" element={<TeacherDash />} />
-      <Route path="/teacher-application" element={<TeacherDash initialTab="Application" />} />
+      <Route path="/teacher-application" element={<TeacherApp authUser={authUser} />} />
       <Route path="/teacher-messages" element={<TeacherMessage />} />
       <Route path="/teacher-messages/:userId" element={<TeacherMessage />} />
       <Route path="/teacher-lesson-plans" element={<LessonPlan />} />
@@ -114,12 +123,18 @@ function App() {
       <Route path="/dean-inventory" element={<Dean />} />
       <Route path="/dean-scheduling" element={<Dean />} />
       <Route path="/dean-academic" element={<Dean />} />
-      <Route path="/dean-lesson-plans" element={<LessonPlan />} />
+      <Route path="/dean-lesson-plans" element={<DeanLessonPlan />} />
+      <Route path="/admin-marks" element={<Marks />} />
+      <Route path="/dean-marks" element={<Marks />} />
+      <Route path="/teacher-marks" element={<Marks />} />
       <Route path="/psychosocialist-lesson-plans" element={<LessonPlan />} />
-      <Route path="/admin2-application" element={<Admin2App authUser={authUser} />} />
-      <Route path="/application" element={<Admin2App authUser={authUser} />} />
-      <Route path="/my-classes" element={<MyClasses authUser={authUser} />} />
-    
+      
+      {/* Psychosocialist Routes */}
+      <Route path="/psycho-dashboard" element={<PsycoDash />} />
+      <Route path="/psycho-cases" element={<PsycoDash initialTab="Cases" />} />
+      <Route path="/psycho-reports" element={<PsycoDash initialTab="Reports" />} />
+      <Route path="/psycho-messages" element={<PsycoDash initialTab="Messages" />} />
+      
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       <Route path="*" element={<Navigate to="/" replace />} />

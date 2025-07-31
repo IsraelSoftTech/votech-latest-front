@@ -2,8 +2,10 @@
   "dependencies": {
     "ajv": "6.12.6",
     "ajv-keywords": "3.5.2",
+    "form-data": "^4.0.4",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
+    "node-fetch": "^3.3.2",
     "react": "^18.2.0",
     "react-calendar": "^4.0.0",
     "react-dom": "^18.2.0",

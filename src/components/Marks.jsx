@@ -1,7 +1,7 @@
 import React from 'react';
 import SideTop from './SideTop';
 
-export default function TeacherApp({ authUser }) {
+export default function Marks() {
   return (
     <SideTop>
       <div style={{
@@ -13,7 +13,7 @@ export default function TeacherApp({ authUser }) {
         color: '#666',
         fontFamily: 'Arial, sans-serif'
       }}>
-        Component yet to be added
+        Content yet to be added
       </div>
     </SideTop>
   );

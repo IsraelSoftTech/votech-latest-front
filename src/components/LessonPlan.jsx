@@ -175,7 +175,16 @@ export default function LessonPlan() {
   };
 
   const handleViewFile = fileUrl => {
-    window.open(`http://localhost:5000${fileUrl}`, '_blank');
+    // If it's already a full URL (FTP), use it directly
+    if (fileUrl && fileUrl.startsWith('http')) {
+      window.open(fileUrl, '_blank');
+    } else {
+      // For local files, construct the proper URL
+      const apiUrl = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:5000' 
+        : 'https://api.votechs7academygroup.com');
+      window.open(`${apiUrl}${fileUrl}`, '_blank');
+    }
   };
 
   const getStatusCount = status => {
@@ -194,7 +203,7 @@ export default function LessonPlan() {
 
   const isAdmin4 = userRole === 'Admin4';
   const isAdmin1 = userRole === 'Admin1';
-  const canUpload = !isAdmin1 && !isAdmin4;
+  const canUpload = !isAdmin1 && !isAdmin4; // Admin4 cannot upload
   const canReview = isAdmin4;
 
   return (
@@ -260,8 +269,8 @@ export default function LessonPlan() {
                   <th>Status</th>
                   <th>Submitted</th>
                   {(isAdmin1 || isAdmin4) && <th>Submitted By</th>}
-                  {(isAdmin1 || isAdmin4) && <th>Subject</th>}
-                  {(isAdmin1 || isAdmin4) && <th>Reviewed By</th>}
+                  {(isAdmin1 || isAdmin4) && <th>Role</th>}
+                  {(isAdmin1 || isAdmin4) && <th>Review Status</th>}
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -281,13 +290,13 @@ export default function LessonPlan() {
                     </td>
                     <td>{formatDate(plan.submitted_at)}</td>
                     {(isAdmin1 || isAdmin4) && (
-                      <td>{plan.submitter_name || plan.submitter_username}</td>
+                      <td>{plan.teacher_name || plan.teacher_username || 'Unknown User'}</td>
                     )}
                     {(isAdmin1 || isAdmin4) && (
-                      <td>{plan.teacher_subjects || '-'}</td>
+                      <td>{plan.teacher_role || '-'}</td>
                     )}
                     {(isAdmin1 || isAdmin4) && (
-                      <td>{plan.reviewer_name || '-'}</td>
+                      <td>{plan.admin_comment ? 'Reviewed' : '-'}</td>
                     )}
                     <td className="actions">
                       <button 
@@ -488,7 +497,7 @@ export default function LessonPlan() {
                     <input 
                       className="lesson-plan-input-field" 
                       type="text" 
-                      value={selectedPlan.submitter_name || selectedPlan.submitter_username} 
+                      value={selectedPlan.teacher_name || selectedPlan.teacher_username || 'Unknown User'} 
                       readOnly 
                     />
                   </div>

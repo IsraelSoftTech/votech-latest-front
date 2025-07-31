@@ -61,6 +61,8 @@ const Signin = () => {
             navigate('/discipline');
           } else if (user.role === "Teacher") {
             navigate('/teacher-dashboard');
+          } else if (user.role === "Psychosocialist") {
+            navigate('/psycho-dashboard');
           } else {
             navigate('/dashboard');
           }

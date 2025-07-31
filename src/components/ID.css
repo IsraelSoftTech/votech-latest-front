@@ -204,6 +204,101 @@
   }
 } 
 
+/* Button styles for PDF download */
+.download-pdf-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 22px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #1976d222;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.download-pdf-btn:hover:not(:disabled) {
+  background: #1565c0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px #1976d233;
+}
+
+.download-pdf-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.download-pdf-btn:disabled:hover {
+  background: #ccc;
+  transform: none;
+  box-shadow: none;
+}
+
+/* PDF Generation Styles */
+.idcard-print-area {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+.idcard-print-area .idcard-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 0;
+  margin: 0;
+}
+
+.idcard-print-area .idcard-template {
+  width: 320px;
+  height: 200px;
+  min-width: 320px;
+  max-width: 320px;
+  min-height: 200px;
+  max-height: 200px;
+  margin: 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  background: linear-gradient(135deg, #6ec6ff 0%, #2196f3 100%);
+  border: 2px solid #204080;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(32,64,128,0.13);
+  padding: 8px 10px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Ensure images load properly for PDF */
+.idcard-print-area .idcard-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #f7f8fa;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Hide controls during PDF generation - only inside the grid */
+.idcard-print-area .idcard-grid select,
+.idcard-print-area .idcard-grid button {
+  display: none !important;
+}
+
 @media print {
   body * {
     visibility: hidden;

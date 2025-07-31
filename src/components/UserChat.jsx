@@ -46,7 +46,16 @@ export default function UserChat() {
   // Mark messages as read when chat is opened
   useEffect(() => {
     if (!userId) return;
-    api.markMessagesRead(userId).catch(() => {});
+    api.markMessagesRead(userId)
+      .then(() => {
+        // Refresh chat list to update unread count
+        if (typeof window.refreshChatList === 'function') {
+          window.refreshChatList();
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to mark messages as read:', error);
+      });
   }, [userId]);
 
   useEffect(() => {

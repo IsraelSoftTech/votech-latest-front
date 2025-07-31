@@ -2,45 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import SideTop from './SideTop';
 import './TeacherDash.css';
-import { FaBook, FaUserGraduate, FaClipboardList, FaChartBar, FaCheck, FaTimes, FaArrowLeft } from 'react-icons/fa';
-import SuccessMessage from './SuccessMessage';
-import api from '../services/api';
-import TeacherApp from './TeacherApp';
+import { FaBook, FaUserGraduate, FaClipboardList, FaChartBar } from 'react-icons/fa';
 
 export default function TeacherDash({ initialTab }) {
+  const [activeTab, setActiveTab] = useState('Dashboard');
   const location = useLocation();
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
-  const username = authUser?.username || 'User';
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState(initialTab || 'Dashboard');
-  const [form, setForm] = useState({
-    full_name: '',
-    sex: '',
-    id_card: '',
-    dob: '',
-    pob: '',
-    subjects: [],
-    classes: '', // read-only
-    contact: ''
-  });
-  const [registering, setRegistering] = useState(false);
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
-  const [subjects, setSubjects] = useState([]);
-  const [teacherRecord, setTeacherRecord] = useState(null);
-  const [showSubjectsDropdown, setShowSubjectsDropdown] = useState(false);
-
-  // Fetch subjects and teacher record
-  useEffect(() => {
-    api.getSubjects().then(setSubjects).catch(() => setSubjects([]));
-    fetchTeacherRecord();
-  }, []);
 
   // Listen to URL changes to update activeTab
   useEffect(() => {
-    if (location.pathname === '/teacher-application') {
-      setActiveTab('Application');
-    } else if (location.pathname === '/teacher-dashboard') {
+    if (location.pathname === '/teacher-dashboard') {
       setActiveTab('Dashboard');
     }
   }, [location.pathname]);
@@ -48,70 +19,6 @@ export default function TeacherDash({ initialTab }) {
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
-
-  const fetchTeacherRecord = async () => {
-    try {
-      const all = await api.getAllTeachers();
-      // Find teacher record for this user (by username or full_name)
-      const rec = all.find(t => t.contact === authUser?.contact || t.full_name === authUser?.name);
-      setTeacherRecord(rec);
-      if (rec) {
-        setForm({
-          full_name: rec.full_name,
-          sex: rec.sex,
-          id_card: rec.id_card,
-          dob: rec.dob,
-          pob: rec.pob,
-          subjects: rec.subjects ? rec.subjects.split(',') : [],
-          classes: rec.classes,
-          contact: rec.contact
-        });
-      }
-    } catch {}
-  };
-
-  const handleFormChange = e => {
-    const { name, value, type, checked } = e.target;
-    if (name === 'subjects') {
-      setForm(f => {
-        const arr = Array.isArray(f.subjects) ? f.subjects : (f.subjects ? f.subjects.split(',') : []);
-        return {
-          ...f,
-          subjects: checked ? [...arr, value] : arr.filter(s => s !== value)
-        };
-      });
-    } else {
-      setForm(f => ({ ...f, [name]: value }));
-    }
-  };
-
-  const handleRegister = async e => {
-    e.preventDefault();
-    setError('');
-    setRegistering(true);
-    try {
-      const submitForm = {
-        ...form,
-        subjects: Array.isArray(form.subjects) ? form.subjects.join(',') : form.subjects,
-        classes: form.classes // not editable here
-      };
-      await api.submitTeacherApplication(submitForm);
-      setSuccess('Application submitted!');
-      fetchTeacherRecord();
-    } catch (err) {
-      setError(err.message || 'Failed to submit application');
-    }
-    setRegistering(false);
-    setTimeout(() => setSuccess(''), 1200);
-  };
-
-  // Status indicator logic
-  let statusColor = '#e53e3e', statusIcon = <FaTimes />, statusTitle = 'Not Approved';
-  if (teacherRecord && teacherRecord.status === 'approved') {
-    statusColor = '#22bb33';
-    statusIcon = <FaCheck />;
-    statusTitle = 'Approved';
-  }
 
   return (
     <SideTop>
@@ -181,9 +88,6 @@ export default function TeacherDash({ initialTab }) {
             </div>
           </div>
         </>
-      )}
-      {activeTab === 'Application' && (
-        <TeacherApp authUser={authUser} />
       )}
     </SideTop>
   );

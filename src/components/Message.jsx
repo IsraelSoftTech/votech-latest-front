@@ -137,6 +137,60 @@ export default function Message() {
       .finally(() => setUsersLoading(false));
   }, []);
 
+  // Add refresh function to window for other components to use
+  useEffect(() => {
+    const refreshChatList = async () => {
+      try {
+        const [allUsers, chatListRaw] = await Promise.all([
+          api.getAllUsersForChat(),
+          api.getChatList()
+        ]);
+        
+        // Build a map of userId to chatList entry
+        const chatMap = {};
+        chatListRaw.forEach(c => {
+          if (c.type === 'user') chatMap[c.id] = c;
+        });
+        
+        // For each user, create a chat entry (with lastMessage/unread if exists)
+        const allUserChats = allUsers.map(u => {
+          const chat = chatMap[u.id] || {};
+          return {
+            id: u.id,
+            username: u.username,
+            name: u.name,
+            lastMessage: chat.lastMessage || null,
+            unread: chat.unread || 0,
+            type: 'user'
+          };
+        });
+        
+        // Add group chats from chatListRaw
+        const groupChats = chatListRaw.filter(c => c.type === 'group');
+        
+        // Merge and sort
+        const allChats = [...allUserChats, ...groupChats].sort((a, b) => {
+          const aTime = a.lastMessage?.time ? new Date(a.lastMessage.time) : new Date(0);
+          const bTime = b.lastMessage?.time ? new Date(b.lastMessage.time) : new Date(0);
+          return bTime - aTime;
+        });
+        
+        setChatList(allChats);
+        setHasUnread(allChats.some(u => u.unread > 0));
+      } catch (error) {
+        console.error('Failed to refresh chat list:', error);
+      }
+    };
+
+    // Make refresh function available globally
+    window.refreshChatList = refreshChatList;
+
+    // Cleanup on unmount
+    return () => {
+      delete window.refreshChatList;
+    };
+  }, []);
+
   // Reset modal state on close
   const handleCloseNewChat = () => {
     setShowNewChat(false);
@@ -239,7 +293,7 @@ export default function Message() {
       </div>
       
       {/* Create Group Button */}
-      <div style={{ marginTop: 24, textAlign: 'center' }}>
+      <div style={{ marginTop: window.innerWidth <= 700 ? 16 : 24, textAlign: 'center' }}>
         <button
           onClick={handleCreateGroup}
           style={{
@@ -247,8 +301,8 @@ export default function Message() {
             color: '#fff',
             border: 'none',
             borderRadius: 8,
-            padding: '12px 24px',
-            fontSize: 16,
+            padding: window.innerWidth <= 700 ? '10px 20px' : '12px 24px',
+            fontSize: window.innerWidth <= 700 ? 14 : 16,
             fontWeight: 600,
             cursor: 'pointer',
             display: 'inline-flex',
@@ -260,27 +314,27 @@ export default function Message() {
           onMouseEnter={(e) => e.target.style.background = '#1a3668'}
           onMouseLeave={(e) => e.target.style.background = '#204080'}
         >
-          <FaUsers />
+          <FaUsers style={{ fontSize: window.innerWidth <= 700 ? 14 : 16 }} />
           Create Group
         </button>
       </div>
       <div
         style={{
-          marginTop: 32,
+          marginTop: window.innerWidth <= 700 ? 16 : 32,
           maxWidth: 700,
           marginLeft: 'auto',
           marginRight: 'auto',
           background: '#fff',
-          borderRadius: 12,
-          boxShadow: '0 2px 8px rgba(32,64,128,0.06)',
+          borderRadius: window.innerWidth <= 700 ? 0 : 12,
+          boxShadow: window.innerWidth <= 700 ? 'none' : '0 2px 8px rgba(32,64,128,0.06)',
           width: '100%',
-          padding: window.innerWidth <= 600 ? '0 8px' : '0 18px',
+          padding: window.innerWidth <= 700 ? '0' : '0 18px',
         }}
       >
         {usersLoading ? (
-          <div style={{ padding: 32, textAlign: 'center' }}>Loading chats...</div>
+          <div style={{ padding: window.innerWidth <= 700 ? 24 : 32, textAlign: 'center' }}>Loading chats...</div>
         ) : usersError ? (
-          <div style={{ padding: 32, color: '#e53e3e', textAlign: 'center' }}>{usersError}</div>
+          <div style={{ padding: window.innerWidth <= 700 ? 24 : 32, color: '#e53e3e', textAlign: 'center' }}>{usersError}</div>
         ) : (
           <div>
             {chatList.map(chat => {
@@ -316,18 +370,74 @@ export default function Message() {
                   onClick={() => isGroup
                     ? navigate(`/admin-group-messages/${chat.id}`)
                     : navigate(`/admin-messages/${chat.id}`)}
-                  style={{ userSelect: 'none', alignItems: 'center', gap: 16 }}
+                  style={{ 
+                    userSelect: 'none', 
+                    alignItems: 'center', 
+                    gap: window.innerWidth <= 700 ? 12 : 16,
+                    padding: window.innerWidth <= 700 ? '12px 16px' : '16px',
+                    borderBottom: window.innerWidth <= 700 ? '1px solid #f0f0f0' : 'none',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                 >
-                  <div className="avatar" style={{ width: 48, height: 48, borderRadius: '50%', background: '#e0e7ef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 20, color: '#204080' }}>
-                    {isGroup ? <FaUsers /> : initials}
+                  <div className="avatar" style={{ 
+                    width: window.innerWidth <= 700 ? 40 : 48, 
+                    height: window.innerWidth <= 700 ? 40 : 48, 
+                    borderRadius: '50%', 
+                    background: '#e0e7ef', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontWeight: 700, 
+                    fontSize: window.innerWidth <= 700 ? 16 : 20, 
+                    color: '#204080' 
+                  }}>
+                    {isGroup ? <FaUsers style={{ fontSize: window.innerWidth <= 700 ? 14 : 16 }} /> : initials}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, color: '#204080', fontSize: 16, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
-                    <div style={{ color: '#444', fontSize: 15, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lastMsg.length > 32 ? lastMsg.slice(0,32) + '…' : lastMsg}</div>
+                    <div style={{ 
+                      fontWeight: 600, 
+                      color: '#204080', 
+                      fontSize: window.innerWidth <= 700 ? 14 : 16, 
+                      whiteSpace: 'nowrap', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis' 
+                    }}>
+                      {displayName}
+                    </div>
+                    <div style={{ 
+                      color: '#444', 
+                      fontSize: window.innerWidth <= 700 ? 13 : 15, 
+                      marginTop: 2, 
+                      whiteSpace: 'nowrap', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis' 
+                    }}>
+                      {lastMsg.length > (window.innerWidth <= 700 ? 25 : 32) ? lastMsg.slice(0, window.innerWidth <= 700 ? 25 : 32) + '…' : lastMsg}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 40, paddingRight: 8 }}>
-                    <div style={{ color: '#888', fontSize: 13 }}>{timeStr}</div>
-                    {parseInt(chat.unread) > 0 && <div style={{ background: '#25d366', color: '#fff', borderRadius: 12, minWidth: 22, minHeight: 22, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 4, padding: '0 7px' }}>{parseInt(chat.unread)}</div>}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 40, paddingRight: window.innerWidth <= 700 ? 0 : 8 }}>
+                    <div style={{ color: '#888', fontSize: window.innerWidth <= 700 ? 11 : 13 }}>{timeStr}</div>
+                    {parseInt(chat.unread) > 0 && (
+                      <div style={{ 
+                        background: '#25d366', 
+                        color: '#fff', 
+                        borderRadius: 12, 
+                        minWidth: window.innerWidth <= 700 ? 18 : 22, 
+                        minHeight: window.innerWidth <= 700 ? 18 : 22, 
+                        fontWeight: 700, 
+                        fontSize: window.innerWidth <= 700 ? 12 : 14, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        marginTop: 4, 
+                        padding: '0 6px' 
+                      }}>
+                        {parseInt(chat.unread)}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

@@ -43,7 +43,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Salary', icon: <FaFileInvoiceDollar />, path: '/admin-salary' },
       { label: 'Inventory', icon: <FaBoxes />, path: '/admin-inventory' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
-      { label: 'Exam/Marks', icon: <FaChartBar /> },
+      { label: 'Marks', icon: <FaChartBar />, path: '/admin-marks' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
     ];
   } else if (authUser?.role === 'Admin3') {
@@ -59,7 +59,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
       { label: 'Reports', icon: <FaFileAlt /> },
-      { label: 'Exam/Marks', icon: <FaChartBar /> },
+      { label: 'Marks', icon: <FaChartBar />, path: '/admin-marks' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Display Users', icon: <FaUserGraduate />, path: '/admin-users' },
     ];
@@ -81,19 +81,11 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     ];
   } else if (authUser?.role === 'Psychosocialist') {
     menuItems = [
-      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
-      { label: 'Application', icon: <FaClipboardList />, path: '/application' },
-      { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
-      { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
-      { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
-      { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
-      { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
-      { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
-      { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
-      { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
-      { label: 'Reports', icon: <FaFileAlt /> },
-      { label: 'Exam/Marks', icon: <FaChartBar /> },
-      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/psychosocialist-lesson-plans' },
+      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/psycho-dashboard' },
+      { label: 'Cases', icon: <FaClipboardList />, path: '/psycho-cases' },
+      { label: 'Lesson Plan', icon: <FaPenFancy />, path: '/psychosocialist-lesson-plans' },
+      { label: 'Reports', icon: <FaFileAlt />, path: '/psycho-reports' },
+      { label: 'Messages', icon: <FaEnvelope />, path: '/psycho-messages' },
     ];
   } else if (authUser?.role === 'Admin4') {
     // Use deanMenuItems for Admin4
@@ -201,7 +193,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   // Teacher menu items (from deleted TeacherSideTop)
   const teacherMenuItems = [
     { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/teacher-dashboard' },
-    { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+    { label: 'Application', icon: <FaClipboardList />, path: '/teacher-application' },
     { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
     { label: 'Students', icon: <FaUserGraduate />, path: '/teacher-students' },
@@ -221,6 +213,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
     { label: 'Academic Planning', icon: <FaBook />, path: '/dean-academic' },
     { label: 'Timetables', icon: <FaClipboardList />, path: '/dean-timetables' },
+    { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/dean-lesson-plans' },
   ];
 
