@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie, FaCalendarAlt } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import ReactDOM from 'react-dom';
 import './SideTop.css';
@@ -9,8 +9,6 @@ import api from '../services/api';
 export default function SideTop({ children, hasUnread, activeTab }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [menuExpanded, setMenuExpanded] = useState(false);
-  const [visibleMenuCount, setVisibleMenuCount] = useState(window.innerWidth <= 700 ? 10 : 11);
   const [expandedMenu, setExpandedMenu] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,6 +20,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   if (authUser?.role === 'Admin1') {
     menuItems = [
       { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
       { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
       { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
@@ -63,6 +62,32 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Display Users', icon: <FaUserGraduate />, path: '/admin-users' },
     ];
+  } else if (authUser?.role === 'Admin4') {
+    menuItems = [
+      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/dean' },
+      { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+      { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
+      { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
+      { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
+      { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
+      { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
+      { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
+      { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
+      { label: 'Reports', icon: <FaFileAlt /> },
+      { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
+      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/dean-lesson-plans' },
+      { label: 'Events', icon: <FaCalendarAlt />, path: '/dean-events' },
+      { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
+    ];
+  } else if (authUser?.role === 'Teacher') {
+    menuItems = [
+      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/teacher-dashboard' },
+      { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+      { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
+      { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
+      { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/teacher-lesson-plans' },
+      { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
+    ];
   } else if (authUser?.role === 'Discipline') {
     menuItems = [
       { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
@@ -82,23 +107,13 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   } else if (authUser?.role === 'Psychosocialist') {
     menuItems = [
       { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/psycho-dashboard' },
+      { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'Cases', icon: <FaClipboardList />, path: '/psycho-cases' },
       { label: 'Lesson Plan', icon: <FaPenFancy />, path: '/psychosocialist-lesson-plans' },
       { label: 'Reports', icon: <FaFileAlt />, path: '/psycho-reports' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/psycho-messages' },
     ];
-  } else if (authUser?.role === 'Admin4') {
-    // Use deanMenuItems for Admin4
-    menuItems = [];
   }
-
-  useEffect(() => {
-    function handleResize() {
-      setVisibleMenuCount(window.innerWidth <= 700 ? 10 : 11);
-    }
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Automatically expand parent menu if a submenu route is active
   useEffect(() => {
@@ -120,13 +135,11 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     }
     return true;
   });
-  const showSeeMore = filteredMenuItems.length > visibleMenuCount;
-  const visibleMenuItems = menuExpanded ? filteredMenuItems : filteredMenuItems.slice(0, visibleMenuCount);
 
-  // Filter out My Classes and Application for Admin1 users
+  // Filter out My Classes for Admin1 users (but keep Application)
   const filterMenuItems = (items) => {
     if (authUser?.role === 'Admin1') {
-      return items.filter(item => item.label !== 'My Classes' && item.label !== 'Application');
+      return items.filter(item => item.label !== 'My Classes');
     }
     return items;
   };
@@ -193,7 +206,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   // Teacher menu items (from deleted TeacherSideTop)
   const teacherMenuItems = [
     { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/teacher-dashboard' },
-    { label: 'Application', icon: <FaClipboardList />, path: '/teacher-application' },
+    { label: 'Application', icon: <FaClipboardList />, path: '/application' },
     { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
     { label: 'Students', icon: <FaUserGraduate />, path: '/teacher-students' },
@@ -206,11 +219,10 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   // Dean/Admin4 menu items (from provided image)
   const deanMenuItems = [
     { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/dean' },
-    { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+    { label: 'Staff Management', icon: <FaUserTie />, path: '/application' },
     { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
     { label: 'Events', icon: <FaClipboardList />, path: '/dean-events' },
-    { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
     { label: 'Academic Planning', icon: <FaBook />, path: '/dean-academic' },
     { label: 'Timetables', icon: <FaClipboardList />, path: '/dean-timetables' },
     { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
@@ -243,7 +255,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
               <span>{item.label}</span>
             </div>
           ))}
-          {!isTeacher && showSeeMore && !expandedMenu && (
+          {/* {!isTeacher && showSeeMore && !expandedMenu && ( // This block is removed
             <button
               className="menu-item see-more-btn"
               style={{ background: '#4669b3', color: '#fff', margin: '8px 12px', border: 'none', borderRadius: 6, fontWeight: 600, cursor: 'pointer', fontSize: '1.05rem', padding: '12px 0' }}
@@ -251,7 +263,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
             >
               {menuExpanded ? 'See Less' : 'See More...'}
             </button>
-          )}
+          )} */}
         </nav>
       </aside>
       <div className="main-content" style={{ paddingTop: 32, minHeight: 'calc(100vh - 0px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>

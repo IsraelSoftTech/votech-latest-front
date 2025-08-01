@@ -7,6 +7,7 @@ import ReactDOM from 'react-dom';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/discipline' },
+  { label: 'Application', icon: <FaClipboardList />, path: '/application' },
   { label: 'Messages', icon: <FaEnvelope />, path: '/discipline-messages' },
   { label: 'Students', icon: <FaUserGraduate />, path: '/discipline-students' },
   { label: 'Attendance', icon: <FaClipboardList />, path: '/attendance' },

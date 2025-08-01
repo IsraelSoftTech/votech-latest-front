@@ -996,9 +996,213 @@ class ApiService {
     const response = await fetch(`${API_URL}/marks/test/${marksId}`, {
       headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to test marks record');
-    return await response.json();
+    return this.handleResponse(response);
   }
+
+  // === Applications API ===
+  
+  async getApplications() {
+    try {
+      const response = await fetch(`${API_URL}/applications`, {
+        headers: this.getAuthHeaders(),
+      });
+      
+      // Handle response manually to avoid automatic logout
+      if (!response.ok) {
+        const text = await response.text();
+        let error;
+        try {
+          error = JSON.parse(text);
+        } catch (e) {
+          error = { error: text };
+        }
+        
+        // Only logout for actual authentication errors, not business logic errors
+        if (response.status === 401) {
+          this.clearToken();
+          throw new Error('Session expired. Please login again.');
+        }
+        
+        throw new Error(error.details || error.error || 'Failed to fetch applications');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Get applications error:', error);
+      throw error;
+    }
+  }
+
+  async getUserApplication(userId) {
+    try {
+      const response = await fetch(`${API_URL}/applications/user/${userId}`, {
+        headers: this.getAuthHeaders(),
+      });
+      
+      // Handle 404 gracefully (user has no application yet)
+      if (response.status === 404) {
+        return null;
+      }
+      
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Get user application error:', error);
+      // Don't throw error for 404, just return null
+      if (error.message.includes('404')) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async submitApplication(formData) {
+    try {
+      const authHeaders = this.getAuthHeaders();
+      const headers = {};
+      
+      // For FormData, only include Authorization header, not Content-Type
+      headers['Authorization'] = authHeaders['Authorization'];
+      
+      const response = await fetch(`${API_URL}/applications`, {
+        method: 'POST',
+        headers: headers,
+        body: formData
+      });
+      
+      // Handle response manually to avoid automatic logout
+      if (!response.ok) {
+        const text = await response.text();
+        let error;
+        try {
+          error = JSON.parse(text);
+        } catch (e) {
+          error = { error: text };
+        }
+        
+        // Only logout for actual authentication errors, not business logic errors
+        if (response.status === 401) {
+          this.clearToken();
+          throw new Error('Session expired. Please login again.');
+        }
+        
+        throw new Error(error.details || error.error || 'Failed to submit application');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Submit application error:', error);
+      throw error;
+    }
+  }
+
+  async updateApplication(id, formData) {
+    try {
+      const authHeaders = this.getAuthHeaders();
+      const headers = {};
+      
+      // For FormData, only include Authorization header, not Content-Type
+      headers['Authorization'] = authHeaders['Authorization'];
+      
+      const response = await fetch(`${API_URL}/applications/${id}`, {
+        method: 'PUT',
+        headers: headers,
+        body: formData
+      });
+      
+      // Handle response manually to avoid automatic logout
+      if (!response.ok) {
+        const text = await response.text();
+        let error;
+        try {
+          error = JSON.parse(text);
+        } catch (e) {
+          error = { error: text };
+        }
+        
+        // Only logout for actual authentication errors, not business logic errors
+        if (response.status === 401) {
+          this.clearToken();
+          throw new Error('Session expired. Please login again.');
+        }
+        
+        throw new Error(error.details || error.error || 'Failed to update application');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Update application error:', error);
+      throw error;
+    }
+  }
+
+  async updateApplicationStatus(id, status) {
+    try {
+      const response = await fetch(`${API_URL}/applications/${id}/status`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ status })
+      });
+      
+      // Handle response manually to avoid automatic logout
+      if (!response.ok) {
+        const text = await response.text();
+        let error;
+        try {
+          error = JSON.parse(text);
+        } catch (e) {
+          error = { error: text };
+        }
+        
+        // Only logout for actual authentication errors, not business logic errors
+        if (response.status === 401) {
+          this.clearToken();
+          throw new Error('Session expired. Please login again.');
+        }
+        
+        throw new Error(error.details || error.error || 'Failed to update application status');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Update application status error:', error);
+      throw error;
+    }
+  }
+
+  async deleteApplication(id) {
+    try {
+      const response = await fetch(`${API_URL}/applications/${id}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+      
+      // Handle response manually to avoid automatic logout
+      if (!response.ok) {
+        const text = await response.text();
+        let error;
+        try {
+          error = JSON.parse(text);
+        } catch (e) {
+          error = { error: text };
+        }
+        
+        // Only logout for actual authentication errors, not business logic errors
+        if (response.status === 401) {
+          this.clearToken();
+          throw new Error('Session expired. Please login again.');
+        }
+        
+        throw new Error(error.details || error.error || 'Failed to delete application');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Delete application error:', error);
+      throw error;
+    }
+  }
+
+  // === End Applications API ===
 }
 
 const api = new ApiService();

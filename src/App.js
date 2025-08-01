@@ -22,11 +22,9 @@ import Dean from './components/Dean.jsx';
 import DeanMessage from './components/DeanMessage.jsx';
 import Subjects from './components/Subjects.jsx';
 import LessonPlan from './components/LessonPlan.jsx';
-import DeanManager from './components/DeanManager';
 import DeanEvent from './components/DeanEvent';
 import Admin2Dash from './components/Admin2Dash.jsx';
-import Admin2App from './components/Admin2App.jsx';
-import TeacherApp from './components/TeacherApp.jsx';
+import Application from './components/Application.jsx';
 import DeanLessonPlan from './components/DeanLessonPlan.jsx';
 import Marks from './components/Marks.jsx';
 import MyClasses from './components/MyClasses.jsx';
@@ -75,8 +73,7 @@ function App() {
       <Route path="/admin-group-messages/:groupId" element={<GroupChat />} />
       <Route path="/user-messages/:userId" element={<UserChat />} />
       <Route path="/lesson-plans" element={<LessonPlan />} />
-      <Route path="/admin2-application" element={<Admin2App authUser={authUser} />} />
-      <Route path="/application" element={<Admin2App authUser={authUser} />} />
+      <Route path="/application" element={<Application authUser={authUser} />} />
       <Route path="/my-classes" element={<MyClasses authUser={authUser} />} />
 
       <Route path="/discipline" element={<DisciplineDashboard />} />
@@ -110,7 +107,6 @@ function App() {
       } />
       <Route path="/discipline-lesson-plans" element={<LessonPlan />} />
       <Route path="/teacher-dashboard" element={<TeacherDash />} />
-      <Route path="/teacher-application" element={<TeacherApp authUser={authUser} />} />
       <Route path="/teacher-messages" element={<TeacherMessage />} />
       <Route path="/teacher-messages/:userId" element={<TeacherMessage />} />
       <Route path="/teacher-lesson-plans" element={<LessonPlan />} />
@@ -118,7 +114,6 @@ function App() {
       <Route path="/dean-messages" element={<DeanMessage />} />
       <Route path="/dean-messages/:userId" element={<DeanMessage />} />
       <Route path="/dean-events" element={<DeanEvent />} />
-      <Route path="/dean-staff" element={<DeanManager />} />
       <Route path="/dean-operations" element={<Dean />} />
       <Route path="/dean-inventory" element={<Dean />} />
       <Route path="/dean-scheduling" element={<Dean />} />
