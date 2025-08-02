@@ -3,6 +3,7 @@ import SideTop from './SideTop';
 import DisciplineSideTop from './DisciplineSideTop';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaCheck, FaTimes, FaFileUpload, FaDownload } from 'react-icons/fa';
 import api from '../services/api';
+import SuccessMessage from './SuccessMessage';
 import './Application.css';
 
 export default function Application({ authUser }) {
@@ -27,19 +28,19 @@ export default function Application({ authUser }) {
   const isAdmin1 = authUser?.role === 'Admin1';
   const isAdmin4 = authUser?.role === 'Admin4';
   const canManageApplications = isAdmin1 || isAdmin4;
-  const canSubmitApplication = !canManageApplications;
+  const canSubmitApplication = true; // All users including admins can submit applications
   const canEditApplications = isAdmin4; // Only Admin4 can edit applications
   const canApproveApplications = isAdmin4; // Only Admin4 can approve applications
 
   useEffect(() => {
-    if (canManageApplications) {
-      fetchApplications();
-    } else {
-      fetchUserApplication();
-    }
+    if (!authUser) return; // Don't fetch data if user is not authenticated
+    
+    // Always fetch both applications and user's own application
+    fetchApplications();
+    fetchUserApplication();
     fetchSubjects();
     fetchClasses();
-  }, []);
+  }, [authUser]);
 
   const fetchSubjects = async () => {
     try {
@@ -78,6 +79,8 @@ export default function Application({ authUser }) {
   };
 
   const fetchUserApplication = async () => {
+    if (!authUser) return; // Don't fetch if user is not authenticated
+    
     try {
       const application = await api.getUserApplication(authUser.id);
       setUserApplication(application);
@@ -89,6 +92,8 @@ export default function Application({ authUser }) {
       } else if (!error.message.includes('404')) {
         console.error('Failed to fetch user application:', error);
       }
+      // Set to null if there's an error (including 404)
+      setUserApplication(null);
     }
   };
 
@@ -206,9 +211,7 @@ export default function Application({ authUser }) {
       
       // Refresh data
       await fetchApplications();
-      if (canSubmitApplication) {
-        await fetchUserApplication();
-      }
+      await fetchUserApplication();
       
       // Clear success message after 5 seconds
       setTimeout(() => {
@@ -252,9 +255,7 @@ export default function Application({ authUser }) {
     try {
       await api.deleteApplication(id);
       fetchApplications();
-      if (canSubmitApplication) {
-        fetchUserApplication();
-      }
+      fetchUserApplication();
     } catch (error) {
       console.error('Error deleting application:', error);
       if (error.message.includes('Session expired')) {
@@ -283,12 +284,12 @@ export default function Application({ authUser }) {
 
   const canEditApplication = (application) => {
     if (canEditApplications) return true;
-    return application.applicant_id === authUser.id && application.status === 'pending';
+    return authUser && application.applicant_id === authUser.id && application.status === 'pending';
   };
 
   const canDeleteApplication = (application) => {
     if (canEditApplications) return true;
-    return application.applicant_id === authUser.id && application.status === 'pending';
+    return authUser && application.applicant_id === authUser.id && application.status === 'pending';
   };
 
   const getStatusBadge = (status) => {
@@ -302,12 +303,12 @@ export default function Application({ authUser }) {
   };
 
   const renderApplicationForm = () => (
-    <div className="application-form-overlay">
-      <div className="application-form-modal">
-        <div className="form-header">
-          <h3>{editingId ? 'Edit Application' : 'Submit Application'}</h3>
+    <div className="application-form-overlay app-form-overlay">
+      <div className="application-form-modal app-form-modal">
+        <div className="form-header app-form-header">
+          <h3 className="app-form-title">{editingId ? 'Edit Application' : 'Submit Application'}</h3>
           <button 
-            className="close-btn" 
+            className="close-btn app-close-btn" 
             onClick={() => {
               setShowForm(false);
               setEditingId(null);
@@ -326,9 +327,9 @@ export default function Application({ authUser }) {
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="application-form">
-          <div className="form-group">
-            <label>Full Name *</label>
+        <form onSubmit={handleSubmit} className="application-form app-form-unique">
+          <div className="form-group app-form-group">
+            <label className="app-form-label">Full Name *</label>
             <input
               type="text"
               name="applicant_name"
@@ -336,23 +337,25 @@ export default function Application({ authUser }) {
               onChange={handleInputChange}
               required
               placeholder="Enter your full name"
+              className="app-form-input"
             />
           </div>
 
-          <div className="form-group">
-            <label>Class(es) *</label>
+          <div className="form-group app-form-group">
+            <label className="app-form-label">Class(es) *</label>
             {isAdmin4 ? (
-              <div className="classes-checkbox-container">
+              <div className="classes-checkbox-container app-classes-container">
                 {classes.map((cls) => (
-                  <label key={cls.id} className="class-checkbox">
+                  <label key={cls.id} className="class-checkbox app-class-checkbox">
                     <input
                       type="checkbox"
                       name="class"
                       value={cls.name}
                       checked={selectedClasses.includes(cls.name)}
                       onChange={handleInputChange}
+                      className="app-checkbox-input"
                     />
-                    <span className="checkbox-label">{cls.name}</span>
+                    <span className="checkbox-label app-checkbox-label">{cls.name}</span>
                   </label>
                 ))}
               </div>
@@ -365,33 +368,35 @@ export default function Application({ authUser }) {
                 required
                 placeholder="Class(es) will be assigned by Admin4"
                 disabled
+                className="app-form-input app-form-input-disabled"
               />
             )}
           </div>
 
-          <div className="form-group">
-            <label>Subject(s) *</label>
-            <div className="subjects-checkbox-container">
+          <div className="form-group app-form-group">
+            <label className="app-form-label">Subject(s) *</label>
+            <div className="subjects-checkbox-container app-subjects-container">
               {subjects.map((subject) => (
-                <label key={subject.id} className="subject-checkbox">
+                <label key={subject.id} className="subject-checkbox app-subject-checkbox">
                   <input
                     type="checkbox"
                     name="subject"
                     value={subject.name}
                     checked={selectedSubjects.includes(subject.name)}
                     onChange={handleInputChange}
+                    className="app-checkbox-input"
                   />
-                  <span className="checkbox-label">{subject.name}</span>
+                  <span className="checkbox-label app-checkbox-label">{subject.name}</span>
                 </label>
               ))}
             </div>
             {selectedSubjects.length === 0 && (
-              <small className="form-help">Please select at least one subject</small>
+              <small className="form-help app-form-help">Please select at least one subject</small>
             )}
           </div>
 
-          <div className="form-group">
-            <label>Contact *</label>
+          <div className="form-group app-form-group">
+            <label className="app-form-label">Contact *</label>
             <input
               type="text"
               name="contact"
@@ -399,32 +404,34 @@ export default function Application({ authUser }) {
               onChange={handleInputChange}
               required
               placeholder="Phone number or email"
+              className="app-form-input"
             />
           </div>
 
-          <div className="form-group">
-            <label>Certificate (PDF or Image)</label>
-            <div className="file-upload">
+          <div className="form-group app-form-group">
+            <label className="app-form-label">Certificate (PDF or Image)</label>
+            <div className="file-upload app-file-upload">
               <input
                 type="file"
                 name="certificate"
                 onChange={handleInputChange}
                 accept=".pdf,.jpg,.jpeg,.png"
                 id="certificate-upload"
+                className="app-file-input"
               />
-              <label htmlFor="certificate-upload" className="file-upload-label">
+              <label htmlFor="certificate-upload" className="file-upload-label app-file-upload-label">
                 <FaFileUpload /> Choose File
               </label>
               {formData.certificate && (
-                <span className="file-name">{formData.certificate.name}</span>
+                <span className="file-name app-file-name">{formData.certificate.name}</span>
               )}
             </div>
           </div>
 
-          <div className="form-actions">
+          <div className="form-actions app-form-actions">
             <button 
               type="button" 
-              className="btn-secondary"
+              className="btn-secondary app-btn-secondary"
               onClick={() => {
                 setShowForm(false);
                 setEditingId(null);
@@ -441,7 +448,7 @@ export default function Application({ authUser }) {
             >
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={loading}>
+            <button type="submit" className="btn-primary app-btn-primary" disabled={loading}>
               {loading ? 'Submitting...' : (editingId ? 'Update' : 'Submit')}
             </button>
           </div>
@@ -450,217 +457,224 @@ export default function Application({ authUser }) {
     </div>
   );
 
-  const renderApplicationsTable = () => (
-    <div className="applications-table-container">
-      <div className="table-header">
-        <h2>
-          {isAdmin1 ? 'Submitted Applications (View Only)' : 
-           isAdmin4 ? 'Applications Management' : 
-           'Applications'}
-        </h2>
-        {canSubmitApplication && !userApplication && (
-          <button 
-            className="btn-primary apply-btn"
-            onClick={() => setShowForm(true)}
-          >
-            <FaPlus /> Apply
-          </button>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="loading">Loading applications...</div>
-      ) : applications.length === 0 ? (
-        <div className="no-applications">
-          {isAdmin1 ? 'No applications have been submitted yet.' : 
-           isAdmin4 ? 'No applications found.' : 
-           (userApplication ? 'No other applications found.' : 'You haven\'t submitted any applications yet.')}
+  const renderApplicationsTable = () => {
+    // Check if current user has already applied by looking in the applications array
+    const currentUserHasApplied = applications.some(app => 
+      authUser && app.applicant_id === authUser.id
+    );
+    
+    return (
+      <div className="applications-table-container app-table-container">
+        <div className="table-header app-table-header">
+          <h2 className="app-table-title">
+            {isAdmin1 ? 'All Applications (View & Apply)' : 
+             isAdmin4 ? 'Applications Management (View & Apply)' : 
+             'Applications'}
+          </h2>
+          {canSubmitApplication && !currentUserHasApplied && (
+            <button 
+              className="btn-primary apply-btn app-apply-btn"
+              onClick={() => setShowForm(true)}
+            >
+              <FaPlus /> Apply
+            </button>
+          )}
         </div>
-      ) : (
-        <div className="table-responsive">
-          <table className="applications-table">
-            <thead>
-              <tr>
-                <th>Name of Applicant</th>
-                <th>Class(es)</th>
-                <th>Subject(s)</th>
-                <th>Contact</th>
-                <th>Certificate</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {applications.map((app) => (
-                <tr key={app.id}>
-                  <td>{app.applicant_name}</td>
-                  <td>{app.classes}</td>
-                  <td>{app.subjects}</td>
-                  <td>{app.contact}</td>
-                  <td>
-                    {app.certificate_url ? (
-                      <a 
-                        href={app.certificate_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="certificate-link"
-                      >
-                        <FaDownload /> View
-                      </a>
-                    ) : (
-                      <span className="no-certificate">No certificate</span>
-                    )}
-                  </td>
-                  <td>{getStatusBadge(app.status)}</td>
-                  <td className="app-actions">
-                    {canEditApplication(app) && (
-                      <button 
-                        className="app-action-btn edit"
-                        onClick={() => handleEdit(app)}
-                        title="Edit"
-                      >
-                        <FaEdit />
-                      </button>
-                    )}
-                    {canDeleteApplication(app) && (
-                      <button 
-                        className="app-action-btn delete"
-                        onClick={() => handleDelete(app.id)}
-                        title="Delete"
-                      >
-                        <FaTrash />
-                      </button>
-                    )}
-                    {canApproveApplications && (
-                      <>
-                        {app.status === 'pending' && (
-                          <>
+
+        {loading ? (
+          <div className="loading app-loading">Loading applications...</div>
+        ) : applications.length === 0 ? (
+          <div className="no-applications app-no-applications">
+            {isAdmin1 ? 'No applications have been submitted yet. You can be the first to apply!' : 
+             isAdmin4 ? 'No applications found. You can be the first to apply!' : 
+             (userApplication ? 'No other applications found.' : 'You haven\'t submitted any applications yet.')}
+          </div>
+        ) : (
+          <div className="table-responsive app-table-responsive">
+            <table className="applications-table app-table">
+              <thead className="app-table-head">
+                <tr className="app-table-row">
+                  <th className="app-table-header-cell">Name of Applicant</th>
+                  <th className="app-table-header-cell">Class(es)</th>
+                  <th className="app-table-header-cell">Subject(s)</th>
+                  <th className="app-table-header-cell">Contact</th>
+                  <th className="app-table-header-cell">Certificate</th>
+                  <th className="app-table-header-cell">Status</th>
+                  <th className="app-table-header-cell">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="app-table-body">
+                {applications.map((app) => (
+                  <tr key={app.id} className="app-table-row">
+                    <td className="app-table-cell">{app.applicant_name}</td>
+                    <td className="app-table-cell">{app.classes}</td>
+                    <td className="app-table-cell">{app.subjects}</td>
+                    <td className="app-table-cell">{app.contact}</td>
+                    <td className="app-table-cell">
+                      {app.certificate_url ? (
+                        <a 
+                          href={app.certificate_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="certificate-link app-certificate-link"
+                        >
+                          <FaDownload /> View
+                        </a>
+                      ) : (
+                        <span className="no-certificate app-no-certificate">No certificate</span>
+                      )}
+                    </td>
+                    <td className="app-table-cell">{getStatusBadge(app.status)}</td>
+                    <td className="app-table-cell app-actions">
+                      {canEditApplication(app) && (
+                        <button 
+                          className="app-action-btn edit"
+                          onClick={() => handleEdit(app)}
+                          title="Edit"
+                        >
+                          <FaEdit />
+                        </button>
+                      )}
+                      {canDeleteApplication(app) && (
+                        <button 
+                          className="app-action-btn delete"
+                          onClick={() => handleDelete(app.id)}
+                          title="Delete"
+                        >
+                          <FaTrash />
+                        </button>
+                      )}
+                      {canApproveApplications && (
+                        <>
+                          {app.status === 'pending' && (
+                            <>
+                              <button 
+                                className="app-action-btn approve"
+                                onClick={() => handleStatusUpdate(app.id, 'approved')}
+                                title="Approve"
+                              >
+                                <FaCheck />
+                              </button>
+                              <button 
+                                className="app-action-btn reject"
+                                onClick={() => handleStatusUpdate(app.id, 'rejected')}
+                                title="Reject"
+                              >
+                                <FaTimes />
+                              </button>
+                            </>
+                          )}
+                          {app.status === 'rejected' && (
                             <button 
                               className="app-action-btn approve"
-                              onClick={() => handleStatusUpdate(app.id, 'approved')}
-                              title="Approve"
+                              onClick={() => handleStatusUpdate(app.id, 'pending')}
+                              title="Remove Rejection"
                             >
                               <FaCheck />
                             </button>
+                          )}
+                          {app.status === 'approved' && (
                             <button 
                               className="app-action-btn reject"
-                              onClick={() => handleStatusUpdate(app.id, 'rejected')}
-                              title="Reject"
+                              onClick={() => handleStatusUpdate(app.id, 'pending')}
+                              title="Remove Approval"
                             >
                               <FaTimes />
                             </button>
-                          </>
-                        )}
-                        {app.status === 'rejected' && (
-                          <button 
-                            className="app-action-btn approve"
-                            onClick={() => handleStatusUpdate(app.id, 'pending')}
-                            title="Remove Rejection"
-                          >
-                            <FaCheck />
-                          </button>
-                        )}
-                        {app.status === 'approved' && (
-                          <button 
-                            className="app-action-btn reject"
-                            onClick={() => handleStatusUpdate(app.id, 'pending')}
-                            title="Remove Approval"
-                          >
-                            <FaTimes />
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
+                          )}
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderUserApplication = () => {
     if (!userApplication) return null;
 
     return (
-      <div className="user-application-section">
-        <div className="section-header">
-          <h3>My Submitted Application</h3>
-          <div className="application-status">
+      <div className="user-application-section app-user-section">
+        <div className="section-header app-section-header">
+          <h3 className="app-section-title">My Submitted Application</h3>
+          <div className="application-status app-status">
             Status: {getStatusBadge(userApplication.status)}
           </div>
         </div>
         
-        <div className="user-application-card">
-          <div className="application-details">
-            <div className="detail-row">
-              <div className="detail-label">Applicant Name:</div>
-              <div className="detail-value">{userApplication.applicant_name}</div>
+        <div className="user-application-card app-user-card">
+          <div className="application-details app-details">
+            <div className="detail-row app-detail-row">
+              <div className="detail-label app-detail-label">Applicant Name:</div>
+              <div className="detail-value app-detail-value">{userApplication.applicant_name}</div>
             </div>
-            <div className="detail-row">
-              <div className="detail-label">Class(es):</div>
-              <div className="detail-value">
+            <div className="detail-row app-detail-row">
+              <div className="detail-label app-detail-label">Class(es):</div>
+              <div className="detail-value app-detail-value">
                 {userApplication.classes || 'Pending assignment by Admin4'}
               </div>
             </div>
-            <div className="detail-row">
-              <div className="detail-label">Subject(s):</div>
-              <div className="detail-value">{userApplication.subjects}</div>
+            <div className="detail-row app-detail-row">
+              <div className="detail-label app-detail-label">Subject(s):</div>
+              <div className="detail-value app-detail-value">{userApplication.subjects}</div>
             </div>
-            <div className="detail-row">
-              <div className="detail-label">Contact:</div>
-              <div className="detail-value">{userApplication.contact}</div>
+            <div className="detail-row app-detail-row">
+              <div className="detail-label app-detail-label">Contact:</div>
+              <div className="detail-value app-detail-value">{userApplication.contact}</div>
             </div>
-            <div className="detail-row">
-              <div className="detail-label">Certificate:</div>
-              <div className="detail-value">
+            <div className="detail-row app-detail-row">
+              <div className="detail-label app-detail-label">Certificate:</div>
+              <div className="detail-value app-detail-value">
                 {userApplication.certificate_url ? (
                   <a 
                     href={userApplication.certificate_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="certificate-link"
+                    className="certificate-link app-certificate-link"
                   >
                     <FaDownload /> View Certificate
                   </a>
                 ) : (
-                  <span className="no-certificate">No certificate uploaded</span>
+                  <span className="no-certificate app-no-certificate">No certificate uploaded</span>
                 )}
               </div>
             </div>
-            <div className="detail-row">
-              <div className="detail-label">Submitted:</div>
-              <div className="detail-value">
+            <div className="detail-row app-detail-row">
+              <div className="detail-label app-detail-label">Submitted:</div>
+              <div className="detail-value app-detail-value">
                 {new Date(userApplication.submitted_at).toLocaleDateString()}
               </div>
             </div>
             {userApplication.reviewed_at && (
-              <div className="detail-row">
-                <div className="detail-label">Reviewed:</div>
-                <div className="detail-value">
+              <div className="detail-row app-detail-row">
+                <div className="detail-label app-detail-label">Reviewed:</div>
+                <div className="detail-value app-detail-value">
                   {new Date(userApplication.reviewed_at).toLocaleDateString()}
                   {userApplication.reviewer_name && (
-                    <span className="reviewer-info"> by {userApplication.reviewer_name}</span>
+                    <span className="reviewer-info app-reviewer-info"> by {userApplication.reviewer_name}</span>
                   )}
                 </div>
               </div>
             )}
             {userApplication.admin_comment && (
-              <div className="detail-row">
-                <div className="detail-label">Admin Comment:</div>
-                <div className="detail-value admin-comment">
+              <div className="detail-row app-detail-row">
+                <div className="detail-label app-detail-label">Admin Comment:</div>
+                <div className="detail-value admin-comment app-admin-comment">
                   {userApplication.admin_comment}
                 </div>
               </div>
             )}
           </div>
           
-          <div className="application-actions">
+          <div className="application-actions app-user-actions">
             {canEditApplication(userApplication) && (
               <button 
-                className="action-btn edit"
+                className="action-btn edit app-user-action-btn app-user-edit-btn"
                 onClick={() => handleEdit(userApplication)}
                 title="Edit Application"
               >
@@ -669,7 +683,7 @@ export default function Application({ authUser }) {
             )}
             {canDeleteApplication(userApplication) && (
               <button 
-                className="action-btn delete"
+                className="action-btn delete app-user-action-btn app-user-delete-btn"
                 onClick={() => handleDelete(userApplication.id)}
                 title="Delete Application"
               >
@@ -686,17 +700,12 @@ export default function Application({ authUser }) {
     if (!successMessage) return null;
     
     return (
-      <div className="success-message">
-        <div className="success-content">
-          <span className="success-icon">✓</span>
-          <span className="success-text">{successMessage}</span>
-        </div>
-      </div>
+      <SuccessMessage message={successMessage} />
     );
   };
 
   const applicationContent = (
-    <div className="application-container">
+    <div className="application-container app-container">
       {renderSuccessMessage()}
       {/* Show user's own application first if they have submitted one */}
       {userApplication && renderUserApplication()}
@@ -708,6 +717,15 @@ export default function Application({ authUser }) {
       {showForm && renderApplicationForm()}
     </div>
   );
+
+  // Show loading state if user is not authenticated yet
+  if (!authUser) {
+    return (
+      <div className="application-container app-container">
+        <div className="loading app-loading">Loading user information...</div>
+      </div>
+    );
+  }
 
   // Use DisciplineSideTop for Discipline users, SideTop for others
   if (authUser?.role === 'Discipline') {

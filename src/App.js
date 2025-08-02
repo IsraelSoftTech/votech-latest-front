@@ -32,6 +32,7 @@ import Salary from './components/Salary.jsx';
 import Inventory from './components/Inventory.jsx';
 import GroupChat from './components/GroupChat';
 import PsycoDash from './components/PsycoDash.jsx';
+import PaySlip from './components/PaySlip';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -66,7 +67,8 @@ function App() {
       <Route path="/admin-users" element={<Users />} />
       <Route path="/admin-fee" element={<Fee />} />
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
-      <Route path="/admin-salary" element={<Salary />} />
+      <Route path="/admin-salary" element={<Salary authUser={authUser} />} />
+      <Route path="/admin-payslip" element={<PaySlip authUser={authUser} />} />
       <Route path="/admin-subjects" element={<Subjects />} />
       <Route path="/admin-lesson-plans" element={<LessonPlan />} />
       <Route path="/admin-inventory" element={<Inventory />} />

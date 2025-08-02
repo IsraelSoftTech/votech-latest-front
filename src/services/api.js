@@ -1203,6 +1203,122 @@ class ApiService {
   }
 
   // === End Applications API ===
+
+  // === Salary API ===
+  async getApprovedApplications() {
+    try {
+      const response = await fetch(`${API_URL}/salary/approved-applications`, {
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Get approved applications error:', error);
+      throw error;
+    }
+  }
+
+  async getSalaryStatistics() {
+    try {
+      const response = await fetch(`${API_URL}/salary/statistics`, {
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Get salary statistics error:', error);
+      throw error;
+    }
+  }
+
+  async updateSalary(userId, amount) {
+    try {
+      const response = await fetch(`${API_URL}/salary/update`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ userId, amount })
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Update salary error:', error);
+      throw error;
+    }
+  }
+
+  async markSalaryAsPaid(salaryId) {
+    try {
+      const response = await fetch(`${API_URL}/salary/mark-paid/${salaryId}`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Mark salary as paid error:', error);
+      throw error;
+    }
+  }
+
+  async getUserSalaryHistory(userId) {
+    try {
+      const response = await fetch(`${API_URL}/salary/user/${userId}`, {
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Get user salary history error:', error);
+      throw error;
+    }
+  }
+
+  async deleteAllSalaries() {
+    try {
+      const response = await fetch(`${API_URL}/salary/delete-all`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Delete all salaries error:', error);
+      throw error;
+    }
+  }
+
+  async getPaidSalaries() {
+    try {
+      const response = await fetch(`${API_URL}/salary/paid-salaries`, {
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Get paid salaries error:', error);
+      throw error;
+    }
+  }
+
+  async getSalaryDescriptions() {
+    try {
+      const response = await fetch(`${API_URL}/salary/descriptions`, {
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Get salary descriptions error:', error);
+      throw error;
+    }
+  }
+
+  async saveSalaryDescriptions(descriptions) {
+    try {
+      const response = await fetch(`${API_URL}/salary/descriptions`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ descriptions })
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Save salary descriptions error:', error);
+      throw error;
+    }
+  }
+  // === End Salary API ===
 }
 
 const api = new ApiService();
