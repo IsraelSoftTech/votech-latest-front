@@ -13,7 +13,7 @@ import { useEffect } from 'react';
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
   { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
-  { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
+  { label: 'Staff', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
   { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
   { label: 'Subjects', icon: <FaBook /> },
   { label: 'Finances', icon: <FaMoneyBill />, path: '/admin-finance' },

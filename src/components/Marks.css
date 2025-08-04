@@ -98,24 +98,117 @@
 }
 
 /* Messages */
-.success-message {
-  background: #d4edda;
-  color: #155724;
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border: 1px solid #c3e6cb;
-  font-weight: 500;
-}
-
 .error-message {
   background: #f8d7da;
   color: #721c24;
-  padding: 12px 20px;
+  padding: 16px;
   border-radius: 8px;
   margin-bottom: 20px;
   border: 1px solid #f5c6cb;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Application Status Message */
+.application-status-message {
+  margin-bottom: 30px;
+}
+
+.loading-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  border: 1px solid #bbdefb;
+  color: #1565c0;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e3f2fd;
+  border-top: 2px solid #1565c0;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.status-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 0.95rem;
+}
+
+.status-message.approved {
+  background: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.status-message.pending {
+  background: #fff3cd;
+  color: #856404;
+  border-color: #ffeaa7;
+}
+
+.status-message.rejected {
+  background: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+
+.status-message.no-application {
+  background: #e3f2fd;
+  color: #1565c0;
+  border-color: #bbdefb;
+}
+
+.status-message svg {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.status-content {
+  flex: 1;
+}
+
+.status-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.status-content p {
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.submit-application-btn {
+  background: #204080;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
   font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.submit-application-btn:hover {
+  background: #1a365d;
 }
 
 /* Marks Table */

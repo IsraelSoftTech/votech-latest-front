@@ -437,10 +437,12 @@ export default function Salary({ authUser }) {
   return (
     <SideTop>
       <div className="salary-container">
-        <SuccessMessage 
-          message={successMessage} 
-          onClose={() => setSuccessMessage('')}
-        />
+        {successMessage && (
+          <SuccessMessage 
+            message={successMessage} 
+            onClose={() => setSuccessMessage('')}
+          />
+        )}
 
         {/* MessageBox */}
         <MessageBox {...messageBox} onClose={closeMessage} />

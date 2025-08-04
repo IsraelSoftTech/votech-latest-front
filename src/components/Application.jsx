@@ -154,6 +154,12 @@ export default function Application({ authUser }) {
     // Clear any previous success message
     setSuccessMessage('');
     
+    // Check if user already has an application (only for new submissions, not edits)
+    if (!editingId && userApplication) {
+      alert('You have already submitted an application. You cannot submit multiple applications.');
+      return;
+    }
+    
     // Validate that at least one subject is selected
     if (selectedSubjects.length === 0) {
       alert('Please select at least one subject');
@@ -458,10 +464,8 @@ export default function Application({ authUser }) {
   );
 
   const renderApplicationsTable = () => {
-    // Check if current user has already applied by looking in the applications array
-    const currentUserHasApplied = applications.some(app => 
-      authUser && app.applicant_id === authUser.id
-    );
+    // Check if current user has already applied using userApplication state
+    const currentUserHasApplied = !!userApplication;
     
     return (
       <div className="applications-table-container app-table-container">
@@ -704,9 +708,30 @@ export default function Application({ authUser }) {
     );
   };
 
+  const renderExistingApplicationMessage = () => {
+    if (!userApplication) return null;
+
+    return (
+      <div className="existing-application-message">
+        <div className="message-content">
+          <h3>Application Already Submitted</h3>
+          <p>You have already submitted an application. You cannot submit multiple applications.</p>
+          <div className="application-summary">
+            <p><strong>Status:</strong> {getStatusBadge(userApplication.status)}</p>
+            <p><strong>Submitted:</strong> {new Date(userApplication.submitted_at).toLocaleDateString()}</p>
+            {userApplication.status === 'rejected' && (
+              <p><strong>Note:</strong> If your application was rejected, you can contact Admin4 for more information.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const applicationContent = (
     <div className="application-container app-container">
       {renderSuccessMessage()}
+      {renderExistingApplicationMessage()}
       {/* Show user's own application first if they have submitted one */}
       {userApplication && renderUserApplication()}
       

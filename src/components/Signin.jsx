@@ -50,6 +50,8 @@ const Signin = () => {
       if (user) {
         setSuccess('Sign in successful!');
         setShowSuccess(true);
+        // Clear success message after 3 seconds
+        setTimeout(() => setShowSuccess(false), 3000);
         setShowLoader(true);
         setTimeout(() => {
           setShowLoader(false);

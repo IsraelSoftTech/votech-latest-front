@@ -13,7 +13,7 @@ import SideTop from './SideTop';
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
   { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
-  { label: 'Teachers', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
+  { label: 'Staff', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
   { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
   { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
   { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
@@ -183,7 +183,7 @@ function Admin() {
         <div className="card teachers">
           <div className="icon"><FaChalkboardTeacher /></div>
           <div className="count">47</div>
-          <div className="desc">Registered Teachers</div>
+          <div className="desc">Registered Staff</div>
         </div>
         <div className="card fees">
           <div className="icon"><FaMoneyBill /></div>

@@ -53,6 +53,8 @@ const Signup = () => {
         gender: form.gender
       });
       setSuccess('Your account has been created successfully! You can now sign in with your credentials.');
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccess(''), 5000);
       setTimeout(() => navigate('/signin'), 2000);
     } catch (err) {
       setError('Signup failed. Try another username.');

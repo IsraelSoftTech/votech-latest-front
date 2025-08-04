@@ -14,7 +14,7 @@ import SideTop from './SideTop';
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt /> },
   { label: 'Students', icon: <FaUserGraduate /> },
-  { label: 'Teachers', icon: <FaChalkboardTeacher /> },
+  { label: 'Staff', icon: <FaChalkboardTeacher /> },
   { label: 'Classes', icon: <FaBook /> },
   { label: 'Messages', icon: <FaEnvelope /> },
   { label: 'ID Cards', icon: <FaIdCard /> },
@@ -455,7 +455,7 @@ export default function AdminStudent() {
         <div className="card teachers">
           <div className="icon"><FaChalkboardTeacher /></div>
           <div className="count">47</div>
-          <div className="desc">Registered Teachers</div>
+          <div className="desc">Registered Staff</div>
         </div>
         <div className="card fees">
           <div className="icon"><FaMoneyBill /></div>

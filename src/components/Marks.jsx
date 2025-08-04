@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import SideTop from './SideTop';
-import { FaUpload, FaDownload, FaEdit, FaTrash, FaPlus, FaTimes, FaCheck, FaFileExcel } from 'react-icons/fa';
+import { FaUpload, FaDownload, FaEdit, FaTrash, FaPlus, FaTimes, FaCheck, FaFileExcel, FaExclamationTriangle } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import api from '../services/api';
+import SuccessMessage from './SuccessMessage';
 import './Marks.css';
 
 export default function Marks() {
@@ -21,14 +22,19 @@ export default function Marks() {
   const [editingMarks, setEditingMarks] = useState(null);
   const [editingMarksData, setEditingMarksData] = useState([]);
   const [savingMarks, setSavingMarks] = useState(false);
+  const [userApplication, setUserApplication] = useState(null);
+  const [checkingApplication, setCheckingApplication] = useState(true);
   
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const isAdmin2 = authUser?.role === 'Admin2';
   const isAdmin4 = authUser?.role === 'Admin4';
   const isTeacher = authUser?.role === 'Teacher';
   const isAdmin3 = authUser?.role === 'Admin3';
+  const isDiscipline = authUser?.role === 'Discipline';
+  const isPsychosocialist = authUser?.role === 'Psychosocialist';
   
-  const canUploadMarks = isAdmin2 || isAdmin4 || isTeacher;
+  // Check if user can upload marks based on role and application status
+  const canUploadMarks = isAdmin2 || isAdmin4 || (isTeacher && userApplication?.status === 'approved') || (isDiscipline && userApplication?.status === 'approved') || (isPsychosocialist && userApplication?.status === 'approved');
   const canViewMarks = isAdmin3;
   const canEditMarks = isAdmin3; // Only Admin3 can edit marks
 
@@ -44,7 +50,23 @@ export default function Marks() {
   useEffect(() => {
     fetchClasses();
     fetchUploadedMarks();
+    checkUserApplication();
   }, []);
+
+  const checkUserApplication = async () => {
+    try {
+      setCheckingApplication(true);
+      if (authUser?.id && (isTeacher || isDiscipline || isPsychosocialist)) {
+        const application = await api.getUserApplication(authUser.id);
+        setUserApplication(application);
+      }
+    } catch (error) {
+      console.error('Error checking user application:', error);
+      setUserApplication(null);
+    } finally {
+      setCheckingApplication(false);
+    }
+  };
 
   const fetchClasses = async () => {
     try {
@@ -379,6 +401,55 @@ export default function Marks() {
           )}
         </div>
 
+        {/* Application Status Message */}
+        {!isAdmin2 && !isAdmin4 && !isAdmin3 && (isTeacher || isDiscipline || isPsychosocialist) && (
+          <div className="application-status-message">
+            {checkingApplication ? (
+              <div className="loading-message">
+                <div className="loading-spinner"></div>
+                <p>Checking application status...</p>
+              </div>
+            ) : userApplication ? (
+              <div className={`status-message ${userApplication.status}`}>
+                <FaExclamationTriangle />
+                <div className="status-content">
+                  <h4>Application Status: {userApplication.status === 'approved' ? 'Approved' : userApplication.status === 'pending' ? 'Pending' : 'Rejected'}</h4>
+                  <p>
+                    {userApplication.status === 'approved' 
+                      ? 'You can upload marks for your assigned classes.' 
+                      : userApplication.status === 'pending' 
+                      ? 'Your application is pending approval. You will be able to upload marks once approved by Admin4.'
+                      : 'Your application was rejected. Please contact Admin4 for more information.'
+                    }
+                  </p>
+                  {userApplication.status !== 'approved' && (
+                    <button 
+                      className="submit-application-btn"
+                      onClick={() => window.location.href = '/application'}
+                    >
+                      {userApplication.status === 'rejected' ? 'Resubmit Application' : 'Submit Application'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="status-message no-application">
+                <FaExclamationTriangle />
+                <div className="status-content">
+                  <h4>Application Required</h4>
+                  <p>You need to submit an application and be approved by Admin4 before you can upload marks.</p>
+                  <button 
+                    className="submit-application-btn"
+                    onClick={() => window.location.href = '/application'}
+                  >
+                    Submit Application
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Stats Cards */}
         <div className="stats-cards">
           <div className="stat-card">
@@ -404,9 +475,7 @@ export default function Marks() {
 
         {/* Success/Error Messages */}
         {success && (
-          <div className="success-message">
-            {success}
-          </div>
+          <SuccessMessage message={success} />
         )}
         
         {error && (

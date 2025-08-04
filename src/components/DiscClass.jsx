@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import './MyClasses.css';
+import './DiscClass.css';
 import { FaBook, FaUserGraduate, FaClipboardList, FaExclamationTriangle } from 'react-icons/fa';
 import api from '../services/api';
-import SideTop from './SideTop';
+import DisciplineSideTop from './DisciplineSideTop';
 
-export default function MyClasses({ authUser }) {
+export default function DiscClass({ authUser }) {
+  console.log('DiscClass component rendered with authUser:', authUser);
+  
   const [assignedClasses, setAssignedClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -66,60 +68,60 @@ export default function MyClasses({ authUser }) {
         }
       } else {
         // Fallback to old method: check teachers table
-      const allTeachers = await api.getAllTeachers();
-      
-      let teacherRecord = null;
-      if (authUser?.id) {
-        teacherRecord = allTeachers.find(t => t.user_id === authUser.id);
-      }
-      if (!teacherRecord && authUser?.contact) {
-        teacherRecord = allTeachers.find(t => t.contact === authUser.contact);
-      }
-      if (!teacherRecord && authUser?.name) {
-        teacherRecord = allTeachers.find(t => t.full_name === authUser.name);
-      }
-      if (!teacherRecord && authUser?.username) {
-        teacherRecord = allTeachers.find(t => 
-          t.full_name?.toLowerCase().includes(authUser.username.toLowerCase()) || 
-          t.contact?.toLowerCase().includes(authUser.username.toLowerCase())
-        );
-      }
-
-      if (!teacherRecord) {
-        setAssignedClasses([]);
-        setTotalStudents(0);
-        setLoading(false);
-        return;
-      }
-
-      const assignedClassNames = teacherRecord.classes 
-        ? teacherRecord.classes.split(',').map(c => c.trim()).filter(c => c && c !== 'undefined')
-        : [];
-
-      if (assignedClassNames.length === 0) {
-        setAssignedClasses([]);
-        setTotalStudents(0);
-        setLoading(false);
-        return;
-      }
-
-      const allClasses = await api.getClasses();
-      const allStudents = await api.getAllStudents();
-
-      const classesWithStudentCounts = assignedClassNames.map(className => {
-        const classRecord = allClasses.find(c => c.name === className);
-        const studentsInClass = allStudents.filter(s => s.class_id === classRecord?.id);
+        const allTeachers = await api.getAllTeachers();
         
-        return {
-          id: classRecord?.id,
-          name: className,
+        let teacherRecord = null;
+        if (authUser?.id) {
+          teacherRecord = allTeachers.find(t => t.user_id === authUser.id);
+        }
+        if (!teacherRecord && authUser?.contact) {
+          teacherRecord = allTeachers.find(t => t.contact === authUser.contact);
+        }
+        if (!teacherRecord && authUser?.name) {
+          teacherRecord = allTeachers.find(t => t.full_name === authUser.name);
+        }
+        if (!teacherRecord && authUser?.username) {
+          teacherRecord = allTeachers.find(t => 
+            t.full_name?.toLowerCase().includes(authUser.username.toLowerCase()) || 
+            t.contact?.toLowerCase().includes(authUser.username.toLowerCase())
+          );
+        }
+
+        if (!teacherRecord) {
+          setAssignedClasses([]);
+          setTotalStudents(0);
+          setLoading(false);
+          return;
+        }
+
+        const assignedClassNames = teacherRecord.classes 
+          ? teacherRecord.classes.split(',').map(c => c.trim()).filter(c => c && c !== 'undefined')
+          : [];
+
+        if (assignedClassNames.length === 0) {
+          setAssignedClasses([]);
+          setTotalStudents(0);
+          setLoading(false);
+          return;
+        }
+
+        const allClasses = await api.getClasses();
+        const allStudents = await api.getAllStudents();
+
+        const classesWithStudentCounts = assignedClassNames.map(className => {
+          const classRecord = allClasses.find(c => c.name === className);
+          const studentsInClass = allStudents.filter(s => s.class_id === classRecord?.id);
+          
+          return {
+            id: classRecord?.id,
+            name: className,
             studentCount: studentsInClass.length,
             classRecord: classRecord
-        };
-      });
+          };
+        });
 
-      setAssignedClasses(classesWithStudentCounts);
-      setTotalStudents(classesWithStudentCounts.reduce((total, cls) => total + cls.studentCount, 0));
+        setAssignedClasses(classesWithStudentCounts);
+        setTotalStudents(classesWithStudentCounts.reduce((total, cls) => total + cls.studentCount, 0));
       }
       
     } catch (err) {
@@ -151,21 +153,21 @@ export default function MyClasses({ authUser }) {
 
   if (loading) {
     return (
-      <SideTop>
-        <div className="my-classes-container">
+      <DisciplineSideTop>
+        <div className="disc-class-container">
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <p>Loading your classes...</p>
           </div>
         </div>
-      </SideTop>
+      </DisciplineSideTop>
     );
   }
 
   return (
-    <SideTop>
-      <div className="my-classes-container">
-        <div className="my-classes-header">
+    <DisciplineSideTop>
+      <div className="disc-class-container">
+        <div className="disc-class-header">
           <h1>My Classes</h1>
           <p>View your assigned classes and student information</p>
           {getApplicationStatus()}
@@ -271,6 +273,6 @@ export default function MyClasses({ authUser }) {
           </div>
         )}
       </div>
-    </SideTop>
+    </DisciplineSideTop>
   );
-}
+} 

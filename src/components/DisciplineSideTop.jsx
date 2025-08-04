@@ -8,6 +8,7 @@ import ReactDOM from 'react-dom';
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/discipline' },
   { label: 'Application', icon: <FaClipboardList />, path: '/application' },
+  { label: 'My Classes', icon: <FaClipboardList />, path: '/discipline-my-classes' },
   { label: 'Messages', icon: <FaEnvelope />, path: '/discipline-messages' },
   { label: 'Students', icon: <FaUserGraduate />, path: '/discipline-students' },
   { label: 'Attendance', icon: <FaClipboardList />, path: '/attendance' },
@@ -37,7 +38,10 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
             <div
               key={item.label}
               className={`ds-menu-item${(activeTab && item.label === activeTab) || location.pathname === item.path || (item.path && location.pathname.startsWith(item.path + '/')) ? ' active' : ''}`}
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                console.log('DisciplineSideTop navigation:', item.label, 'to path:', item.path);
+                navigate(item.path);
+              }}
               style={{ position: 'relative' }}
             >
               {item.icon}

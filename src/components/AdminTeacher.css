@@ -173,14 +173,6 @@
 .student-modal-form .signup-btn:hover {
   background: #4eaaff;
 }
-.success-message {
-  color: #22bb33;
-  background: #eafbe7;
-  border-radius: 4px;
-  padding: 7px 0 7px 10px;
-  margin: 8px 0 0 0;
-  font-size: 1rem;
-}
 .error-message {
   color: #e53e3e;
   background: #fff0f0;
@@ -315,4 +307,81 @@
   display: flex;
   align-items: center;
   justify-content: center;
+} 
+
+/* Staff Header */
+.teacher-header-row h2 {
+  color: #204080;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+.teacher-header-row p {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Staff Name Styling */
+.staff-name {
+  font-weight: 600;
+  color: #204080;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  color: #666;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #cbd5e0;
+  margin-bottom: 24px;
+}
+
+.empty-state h3 {
+  color: #4a5568;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .teacher-header-row h2 {
+    font-size: 1.5rem;
+  }
+  
+  .teacher-header-row p {
+    font-size: 0.9rem;
+  }
+  
+  .empty-state {
+    padding: 60px 16px;
+  }
+  
+  .empty-icon {
+    font-size: 3rem;
+  }
+  
+  .empty-state h3 {
+    font-size: 1.3rem;
+  }
+  
+  .empty-state p {
+    font-size: 1rem;
+  }
 } 

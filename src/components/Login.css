@@ -335,54 +335,6 @@ body, .login-container {
   box-shadow: none;
 }
 
-/* Success Message */
-.success-message-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-
-.success-message {
-  background: #f0fdf4;
-  color: #166534;
-  padding: 1.5rem 2rem;
-  border-radius: 12px;
-  font-size: 1rem;
-  text-align: center;
-  animation: messageSlideIn 0.3s ease-out;
-  border: 2px solid #bbf7d0;
-  box-shadow: 0 8px 24px rgba(22, 101, 52, 0.15);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 600;
-}
-
-.success-message svg {
-  width: 24px;
-  height: 24px;
-  color: #166534;
-}
-
-@keyframes messageSlideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
 /* Responsive Design */
 @media (max-width: 480px) {
   .login-card {

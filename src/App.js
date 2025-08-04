@@ -28,6 +28,7 @@ import Application from './components/Application.jsx';
 import DeanLessonPlan from './components/DeanLessonPlan.jsx';
 import Marks from './components/Marks.jsx';
 import MyClasses from './components/MyClasses.jsx';
+import DiscClass from './components/DiscClass.jsx';
 import Salary from './components/Salary.jsx';
 import Inventory from './components/Inventory.jsx';
 import GroupChat from './components/GroupChat';
@@ -79,6 +80,7 @@ function App() {
       <Route path="/my-classes" element={<MyClasses authUser={authUser} />} />
 
       <Route path="/discipline" element={<DisciplineDashboard />} />
+      <Route path="/discipline-my-classes" element={<DiscClass authUser={authUser} />} />
       <Route path="/discipline-messages" element={<DiscMessage />} />
       <Route path="/discipline-messages/:userId" element={<DiscUserChat />} />
       <Route path="/discipline-students" element={

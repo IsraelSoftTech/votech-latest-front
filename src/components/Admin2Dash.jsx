@@ -39,7 +39,7 @@ export default function Admin2Dash() {
         <div className="card teachers">
           <div className="icon"><FaChalkboardTeacher /></div>
           <div className="count" style={{ fontSize: 22 }}>{teachers.length}</div>
-          <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Teachers</div>
+          <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Staff</div>
         </div>
         <div className="card inventory">
           <div className="icon"><FaBoxes /></div>

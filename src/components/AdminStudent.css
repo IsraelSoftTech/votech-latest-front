@@ -492,14 +492,6 @@
 .student-modal-form .signup-btn:hover {
   background: #4eaaff;
 }
-.success-message {
-  color: #22bb33;
-  background: #eafbe7;
-  border-radius: 4px;
-  padding: 7px 0 7px 10px;
-  margin: 8px 0 0 0;
-  font-size: 1rem;
-}
 .error-message {
   color: #e53e3e;
   background: #fff0f0;

@@ -93,6 +93,8 @@ export default function Attendance() {
       setStudents([]);
       setAttendance({});
       setShowSuccess(true);
+      // Clear success message after 3 seconds
+      setTimeout(() => setShowSuccess(false), 3000);
       // Prepare lastAbsent table data
       const absentStudents = students.filter(s => attendance[s.id] === 'absent').map((s, idx) => ({
         id: s.id,
@@ -124,6 +126,8 @@ export default function Attendance() {
       setLastAbsent([]);
       setShowDeleteAllConfirm(false);
       setShowSuccess(true);
+      // Clear success message after 3 seconds
+      setTimeout(() => setShowSuccess(false), 3000);
     } catch (e) {
       setError('Failed to delete attendance records');
     }

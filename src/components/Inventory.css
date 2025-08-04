@@ -376,21 +376,11 @@
 /* Messages */
 .error-message {
   background: #fef2f2;
-  color: #e53e3e;
+  color: #dc2626;
   padding: 16px;
   border-radius: 12px;
   margin-bottom: 16px;
   border-left: 4px solid #e53e3e;
-  font-weight: 500;
-}
-
-.success-message {
-  background: #f0fdf4;
-  color: #1a8a28;
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  border-left: 4px solid #22bb33;
   font-weight: 500;
 }
 
