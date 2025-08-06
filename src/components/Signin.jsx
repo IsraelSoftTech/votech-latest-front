@@ -156,11 +156,11 @@ const Signin = () => {
     <div className="signin-root">
       {showSuccess && <SuccessMessage message={success} onClose={() => setShowSuccess(false)} />}
       <header className="signin-header">
-        <div className="header-group">
+        <div className="signin-header-group">
           <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
           <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
-          <Link className={`header-link${location.pathname === '/signin' || location.pathname === '/' ? ' active' : ''}`} to="/signin">Sign In</Link>
-          <Link className={`header-link${location.pathname === '/signup' ? ' active' : ''}`} to="/signup">Sign Up</Link>
+          <Link className={`signin-header-link${location.pathname === '/signin' || location.pathname === '/' ? ' active' : ''}`} to="/signin">Sign In</Link>
+          <Link className={`signin-header-link${location.pathname === '/signup' ? ' active' : ''}`} to="/signup">Sign Up</Link>
         </div>
       </header>
       <main className="signin-main">
@@ -168,72 +168,72 @@ const Signin = () => {
           <Loader poweredBy />
         ) : (
           <form className="signin-form" onSubmit={handleSubmit}>
-            <h2 className="form-title">Sign In</h2>
-            <button type="button" className="google-btn">
-              <FcGoogle className="google-icon" />
+            <h2 className="signin-form-title">Sign In</h2>
+            <button type="button" className="signin-google-btn">
+              <FcGoogle className="signin-google-icon" />
               Continue with google authentication
             </button>
-            <div className="or-divider">
-              <span className="line"></span>
-              <span className="or-text">Or</span>
-              <span className="line"></span>
+            <div className="signin-or-divider">
+              <span className="signin-line"></span>
+              <span className="signin-or-text">Or</span>
+              <span className="signin-line"></span>
             </div>
-            <label className="input-label">Username *</label>
-            <input className="input-field" type="text" name="username" value={form.username} onChange={handleChange} placeholder="Enter Username" />
-            <label className="input-label">Password *</label>
-            <div className="password-field-wrapper">
-              <input className="input-field" type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} placeholder="Enter Password" />
-              <span className="eye-icon" onClick={() => setShowPassword(v => !v)}>
+            <label className="signin-input-label">Username *</label>
+            <input className="signin-input-field" type="text" name="username" value={form.username} onChange={handleChange} placeholder="Enter Username" />
+            <label className="signin-input-label">Password *</label>
+            <div className="signin-password-field-wrapper">
+              <input className="signin-input-field" type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} placeholder="Enter Password" />
+              <span className="signin-eye-icon" onClick={() => setShowPassword(v => !v)}>
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
             </div>
-            <div className="form-links">
-              <button type="button" className="forgot-link" onClick={() => setShowForgot(true)}>
+            <div className="signin-form-links">
+              <button type="button" className="signin-forgot-link" onClick={() => setShowForgot(true)}>
                 Forgot Password?
               </button>
             </div>
-            <div className="form-bottom-text">
-              Don't have an account? <Link to="/signup" className="signup-link">Sign Up</Link>
+            <div className="signin-form-bottom-text">
+              Don't have an account? <Link to="/signup" className="signin-signup-link">Sign Up</Link>
             </div>
-            {error && <div className="error-message">{error}</div>}
+            {error && <div className="signin-error-message">{error}</div>}
             <button type="submit" className="signin-btn" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
           </form>
         )}
         {showForgot && (
-          <div className="modal-overlay" onClick={() => { setShowForgot(false); setForgotStep(1); setForgotError(''); setResetError(''); setResetSuccess(''); }}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
+          <div className="signin-modal-overlay" onClick={() => { setShowForgot(false); setForgotStep(1); setForgotError(''); setResetError(''); setResetSuccess(''); }}>
+            <div className="signin-modal" onClick={e => e.stopPropagation()}>
+              <div className="signin-modal-header">
                 <h2>{forgotStep === 1 ? 'Check Account' : 'Reset Password'}</h2>
-                <button className="close-button modal-text-btn" type="button" onClick={() => { setShowForgot(false); setForgotStep(1); setForgotError(''); setResetError(''); setResetSuccess(''); }}>&times;</button>
+                <button className="signin-close-button signin-modal-text-btn" type="button" onClick={() => { setShowForgot(false); setForgotStep(1); setForgotError(''); setResetError(''); setResetSuccess(''); }}>&times;</button>
               </div>
               {forgotStep === 1 ? (
-                <form onSubmit={handleCheckAccount} className="forgot-form">
-                  <label className="input-label">Username</label>
-                  <input className="input-field" type="text" value={forgotUsername} onChange={e => setForgotUsername(e.target.value)} required />
-                  <label className="input-label">Phone Number</label>
-                  <input className="input-field" type="tel" value={forgotPhone} onChange={e => setForgotPhone(e.target.value)} required />
-                  {forgotError && <div className="error-message">{forgotError}</div>}
-                  <button type="submit" className="modal-text-btn" disabled={forgotLoading}>{forgotLoading ? 'Checking...' : 'Check Account'}</button>
+                <form onSubmit={handleCheckAccount} className="signin-forgot-form">
+                  <label className="signin-input-label">Username</label>
+                  <input className="signin-input-field" type="text" value={forgotUsername} onChange={e => setForgotUsername(e.target.value)} required />
+                  <label className="signin-input-label">Phone Number</label>
+                  <input className="signin-input-field" type="tel" value={forgotPhone} onChange={e => setForgotPhone(e.target.value)} required />
+                  {forgotError && <div className="signin-error-message">{forgotError}</div>}
+                  <button type="submit" className="signin-modal-text-btn" disabled={forgotLoading}>{forgotLoading ? 'Checking...' : 'Check Account'}</button>
                 </form>
               ) : (
-                <form onSubmit={handleResetPassword} className="forgot-form">
-                  <label className="input-label">Enter New Password</label>
-                  <div className="password-field-wrapper">
-                    <input className="input-field" type={showForgotPassword ? 'text' : 'password'} value={reset1Password} onChange={e => setReset1Password(e.target.value)} required />
-                    <span className="eye-icon" onClick={() => setShowForgotPassword(v => !v)}>
+                <form onSubmit={handleResetPassword} className="signin-forgot-form">
+                  <label className="signin-input-label">Enter New Password</label>
+                  <div className="signin-password-field-wrapper">
+                    <input className="signin-input-field" type={showForgotPassword ? 'text' : 'password'} value={reset1Password} onChange={e => setReset1Password(e.target.value)} required />
+                    <span className="signin-eye-icon" onClick={() => setShowForgotPassword(v => !v)}>
                       {showForgotPassword ? <FaEyeSlash /> : <FaEye />}
                     </span>
                   </div>
-                  <label className="input-label">Repeat Password</label>
-                  <div className="password-field-wrapper">
-                    <input className="input-field" type={showForgotPassword ? 'text' : 'password'} value={reset2Password} onChange={e => setReset2Password(e.target.value)} required />
-                    <span className="eye-icon" onClick={() => setShowForgotPassword(v => !v)}>
+                  <label className="signin-input-label">Repeat Password</label>
+                  <div className="signin-password-field-wrapper">
+                    <input className="signin-input-field" type={showForgotPassword ? 'text' : 'password'} value={reset2Password} onChange={e => setReset2Password(e.target.value)} required />
+                    <span className="signin-eye-icon" onClick={() => setShowForgotPassword(v => !v)}>
                       {showForgotPassword ? <FaEyeSlash /> : <FaEye />}
                     </span>
                   </div>
-                  {resetError && <div className="error-message">{resetError}</div>}
+                  {resetError && <div className="signin-error-message">{resetError}</div>}
                   {resetSuccess && <SuccessMessage message={resetSuccess} />}
-                  <button type="submit" className="modal-text-btn" disabled={forgotLoading}>{forgotLoading ? 'Resetting...' : 'Reset'}</button>
+                  <button type="submit" className="signin-modal-text-btn" disabled={forgotLoading}>{forgotLoading ? 'Resetting...' : 'Reset'}</button>
                 </form>
               )}
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SideTop from './SideTop';
-import { FaUpload, FaDownload, FaEdit, FaTrash, FaPlus, FaTimes, FaCheck, FaFileExcel, FaExclamationTriangle } from 'react-icons/fa';
+import { FaUpload, FaDownload, FaEdit, FaTrash, FaPlus, FaTimes, FaCheck, FaFileExcel, FaExclamationTriangle, FaEye } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
@@ -15,7 +15,7 @@ export default function Marks() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [currentStep, setCurrentStep] = useState(1); // 1: class, 2: sequence, 3: download, 4: upload
+  const [currentStep, setCurrentStep] = useState(1); // 1: class, 2: subject, 3: sequence, 4: download, 5: upload
   const [excelFile, setExcelFile] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -24,6 +24,15 @@ export default function Marks() {
   const [savingMarks, setSavingMarks] = useState(false);
   const [userApplication, setUserApplication] = useState(null);
   const [checkingApplication, setCheckingApplication] = useState(true);
+  const [assignedClasses, setAssignedClasses] = useState([]);
+  const [assignedSubjects, setAssignedSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [subjects, setSubjects] = useState([]);
+  
+  // Preview state variables
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const isAdmin2 = authUser?.role === 'Admin2';
@@ -51,6 +60,11 @@ export default function Marks() {
     fetchClasses();
     fetchUploadedMarks();
     checkUserApplication();
+    fetchSubjects();
+    // Fetch assigned data for all users who need it
+    if (authUser?.id) {
+      fetchUserAssignedData();
+    }
   }, []);
 
   const checkUserApplication = async () => {
@@ -68,6 +82,20 @@ export default function Marks() {
     }
   };
 
+  const fetchUserAssignedData = async () => {
+    try {
+      if (authUser?.id) {
+        const assignedData = await api.getUserAssignedData(authUser.id);
+        setAssignedClasses(assignedData.assignedClasses || []);
+        setAssignedSubjects(assignedData.assignedSubjects || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user assigned data:', error);
+      setAssignedClasses([]);
+      setAssignedSubjects([]);
+    }
+  };
+
   const fetchClasses = async () => {
     try {
       const data = await api.getClasses();
@@ -75,6 +103,59 @@ export default function Marks() {
     } catch (error) {
       console.error('Error fetching classes:', error);
     }
+  };
+
+  const fetchSubjects = async () => {
+    try {
+      const data = await api.getSubjects();
+      setSubjects(data);
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+    }
+  };
+
+  // Get classes to show based on user role
+  const getClassesToShow = () => {
+    // For Admin4 users, filter by assigned classes if available
+    if (isAdmin4 && assignedClasses.length > 0) {
+      return classes.filter(cls => assignedClasses.includes(cls.name));
+    }
+    
+    // For teachers, discipline, and psychosocialist users, filter by their application classes
+    if ((isTeacher || isDiscipline || isPsychosocialist) && userApplication?.classes) {
+      const userClasses = userApplication.classes.split(',').map(c => c.trim());
+      return classes.filter(cls => userClasses.includes(cls.name));
+    }
+    
+    // For Admin2 and Admin3, show all classes
+    if (isAdmin2 || isAdmin3) {
+      return classes;
+    }
+    
+    // Default: show all classes
+    return classes;
+  };
+
+  // Get subjects to show based on user role
+  const getSubjectsToShow = () => {
+    // For Admin4 users, filter by assigned subjects if available
+    if (isAdmin4 && assignedSubjects.length > 0) {
+      return subjects.filter(subject => assignedSubjects.includes(subject.name));
+    }
+    
+    // For teachers, discipline, and psychosocialist users, filter by their application subjects
+    if ((isTeacher || isDiscipline || isPsychosocialist) && userApplication?.subjects) {
+      const userSubjects = userApplication.subjects.split(',').map(s => s.trim());
+      return subjects.filter(subject => userSubjects.includes(subject.name));
+    }
+    
+    // For Admin2 and Admin3, show all subjects
+    if (isAdmin2 || isAdmin3) {
+      return subjects;
+    }
+    
+    // Default: show all subjects
+    return subjects;
   };
 
   const fetchUploadedMarks = async () => {
@@ -102,6 +183,7 @@ export default function Marks() {
     setShowModal(true);
     setCurrentStep(1);
     setSelectedClass('');
+    setSelectedSubject('');
     setSelectedSequence('');
     setExcelFile(null);
   };
@@ -111,9 +193,14 @@ export default function Marks() {
     setCurrentStep(2);
   };
 
+  const handleSubjectSelect = (subjectName) => {
+    setSelectedSubject(subjectName);
+    setCurrentStep(3);
+  };
+
   const handleSequenceSelect = (sequenceId) => {
     setSelectedSequence(sequenceId);
-    setCurrentStep(3);
+    setCurrentStep(4);
   };
 
   const downloadExcelTemplate = async () => {
@@ -169,7 +256,9 @@ export default function Marks() {
       XLSX.writeFile(wb, filename);
       
       setSuccess(`Excel template downloaded successfully with ${students.length} students!`);
-      setCurrentStep(4);
+      
+      // Automatically proceed to Step 5 (Upload) after successful download
+      setCurrentStep(5);
       
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
@@ -201,6 +290,7 @@ export default function Marks() {
       formData.append('marksFile', excelFile);
       formData.append('classId', selectedClass);
       formData.append('sequenceId', selectedSequence);
+      formData.append('subject', selectedSubject);
 
       await api.uploadMarks(formData);
       
@@ -211,12 +301,17 @@ export default function Marks() {
       // Reset form
       setSelectedClass('');
       setSelectedSequence('');
+      setSelectedSubject('');
       setExcelFile(null);
       setCurrentStep(1);
       
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
-      setError('Failed to upload marks. Please check your file format.');
+      if (error.message && error.message.includes('already exist')) {
+        setError('Marks for this class, sequence, and subject combination already exist. Please choose a different subject or sequence.');
+      } else {
+        setError('Failed to upload marks. Please check your file format.');
+      }
     } finally {
       setLoading(false);
     }
@@ -351,10 +446,47 @@ export default function Marks() {
     setError('');
   };
 
+  const previewMarks = async (mark) => {
+    try {
+      setPreviewLoading(true);
+      setShowPreview(true);
+      
+      // Get the marks data using class_id and sequence_id
+      const marksData = await api.getMarksByClassAndSequence(mark.class_id, mark.sequence_id);
+      
+      if (marksData.student_data) {
+        const studentData = typeof marksData.student_data === 'string' 
+          ? JSON.parse(marksData.student_data) 
+          : marksData.student_data;
+        
+        setPreviewData({
+          marks: marksData,
+          studentData: studentData
+        });
+      } else {
+        setPreviewData({
+          marks: marksData,
+          studentData: []
+        });
+      }
+    } catch (error) {
+      console.error('Error previewing marks:', error);
+      setError('Failed to load marks preview');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const closePreview = () => {
+    setShowPreview(false);
+    setPreviewData(null);
+  };
+
   const closeModal = () => {
     setShowModal(false);
     setCurrentStep(1);
     setSelectedClass('');
+    setSelectedSubject('');
     setSelectedSequence('');
     setExcelFile(null);
   };
@@ -493,6 +625,7 @@ export default function Marks() {
                 <thead>
                   <tr>
                     <th>Class</th>
+                    <th>Subject</th>
                     <th>Sequence</th>
                     <th>Uploaded By</th>
                     <th>Upload Date</th>
@@ -503,11 +636,19 @@ export default function Marks() {
                   {uploadedMarks.map((mark) => (
                     <tr key={mark.id}>
                       <td>{mark.class_name}</td>
+                      <td>{mark.subject || 'N/A'}</td>
                       <td>{mark.sequence_name}</td>
                       <td>{mark.uploaded_by_name}</td>
                       <td>{new Date(mark.upload_date).toLocaleDateString()}</td>
                       <td>
                         <div className="action-buttons">
+                          <button 
+                            className="preview-btn" 
+                            onClick={() => previewMarks(mark)}
+                            title="Preview Marks"
+                          >
+                            <FaEye />
+                          </button>
                           {canEditMarks && (
                             <button 
                               className="edit-btn" 
@@ -545,6 +686,7 @@ export default function Marks() {
                 <thead>
                   <tr>
                     <th>Class</th>
+                    <th>Subject</th>
                     <th>Sequence</th>
                     <th>Upload Date</th>
                     <th>Status</th>
@@ -554,6 +696,7 @@ export default function Marks() {
                   {userMarks.map((mark) => (
                     <tr key={mark.id}>
                       <td>{mark.class_name}</td>
+                      <td>{mark.subject || 'N/A'}</td>
                       <td>{mark.sequence_name}</td>
                       <td>{new Date(mark.upload_date).toLocaleDateString()}</td>
                       <td>
@@ -602,7 +745,7 @@ export default function Marks() {
                   <div className="step-content">
                     <h3>Step 1: Select Class</h3>
                     <div className="class-grid">
-                      {classes.map((cls) => (
+                      {getClassesToShow().map((cls) => (
                         <div 
                           key={cls.id} 
                           className="class-card"
@@ -616,10 +759,28 @@ export default function Marks() {
                   </div>
                 )}
 
-                {/* Step 2: Sequence Selection */}
+                {/* Step 2: Subject Selection */}
                 {currentStep === 2 && (
                   <div className="step-content">
-                    <h3>Step 2: Select Sequence</h3>
+                    <h3>Step 2: Select Subject</h3>
+                    <div className="subject-grid">
+                      {getSubjectsToShow().map((subject) => (
+                        <div 
+                          key={subject.id} 
+                          className="subject-card"
+                          onClick={() => handleSubjectSelect(subject.name)}
+                        >
+                          <h4>{subject.name}</h4>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Sequence Selection */}
+                {currentStep === 3 && (
+                  <div className="step-content">
+                    <h3>Step 3: Select Sequence</h3>
                     <div className="sequence-grid">
                       {sequences.map((seq) => (
                         <div 
@@ -634,12 +795,13 @@ export default function Marks() {
                   </div>
                 )}
 
-                {/* Step 3: Download Template */}
-                {currentStep === 3 && (
+                {/* Step 4: Download Template */}
+                {currentStep === 4 && (
                   <div className="step-content">
-                    <h3>Step 3: Download Excel Template</h3>
+                    <h3>Step 4: Download Excel Template</h3>
                     <div className="download-info">
                       <p><strong>Class:</strong> {classes.find(c => c.id === selectedClass)?.name}</p>
+                      <p><strong>Subject:</strong> {selectedSubject}</p>
                       <p><strong>Sequence:</strong> {sequences.find(s => s.id === selectedSequence)?.name}</p>
                     </div>
                     <button className="download-btn" onClick={downloadExcelTemplate} disabled={downloading}>
@@ -651,19 +813,32 @@ export default function Marks() {
                         </>
                       )}
                     </button>
-                    <p className="download-note">
-                      Download the template with student names pre-filled, fill in the marks, then proceed to upload.
-                    </p>
+                    <div className="skip-download-section">
+                      <p className="download-note">
+                        Download the template with student names pre-filled, fill in the marks, then proceed to upload.
+                      </p>
+                      <button 
+                        className="skip-btn" 
+                        onClick={() => setCurrentStep(5)}
+                        disabled={downloading}
+                      >
+                        Skip Download & Proceed to Upload
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {/* Step 4: Upload File */}
-                {currentStep === 4 && (
+                {/* Step 5: Upload File */}
+                {currentStep === 5 && (
                   <div className="step-content">
-                    <h3>Step 4: Upload Marks File</h3>
+                    <h3>Step 5: Upload Marks File</h3>
                     <div className="upload-info">
                       <p><strong>Class:</strong> {classes.find(c => c.id === selectedClass)?.name}</p>
+                      <p><strong>Subject:</strong> {selectedSubject}</p>
                       <p><strong>Sequence:</strong> {sequences.find(s => s.id === selectedSequence)?.name}</p>
+                    </div>
+                    <div className="upload-note">
+                      <p><strong>Note:</strong> You can upload marks for different subjects for the same class and sequence. Each subject will be stored separately.</p>
                     </div>
                     <div className="file-upload">
                       <input
@@ -706,6 +881,7 @@ export default function Marks() {
 
               <div className="modal-body">
                 <h3>Class: {editingMarks.class_name}</h3>
+                <h3>Subject: {editingMarks.subject || 'N/A'}</h3>
                 <h3>Sequence: {editingMarks.sequence_name}</h3>
                 <h3>Uploaded By: {editingMarks.uploaded_by_name}</h3>
                 <h3>Upload Date: {new Date(editingMarks.upload_date).toLocaleDateString()}</h3>
@@ -745,6 +921,74 @@ export default function Marks() {
                   </button>
                   <button className="cancel-btn" onClick={closeEditModal}>Cancel</button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Preview Marks Modal */}
+        {showPreview && (
+          <div className="modal-overlay" onClick={closePreview}>
+            <div className="modal-content preview-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Preview Marks</h2>
+                <button className="close-btn" onClick={closePreview}>
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="modal-body">
+                {previewLoading ? (
+                  <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                    <p>Loading marks data...</p>
+                  </div>
+                ) : previewData ? (
+                  <div className="preview-content">
+                    <div className="preview-info">
+                      <h3>Class: {previewData.marks.class_name}</h3>
+                      <h3>Subject: {previewData.marks.subject || 'N/A'}</h3>
+                      <h3>Sequence: {previewData.marks.sequence_name}</h3>
+                      <h3>Uploaded By: {previewData.marks.uploaded_by_name}</h3>
+                      <h3>Upload Date: {new Date(previewData.marks.upload_date).toLocaleDateString()}</h3>
+                    </div>
+
+                    <div className="preview-table-container">
+                      <h4>Student Marks Data</h4>
+                      {previewData.studentData.length > 0 ? (
+                        <div className="table-responsive">
+                          <table className="preview-table">
+                            <thead>
+                              <tr>
+                                <th>S/N</th>
+                                <th>Full Name</th>
+                                <th>Marks/20</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {previewData.studentData.map((row, index) => (
+                                <tr key={index}>
+                                  <td>{row[0] || '-'}</td>
+                                  <td>{row[1] || '-'}</td>
+                                  <td>{row[2] || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="no-data-message">
+                          <p>No student data found in the uploaded file.</p>
+                          <p>This might indicate that the Excel file was not processed correctly.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="error-message">
+                    <p>Failed to load marks data.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

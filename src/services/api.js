@@ -11,11 +11,9 @@ class ApiService {
     // Initialize token and user from sessionStorage
     this.token = sessionStorage.getItem('token');
     this.user = JSON.parse(sessionStorage.getItem('authUser'));
-    console.log('API Service initialized with token:', this.token ? 'Present' : 'Not present');
   }
 
   setToken(token) {
-    console.log('Setting new token');
     this.token = token;
     if (token) {
       sessionStorage.setItem('token', token);
@@ -25,11 +23,13 @@ class ApiService {
   }
 
   getToken() {
+    if (!this.token) {
+      this.token = sessionStorage.getItem('token');
+    }
     return this.token;
   }
 
   clearToken() {
-    console.log('Clearing token and user data');
     this.token = null;
     this.user = null;
     sessionStorage.removeItem('token');
@@ -72,7 +72,6 @@ class ApiService {
 
   async login(username, password) {
     try {
-      console.log('Attempting login for:', username);
       const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
@@ -84,7 +83,6 @@ class ApiService {
       const data = await this.handleResponse(response);
       
       if (data.token) {
-        console.log('Login successful, setting token');
         this.setToken(data.token);
         if (data.user) {
           this.user = data.user;
@@ -103,7 +101,6 @@ class ApiService {
 
   async createAccount({ username, contact, password, role }) {
     try {
-      console.log('Sending registration request:', { username, contact, password, role });
       const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: {
@@ -956,6 +953,15 @@ class ApiService {
     return await response.json();
   }
 
+  // Test marks data
+  async testMarksData(marksId) {
+    const response = await fetch(`${API_URL}/marks/test/${marksId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to test marks data');
+    return await response.json();
+  }
+
   async getMarksStatistics() {
     const response = await fetch(`${API_URL}/marks/statistics`, {
       headers: this.getAuthHeaders(),
@@ -1051,6 +1057,19 @@ class ApiService {
       if (error.message.includes('404')) {
         return null;
       }
+      throw error;
+    }
+  }
+
+  async getUserAssignedData(userId) {
+    try {
+      const response = await fetch(`${API_URL}/user/assigned-data/${userId}`, {
+        headers: this.getAuthHeaders(),
+      });
+      
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Get user assigned data error:', error);
       throw error;
     }
   }
@@ -1312,15 +1331,148 @@ class ApiService {
         headers: this.getAuthHeaders(),
         body: JSON.stringify({ descriptions })
       });
-      return this.handleResponse(response);
+      return await this.handleResponse(response);
     } catch (error) {
-      console.error('Save salary descriptions error:', error);
+      console.error('Error saving salary descriptions:', error);
       throw error;
     }
   }
-  // === End Salary API ===
+
+  // Subject Classification and Coefficient Management
+  async getSubjectClassifications() {
+    try {
+      const response = await fetch(`${API_URL}/subject-classifications`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching subject classifications:', error);
+      throw error;
+    }
+  }
+
+  async saveSubjectClassifications(classId, classifications) {
+    try {
+      const response = await fetch(`${API_URL}/subject-classifications`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ classId, classifications })
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error saving subject classifications:', error);
+      throw error;
+    }
+  }
+
+  async getSubjectCoefficients() {
+    try {
+      const response = await fetch(`${API_URL}/subject-coefficients`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching subject coefficients:', error);
+      throw error;
+    }
+  }
+
+  async saveSubjectCoefficients(classId, coefficients) {
+    try {
+      const response = await fetch(`${API_URL}/subjects/coefficients`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ classId, coefficients })
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error saving subject coefficients:', error);
+      throw error;
+    }
+  }
+
+  // Report Card Generation APIs
+  async generateReportCards(classId, term) {
+    try {
+      const response = await fetch(`${API_URL}/reports/generate`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ classId, term })
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error generating report cards:', error);
+      throw error;
+    }
+  }
+
+  async getReportCardData(classId, studentId, term) {
+    try {
+      const response = await fetch(`${API_URL}/reports/data/${classId}/${studentId}/${term}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching report card data:', error);
+      throw error;
+    }
+  }
+
+  async saveReportCardSettings(classId, settings) {
+    try {
+      const response = await fetch(`${API_URL}/reports/settings`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ classId, settings })
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error saving report card settings:', error);
+      throw error;
+    }
+  }
+
+  async getReportCardSettings(classId) {
+    try {
+      const response = await fetch(`${API_URL}/reports/settings/${classId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching report card settings:', error);
+      throw error;
+    }
+  }
+
+  async getClassMarksSummary(classId) {
+    try {
+      const response = await fetch(`${API_URL}/marks/summary/${classId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching class marks summary:', error);
+      throw error;
+    }
+  }
+
+  async getStudentMarksForReport(classId, studentId) {
+    try {
+      const response = await fetch(`${API_URL}/marks/student/${classId}/${studentId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching student marks for report:', error);
+      throw error;
+    }
+  }
 }
 
-const api = new ApiService();
-api.API_URL = API_URL;
-export default api; 
+export default new ApiService(); 

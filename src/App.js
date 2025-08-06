@@ -34,6 +34,8 @@ import Inventory from './components/Inventory.jsx';
 import GroupChat from './components/GroupChat';
 import PsycoDash from './components/PsycoDash.jsx';
 import PaySlip from './components/PaySlip';
+import TimeTable from './components/TimeTable.jsx';
+import ReportCard from './components/ReportCard.jsx';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -73,6 +75,9 @@ function App() {
       <Route path="/admin-subjects" element={<Subjects />} />
       <Route path="/admin-lesson-plans" element={<LessonPlan />} />
       <Route path="/admin-inventory" element={<Inventory />} />
+      <Route path="/admin-timetable" element={<TimeTable authUser={authUser} />} />
+      <Route path="/timetables" element={<TimeTable authUser={authUser} />} />
+      <Route path="/admin-reports" element={<ReportCard />} />
       <Route path="/admin-group-messages/:groupId" element={<GroupChat />} />
       <Route path="/user-messages/:userId" element={<UserChat />} />
       <Route path="/lesson-plans" element={<LessonPlan />} />

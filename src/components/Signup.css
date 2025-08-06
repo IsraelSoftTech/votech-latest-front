@@ -28,13 +28,13 @@
   box-shadow: none;
 }
 
-.header-left {
+.signup-header-left {
   display: flex;
   align-items: center;
   margin-left: 48px;
 }
 
-.header-logo {
+.signup-header-logo {
   height: 32px;
   width: 32px;
   object-fit: contain;
@@ -42,21 +42,21 @@
   vertical-align: middle;
 }
 
-.header-voltech {
+.signup-header-voltech {
   color: var(--accent-blue);
   font-size: 1.7rem;
   font-weight: 500;
   letter-spacing: 1px;
 }
 
-.header-right {
+.signup-header-right {
   display: flex;
   align-items: center;
   gap: 24px;
   margin-right: 48px;
 }
 
-.header-link {
+.signup-header-link {
   color: var(--text-secondary);
   font-size: 1.1rem;
   text-decoration: none;
@@ -66,10 +66,10 @@
   transition: color 0.2s;
   padding-bottom: 2px;
 }
-.header-link.active, .header-link:hover {
+.signup-header-link.active, .signup-header-link:hover {
   color: var(--accent-blue);
 }
-.header-link.active::after {
+.signup-header-link.active::after {
   content: '';
   display: block;
   margin: 0 auto;
@@ -99,7 +99,7 @@
   margin-top: 40px;
 }
 
-.form-title {
+.signup-form-title {
   color: var(--accent-blue);
   text-align: center;
   font-size: 1.3rem;
@@ -107,7 +107,7 @@
   margin-bottom: 24px;
 }
 
-.google-btn {
+.signup-google-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -121,42 +121,42 @@
   margin-bottom: 22px;
   transition: box-shadow 0.2s;
 }
-.google-btn:hover {
+.signup-google-btn:hover {
   box-shadow: 0 2px 8px rgba(245,158,11,0.10);
 }
-.google-icon {
+.signup-google-icon {
   width: 22px;
   height: 22px;
   margin-right: 12px;
   color: var(--accent-blue);
 }
 
-.or-divider {
+.signup-or-divider {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 18px;
 }
-.line {
+.signup-line {
   flex: 1;
   height: 2px;
   background: var(--accent-blue);
   opacity: 0.5;
   margin: 0 10px;
 }
-.or-text {
+.signup-or-text {
   color: var(--accent-blue);
   font-size: 1.1rem;
   font-weight: 500;
 }
 
-.input-label {
+.signup-input-label {
   color: var(--text-secondary);
   font-size: 1rem;
   margin-bottom: 4px;
   margin-top: 10px;
 }
-.input-field {
+.signup-input-field {
   padding: 10px 12px;
   border: 1px solid var(--input-border);
   border-radius: 4px;
@@ -165,20 +165,20 @@
   outline: none;
   transition: border 0.2s;
 }
-.input-field:focus {
+.signup-input-field:focus {
   border: 1.5px solid var(--accent-blue);
 }
 
-.password-field-wrapper {
+.signup-password-field-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
-.password-field-wrapper .input-field {
+.signup-password-field-wrapper .signup-input-field {
   flex: 1;
   padding-right: 38px;
 }
-.eye-icon {
+.signup-eye-icon {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -189,24 +189,24 @@
   transition: color 0.2s;
   z-index: 2;
 }
-.eye-icon:hover {
+.signup-eye-icon:hover {
   color: var(--accent-blue);
 }
 
-.form-bottom-text {
+.signup-form-bottom-text {
   color: var(--text-secondary);
   font-size: 1rem;
   margin-bottom: 18px;
   text-align: left;
 }
-.signup-link {
+.signup-signin-link {
   color: var(--link);
   text-decoration: none;
   margin-left: 4px;
   font-weight: 500;
   transition: color 0.2s;
 }
-.signup-link:hover {
+.signup-signin-link:hover {
   color: var(--link-hover);
 }
 
@@ -226,10 +226,17 @@
   background: var(--link-hover);
 }
 
-.signup-header .header-group {
+.signup-header .signup-header-group {
   display: flex;
   align-items: center;
   gap: 18px;
+}
+
+.signup-error-message {
+  color: #dc2626;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  text-align: center;
 }
 
 @media (max-width: 600px) {
@@ -241,30 +248,30 @@
     align-items: center;
     justify-content: space-between;
   }
-  .signup-header .header-group {
+  .signup-header .signup-header-group {
     margin: 0 8px;
     gap: 10px;
     flex-wrap: wrap;
   }
-  .header-left, .header-right {
+  .signup-header-left, .signup-header-right {
     margin: 0;
     padding: 0;
     display: none;
   }
-  .header-logo {
+  .signup-header-logo {
     height: 24px;
     width: 24px;
     margin-right: 6px;
   }
-  .header-voltech {
+  .signup-header-voltech {
     font-size: 1rem;
   }
-  .header-link {
+  .signup-header-link {
     font-size: 0.95rem;
     margin-left: 6px;
     color: var(--text-secondary);
   }
-  .header-link.active, .header-link:hover {
+  .signup-header-link.active, .signup-header-link:hover {
     color: var(--accent-blue);
   }
   .signup-form {
@@ -274,17 +281,17 @@
     margin-top: 0;
     background: var(--card-bg);
   }
-  .form-title {
+  .signup-form-title {
     font-size: 1.1rem;
     color: var(--accent-blue);
   }
-  .google-btn {
+  .signup-google-btn {
     font-size: 0.95rem;
     padding: 8px 0;
     background: var(--card-bg);
     border: 1px solid var(--input-border);
   }
-  .input-label, .form-bottom-text, .signup-link {
+  .signup-input-label, .signup-form-bottom-text, .signup-signin-link {
     font-size: 0.95rem;
     color: var(--text-secondary);
   }
@@ -297,19 +304,19 @@
   .signup-btn:hover {
     background: var(--link-hover);
   }
-  .password-field-wrapper .input-field {
+  .signup-password-field-wrapper .signup-input-field {
     padding-right: 32px;
     border: 1px solid var(--input-border);
   }
-  .eye-icon {
+  .signup-eye-icon {
     font-size: 1rem;
     right: 8px;
     color: var(--input-border);
   }
-  .eye-icon:hover {
+  .signup-eye-icon:hover {
     color: var(--accent-blue);
   }
-  .google-icon {
+  .signup-google-icon {
     width: 18px;
     height: 18px;
     margin-right: 8px;

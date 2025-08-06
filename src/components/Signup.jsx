@@ -64,38 +64,38 @@ const Signup = () => {
 
   return (
     <div className="signup-root">
-      <header className="signin-header">
-        <div className="header-group">
+      <header className="signup-header">
+        <div className="signup-header-group">
           <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
           <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
-          <Link className={`header-link${window.location.pathname === '/signin' ? ' active' : ''}`} to="/signin">Sign In</Link>
-          <Link className={`header-link${window.location.pathname === '/signup' ? ' active' : ''}`} to="/signup">Sign Up</Link>
+          <Link className={`signup-header-link${window.location.pathname === '/signin' ? ' active' : ''}`} to="/signin">Sign In</Link>
+          <Link className={`signup-header-link${window.location.pathname === '/signup' ? ' active' : ''}`} to="/signup">Sign Up</Link>
         </div>
       </header>
       <main className="signup-main">
         <form className="signup-form" onSubmit={handleSubmit}>
-          <h2 className="form-title">Sign Up</h2>
-          <button type="button" className="google-btn">
-            <FcGoogle className="google-icon" />
+          <h2 className="signup-form-title">Sign Up</h2>
+          <button type="button" className="signup-google-btn">
+            <FcGoogle className="signup-google-icon" />
             Continue with google authentication
           </button>
-          <div className="or-divider">
-            <span className="line"></span>
-            <span className="or-text">Or</span>
-            <span className="line"></span>
+          <div className="signup-or-divider">
+            <span className="signup-line"></span>
+            <span className="signup-or-text">Or</span>
+            <span className="signup-line"></span>
           </div>
-          <label className="input-label">Full Name *</label>
-          <input className="input-field" type="text" name="name" value={form.name} onChange={handleChange} placeholder="Enter Full Name" />
-          <label className="input-label">Email *</label>
-          <input className="input-field" type="email" name="email" value={form.email} onChange={handleChange} placeholder="Enter Email" />
-          <label className="input-label">Phone Number *</label>
-          <input className="input-field" type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="Enter Phone Number" />
-          <label className="input-label">Username *</label>
-          <input className="input-field" type="text" name="username" value={form.username} onChange={handleChange} placeholder="Enter Username" />
-          <label className="input-label">Gender *</label>
-          <select className="input-field" name="gender" value={form.gender} onChange={handleChange}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
-          <label className="input-label">Role *</label>
-          <select className="input-field" name="role" value={form.role} onChange={handleChange} required>
+          <label className="signup-input-label">Full Name *</label>
+          <input className="signup-input-field" type="text" name="name" value={form.name} onChange={handleChange} placeholder="Enter Full Name" />
+          <label className="signup-input-label">Email *</label>
+          <input className="signup-input-field" type="email" name="email" value={form.email} onChange={handleChange} placeholder="Enter Email" />
+          <label className="signup-input-label">Phone Number *</label>
+          <input className="signup-input-field" type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="Enter Phone Number" />
+          <label className="signup-input-label">Username *</label>
+          <input className="signup-input-field" type="text" name="username" value={form.username} onChange={handleChange} placeholder="Enter Username" />
+          <label className="signup-input-label">Gender *</label>
+          <select className="signup-input-field" name="gender" value={form.gender} onChange={handleChange}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+          <label className="signup-input-label">Role *</label>
+          <select className="signup-input-field" name="role" value={form.role} onChange={handleChange} required>
             <option value="">Select</option>
             <option value="Admin1">Admin1</option>
             <option value="Admin2">Admin2</option>
@@ -105,24 +105,24 @@ const Signup = () => {
             <option value="Discipline">Discipline</option>
             <option value="Psychosocialist">Psychosocialist</option>
           </select>
-          <label className="input-label">Password *</label>
-          <div className="password-field-wrapper">
-            <input className="input-field" type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} placeholder="Enter Password" />
-            <span className="eye-icon" onClick={() => setShowPassword(v => !v)}>
+          <label className="signup-input-label">Password *</label>
+          <div className="signup-password-field-wrapper">
+            <input className="signup-input-field" type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} placeholder="Enter Password" />
+            <span className="signup-eye-icon" onClick={() => setShowPassword(v => !v)}>
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </div>
-          <label className="input-label">Repeat Password *</label>
-          <div className="password-field-wrapper">
-            <input className="input-field" type={showRepeatPassword ? 'text' : 'password'} name="repeatPassword" value={form.repeatPassword} onChange={handleChange} placeholder="Repeat password" />
-            <span className="eye-icon" onClick={() => setShowRepeatPassword(v => !v)}>
+          <label className="signup-input-label">Repeat Password *</label>
+          <div className="signup-password-field-wrapper">
+            <input className="signup-input-field" type={showRepeatPassword ? 'text' : 'password'} name="repeatPassword" value={form.repeatPassword} onChange={handleChange} placeholder="Repeat password" />
+            <span className="signup-eye-icon" onClick={() => setShowRepeatPassword(v => !v)}>
               {showRepeatPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </div>
-          <div className="form-bottom-text">
-            Already have an account? <Link to="/signin" className="signup-link">Sign In</Link>
+          <div className="signup-form-bottom-text">
+            Already have an account? <Link to="/signin" className="signup-signin-link">Sign In</Link>
           </div>
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="signup-error-message">{error}</div>}
           {success && <SuccessMessage message={success} />}
           <button type="submit" className="signup-btn" disabled={loading}>{loading ? 'Signing Up...' : 'Sign Up'}</button>
         </form>

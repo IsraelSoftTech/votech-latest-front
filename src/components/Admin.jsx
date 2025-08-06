@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Admin.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaMoneyCheckAlt, FaUserTie, FaChartPie, FaBoxes, FaFileInvoiceDollar, FaPlus, FaEnvelope, FaIdCard, FaCog } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaMoneyCheckAlt, FaUserTie, FaChartPie, FaBoxes, FaFileInvoiceDollar, FaPlus, FaEnvelope, FaIdCard, FaCog, FaCalendarAlt } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Calendar from 'react-calendar';
@@ -23,6 +23,7 @@ const menuItems = [
   { label: 'Reports', icon: <FaFileAlt /> },
   { label: 'Exam/Marks', icon: <FaChartBar /> },
   { label: 'Lesson Plans', icon: <FaPenFancy /> },
+  { label: 'Time Table', icon: <FaCalendarAlt />, path: '/admin-timetable' },
 ];
 
 const years = Array.from({length: 26}, (_, i) => `20${25+i}/20${26+i}`);

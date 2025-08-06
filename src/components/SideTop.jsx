@@ -57,8 +57,9 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
-      { label: 'Reports', icon: <FaFileAlt /> },
       { label: 'Marks', icon: <FaChartBar />, path: '/admin-marks' },
+
+      { label: 'Report Cards', icon: <FaFileAlt />, path: '/admin-reports' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Display Users', icon: <FaUserGraduate />, path: '/admin-users' },
     ];
@@ -229,8 +230,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
     { label: 'Events', icon: <FaClipboardList />, path: '/dean-events' },
-    { label: 'Academic Planning', icon: <FaBook />, path: '/dean-academic' },
-    { label: 'Timetables', icon: <FaClipboardList />, path: '/dean-timetables' },
+    { label: 'Timetables', icon: <FaClipboardList />, path: '/timetables' },
     { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/dean-lesson-plans' },
   ];
@@ -238,6 +238,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   // Use correct menu for each role
   if (isTeacher) menuToShow = filterMenuItems(teacherMenuItems);
   if (authUser?.role === 'Admin4') menuToShow = filterMenuItems(deanMenuItems);
+  if (authUser?.role === 'Admin3') menuToShow = filterMenuItems(menuItems);
 
   return (
     <div className="admin-container">
@@ -332,4 +333,4 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
     </div>
   );
-} 
+}
