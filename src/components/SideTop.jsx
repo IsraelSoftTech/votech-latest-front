@@ -58,8 +58,6 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
       { label: 'Marks', icon: <FaChartBar />, path: '/admin-marks' },
-
-      { label: 'Report Cards', icon: <FaFileAlt />, path: '/admin-reports' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Display Users', icon: <FaUserGraduate />, path: '/admin-users' },
     ];
@@ -75,7 +73,6 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
-      { label: 'Reports', icon: <FaFileAlt /> },
       { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/dean-lesson-plans' },
       { label: 'Events', icon: <FaCalendarAlt />, path: '/dean-events' },
@@ -103,7 +100,6 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
-      { label: 'Reports', icon: <FaFileAlt /> },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/discipline-lesson-plans' },
     ];
   } else if (authUser?.role === 'Psychosocialist') {
@@ -113,7 +109,6 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Cases', icon: <FaClipboardList />, path: '/psycho-cases' },
       { label: 'Lesson Plan', icon: <FaPenFancy />, path: '/psychosocialist-lesson-plans' },
-      { label: 'Reports', icon: <FaFileAlt />, path: '/psycho-reports' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/psycho-messages' },
     ];
   }
@@ -216,7 +211,6 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
     { label: 'Attendance', icon: <FaClipboardList />, path: '/teacher-attendance' },
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/teacher-lesson-plans' },
-    { label: 'Reports', icon: <FaFileAlt />, path: '/teacher-reports' },
   ];
 
   // Dean/Admin4 menu items (from provided image)

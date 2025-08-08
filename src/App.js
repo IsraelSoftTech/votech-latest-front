@@ -35,7 +35,6 @@ import GroupChat from './components/GroupChat';
 import PsycoDash from './components/PsycoDash.jsx';
 import PaySlip from './components/PaySlip';
 import TimeTable from './components/TimeTable.jsx';
-import ReportCard from './components/ReportCard.jsx';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -77,7 +76,6 @@ function App() {
       <Route path="/admin-inventory" element={<Inventory />} />
       <Route path="/admin-timetable" element={<TimeTable authUser={authUser} />} />
       <Route path="/timetables" element={<TimeTable authUser={authUser} />} />
-      <Route path="/admin-reports" element={<ReportCard />} />
       <Route path="/admin-group-messages/:groupId" element={<GroupChat />} />
       <Route path="/user-messages/:userId" element={<UserChat />} />
       <Route path="/lesson-plans" element={<LessonPlan />} />
@@ -97,11 +95,6 @@ function App() {
       <Route path="/discipline-cases" element={
         <DisciplineSideTop>
           <div>Disciplinary Cases Page</div>
-        </DisciplineSideTop>
-      } />
-      <Route path="/discipline-reports" element={
-        <DisciplineSideTop>
-          <div>Reports Page</div>
         </DisciplineSideTop>
       } />
       <Route path="/discipline-counseling" element={
@@ -132,13 +125,12 @@ function App() {
       <Route path="/dean-marks" element={<Marks />} />
       <Route path="/teacher-marks" element={<Marks />} />
       <Route path="/psychosocialist-lesson-plans" element={<LessonPlan />} />
-      
+
       {/* Psychosocialist Routes */}
       <Route path="/psycho-dashboard" element={<PsycoDash />} />
       <Route path="/psycho-cases" element={<PsycoDash initialTab="Cases" />} />
-      <Route path="/psycho-reports" element={<PsycoDash initialTab="Reports" />} />
       <Route path="/psycho-messages" element={<PsycoDash initialTab="Messages" />} />
-      
+
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}
       <Route path="*" element={<Navigate to="/" replace />} />

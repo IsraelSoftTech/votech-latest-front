@@ -13,7 +13,6 @@ const menuItems = [
   { label: 'Students', icon: <FaUserGraduate />, path: '/discipline-students' },
   { label: 'Attendance', icon: <FaClipboardList />, path: '/attendance' },
   { label: 'Disciplinary Cases', icon: <FaGavel />, path: '/discipline-cases' },
-  { label: 'Reports', icon: <FaFileAlt />, path: '/discipline-reports' },
   { label: 'Counseling Records', icon: <FaComments />, path: '/discipline-counseling' },
   { label: 'Security Incidents', icon: <FaShieldAlt />, path: '/discipline-security' }
 ];

@@ -1089,3 +1089,324 @@
     font-size: 0.8rem;
   }
 } 
+
+/* Admin3 Marksheet Styles */
+.admin3-marksheet-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.marksheet-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.marksheet-header h2 {
+  color: #333;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.marksheet-header p {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.class-selector-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.class-selector-section label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+  min-width: 100px;
+}
+
+.class-select-dropdown {
+  flex: 1;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.class-select-dropdown:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.marksheet-container {
+  margin-top: 20px;
+}
+
+.marksheet-table-wrapper {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.marksheet-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.marksheet-controls h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.save-marksheet-btn {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.save-marksheet-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.save-marksheet-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loading-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.marksheet-table-container {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.marksheet-table {
+  width: 100%;
+  min-width: 1200px;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.marksheet-table th {
+  background: #667eea;
+  color: white;
+  padding: 12px 8px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #5a6fd8;
+  white-space: nowrap;
+}
+
+.marksheet-table th:first-child {
+  border-left: none;
+}
+
+.marksheet-table th:last-child {
+  border-right: none;
+}
+
+.marksheet-table td {
+  padding: 8px;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+
+.marksheet-table tr:nth-child(even) {
+  background: #f8f9fa;
+}
+
+.marksheet-table tr:hover {
+  background: #e3f2fd;
+}
+
+.serial-number {
+  font-weight: 600;
+  color: #333;
+  background: #f0f0f0 !important;
+  min-width: 50px;
+}
+
+.student-name {
+  text-align: left;
+  font-weight: 500;
+  color: #333;
+  min-width: 150px;
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+.student-id {
+  font-weight: 500;
+  color: #666;
+  min-width: 100px;
+}
+
+.mark-cell {
+  padding: 4px !important;
+  min-width: 80px;
+}
+
+.mark-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.9rem;
+  background: white;
+  transition: border-color 0.3s ease;
+}
+
+.mark-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.mark-input:invalid {
+  border-color: #f44336;
+  box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.1);
+}
+
+.average-cell {
+  font-weight: 600;
+  color: #4CAF50;
+  background: #e8f5e8 !important;
+  min-width: 60px;
+}
+
+/* Responsive Design for Marksheet */
+@media (max-width: 1200px) {
+  .marksheet-table {
+    min-width: 1000px;
+  }
+  
+  .student-name {
+    min-width: 120px;
+    max-width: 150px;
+  }
+  
+  .mark-cell {
+    min-width: 70px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin3-marksheet-section {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .marksheet-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .class-selector-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .class-selector-section label {
+    min-width: auto;
+  }
+  
+  .class-select-dropdown {
+    max-width: none;
+  }
+  
+  .marksheet-controls {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .marksheet-controls h3 {
+    text-align: center;
+  }
+  
+  .save-marksheet-btn {
+    justify-content: center;
+  }
+  
+  .marksheet-table {
+    min-width: 800px;
+    font-size: 0.8rem;
+  }
+  
+  .mark-input {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin3-marksheet-section {
+    padding: 12px;
+  }
+  
+  .marksheet-header h2 {
+    font-size: 1.3rem;
+  }
+  
+  .marksheet-table {
+    min-width: 600px;
+    font-size: 0.75rem;
+  }
+  
+  .mark-input {
+    padding: 3px 4px;
+    font-size: 0.75rem;
+  }
+  
+  .student-name {
+    min-width: 100px;
+    max-width: 120px;
+  }
+} 

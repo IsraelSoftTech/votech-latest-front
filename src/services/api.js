@@ -894,117 +894,6 @@ class ApiService {
     return await response.json();
   }
 
-  // === Marks Management API ===
-  
-  async getUploadedMarks() {
-    const response = await fetch(`${API_URL}/marks`, {
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch uploaded marks');
-    return await response.json();
-  }
-
-  async uploadMarks(formData) {
-    const authHeaders = this.getAuthHeaders();
-    const headers = {};
-    
-    // For FormData, only include Authorization header, not Content-Type
-    headers['Authorization'] = authHeaders['Authorization'];
-    
-    const response = await fetch(`${API_URL}/marks/upload`, {
-      method: 'POST',
-      headers: headers,
-      body: formData,
-    });
-    if (!response.ok) throw new Error('Failed to upload marks');
-    return await response.json();
-  }
-
-  async deleteMarks(marksId) {
-    const response = await fetch(`${API_URL}/marks/${marksId}`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to delete marks');
-    return await response.json();
-  }
-
-  async updateMarks(marksId, formData) {
-    const authHeaders = this.getAuthHeaders();
-    const headers = {};
-    
-    // For FormData, only include Authorization header, not Content-Type
-    headers['Authorization'] = authHeaders['Authorization'];
-    
-    const response = await fetch(`${API_URL}/marks/${marksId}`, {
-      method: 'PUT',
-      headers: headers,
-      body: formData,
-    });
-    if (!response.ok) throw new Error('Failed to update marks');
-    return await response.json();
-  }
-
-  async getMarksByClassAndSequence(classId, sequenceId) {
-    const response = await fetch(`${API_URL}/marks/${classId}/${sequenceId}`, {
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch marks');
-    return await response.json();
-  }
-
-  // Test marks data
-  async testMarksData(marksId) {
-    const response = await fetch(`${API_URL}/marks/test/${marksId}`, {
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to test marks data');
-    return await response.json();
-  }
-
-  async getMarksStatistics() {
-    const response = await fetch(`${API_URL}/marks/statistics`, {
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch marks statistics');
-    return await response.json();
-  }
-
-  // Get students by class
-  async getStudentsByClass(classId) {
-    const response = await fetch(`${API_URL}/students/class/${classId}`, {
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to fetch students for class');
-    return await response.json();
-  }
-
-  // Test students table access
-  async testStudentsTable() {
-    const response = await fetch(`${API_URL}/students/test`, {
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to test students table');
-    return await response.json();
-  }
-
-  // Test marks table access
-  async testMarksTable() {
-    const response = await fetch(`${API_URL}/marks/test`, {
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to test marks table');
-    return await response.json();
-  }
-
-  // Test specific marks record access
-  async testMarksRecord(marksId) {
-    const response = await fetch(`${API_URL}/marks/test/${marksId}`, {
-      headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse(response);
-  }
-
   // === Applications API ===
   
   async getApplications() {
@@ -1381,95 +1270,77 @@ class ApiService {
 
   async saveSubjectCoefficients(classId, coefficients) {
     try {
-      const response = await fetch(`${API_URL}/subjects/coefficients`, {
+      const response = await fetch(`${API_URL}/subject-coefficients/${classId}`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ classId, coefficients })
+        body: JSON.stringify({ coefficients })
       });
-      return await this.handleResponse(response);
+      if (!response.ok) throw new Error('Failed to save subject coefficients');
+      return await response.json();
     } catch (error) {
       console.error('Error saving subject coefficients:', error);
       throw error;
     }
   }
 
-  // Report Card Generation APIs
-  async generateReportCards(classId, term) {
+  // Get all users for class master selection
+  async getUsersForClassMaster() {
     try {
-      const response = await fetch(`${API_URL}/reports/generate`, {
+      const response = await fetch(`${API_URL}/users/all`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching users for class master:', error);
+      throw error;
+    }
+  }
+
+  // Get all approved applicants (for class master selection)
+  async getApprovedApplicants() {
+    try {
+      const response = await this.getApplications();
+      // If response is an object with a data property, use that
+      const applications = Array.isArray(response) ? response : response.data || [];
+      return applications
+        .filter(app => app.status === 'approved')
+        .map(app => ({
+          id: app.applicant_id,
+          full_name: app.applicant_name,
+          contact: app.contact
+        }));
+    } catch (error) {
+      console.error('Error fetching approved applicants:', error);
+      return [];
+    }
+  }
+
+  // Get the class master for a class and academic year
+  async getClassMaster(classId, academicYear) {
+    try {
+      const response = await fetch(`${API_URL}/masters/${classId}/${encodeURIComponent(academicYear)}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching class master:', error);
+      throw error;
+    }
+  }
+
+  // Save the class master for a class and academic year
+  async saveClassMaster(classId, academicYear, master_id) {
+    try {
+      const response = await fetch(`${API_URL}/masters/${classId}/${encodeURIComponent(academicYear)}`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ classId, term })
+        body: JSON.stringify({ master_id })
       });
       return await this.handleResponse(response);
     } catch (error) {
-      console.error('Error generating report cards:', error);
-      throw error;
-    }
-  }
-
-  async getReportCardData(classId, studentId, term) {
-    try {
-      const response = await fetch(`${API_URL}/reports/data/${classId}/${studentId}/${term}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Error fetching report card data:', error);
-      throw error;
-    }
-  }
-
-  async saveReportCardSettings(classId, settings) {
-    try {
-      const response = await fetch(`${API_URL}/reports/settings`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ classId, settings })
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Error saving report card settings:', error);
-      throw error;
-    }
-  }
-
-  async getReportCardSettings(classId) {
-    try {
-      const response = await fetch(`${API_URL}/reports/settings/${classId}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Error fetching report card settings:', error);
-      throw error;
-    }
-  }
-
-  async getClassMarksSummary(classId) {
-    try {
-      const response = await fetch(`${API_URL}/marks/summary/${classId}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Error fetching class marks summary:', error);
-      throw error;
-    }
-  }
-
-  async getStudentMarksForReport(classId, studentId) {
-    try {
-      const response = await fetch(`${API_URL}/marks/student/${classId}/${studentId}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders()
-      });
-      return await this.handleResponse(response);
-    } catch (error) {
-      console.error('Error fetching student marks for report:', error);
+      console.error('Error saving class master:', error);
       throw error;
     }
   }
