@@ -548,3 +548,103 @@
     padding: 4px 6px;
   }
 } 
+
+/* Enhanced Dashboard (Dean/Admin4) */
+.lesson-plan-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.lesson-plan-stat-card {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-left-width: 6px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.lesson-plan-stat-card .stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+}
+.lesson-plan-stat-card.total { border-left-color: #2563eb; }
+.lesson-plan-stat-card.pending { border-left-color: #f59e0b; }
+.lesson-plan-stat-card.approved { border-left-color: #10b981; }
+.lesson-plan-stat-card.rejected { border-left-color: #ef4444; }
+.lesson-plan-stat-card.total .stat-icon { background: #2563eb; }
+.lesson-plan-stat-card.pending .stat-icon { background: #f59e0b; }
+.lesson-plan-stat-card.approved .stat-icon { background: #10b981; }
+.lesson-plan-stat-card.rejected .stat-icon { background: #ef4444; }
+.lesson-plan-stat-card .stat-content { line-height: 1.1; }
+.lesson-plan-stat-card .stat-number { font-size: 1.6rem; font-weight: 700; color: #111827; }
+.lesson-plan-stat-card .stat-label { font-weight: 600; color: #374151; margin-top: 2px; }
+.lesson-plan-stat-card .stat-sublabel { color: #9ca3af; font-size: 0.85rem; margin-top: 2px; }
+
+/* Header */
+.header-left h2 { margin: 0; font-size: 1.4rem; color: #111827; }
+.header-subtitle { margin: 2px 0 0; color: #6b7280; font-size: 0.95rem; }
+.header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.action-btn.report-btn { background: #0ea5e9; color: #fff; padding: 10px 14px; border-radius: 8px; border: none; display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+.action-btn.report-btn:hover { background: #0284c7; }
+.action-btn.upload-btn { background: #2563eb; color: #fff; padding: 10px 14px; border-radius: 8px; border: none; display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+.action-btn.upload-btn:hover { background: #1d4ed8; }
+
+/* Filters */
+.lesson-plan-filters { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.filter-group { display: flex; gap: 8px; align-items: center; }
+.filter-select { padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+.search-group { flex: 1; min-width: 220px; }
+.search-input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; }
+
+/* Table */
+.table-container { width: 100%; overflow-x: auto; }
+.title-cell .title-text { font-weight: 600; color: #111827; }
+.teacher-cell .teacher-name { font-weight: 500; color: #374151; }
+.role-badge { display: inline-block; background: #eef2ff; color: #4f46e5; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; }
+.reviewed-badge { display: inline-block; background: #ecfdf5; color: #059669; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+.not-reviewed-badge { display: inline-block; background: #f3f4f6; color: #6b7280; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+
+/* Align with component usage */
+.period-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-transform: capitalize; }
+.period-badge.period-weekly, .period-weekly { background: #dbeafe; color: #1d4ed8; }
+.period-badge.period-monthly, .period-monthly { background: #fef3c7; color: #d97706; }
+.period-badge.period-yearly, .period-yearly { background: #f3e8ff; color: #7c3aed; }
+
+/* Status pill alignment with dynamic classes */
+.status-badge .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 9999px; background: currentColor; margin-right: 6px; }
+.status-badge.status-pending { background: #fef3c7; color: #d97706; }
+.status-badge.status-approved { background: #d1fae5; color: #059669; }
+.status-badge.status-rejected { background: #fee2e2; color: #dc2626; }
+
+/* Action buttons container alias */
+.action-buttons { display: flex; gap: 8px; align-items: center; }
+
+/* Loading & Empty states */
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; color: #6b7280; }
+.loading-spinner { width: 36px; height: 36px; border: 4px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 48px 16px; color: #6b7280; }
+.empty-state .empty-icon { font-size: 42px; color: #9ca3af; margin-bottom: 10px; }
+
+/* Content link */
+.content-cell a { color: #2563eb; text-decoration: none; }
+.content-cell a:hover { text-decoration: underline; }
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .lesson-plan-stats-grid { grid-template-columns: 1fr; }
+  .header-actions { width: 100%; }
+  .action-btn.report-btn, .action-btn.upload-btn { width: 100%; justify-content: center; }
+  .lesson-plan-filters { flex-direction: column; align-items: stretch; }
+} 

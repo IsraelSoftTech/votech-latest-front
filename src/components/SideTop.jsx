@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie, FaCalendarAlt } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie, FaCalendarAlt, FaUsers } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import ReactDOM from 'react-dom';
 import './SideTop.css';
@@ -60,6 +60,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Marks', icon: <FaChartBar />, path: '/admin-marks' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Display Users', icon: <FaUserGraduate />, path: '/admin-users' },
+      { label: 'Monitor Users', icon: <FaUsers />, path: '/monitor-users' },
     ];
   } else if (authUser?.role === 'Admin4') {
     menuItems = [

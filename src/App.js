@@ -35,6 +35,7 @@ import GroupChat from './components/GroupChat';
 import PsycoDash from './components/PsycoDash.jsx';
 import PaySlip from './components/PaySlip';
 import TimeTable from './components/TimeTable.jsx';
+import MonitorUsers from './components/MonitorUsers.jsx';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -67,6 +68,7 @@ function App() {
       <Route path="/admin-messages/:userId" element={<UserChat />} />
       <Route path="/admin-idcards" element={<ID />} />
       <Route path="/admin-users" element={<Users />} />
+      <Route path="/monitor-users" element={<MonitorUsers />} />
       <Route path="/admin-fee" element={<Fee />} />
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
       <Route path="/admin-salary" element={<Salary authUser={authUser} />} />

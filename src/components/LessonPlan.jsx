@@ -3,15 +3,28 @@ import { FaPlus, FaEdit, FaTrash, FaEye, FaCheck, FaTimes, FaDownload } from 're
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
-import './LessonPlan.css';
+
 
 export default function LessonPlan() {
   const [lessonPlans, setLessonPlans] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [form, setForm] = useState({ title: '', period_type: 'weekly' });
+  const [lessonForm, setLessonForm] = useState({
+    title: '',
+    subject: '',
+    class_name: '',
+    week: '',
+    period_type: 'weekly',
+    objectives: '',
+    content: '',
+    activities: '',
+    assessment: '',
+    resources: ''
+  });
   const [selectedFile, setSelectedFile] = useState(null);
   const [reviewForm, setReviewForm] = useState({ status: 'approved', admin_comment: '' });
   const [success, setSuccess] = useState('');

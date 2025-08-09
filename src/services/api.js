@@ -151,13 +151,38 @@ class ApiService {
 
   async getCurrentUser() {
     try {
-      const response = await fetch(`${API_URL}/users/current`, {
+      // Prefer cached user from session storage
+      if (this.user) return this.user;
+      const stored = sessionStorage.getItem('authUser');
+      if (stored) {
+        this.user = JSON.parse(stored);
+        return this.user;
+      }
+
+      // Fallback: try a lightweight endpoint if available; otherwise return minimal from token
+      const response = await fetch(`${API_URL}/users`, {
         headers: this.getAuthHeaders(),
       });
+      // If the endpoint exists, use it; note it may not include role
+      if (response.ok) {
+        const data = await response.json();
+        // Merge with any stored role from token storage if present
+        const storedUser = JSON.parse(sessionStorage.getItem('authUser') || '{}');
+        this.user = { ...storedUser, ...data };
+        sessionStorage.setItem('authUser', JSON.stringify(this.user));
+        return this.user;
+      }
 
-      return await this.handleResponse(response);
+      // As last resort, throw to be handled by caller
+      throw new Error('Unable to fetch current user');
     } catch (error) {
       console.error('Get current user error:', error);
+      // Still try to return whatever is in storage to keep app functional
+      const stored = sessionStorage.getItem('authUser');
+      if (stored) {
+        this.user = JSON.parse(stored);
+        return this.user;
+      }
       throw error;
     }
   }
@@ -377,6 +402,36 @@ class ApiService {
   async suspendUser(id) {
     const response = await fetch(`${API_URL}/users/${id}/suspend`, {
       method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  // User monitoring for Admin3
+  async getMonitoredUsers() {
+    const response = await fetch(`${API_URL}/monitor/users`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getUserActivities(userId = null, limit = 50, offset = 0) {
+    let url = `${API_URL}/monitor/user-activities?limit=${limit}&offset=${offset}`;
+    if (userId) {
+      url += `&userId=${userId}`;
+    }
+    const response = await fetch(url, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getUserSessions(userId = null, limit = 50, offset = 0) {
+    let url = `${API_URL}/monitor/user-sessions?limit=${limit}&offset=${offset}`;
+    if (userId) {
+      url += `&userId=${userId}`;
+    }
+    const response = await fetch(url, {
       headers: this.getAuthHeaders(),
     });
     return await this.handleResponse(response);
@@ -831,11 +886,26 @@ class ApiService {
   }
 
   async getAllLessonPlans() {
+    console.log('🔍 API: getAllLessonPlans() called');
+    console.log('🔍 API: API_URL:', API_URL);
+    console.log('🔍 API: Auth headers:', this.getAuthHeaders());
+    
     const response = await fetch(`${API_URL}/lesson-plans/all`, {
       headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch all lesson plans');
-    return await response.json();
+    
+    console.log('🔍 API: Response status:', response.status);
+    console.log('🔍 API: Response ok:', response.ok);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('🔍 API: Error response:', errorText);
+      throw new Error('Failed to fetch all lesson plans');
+    }
+    
+    const data = await response.json();
+    console.log('🔍 API: getAllLessonPlans() returning data:', data);
+    return data;
   }
 
   async updateLessonPlan(id, formData) {
@@ -891,6 +961,66 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to test lesson plans');
+    return await response.json();
+  }
+
+  // === Lessons API (Content-based lessons) ===
+  
+  async createLesson(lessonData) {
+    const response = await fetch(`${API_URL}/lessons`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(lessonData),
+    });
+    if (!response.ok) throw new Error('Failed to create lesson');
+    return await response.json();
+  }
+
+  async getMyLessons() {
+    const response = await fetch(`${API_URL}/lessons/my`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch my lessons');
+    return await response.json();
+  }
+
+  async getAllLessons() {
+    const response = await fetch(`${API_URL}/lessons/all`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch all lessons');
+    return await response.json();
+  }
+
+  async updateLesson(id, lessonData) {
+    const response = await fetch(`${API_URL}/lessons/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(lessonData),
+    });
+    if (!response.ok) throw new Error('Failed to update lesson');
+    return await response.json();
+  }
+
+  async deleteLesson(id) {
+    const response = await fetch(`${API_URL}/lessons/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete lesson');
+    return await response.json();
+  }
+
+  async reviewLesson(id, status, adminComment) {
+    const response = await fetch(`${API_URL}/lessons/${id}/review`, {
+      method: 'PUT',
+      headers: {
+        ...this.getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status, admin_comment: adminComment }),
+    });
+    if (!response.ok) throw new Error('Failed to review lesson');
     return await response.json();
   }
 

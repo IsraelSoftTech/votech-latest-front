@@ -184,12 +184,12 @@ export default function TimeTable({ authUser }) {
 
     // Only create empty grids if no data has been loaded from database
     if (!dataLoaded) {
-      setTimetable(prev => {
-        const updated = { ...prev };
-        classes.forEach(cls => {
-          if (!updated[cls.id]) {
+    setTimetable(prev => {
+      const updated = { ...prev };
+      classes.forEach(cls => {
+        if (!updated[cls.id]) {
             // Only create empty grid if no timetable exists for this class
-            updated[cls.id] = { grid: buildEmptyGrid(numDays, periodsPerDay, breakPeriodIndexes) };
+          updated[cls.id] = { grid: buildEmptyGrid(numDays, periodsPerDay, breakPeriodIndexes) };
           } else if (updated[cls.id].grid) {
             // Only resize if the grid dimensions have changed
             const currentGrid = updated[cls.id].grid;
@@ -198,15 +198,15 @@ export default function TimeTable({ authUser }) {
             
             if (currentDays !== numDays || currentPeriods !== periodsPerDay) {
               const resized = resizeGrid(currentGrid, numDays, periodsPerDay, breakPeriodIndexes);
-              updated[cls.id] = { grid: resized };
+          updated[cls.id] = { grid: resized };
             }
           } else {
             // If grid is missing, create it
             updated[cls.id] = { grid: buildEmptyGrid(numDays, periodsPerDay, breakPeriodIndexes) };
-          }
-        });
-        return updated;
+        }
       });
+      return updated;
+    });
     }
   }, [classes, numDays, periodsPerDay, breakPeriodIndexes, dataLoaded]);
 
@@ -435,7 +435,7 @@ export default function TimeTable({ authUser }) {
 
     // Create a simple timetable based on requirements with teacher conflict prevention
     const generatedTimetable = {};
-    
+
     // Track teacher availability across all classes: teacherBusy[teacherId][dayIndex][periodIndex] = true
     const teacherBusy = {};
     
@@ -511,7 +511,7 @@ export default function TimeTable({ authUser }) {
                 
                 placed = true;
                 break;
-              }
+      }
             }
             
             if (placed) break;
@@ -535,7 +535,7 @@ export default function TimeTable({ authUser }) {
     
     if (Object.keys(generatedTimetable).length > 0) {
       setTimetable(generatedTimetable);
-      // Persist generated timetables and settings to server
+    // Persist generated timetables and settings to server
       persistTimetablesAndSettings(generatedTimetable).catch(err => console.error('Persist after generate failed:', err));
       setSuccessMessage('Timetable generated successfully!');
     } else {
@@ -697,7 +697,7 @@ export default function TimeTable({ authUser }) {
           requiresDouble: false,
         }));
         if (reqs.length > 0) {
-          out[cid] = reqs;
+        out[cid] = reqs;
         }
       }
     });
@@ -1048,7 +1048,7 @@ export default function TimeTable({ authUser }) {
   }
 
   function renderSetup() {
-    return (
+  return (
       <div className="tt-setup">
         <div className="tt-setup-left">
           <div className="tt-panel">
@@ -1191,26 +1191,26 @@ export default function TimeTable({ authUser }) {
   function renderGrid(classId) {
     const t = timetable[classId] || { grid: buildEmptyGrid(numDays, periodsPerDay, breakPeriodIndexes) };
     const grid = t.grid || buildEmptyGrid(numDays, periodsPerDay, breakPeriodIndexes);
-    
+
     // Ensure grid has the correct structure
     if (!Array.isArray(grid) || grid.length === 0) {
       const emptyGrid = buildEmptyGrid(numDays, periodsPerDay, breakPeriodIndexes);
-      return (
-        <div className="tt-grid-wrapper">
-          <table className="tt-grid" role="grid" aria-label={`Timetable for ${getClassName(classId)}`}>
-            <thead>
-              <tr>
-                <th className="tt-sticky">Day / Period</th>
-                {Array.from({ length: periodsPerDay }, (_, i) => (
-                  <th key={i} className="tt-period-head">P{i + 1}<div className="tt-period-sub">{getPeriodLabel(i)}</div></th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: numDays }, (_, d) => (
-                <tr key={d}>
-                  <th className="tt-sticky">{dayLabels[d] || `Day ${d + 1}`}</th>
-                  {Array.from({ length: periodsPerDay }, (_, p) => {
+    return (
+      <div className="tt-grid-wrapper">
+        <table className="tt-grid" role="grid" aria-label={`Timetable for ${getClassName(classId)}`}>
+          <thead>
+            <tr>
+              <th className="tt-sticky">Day / Period</th>
+              {Array.from({ length: periodsPerDay }, (_, i) => (
+                <th key={i} className="tt-period-head">P{i + 1}<div className="tt-period-sub">{getPeriodLabel(i)}</div></th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: numDays }, (_, d) => (
+              <tr key={d}>
+                <th className="tt-sticky">{dayLabels[d] || `Day ${d + 1}`}</th>
+                {Array.from({ length: periodsPerDay }, (_, p) => {
                     const slot = emptyGrid[d]?.[p];
                     const startMin = getPeriodStartMinutes(p);
                     if (slot?.isBreak) {
