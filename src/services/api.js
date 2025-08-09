@@ -1344,6 +1344,222 @@ class ApiService {
       throw error;
     }
   }
+
+  async saveTimetableSettings(config) {
+    try {
+      const response = await fetch(`${API_URL}/timetables/settings`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(config)
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error saving timetable settings:', error);
+      throw error;
+    }
+  }
+
+  async getTimetableSettings() {
+    try {
+      const response = await fetch(`${API_URL}/timetables/settings`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching timetable settings:', error);
+      throw error;
+    }
+  }
+
+  async saveClassTimetable(classId, data) {
+    try {
+      const response = await fetch(`${API_URL}/timetables/class/${classId}`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error saving class timetable:', error);
+      throw error;
+    }
+  }
+
+  async getClassTimetable(classId) {
+    try {
+      const response = await fetch(`${API_URL}/timetables/class/${classId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching class timetable:', error);
+      throw error;
+    }
+  }
+
+  async getAllTimetables() {
+    try {
+      const response = await fetch(`${API_URL}/timetables`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching timetables:', error);
+      throw error;
+    }
+  }
+
+  async saveTeacherAssignments(assignments) {
+    try {
+      const response = await fetch(`${API_URL}/timetables/assignments/bulk`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ assignments })
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error saving assignments:', error);
+      throw error;
+    }
+  }
+
+  async getTeacherAssignments({ classId, subjectId } = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (classId) params.set('classId', classId);
+      if (subjectId) params.set('subjectId', subjectId);
+      const response = await fetch(`${API_URL}/timetables/assignments?${params.toString()}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+      throw error;
+    }
+  }
+
+  async deleteAllTimetables() {
+    try {
+      const response = await fetch(`${API_URL}/timetables/delete-all`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error deleting all timetables:', error);
+      throw error;
+    }
+  }
+
+  async deleteTimetableSettings() {
+    try {
+      const response = await fetch(`${API_URL}/timetables/settings`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error deleting timetable settings:', error);
+      throw error;
+    }
+  }
+
+  async deleteTeacherAssignments() {
+    try {
+      const response = await fetch(`${API_URL}/timetables/assignments`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error deleting teacher assignments:', error);
+      throw error;
+    }
+  }
+
+  async saveClassRequirements(classRequirements) {
+    try {
+      const response = await fetch(`${API_URL}/timetables/class-requirements`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ classRequirements })
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error saving class requirements:', error);
+      throw error;
+    }
+  }
+
+  async getClassRequirements() {
+    try {
+      const response = await fetch(`${API_URL}/timetables/class-requirements`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching class requirements:', error);
+      throw error;
+    }
+  }
+
+  async saveHeavySubjects(heavySubjectIds) {
+    try {
+      const response = await fetch(`${API_URL}/timetables/heavy-subjects`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ heavySubjectIds: Array.from(heavySubjectIds) })
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error saving heavy subjects:', error);
+      throw error;
+    }
+  }
+
+  async getHeavySubjects() {
+    try {
+      const response = await fetch(`${API_URL}/timetables/heavy-subjects`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching heavy subjects:', error);
+      throw error;
+    }
+  }
+
+  async deleteClassRequirements() {
+    try {
+      const response = await fetch(`${API_URL}/timetables/class-requirements`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error deleting class requirements:', error);
+      throw error;
+    }
+  }
+
+  async deleteHeavySubjects() {
+    try {
+      const response = await fetch(`${API_URL}/timetables/heavy-subjects`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error deleting heavy subjects:', error);
+      throw error;
+    }
+  }
 }
 
 export default new ApiService(); 
