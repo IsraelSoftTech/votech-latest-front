@@ -14,7 +14,7 @@ import {
 
 export const AcademicYear = () => {
   const columns = [
-    { label: "ID", accessor: "id" },
+    { label: "S/N", accessor: "sn" },
     { label: "Name", accessor: "name" },
     { label: "Start Date", accessor: "start_date" },
     { label: "End Date", accessor: "end_date" },
@@ -64,8 +64,9 @@ export const AcademicYear = () => {
       const res = await api.get("/academic-years");
 
       if (res.data?.data) {
-        const formatted = res.data.data.map((el) => ({
+        const formatted = res.data.data.map((el, index) => ({
           ...el,
+          sn: index + 1,
           start_date: el.start_date
             ? new Date(el.start_date).toISOString().split("T")[0]
             : "",
@@ -231,7 +232,7 @@ export const AcademicYear = () => {
   return (
     <SideTop>
       <div style={{ padding: "20px" }}>
-        <h2>Academic Years</h2>
+        <h2 className="page-title">Academic Years</h2>
 
         {/* Create Button */}
         <button className="btn btn-create" onClick={openCreateModal}>

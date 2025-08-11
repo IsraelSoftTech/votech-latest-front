@@ -105,3 +105,7 @@
   min-width: 100px;
   display: inline-block;
 }
+
+.page-title {
+  margin-bottom: 0.5rem;
+}
