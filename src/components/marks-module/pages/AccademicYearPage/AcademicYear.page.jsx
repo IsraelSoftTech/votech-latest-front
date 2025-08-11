@@ -77,7 +77,7 @@ export const AcademicYear = () => {
       }
     } catch (err) {
       toast.error(
-        err.response?.data?.message || "Failed to load academic years."
+        err.response.data.details || "Failed to load academic years."
       );
     } finally {
       setIsLoading(false);
@@ -118,8 +118,9 @@ export const AcademicYear = () => {
       closeCreateModal();
       fetchAcademicYears();
     } catch (err) {
+      // console.log(err.response.data.details);
       const serverError =
-        err.response?.data?.message || "Failed to create academic year.";
+        err.response.data.details || "Failed to create academic year.";
       toast.error(serverError);
     } finally {
       setCreateLoading(false);
@@ -205,7 +206,7 @@ export const AcademicYear = () => {
       toast.success("Academic year deleted successfully");
       fetchAcademicYears();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Delete failed.");
+      toast.error(err.response.data.details || "Delete failed.");
     }
   };
 
@@ -245,6 +246,11 @@ export const AcademicYear = () => {
           onRowClick={handleRowClick}
           loading={isLoading}
           limit={10}
+          warnDelete={() => {
+            toast.warn(
+              "Warning: Deleting this academic year may cause issues because students, marks, and other data are linked to it. Consider archiving instead to preserve data integrity."
+            );
+          }}
         />
 
         {/* Details Modal */}

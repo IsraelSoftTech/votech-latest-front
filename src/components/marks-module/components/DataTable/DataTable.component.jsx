@@ -11,6 +11,7 @@ const DataTable = ({
   onRowClick,
   loading = false,
   limit = 10, // new prop to control rows per page
+  warnDelete,
 }) => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -90,7 +91,10 @@ const DataTable = ({
                   </button>
                   <button
                     className="btn btn-delete"
-                    onClick={() => openDeleteModal(row)}
+                    onClick={() => {
+                      warnDelete();
+                      openDeleteModal(row);
+                    }}
                     title="Delete"
                   >
                     <FaTrash />
