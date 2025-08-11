@@ -1,0 +1,107 @@
+.btn-create {
+  background-color: #204080;
+  color: white;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-bottom: 15px;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-create:hover {
+  opacity: 0.8;
+}
+
+.btn-create:active {
+  opacity: 0.6;
+}
+
+.modal-form {
+  width: 100%;
+}
+
+/* .modal-form label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #204080;
+} */
+
+.modal-form input,
+.modal-form select {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  font-family: Arial, sans-serif;
+}
+
+.set-active-prompt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* background-color: red; */
+  width: 100%;
+}
+
+.modal-form input:focus,
+.modal-form select:focus {
+  border-color: #204080;
+  outline: none;
+}
+
+.btn-confirm {
+  background-color: #204080;
+  color: white;
+  padding: 8px 16px;
+}
+
+.btn-create-submit {
+  background-color: #4caf50;
+  color: white;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-create-submit:hover {
+  background-color: #3a8d3a;
+}
+
+@media (max-width: 600px) {
+  .btn-create {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+
+.academic-year-details {
+  padding: 0rem 1rem;
+  font-family: Arial, sans-serif;
+  color: #333;
+  width: 100%;
+}
+
+.academic-year-details p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  text-align: left;
+}
+
+.academic-year-details strong {
+  color: #204080;
+  min-width: 100px;
+  display: inline-block;
+}

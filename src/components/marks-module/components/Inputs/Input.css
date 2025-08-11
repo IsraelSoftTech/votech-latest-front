@@ -1,0 +1,256 @@
+:root {
+  --bg: #ffffff;
+  --muted: #6d7280;
+  --border: #e6e9ee;
+  --accent: #204080;
+  --danger: #e04b4b;
+  --shadow: 0 6px 18px rgba(32, 64, 128, 0.06);
+}
+
+.ci-wrapper {
+  width: 100%;
+  text-align: left;
+}
+.ci-external-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  text-align: left;
+}
+.ci-external-text {
+  font-size: 13px;
+  color: #111;
+  font-weight: 600;
+  line-height: 1;
+}
+.ci-required {
+  color: var(--danger);
+  margin-left: 6px;
+  font-weight: 700;
+  align-self: center;
+}
+
+.ci-field {
+  position: relative;
+  margin: 6px 0 18px 0;
+}
+
+.ci-input,
+.ci-select {
+  display: block;
+  width: 100%;
+  height: 44px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 44px 0 14px;
+  font-size: 14px;
+  line-height: 44px;
+  color: #111;
+  box-shadow: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  cursor: text;
+}
+/* .ci-input::placeholder {
+  color: transparent;
+} */
+
+.ci-field.active .ci-input,
+.ci-field:focus-within .ci-input {
+  border-color: rgba(32, 64, 128, 0.12);
+  box-shadow: var(--shadow);
+}
+
+/* .ci-placeholder {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: auto;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.1;
+  cursor: text;
+}
+.ci-placeholder:hover {
+  color: rgba(32, 64, 128, 0.7);
+}
+.ci-field:focus-within .ci-placeholder {
+  color: rgba(32, 64, 128, 0.7);
+} */
+
+.ci-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 0;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.ci-clear:hover {
+  color: #111;
+}
+
+.ci-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+}
+.ci-select-text {
+  flex: 1;
+  text-align: left;
+  line-height: 1;
+}
+.ci-arrow {
+  margin-left: 8px;
+  color: var(--muted);
+}
+.ci-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(16, 24, 40, 0.06);
+  max-height: 240px;
+  overflow: auto;
+  z-index: 80;
+  padding: 6px 0;
+}
+.ci-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  color: #222;
+  text-align: left;
+}
+.ci-option:hover,
+.ci-option:focus {
+  background: #f6f8fb;
+  outline: none;
+}
+
+.ci-calendar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(16, 24, 40, 0.06);
+  z-index: 90;
+  padding: 10px;
+}
+.ci-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.ci-cal-btn {
+  background: transparent;
+  border: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.ci-cal-btn:focus {
+  outline: 2px solid rgba(32, 64, 128, 0.12);
+}
+.ci-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.ci-cal-day {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  padding: 6px 0;
+}
+.ci-cal-cell {
+  height: 34px;
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: center;
+  padding: 0;
+  line-height: 34px;
+}
+.ci-cal-cell.clickable:hover {
+  background: #f6f8fb;
+}
+.ci-cal-cell.today {
+  box-shadow: inset 0 0 0 1px rgba(32, 64, 128, 0.08);
+  border-radius: 6px;
+}
+.ci-cal-cell.empty {
+  visibility: hidden;
+}
+.ci-cal-cell:focus {
+  outline: 2px solid rgba(32, 64, 128, 0.12);
+}
+
+.submit-btn {
+  background-color: #204080;
+  color: white;
+  border: none;
+  padding: 0.8rem 0;
+  width: 100%;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 15px;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.submit-btn:hover {
+  opacity: 0.8;
+}
+
+.submit-btn:active {
+  opacity: 0.6;
+}
+
+@media (max-width: 520px) {
+  .ci-input,
+  .ci-select {
+    height: 40px;
+    border-radius: 8px;
+    padding: 0 42px 0 12px;
+  }
+  .ci-external-label {
+    margin-bottom: 6px;
+  }
+}
+
+.ci-input:focus,
+.ci-select:focus {
+  outline: 2px solid rgba(32, 64, 128, 0.06);
+}
+
+.ci-cal-head button {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.ci-cal-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111;
+  min-width: 110px; /* keeps title from shifting */
+  text-align: center;
+}
