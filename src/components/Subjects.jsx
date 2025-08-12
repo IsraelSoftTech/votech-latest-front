@@ -34,10 +34,10 @@ export default function Subjects() {
     try {
       if (editingId) {
         await api.updateSubject(editingId, form);
-        setSuccess('Subject updated!');
+        setSuccess('success');
       } else {
         await api.createSubject(form);
-        setSuccess('Subject created!');
+        setSuccess('success');
       }
       setShowModal(false);
       setForm({ name: '', code: '' });

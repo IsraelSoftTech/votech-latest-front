@@ -429,7 +429,7 @@ export default function TimeTable({ authUser }) {
     console.log('Effective requirements:', effectiveRequirements);
 
     if (Object.keys(effectiveRequirements).length === 0) {
-      setSuccessMessage('No class requirements found. Please set up subjects for classes first.');
+      setSuccessMessage('failed');
       return;
     }
 
@@ -537,9 +537,9 @@ export default function TimeTable({ authUser }) {
       setTimetable(generatedTimetable);
     // Persist generated timetables and settings to server
       persistTimetablesAndSettings(generatedTimetable).catch(err => console.error('Persist after generate failed:', err));
-      setSuccessMessage('Timetable generated successfully!');
+      setSuccessMessage('success');
     } else {
-      setSuccessMessage('Failed to generate timetable. Please check your setup and try again.');
+      setSuccessMessage('failed');
     }
   }
 
@@ -576,10 +576,10 @@ export default function TimeTable({ authUser }) {
         });
       });
       if (assignments.length > 0) await api.saveTeacherAssignments(assignments);
-      setSuccessMessage('Timetable saved to server successfully!');
+      setSuccessMessage('success');
     } catch (e) {
       console.error('Persist error:', e);
-      setSuccessMessage('Failed to save timetable to server.');
+      setSuccessMessage('failed');
     }
   }
 
@@ -615,10 +615,10 @@ export default function TimeTable({ authUser }) {
       setTeacherDailyMaxLoad({});
       setDataLoaded(false);
 
-      setSuccessMessage('All timetable data deleted successfully!');
+      setSuccessMessage('success');
     } catch (error) {
       console.error('Delete all failed:', error);
-      setSuccessMessage('Failed to delete timetable data. Please try again.');
+      setSuccessMessage('failed');
     }
   }
 
@@ -850,10 +850,10 @@ export default function TimeTable({ authUser }) {
         });
       });
       if (assignments.length > 0) await api.saveTeacherAssignments(assignments);
-      setSuccessMessage('Timetable saved to server successfully!');
+      setSuccessMessage('success');
     } catch (e) {
       console.error('Save cloud failed', e);
-      setSuccessMessage('Failed to save to server.');
+      setSuccessMessage('failed');
     }
   }
 
@@ -974,10 +974,10 @@ export default function TimeTable({ authUser }) {
         await api.saveTeacherAssignments(assignments);
       }
 
-      setSuccessMessage('Setup configurations saved successfully!');
+      setSuccessMessage('success');
     } catch (error) {
       console.error('Save setup failed:', error);
-      setSuccessMessage('Failed to save setup configurations. Please try again.');
+      setSuccessMessage('failed');
     }
   }
 

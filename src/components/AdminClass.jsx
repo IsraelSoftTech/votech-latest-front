@@ -128,7 +128,7 @@ export default function AdminClass() {
         await api.createClass(form);
       }
       setRegistering(false);
-      setSuccess(editId ? 'Class updated!' : 'Class created!');
+      setSuccess('success');
       fetchClasses();
       setTimeout(() => {
         setShowModal(false);

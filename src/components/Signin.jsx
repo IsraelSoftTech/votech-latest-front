@@ -48,7 +48,7 @@ const Signin = () => {
       // Support both response.data.user and response.user
       const user = response.data?.user || response.user;
       if (user) {
-        setSuccess('Sign in successful!');
+        setSuccess('success');
         setShowSuccess(true);
         // Clear success message after 3 seconds
         setTimeout(() => setShowSuccess(false), 3000);
@@ -71,9 +71,15 @@ const Signin = () => {
         }, 3000);
       } else {
         setError('Invalid username or password.');
+        setSuccess('failed');
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2500);
       }
     } catch (err) {
       setError('Signin failed. Try again.');
+      setSuccess('failed');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2500);
     }
     setLoading(false);
   };
@@ -133,7 +139,7 @@ const Signin = () => {
     setForgotLoading(true);
     try {
       await api.resetPassword(forgotUsername, reset1Password);
-      setResetSuccess('Password reset successful! Redirecting to sign in...');
+      setResetSuccess('success');
       setTimeout(() => {
         setShowForgot(false);
         setForgotStep(1);

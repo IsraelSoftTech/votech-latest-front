@@ -135,11 +135,11 @@ export default function MonitorUsers() {
           </div>
           <div className="header-actions">
             <button 
-              className="action-btn refresh-btn" 
+              className="monitor-action-btn monitor-refresh-btn" 
               onClick={handleRefresh}
               disabled={loading}
             >
-              <FaSync className={loading ? 'spinning' : ''} />
+              <FaSync className={loading ? 'monitor-spinning' : ''} />
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
@@ -147,47 +147,47 @@ export default function MonitorUsers() {
 
         {/* Success/Error Messages */}
         {success && <SuccessMessage message={success} />}
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="monitor-error-message">{error}</div>}
 
         {/* Stats Cards */}
-        <div className="stats-grid">
-          <div className="stat-card total-users">
-            <div className="stat-icon">
+        <div className="monitor-stats-grid">
+          <div className="monitor-stat-card monitor-total-users">
+            <div className="monitor-stat-icon">
               <FaUsers />
             </div>
-            <div className="stat-content">
-              <div className="stat-number">{users.length}</div>
-              <div className="stat-label">Total Users</div>
+            <div className="monitor-stat-content">
+              <div className="monitor-stat-number">{users.length}</div>
+              <div className="monitor-stat-label">Total Users</div>
             </div>
           </div>
           
-          <div className="stat-card logged-in">
-            <div className="stat-icon">
+          <div className="monitor-stat-card monitor-logged-in">
+            <div className="monitor-stat-icon">
               <FaUserCheck />
             </div>
-            <div className="stat-content">
-              <div className="stat-number">{getStatusCount('Logged In')}</div>
-              <div className="stat-label">Currently Online</div>
+            <div className="monitor-stat-content">
+              <div className="monitor-stat-number">{getStatusCount('Logged In')}</div>
+              <div className="monitor-stat-label">Currently Online</div>
             </div>
           </div>
           
-          <div className="stat-card logged-out">
-            <div className="stat-icon">
+          <div className="monitor-stat-card monitor-logged-out">
+            <div className="monitor-stat-icon">
               <FaUserTimes />
             </div>
-            <div className="stat-content">
-              <div className="stat-number">{getStatusCount('Logged Out')}</div>
-              <div className="stat-label">Offline</div>
+            <div className="monitor-stat-content">
+              <div className="monitor-stat-number">{getStatusCount('Logged Out')}</div>
+              <div className="monitor-stat-label">Offline</div>
             </div>
           </div>
           
-          <div className="stat-card total-activities">
-            <div className="stat-icon">
+          <div className="monitor-stat-card monitor-total-activities">
+            <div className="monitor-stat-icon">
               <FaClock />
             </div>
-            <div className="stat-content">
-              <div className="stat-number">{activities.length}</div>
-              <div className="stat-label">Total Activities</div>
+            <div className="monitor-stat-content">
+              <div className="monitor-stat-number">{activities.length}</div>
+              <div className="monitor-stat-label">Total Activities</div>
             </div>
           </div>
         </div>
@@ -195,21 +195,21 @@ export default function MonitorUsers() {
         {/* Tabs */}
         <div className="monitor-tabs">
           <button 
-            className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            className={`monitor-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
             onClick={() => setActiveTab('users')}
           >
             <FaUsers />
             Users ({users.length})
           </button>
           <button 
-            className={`tab-btn ${activeTab === 'activities' ? 'active' : ''}`}
+            className={`monitor-tab-btn ${activeTab === 'activities' ? 'active' : ''}`}
             onClick={() => setActiveTab('activities')}
           >
             <FaClock />
             Activities ({activities.length})
           </button>
           <button 
-            className={`tab-btn ${activeTab === 'sessions' ? 'active' : ''}`}
+            className={`monitor-tab-btn ${activeTab === 'sessions' ? 'active' : ''}`}
             onClick={() => setActiveTab('sessions')}
           >
             <FaEye />
@@ -219,24 +219,24 @@ export default function MonitorUsers() {
 
         {/* Search and Filters */}
         <div className="monitor-filters">
-          <div className="search-group">
-            <FaSearch className="search-icon" />
+          <div className="monitor-search-group">
+            <FaSearch className="monitor-search-icon" />
             <input
               type="text"
               placeholder="Search users, activities, or sessions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
+              className="monitor-search-input"
             />
           </div>
           
           {activeTab === 'users' && (
-            <div className="filter-group">
-              <FaFilter className="filter-icon" />
+            <div className="monitor-filter-group">
+              <FaFilter className="monitor-filter-icon" />
               <select 
                 value={filterStatus} 
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="filter-select"
+                className="monitor-filter-select"
               >
                 <option value="all">All Status</option>
                 <option value="Logged In">Logged In</option>
@@ -249,15 +249,15 @@ export default function MonitorUsers() {
         {/* Content */}
         <div className="monitor-content">
           {loading ? (
-            <div className="loading-state">
-              <div className="loading-spinner"></div>
+            <div className="monitor-loading-state">
+              <div className="monitor-loading-spinner"></div>
               <p>Loading monitoring data...</p>
             </div>
           ) : (
             <>
               {/* Users Tab */}
               {activeTab === 'users' && (
-                <div className="table-container">
+                <div className="monitor-table-container">
                   <table className="monitor-table">
                     <thead>
                       <tr>
@@ -272,38 +272,38 @@ export default function MonitorUsers() {
                     <tbody>
                       {filteredUsers.map((user) => (
                         <tr key={user.id} className={`user-row ${user.suspended ? 'suspended' : ''}`}>
-                          <td className="user-cell">
-                            <div className="user-info">
-                              <div className="user-avatar">
+                          <td className="monitor-user-cell">
+                            <div className="monitor-user-info">
+                              <div className="monitor-user-avatar">
                                 {user.name ? user.name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
                               </div>
-                              <div className="user-details">
-                                <div className="user-name">{user.name || 'N/A'}</div>
-                                <div className="user-username">@{user.username}</div>
+                              <div className="monitor-user-details">
+                                <div className="monitor-user-name">{user.name || 'N/A'}</div>
+                                <div className="monitor-user-username">@{user.username}</div>
                               </div>
                             </div>
                           </td>
                           <td>
-                            <span className="role-badge">{user.role}</span>
+                            <span className="monitor-role-badge">{user.role}</span>
                           </td>
                           <td>
                             <span 
-                              className="status-badge"
+                              className="monitor-status-badge"
                               style={{ backgroundColor: getStatusColor(user.current_status) }}
                             >
-                              <span className="status-dot"></span>
+                              <span className="monitor-status-dot"></span>
                               {user.current_status || 'Unknown'}
                             </span>
                           </td>
-                          <td className="date-cell">
+                          <td className="monitor-date-cell">
                             {user.last_login ? formatDate(user.last_login) : 'Never'}
                           </td>
-                          <td className="ip-cell">
+                          <td className="monitor-ip-cell">
                             {user.last_ip || 'N/A'}
                           </td>
-                          <td className="actions-cell">
+                          <td className="monitor-actions-cell">
                             <button 
-                              className="action-btn view-btn"
+                              className="monitor-action-btn monitor-view-btn"
                               onClick={() => {
                                 setSelectedUser(user);
                                 setShowUserDetails(true);
@@ -322,7 +322,7 @@ export default function MonitorUsers() {
 
               {/* Activities Tab */}
               {activeTab === 'activities' && (
-                <div className="table-container">
+                <div className="monitor-table-container">
                   <table className="monitor-table">
                     <thead>
                       <tr>
@@ -337,39 +337,39 @@ export default function MonitorUsers() {
                     <tbody>
                       {filteredActivities.map((activity) => (
                         <tr key={activity.id} className="activity-row">
-                          <td className="user-cell">
-                            <div className="user-info">
-                              <div className="user-avatar">
+                          <td className="monitor-user-cell">
+                            <div className="monitor-user-info">
+                              <div className="monitor-user-avatar">
                                 {activity.user_name ? activity.user_name.charAt(0).toUpperCase() : activity.username.charAt(0).toUpperCase()}
                               </div>
-                              <div className="user-details">
-                                <div className="user-name">{activity.user_name || 'N/A'}</div>
-                                <div className="user-username">@{activity.username}</div>
+                              <div className="monitor-user-details">
+                                <div className="monitor-user-name">{activity.user_name || 'N/A'}</div>
+                                <div className="monitor-user-username">@{activity.username}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="activity-cell">
-                            <div className="activity-content">
-                              <span className="activity-icon">{getActivityIcon(activity.activity_type)}</span>
-                              <span className="activity-description">{activity.activity_description}</span>
+                          <td className="monitor-activity-cell">
+                            <div className="monitor-activity-content">
+                              <span className="monitor-activity-icon">{getActivityIcon(activity.activity_type)}</span>
+                              <span className="monitor-activity-description">{activity.activity_description}</span>
                             </div>
                           </td>
                           <td>
-                            <span className="activity-type-badge">{activity.activity_type}</span>
+                            <span className="monitor-activity-type-badge">{activity.activity_type}</span>
                           </td>
-                          <td className="entity-cell">
+                          <td className="monitor-entity-cell">
                             {activity.entity_name ? (
-                              <span className="entity-badge">
+                              <span className="monitor-entity-badge">
                                 {activity.entity_type}: {activity.entity_name}
                               </span>
                             ) : (
                               'N/A'
                             )}
                           </td>
-                          <td className="ip-cell">
+                          <td className="monitor-ip-cell">
                             {activity.ip_address || 'N/A'}
                           </td>
-                          <td className="date-cell">
+                          <td className="monitor-date-cell">
                             {formatDate(activity.created_at)}
                           </td>
                         </tr>
@@ -381,7 +381,7 @@ export default function MonitorUsers() {
 
               {/* Sessions Tab */}
               {activeTab === 'sessions' && (
-                <div className="table-container">
+                <div className="monitor-table-container">
                   <table className="monitor-table">
                     <thead>
                       <tr>
@@ -396,36 +396,36 @@ export default function MonitorUsers() {
                     <tbody>
                       {sessions.map((session) => (
                         <tr key={session.id} className="session-row">
-                          <td className="user-cell">
-                            <div className="user-info">
-                              <div className="user-avatar">
+                          <td className="monitor-user-cell">
+                            <div className="monitor-user-info">
+                              <div className="monitor-user-avatar">
                                 {session.user_name ? session.user_name.charAt(0).toUpperCase() : session.username.charAt(0).toUpperCase()}
                               </div>
-                              <div className="user-details">
-                                <div className="user-name">{session.user_name || 'N/A'}</div>
-                                <div className="user-username">@{session.username}</div>
+                              <div className="monitor-user-details">
+                                <div className="monitor-user-name">{session.user_name || 'N/A'}</div>
+                                <div className="monitor-user-username">@{session.username}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="date-cell">
+                          <td className="monitor-date-cell">
                             {formatDate(session.session_start)}
                           </td>
-                          <td className="date-cell">
+                          <td className="monitor-date-cell">
                             {session.session_end ? formatDate(session.session_end) : 'Active'}
                           </td>
-                          <td className="duration-cell">
+                          <td className="monitor-duration-cell">
                             {formatDuration(session.session_start, session.session_end)}
                           </td>
                           <td>
                             <span 
-                              className="status-badge"
+                              className="monitor-status-badge"
                               style={{ backgroundColor: session.status === 'active' ? '#10B981' : '#6B7280' }}
                             >
-                              <span className="status-dot"></span>
+                              <span className="monitor-status-dot"></span>
                               {session.status}
                             </span>
                           </td>
-                          <td className="ip-cell">
+                          <td className="monitor-ip-cell">
                             {session.ip_address || 'N/A'}
                           </td>
                         </tr>
@@ -440,49 +440,49 @@ export default function MonitorUsers() {
 
         {/* User Details Modal */}
         {showUserDetails && selectedUser && (
-          <div className="modal-overlay" onClick={() => setShowUserDetails(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
+          <div className="monitor-modal-overlay" onClick={() => setShowUserDetails(false)}>
+            <div className="monitor-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="monitor-modal-header">
                 <h3>User Details</h3>
                 <button 
-                  className="modal-close"
+                  className="monitor-modal-close"
                   onClick={() => setShowUserDetails(false)}
                 >
                   ×
                 </button>
               </div>
-              <div className="modal-body">
-                <div className="user-detail-grid">
-                  <div className="detail-item">
+              <div className="monitor-modal-body">
+                <div className="monitor-user-detail-grid">
+                  <div className="monitor-detail-item">
                     <label>Name:</label>
                     <span>{selectedUser.name || 'N/A'}</span>
                   </div>
-                  <div className="detail-item">
+                  <div className="monitor-detail-item">
                     <label>Username:</label>
                     <span>@{selectedUser.username}</span>
                   </div>
-                  <div className="detail-item">
+                  <div className="monitor-detail-item">
                     <label>Role:</label>
-                    <span className="role-badge">{selectedUser.role}</span>
+                    <span className="monitor-role-badge">{selectedUser.role}</span>
                   </div>
-                  <div className="detail-item">
+                  <div className="monitor-detail-item">
                     <label>Status:</label>
                     <span 
-                      className="status-badge"
+                      className="monitor-status-badge"
                       style={{ backgroundColor: getStatusColor(selectedUser.current_status) }}
                     >
                       {selectedUser.current_status || 'Unknown'}
                     </span>
                   </div>
-                  <div className="detail-item">
+                  <div className="monitor-detail-item">
                     <label>Last Login:</label>
                     <span>{selectedUser.last_login ? formatDate(selectedUser.last_login) : 'Never'}</span>
                   </div>
-                  <div className="detail-item">
+                  <div className="monitor-detail-item">
                     <label>IP Address:</label>
                     <span>{selectedUser.last_ip || 'N/A'}</span>
                   </div>
-                  <div className="detail-item">
+                  <div className="monitor-detail-item">
                     <label>Account Created:</label>
                     <span>{formatDate(selectedUser.created_at)}</span>
                   </div>

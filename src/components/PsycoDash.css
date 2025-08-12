@@ -467,6 +467,25 @@
   transform: translateY(-1px);
 }
 
+.psycho-cases-redirect {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(32,64,128,0.06);
+}
+
+.psycho-cases-redirect p {
+  font-size: 18px;
+  color: #4a5568;
+  margin-bottom: 24px;
+}
+
+.psycho-cases-redirect .psycho-btn {
+  font-size: 16px;
+  padding: 12px 32px;
+}
+
 /* Responsive design */
 @media (max-width: 1024px) {
   .psycho-dashboard-main {

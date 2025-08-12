@@ -33,6 +33,9 @@ import Salary from './components/Salary.jsx';
 import Inventory from './components/Inventory.jsx';
 import GroupChat from './components/GroupChat';
 import PsycoDash from './components/PsycoDash.jsx';
+import Cases from './components/Cases.jsx';
+import PsychoMessage from './components/PsychoMessage.jsx';
+import PsychoChat from './components/PsychoChat.jsx';
 import PaySlip from './components/PaySlip';
 import TimeTable from './components/TimeTable.jsx';
 import MonitorUsers from './components/MonitorUsers.jsx';
@@ -41,19 +44,72 @@ import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
 import DiscMessage from './components/DiscMessage.jsx';
 import DiscUserChat from './components/DiscUserChat.jsx';
+import DisciplineCases from './components/DisciplineCases';
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
 function App() {
   const [showLoader, setShowLoader] = React.useState(true);
   const [showPoweredBy, setShowPoweredBy] = React.useState(false);
+  const [authUser, setAuthUser] = React.useState(null);
+  const [authLoading, setAuthLoading] = React.useState(true);
+
   React.useEffect(() => {
     const timer1 = setTimeout(() => setShowPoweredBy(true), 1500); // show text after 1.5s
     const timer2 = setTimeout(() => setShowLoader(false), 2500); // total 2.5s
     return () => { clearTimeout(timer1); clearTimeout(timer2); };
   }, []);
+
+  // Handle auth user state
+  React.useEffect(() => {
+    const checkAuthUser = () => {
+      try {
+        const storedUser = sessionStorage.getItem('authUser');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          console.log('App: Setting auth user:', parsedUser);
+          setAuthUser(parsedUser);
+        } else {
+          console.log('App: No auth user found, setting to null');
+          setAuthUser(null);
+        }
+      } catch (error) {
+        console.error('App: Error parsing auth user:', error);
+        setAuthUser(null);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    // Check immediately
+    console.log('App: Initial auth check');
+    checkAuthUser();
+
+    // Listen for storage changes (when user logs in/out in another tab)
+    const handleStorageChange = (e) => {
+      if (e.key === 'authUser') {
+        console.log('App: Storage change detected for authUser');
+        checkAuthUser();
+      }
+    };
+
+    // Listen for custom auth events
+    const handleAuthChange = () => {
+      console.log('App: Custom auth change event received');
+      checkAuthUser();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('authUserChanged', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authUserChanged', handleAuthChange);
+    };
+  }, []);
+
   if (showLoader) return <Loader poweredBy={showPoweredBy} />;
-  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
+  
   return (
     <Routes>
       <Route path="/" element={<Signin />} />
@@ -88,25 +144,10 @@ function App() {
       <Route path="/discipline-my-classes" element={<DiscClass authUser={authUser} />} />
       <Route path="/discipline-messages" element={<DiscMessage />} />
       <Route path="/discipline-messages/:userId" element={<DiscUserChat />} />
-      <Route path="/discipline-students" element={
-        <DisciplineSideTop>
-          <div>Students Page</div>
-        </DisciplineSideTop>
-      } />
       <Route path="/attendance" element={<DisciplineSideTop><Attendance /></DisciplineSideTop>} />
       <Route path="/discipline-cases" element={
         <DisciplineSideTop>
-          <div>Disciplinary Cases Page</div>
-        </DisciplineSideTop>
-      } />
-      <Route path="/discipline-counseling" element={
-        <DisciplineSideTop>
-          <div>Counseling Records Page</div>
-        </DisciplineSideTop>
-      } />
-      <Route path="/discipline-security" element={
-        <DisciplineSideTop>
-          <div>Security Incidents Page</div>
+          <DisciplineCases />
         </DisciplineSideTop>
       } />
       <Route path="/discipline-lesson-plans" element={<LessonPlan />} />
@@ -130,8 +171,9 @@ function App() {
 
       {/* Psychosocialist Routes */}
       <Route path="/psycho-dashboard" element={<PsycoDash />} />
-      <Route path="/psycho-cases" element={<PsycoDash initialTab="Cases" />} />
-      <Route path="/psycho-messages" element={<PsycoDash initialTab="Messages" />} />
+      <Route path="/psycho-cases" element={<Cases />} />
+      <Route path="/psycho-messages" element={<PsychoMessage />} />
+      <Route path="/psycho-chat/:userId" element={<PsychoChat />} />
 
       {/* Uncomment if you have a Dashboard component */}
       {/* <Route path="/dashboard" element={<Dashboard />} /> */}

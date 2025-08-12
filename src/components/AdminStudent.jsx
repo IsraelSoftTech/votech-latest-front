@@ -6,6 +6,7 @@ import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaCli
 import logo from '../assets/logo.png';
 
 import api from '../services/api';
+import config from '../config';
 import SuccessMessage from './SuccessMessage';
 import StudentListReport from './StudentListReport';
 import * as XLSX from 'xlsx';
@@ -117,7 +118,9 @@ export default function AdminStudent() {
 
   // Helper to count today's students
   const todayStr = new Date().toISOString().slice(0, 10);
-  const todayCount = studentList.filter(s => s.created_at && s.created_at.slice(0, 10) === todayStr).length;
+  const todayCount = (studentList && Array.isArray(studentList))
+    ? studentList.filter(s => s.created_at && s.created_at.slice(0, 10) === todayStr).length
+    : 0;
 
   // 3. Helper to generate student ID
   const generateStudentId = (fullName, regDate, index) => {
@@ -135,7 +138,7 @@ export default function AdminStudent() {
   useEffect(() => {
     setForm(f => ({
       ...f,
-      studentId: generateStudentId(f.fullName, f.regDate, studentList.length)
+      studentId: generateStudentId(f.fullName, f.regDate, (studentList && Array.isArray(studentList)) ? studentList.length : 0)
     }));
   }, [form.fullName, form.regDate, studentList.length]);
 
@@ -156,8 +159,8 @@ export default function AdminStudent() {
       pob: student.place_of_birth || '',
       father: student.father_name || '',
       mother: student.mother_name || '',
-      class: classes.find(c => c.id === student.class_id)?.name || '',
-      dept: specialties.find(s => s.id === student.specialty_id)?.name || '',
+      class: (classes && Array.isArray(classes)) ? classes.find(c => c.id === student.class_id)?.name || '' : '',
+      dept: (specialties && Array.isArray(specialties)) ? specialties.find(s => s.id === student.specialty_id)?.name || '' : '',
       contact: student.guardian_contact || '',
       photo: null
     });
@@ -183,7 +186,7 @@ export default function AdminStudent() {
       formData.append('contact', form.contact);
       if (form.photo) formData.append('photo', form.photo);
       await api.createStudent(formData);
-      setSuccess('Student registered!');
+      setSuccess('success');
       const students = await api.getStudents();
       setStudentList(students);
       setTimeout(() => {
@@ -220,7 +223,7 @@ export default function AdminStudent() {
     const studentToDelete = studentList[deleteIdx];
     try {
       await api.deleteStudent(studentToDelete.id);
-      setSuccess('Student deleted successfully!');
+      setSuccess('success');
       const students = await api.getStudents();
       setStudentList(students);
     } catch (err) {
@@ -344,16 +347,18 @@ export default function AdminStudent() {
   };
 
   // Filtered students for search and print
-  const filteredStudents = studentList
-    .filter(s => s.full_name && s.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+  const filteredStudents = (studentList && Array.isArray(studentList))
+    ? studentList
+        .filter(s => s.full_name && s.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''))
+    : [];
 
   const classStudents = printClass
     ? filteredStudents.filter(s => (s.class_name || s.class || '') === printClass)
     : [];
 
   // Helper to get image URL
-  const baseApiUrl = (api.API_URL && api.API_URL.replace('/api','')) || 'http://localhost:5000';
+  const baseApiUrl = (config.API_URL && config.API_URL.replace('/api','')) || 'http://localhost:5000';
   const getImageUrl = (pic) => {
     if (!pic) return null;
     if (pic.startsWith('/')) return baseApiUrl + pic;
@@ -568,7 +573,7 @@ export default function AdminStudent() {
                   <td>{s.specialty_name || s.dept || ''}</td>
                   <td>{s.guardian_contact}</td>
                   <td>{s.photo_url ? (
-                    <img src={s.photo_url.startsWith('http') ? s.photo_url : `${api.API_URL.replace('/api','')}${s.photo_url}`} alt="student" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={s.photo_url.startsWith('http') ? s.photo_url : `${config.API_URL.replace('/api','')}${s.photo_url}`} alt="student" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
                   ) : ''}</td>
                   <td className="actions">
                     <button className="action-btn edit" title="Edit" onClick={() => handleEdit(s)}><FaEdit /></button>
@@ -613,12 +618,12 @@ export default function AdminStudent() {
                   <label className="input-label">Class *</label>
                   <select className="input-field" name="class" value={form.class} onChange={handleFormChange} required>
                     <option value="">Select</option>
-                    {classes.map(opt => <option key={opt.id} value={typeof opt.name === 'string' ? opt.name : ''}>{typeof opt.name === 'string' ? opt.name : 'Unknown Class'}</option>)}
+                    {classes && classes.length > 0 ? classes.map(opt => <option key={opt.id} value={typeof opt.name === 'string' ? opt.name : ''}>{typeof opt.name === 'string' ? opt.name : 'Unknown Class'}</option>) : <option value="">No classes available</option>}
                   </select>
                   <label className="input-label">Department/Specialty *</label>
                   <select className="input-field" name="dept" value={form.dept} onChange={handleFormChange} required>
                     <option value="">Select</option>
-                    {specialties.map(opt => <option key={opt.id} value={typeof opt.name === 'string' ? opt.name : ''}>{typeof opt.name === 'string' ? opt.name : 'Unknown Specialty'}</option>)}
+                    {specialties && specialties.length > 0 ? specialties.map(opt => <option key={opt.id} value={typeof opt.name === 'string' ? opt.name : ''}>{typeof opt.name === 'string' ? opt.name : 'Unknown Specialty'}</option>) : <option value="">No specialties available</option>}
                   </select>
                   <label className="input-label">Contact *</label>
                   <input className="input-field" type="text" name="contact" value={form.contact} onChange={handleFormChange} placeholder="Enter Contact" required />

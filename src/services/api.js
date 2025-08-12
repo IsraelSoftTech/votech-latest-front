@@ -438,8 +438,12 @@ class ApiService {
   }
 
   async createStudent(formData) {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    if (authHeaders['Authorization']) headers['Authorization'] = authHeaders['Authorization'];
     const response = await fetch(`${API_URL}/students`, {
       method: 'POST',
+      headers: headers,
       body: formData
     });
     if (!response.ok) {
@@ -676,54 +680,6 @@ class ApiService {
     });
     if (!response.ok) throw new Error('Failed to fetch chat list');
     return await response.json();
-  }
-
-  // Attendance endpoints
-  async startAttendanceSession(class_id, session_time) {
-    const response = await fetch(`${API_URL}/attendance/start`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ class_id, session_time })
-    });
-    return await this.handleResponse(response);
-  }
-
-  async getAttendanceClasses() {
-    const response = await fetch(`${API_URL}/attendance/classes`, {
-      headers: this.getAuthHeaders()
-    });
-    return await this.handleResponse(response);
-  }
-
-  async getAttendanceStudents(classId) {
-    const response = await fetch(`${API_URL}/attendance/${classId}/students`, {
-      headers: this.getAuthHeaders()
-    });
-    return await this.handleResponse(response);
-  }
-
-  async markAttendance(sessionId, student_id, status) {
-    const response = await fetch(`${API_URL}/attendance/${sessionId}/mark`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ student_id, status })
-    });
-    return await this.handleResponse(response);
-  }
-
-  async getTodayAttendanceSummary() {
-    const response = await fetch(`${API_URL}/attendance/today-summary`, {
-      headers: this.getAuthHeaders()
-    });
-    return await this.handleResponse(response);
-  }
-
-  async deleteAllAttendance() {
-    const response = await fetch(`${API_URL}/attendance/all`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders()
-    });
-    return await this.handleResponse(response);
   }
 
   // Teacher endpoints
@@ -1689,6 +1645,231 @@ class ApiService {
       console.error('Error deleting heavy subjects:', error);
       throw error;
     }
+  }
+
+  // === Cases API ===
+  async getCases() {
+    const response = await fetch(`${API_URL}/cases`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getStudentsForCases() {
+    const response = await fetch(`${API_URL}/cases/students/list`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getClassesForCases() {
+    const response = await fetch(`${API_URL}/cases/classes/list`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getAdminsForReports() {
+    const response = await fetch(`${API_URL}/cases/admins/list`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getCaseSessions(caseId) {
+    const response = await fetch(`${API_URL}/cases/${caseId}/sessions`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async createCase(data) {
+    const response = await fetch(`${API_URL}/cases`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return await this.handleResponse(response);
+  }
+
+  async updateCase(id, data) {
+    const response = await fetch(`${API_URL}/cases/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return await this.handleResponse(response);
+  }
+
+  async deleteCase(id) {
+    const response = await fetch(`${API_URL}/cases/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async createCaseSession(caseId, data) {
+    const response = await fetch(`${API_URL}/cases/${caseId}/sessions`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return await this.handleResponse(response);
+  }
+
+  async sendCaseReport(caseId, data) {
+    const response = await fetch(`${API_URL}/cases/${caseId}/send-report`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return await this.handleResponse(response);
+  }
+
+  // Optional: session update/delete if needed elsewhere
+  async updateCaseSession(sessionId, data) {
+    const response = await fetch(`${API_URL}/cases/sessions/${sessionId}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return await this.handleResponse(response);
+  }
+
+  async deleteCaseSession(sessionId) {
+    const response = await fetch(`${API_URL}/cases/sessions/${sessionId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getStudentsByClass(classId) {
+    try {
+      const response = await fetch(`${API_URL}/students/class/${classId}`, {
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Get students by class error:', error);
+      throw error;
+    }
+  }
+
+  // Attendance endpoints (new server compatible)
+  async getAttendanceClasses() {
+    const response = await fetch(`${API_URL}/attendance/classes`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getAttendanceTeachers() {
+    const response = await fetch(`${API_URL}/attendance/teachers`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getAttendanceStudents(classId) {
+    const response = await fetch(`${API_URL}/attendance/${classId}/students`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async startAttendanceSession({ type, class_id, session_time }) {
+    const response = await fetch(`${API_URL}/attendance/start`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ type, class_id, session_time })
+    });
+    return await this.handleResponse(response);
+  }
+
+  async saveAttendanceBulk(sessionId, records) {
+    const response = await fetch(`${API_URL}/attendance/${sessionId}/mark-bulk`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ records })
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getTodayAttendanceSummary() {
+    const response = await fetch(`${API_URL}/attendance/today-summary`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getTodaySessions() {
+    console.log('API: Fetching today sessions...');
+    const response = await fetch(`${API_URL}/attendance/today-sessions`, { headers: this.getAuthHeaders() });
+    const data = await this.handleResponse(response);
+    console.log('API: Today sessions response:', data);
+    return data;
+  }
+
+  async getAllSessions() {
+    console.log('API: Fetching all sessions for debugging...');
+    const response = await fetch(`${API_URL}/attendance/all-sessions`, { headers: this.getAuthHeaders() });
+    const data = await this.handleResponse(response);
+    console.log('API: All sessions response:', data);
+    return data;
+  }
+
+  async exportAttendance({ type, classId, date }) {
+    const params = new URLSearchParams();
+    if (type) params.set('type', type);
+    if (classId) params.set('classId', classId);
+    if (date) params.set('date', date);
+    const response = await fetch(`${API_URL}/attendance/export?${params.toString()}`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async deleteAllAttendance() {
+    const response = await fetch(`${API_URL}/attendance/all`, { method: 'DELETE', headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  // Debug endpoint to check stored dates
+  async debugDates() {
+    const response = await fetch(`${API_URL}/attendance/debug-dates`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  // Discipline Cases API endpoints
+  async getDisciplineCases() {
+    const response = await fetch(`${API_URL}/discipline-cases`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getDisciplineStudents() {
+    const response = await fetch(`${API_URL}/discipline-cases/students`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async getDisciplineClasses() {
+    const response = await fetch(`${API_URL}/discipline-cases/classes`, { headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  async createDisciplineCase(data) {
+    const response = await fetch(`${API_URL}/discipline-cases`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return await this.handleResponse(response);
+  }
+
+  async updateDisciplineCaseStatus(id, data) {
+    const response = await fetch(`${API_URL}/discipline-cases/${id}/status`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return await this.handleResponse(response);
+  }
+
+  async deleteDisciplineCase(id) {
+    const response = await fetch(`${API_URL}/discipline-cases/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async deleteAllDisciplineCases() {
+    const response = await fetch(`${API_URL}/discipline-cases`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
   }
 }
 

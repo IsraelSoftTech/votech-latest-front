@@ -9,7 +9,7 @@ import './Application.css';
 export default function Application({ authUser }) {
   const [applications, setApplications] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [subjects, setSubjects] = useState([]);
   const [classes, setClasses] = useState([]);
   const [formData, setFormData] = useState({
@@ -24,23 +24,89 @@ export default function Application({ authUser }) {
   const [userApplication, setUserApplication] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedClasses, setSelectedClasses] = useState([]);
+  const [authLoading, setAuthLoading] = useState(true); // New state for auth loading
 
-  const isAdmin1 = authUser?.role === 'Admin1';
-  const isAdmin4 = authUser?.role === 'Admin4';
+  // Derive current user from prop or session storage
+  const currentUser = authUser || JSON.parse(sessionStorage.getItem('authUser') || 'null');
+
+  const isAdmin1 = currentUser?.role === 'Admin1';
+  const isAdmin4 = currentUser?.role === 'Admin4';
   const canManageApplications = isAdmin1 || isAdmin4;
   const canSubmitApplication = true; // All users including admins can submit applications
   const canEditApplications = isAdmin4; // Only Admin4 can edit applications
   const canApproveApplications = isAdmin4; // Only Admin4 can approve applications
 
+  // Handle auth user loading
   useEffect(() => {
-    if (!authUser) return; // Don't fetch data if user is not authenticated
-    
-    // Always fetch both applications and user's own application
-    fetchApplications();
-    fetchUserApplication();
-    fetchSubjects();
-    fetchClasses();
+    const checkAuthUser = async () => {
+      try {
+        console.log('Application: Checking auth user...', { authUser });
+        // If authUser is passed as prop, use it
+        if (authUser) {
+          console.log('Application: Auth user provided as prop:', authUser);
+          setAuthLoading(false);
+          return;
+        }
+        
+        // Otherwise, try to get from sessionStorage
+        const storedUser = sessionStorage.getItem('authUser');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          console.log('Application: Auth user found in sessionStorage:', parsedUser);
+          // Update the authUser by calling the parent or using a callback
+          // For now, we'll work with the stored user
+          setAuthLoading(false);
+        } else {
+          console.log('Application: No auth user found, redirecting to login');
+          // No user found, redirect to login
+          window.location.href = '/signin';
+        }
+      } catch (error) {
+        console.error('Application: Error checking auth user:', error);
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuthUser();
   }, [authUser]);
+
+  // Fetch data when auth is ready
+  useEffect(() => {
+    if (authLoading) {
+      console.log('Application: Auth still loading, skipping data fetch');
+      return; // Don't fetch if still loading auth
+    }
+    
+    // currentUser already derived above
+    console.log('Application: Auth ready, fetching data for user:', currentUser);
+    
+    if (!currentUser) {
+      console.log('Application: No current user, setting loading to false');
+      setLoading(false);
+      return;
+    }
+    
+    // Fetch all data in parallel
+    const fetchAllData = async () => {
+      try {
+        console.log('Application: Starting to fetch all data...');
+        setLoading(true);
+        await Promise.all([
+          fetchApplications(),
+          fetchUserApplication(),
+          fetchSubjects(),
+          fetchClasses()
+        ]);
+        console.log('Application: All data fetched successfully');
+      } catch (error) {
+        console.error('Application: Error fetching initial data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, [authLoading, authUser]);
 
   const fetchSubjects = async () => {
     try {
@@ -62,7 +128,6 @@ export default function Application({ authUser }) {
 
   const fetchApplications = async () => {
     try {
-      setLoading(true);
       const response = await api.getApplications();
       setApplications(response);
     } catch (error) {
@@ -73,16 +138,15 @@ export default function Application({ authUser }) {
       } else {
         console.error('Failed to fetch applications:', error);
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchUserApplication = async () => {
-    if (!authUser) return; // Don't fetch if user is not authenticated
+    const currentUser = authUser || JSON.parse(sessionStorage.getItem('authUser') || 'null');
+    if (!currentUser) return;
     
     try {
-      const application = await api.getUserApplication(authUser.id);
+      const application = await api.getUserApplication(currentUser.id);
       setUserApplication(application);
     } catch (error) {
       console.error('Error fetching user application:', error);
@@ -195,11 +259,11 @@ export default function Application({ authUser }) {
       if (editingId) {
         response = await api.updateApplication(editingId, formDataToSend);
         console.log('Application updated successfully');
-        setSuccessMessage('Application updated successfully!');
+        setSuccessMessage('success');
       } else {
         response = await api.submitApplication(formDataToSend);
         console.log('Application submitted successfully');
-        setSuccessMessage('Application submitted successfully!');
+        setSuccessMessage('success');
       }
 
       // Reset form
@@ -216,8 +280,10 @@ export default function Application({ authUser }) {
       setEditingId(null);
       
       // Refresh data
-      await fetchApplications();
-      await fetchUserApplication();
+      await Promise.all([
+        fetchApplications(),
+        fetchUserApplication()
+      ]);
       
       // Clear success message after 5 seconds
       setTimeout(() => {
@@ -260,8 +326,10 @@ export default function Application({ authUser }) {
     
     try {
       await api.deleteApplication(id);
-      fetchApplications();
-      fetchUserApplication();
+      await Promise.all([
+        fetchApplications(),
+        fetchUserApplication()
+      ]);
     } catch (error) {
       console.error('Error deleting application:', error);
       if (error.message.includes('Session expired')) {
@@ -276,7 +344,7 @@ export default function Application({ authUser }) {
   const handleStatusUpdate = async (id, status) => {
     try {
       await api.updateApplicationStatus(id, status);
-      fetchApplications();
+      await fetchApplications();
     } catch (error) {
       console.error('Error updating application status:', error);
       if (error.message.includes('Session expired')) {
@@ -289,13 +357,19 @@ export default function Application({ authUser }) {
   };
 
   const canEditApplication = (application) => {
-    if (canEditApplications) return true;
-    return authUser && application.applicant_id === authUser.id && application.status === 'pending';
+    if (canEditApplications) return true; // Admin4
+    const currentUser = authUser || JSON.parse(sessionStorage.getItem('authUser') || 'null');
+    if (!currentUser) return false;
+    if (currentUser.role === 'Admin1') return false; // Admin1 is view-only
+    return application.applicant_id === currentUser.id && application.status === 'pending';
   };
 
   const canDeleteApplication = (application) => {
-    if (canEditApplications) return true;
-    return authUser && application.applicant_id === authUser.id && application.status === 'pending';
+    if (canEditApplications) return true; // Admin4
+    const currentUser = authUser || JSON.parse(sessionStorage.getItem('authUser') || 'null');
+    if (!currentUser) return false;
+    if (currentUser.role === 'Admin1') return false; // Admin1 is view-only
+    return application.applicant_id === currentUser.id && application.status === 'pending';
   };
 
   const getStatusBadge = (status) => {
@@ -743,8 +817,8 @@ export default function Application({ authUser }) {
     </div>
   );
 
-  // Show loading state if user is not authenticated yet
-  if (!authUser) {
+  // Show loading state if auth is still loading
+  if (authLoading) {
     return (
       <div className="application-container app-container">
         <div className="loading app-loading">Loading user information...</div>
@@ -752,8 +826,19 @@ export default function Application({ authUser }) {
     );
   }
 
+  // currentUser already derived above
+  
+  // Show loading state if data is still loading
+  if (loading) {
+    return (
+      <div className="application-container app-container">
+        <div className="loading app-loading">Loading applications...</div>
+      </div>
+    );
+  }
+
   // Use DisciplineSideTop for Discipline users, SideTop for others
-  if (authUser?.role === 'Discipline') {
+  if (currentUser?.role === 'Discipline') {
     return (
       <DisciplineSideTop>
         {applicationContent}

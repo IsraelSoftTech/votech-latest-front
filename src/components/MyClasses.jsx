@@ -6,18 +6,23 @@ import SideTop from './SideTop';
 
 export default function MyClasses({ authUser }) {
   const [assignedClasses, setAssignedClasses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [totalStudents, setTotalStudents] = useState(0);
   const [userApplication, setUserApplication] = useState(null);
+  const currentUser = authUser || JSON.parse(sessionStorage.getItem('authUser') || 'null');
 
   useEffect(() => {
-    if (authUser) {
-      fetchUserClasses();
+    if (currentUser?.id) {
+      fetchUserClasses(currentUser);
+    } else {
+      setAssignedClasses([]);
+      setTotalStudents(0);
+      setLoading(false);
     }
-  }, [authUser]);
+  }, [currentUser?.id]);
 
-  const fetchUserClasses = async () => {
+  const fetchUserClasses = async (user) => {
     try {
       setLoading(true);
       setError('');
@@ -25,7 +30,7 @@ export default function MyClasses({ authUser }) {
       // First, get the user's application to see what classes they were assigned
       let userApp = null;
       try {
-        userApp = await api.getUserApplication(authUser.id);
+        userApp = await api.getUserApplication(user.id);
         setUserApplication(userApp);
       } catch (err) {
         console.log('No application found for user');
@@ -40,23 +45,22 @@ export default function MyClasses({ authUser }) {
           .filter(c => c && c !== 'undefined' && c !== '');
 
         if (assignedClassNames.length > 0) {
-          // Get all classes and students to calculate counts
-          const [allClasses, allStudents] = await Promise.all([
-            api.getClasses(),
-            api.getAllStudents()
-          ]);
+          // Get all classes to resolve class IDs
+          const allClasses = await api.getClasses();
 
-          const classesWithStudentCounts = assignedClassNames.map(className => {
-            const classRecord = allClasses.find(c => c.name === className);
-            const studentsInClass = allStudents.filter(s => s.class_id === classRecord?.id);
-            
-            return {
-              id: classRecord?.id,
-              name: className,
-              studentCount: studentsInClass.length,
-              classRecord: classRecord
-            };
+          const normalized = (s) => (s || '').toString().trim().toLowerCase();
+          const classRecords = assignedClassNames.map(name => ({
+            name,
+            record: allClasses.find(c => normalized(c.name) === normalized(name)) || null
+          }));
+          const fetches = classRecords.map(async ({ name, record }) => {
+            if (!record?.id) {
+              return { id: null, name, studentCount: 0, classRecord: record };
+            }
+            const students = await api.getStudentsByClass(record.id).catch(() => []);
+            return { id: record.id, name, studentCount: Array.isArray(students) ? students.length : 0, classRecord: record };
           });
+          const classesWithStudentCounts = await Promise.all(fetches);
 
           setAssignedClasses(classesWithStudentCounts);
           setTotalStudents(classesWithStudentCounts.reduce((total, cls) => total + cls.studentCount, 0));
@@ -69,19 +73,19 @@ export default function MyClasses({ authUser }) {
       const allTeachers = await api.getAllTeachers();
       
       let teacherRecord = null;
-      if (authUser?.id) {
-        teacherRecord = allTeachers.find(t => t.user_id === authUser.id);
+      if (user?.id) {
+        teacherRecord = allTeachers.find(t => t.user_id === user.id);
       }
-      if (!teacherRecord && authUser?.contact) {
-        teacherRecord = allTeachers.find(t => t.contact === authUser.contact);
+      if (!teacherRecord && user?.contact) {
+        teacherRecord = allTeachers.find(t => t.contact === user.contact);
       }
-      if (!teacherRecord && authUser?.name) {
-        teacherRecord = allTeachers.find(t => t.full_name === authUser.name);
+      if (!teacherRecord && user?.name) {
+        teacherRecord = allTeachers.find(t => t.full_name === user.name);
       }
-      if (!teacherRecord && authUser?.username) {
+      if (!teacherRecord && user?.username) {
         teacherRecord = allTeachers.find(t => 
-          t.full_name?.toLowerCase().includes(authUser.username.toLowerCase()) || 
-          t.contact?.toLowerCase().includes(authUser.username.toLowerCase())
+          t.full_name?.toLowerCase().includes(user.username.toLowerCase()) || 
+          t.contact?.toLowerCase().includes(user.username.toLowerCase())
         );
       }
 
@@ -104,19 +108,20 @@ export default function MyClasses({ authUser }) {
       }
 
       const allClasses = await api.getClasses();
-      const allStudents = await api.getAllStudents();
 
-      const classesWithStudentCounts = assignedClassNames.map(className => {
-        const classRecord = allClasses.find(c => c.name === className);
-        const studentsInClass = allStudents.filter(s => s.class_id === classRecord?.id);
-        
-        return {
-          id: classRecord?.id,
-          name: className,
-            studentCount: studentsInClass.length,
-            classRecord: classRecord
-        };
+      const normalized = (s) => (s || '').toString().trim().toLowerCase();
+      const classRecords = assignedClassNames.map(name => ({
+        name,
+        record: allClasses.find(c => normalized(c.name) === normalized(name)) || null
+      }));
+      const fetches = classRecords.map(async ({ name, record }) => {
+        if (!record?.id) {
+          return { id: null, name, studentCount: 0, classRecord: record };
+        }
+        const students = await api.getStudentsByClass(record.id).catch(() => []);
+        return { id: record.id, name, studentCount: Array.isArray(students) ? students.length : 0, classRecord: record };
       });
+      const classesWithStudentCounts = await Promise.all(fetches);
 
       setAssignedClasses(classesWithStudentCounts);
       setTotalStudents(classesWithStudentCounts.reduce((total, cls) => total + cls.studentCount, 0));
@@ -149,18 +154,7 @@ export default function MyClasses({ authUser }) {
     );
   };
 
-  if (loading) {
-    return (
-      <SideTop>
-        <div className="my-classes-container">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Loading your classes...</p>
-          </div>
-        </div>
-      </SideTop>
-    );
-  }
+  // Do not block UI with loading; render content immediately
 
   return (
     <SideTop>
@@ -169,6 +163,12 @@ export default function MyClasses({ authUser }) {
           <h1>My Classes</h1>
           <p>View your assigned classes and student information</p>
           {getApplicationStatus()}
+          {loading && (
+            <div className="loading-inline">
+              <div className="loading-spinner small"></div>
+              <span>Loading your classes...</span>
+            </div>
+          )}
         </div>
 
         <div className="dashboard-cards">
@@ -243,7 +243,7 @@ export default function MyClasses({ authUser }) {
           )}
         </div>
 
-        {!loading && assignedClasses.length === 0 && !error && (
+        {assignedClasses.length === 0 && !error && (
           <div className="empty-state">
             <div className="empty-icon">
               <FaClipboardList />

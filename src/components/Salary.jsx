@@ -112,7 +112,7 @@ export default function Salary({ authUser }) {
         parseFloat(salaryAmount)
       );
 
-      setSuccessMessage('Salary updated successfully for all months!');
+      setSuccessMessage('success');
       setEditingSalary(null);
       setSalaryAmount('');
       
@@ -293,7 +293,7 @@ export default function Salary({ authUser }) {
           try {
             await api.markSalaryAsPaid(salaryRecord.id);
 
-            setSuccessMessage('Salary paid successfully!');
+            setSuccessMessage('success');
             closePayModal();
             
             // Refresh data
@@ -522,7 +522,7 @@ export default function Salary({ authUser }) {
                     async () => {
                       try {
                         await api.deleteAllSalaries();
-                        setSuccessMessage('All salary records deleted successfully!');
+                        setSuccessMessage('success');
                         await fetchData();
                         setTimeout(() => {
                           setSuccessMessage('');

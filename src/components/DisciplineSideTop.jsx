@@ -10,11 +10,8 @@ const menuItems = [
   { label: 'Application', icon: <FaClipboardList />, path: '/application' },
   { label: 'My Classes', icon: <FaClipboardList />, path: '/discipline-my-classes' },
   { label: 'Messages', icon: <FaEnvelope />, path: '/discipline-messages' },
-  { label: 'Students', icon: <FaUserGraduate />, path: '/discipline-students' },
   { label: 'Attendance', icon: <FaClipboardList />, path: '/attendance' },
-  { label: 'Disciplinary Cases', icon: <FaGavel />, path: '/discipline-cases' },
-  { label: 'Counseling Records', icon: <FaComments />, path: '/discipline-counseling' },
-  { label: 'Security Incidents', icon: <FaShieldAlt />, path: '/discipline-security' }
+  { label: 'Disciplinary Cases', icon: <FaGavel />, path: '/discipline-cases' }
 ];
 
 export default function DisciplineSideTop({ children, hasUnread = false, activeTab }) {
