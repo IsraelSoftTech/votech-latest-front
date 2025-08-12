@@ -46,7 +46,7 @@ export const CustomInput = ({
       className="ci-wrapper"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
+      transition={{ duration: 0.3 }}
     >
       {/* External label */}
       <label className="ci-external-label">
@@ -115,7 +115,7 @@ export const CustomDropdown = ({
       className="ci-wrapper"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
+      transition={{ duration: 0.3 }}
     >
       <label className="ci-external-label">
         <span className="ci-external-text">
@@ -259,7 +259,7 @@ export const CustomDatePicker = ({
       className="ci-wrapper"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
+      transition={{ duration: 0.3 }}
     >
       <label className="ci-external-label">
         <span className="ci-external-text">

@@ -43,6 +43,7 @@ import DiscUserChat from "./components/DiscUserChat.jsx";
 import { AcademicYear } from "./components/marks-module/pages/AccademicYearPage/AcademicYear.page";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subject.page";
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -170,6 +171,7 @@ function App() {
         {/* Academics routes */}
 
         <Route path="/academics/academic-years" element={<AcademicYear />} />
+        <Route path="/academics/subjects" element={<SubjectPage />} />
 
         {/* Psychosocialist Routes */}
         <Route path="/psycho-dashboard" element={<PsycoDash />} />

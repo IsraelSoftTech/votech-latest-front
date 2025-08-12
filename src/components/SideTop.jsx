@@ -72,7 +72,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
         submenu: [
           {
             label: "Subjects",
-            path: "/subjects",
+            path: "/academics/subjects",
             icon: <FaChalkboardTeacher />,
           },
           {
