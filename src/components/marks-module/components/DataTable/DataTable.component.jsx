@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Modal from "../Modal/Modal.component";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import "./DataTable.styles.css";
+import { CustomDropdown, CustomInput } from "../Inputs/CustumInputs";
 
 const DataTable = ({
   columns,
@@ -10,15 +11,45 @@ const DataTable = ({
   onDelete,
   onRowClick,
   loading = false,
-  limit = 10, // new prop to control rows per page
+  limit = 10,
   warnDelete,
+  filterCategories = [],
+  extraActions = [],
 }) => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
 
-  const totalPages = Math.ceil(data.length / limit);
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+  const filteredData = useMemo(() => {
+    let filtered = data;
+
+    if (filterCategory && filterCategory !== "All") {
+      const normalizedFilter = filterCategory.toLowerCase();
+      filtered = filtered.filter((row) =>
+        columns.some(({ accessor }) =>
+          String(row[accessor]).toLowerCase().includes(normalizedFilter)
+        )
+      );
+    }
+
+    if (normalizedSearchTerm) {
+      filtered = filtered.filter((row) =>
+        columns.some(({ accessor }) =>
+          String(row[accessor]).toLowerCase().includes(normalizedSearchTerm)
+        )
+      );
+    }
+
+    return filtered;
+  }, [data, normalizedSearchTerm, filterCategory, columns, filterCategories]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredData.length / limit);
   const startIndex = (currentPage - 1) * limit;
-  const paginatedData = data.slice(startIndex, startIndex + limit);
+  const paginatedData = filteredData.slice(startIndex, startIndex + limit);
 
   const openDeleteModal = (row) => setDeleteTarget(row);
   const closeDeleteModal = () => setDeleteTarget(null);
@@ -29,8 +60,38 @@ const DataTable = ({
     }
   };
 
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterCategory]);
+
   return (
     <div className="table-wrapper">
+      {/* Search & Filter */}
+      <div className="table-controls">
+        <div className="table-search">
+          <CustomInput
+            // label="Search"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(name, val) => setSearchTerm(val)}
+            onClear={() => setSearchTerm("")}
+            name="search"
+          />
+        </div>
+
+        <div className="table-search">
+          {filterCategories.length > 0 && (
+            <CustomDropdown
+              value={filterCategory}
+              onChange={(name, val) => setFilterCategory(val)}
+              options={["All", ...filterCategories]}
+              name="filterCategory"
+            />
+          )}
+        </div>
+      </div>
+
       <table className="data-table">
         <thead>
           <tr>
@@ -56,7 +117,7 @@ const DataTable = ({
                   </td>
                 </tr>
               ))
-          ) : data.length === 0 ? (
+          ) : filteredData.length === 0 ? (
             <tr>
               <td colSpan={columns.length + 1} className="no-data">
                 No data at the moment
@@ -99,6 +160,18 @@ const DataTable = ({
                   >
                     <FaTrash />
                   </button>
+
+                  {extraActions.map(({ icon, onClick, title }, idx) => (
+                    <button
+                      key={idx}
+                      className="btn"
+                      onClick={() => onClick(row)}
+                      title={title}
+                      type="button"
+                    >
+                      {icon}
+                    </button>
+                  ))}
                 </td>
               </tr>
             ))
@@ -106,7 +179,7 @@ const DataTable = ({
         </tbody>
       </table>
 
-      {/* Pagination Controls */}
+      {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className="pagination">
           <button
@@ -137,7 +210,7 @@ const DataTable = ({
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Modal */}
       <Modal
         isOpen={!!deleteTarget}
         onClose={closeDeleteModal}

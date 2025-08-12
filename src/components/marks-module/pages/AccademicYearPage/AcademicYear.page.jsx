@@ -252,6 +252,7 @@ export const AcademicYear = () => {
               "Warning: Deleting this academic year may cause issues because students, marks, and other data are linked to it. Consider archiving instead to preserve data integrity."
             );
           }}
+          filterCategories={["active"]}
         />
 
         {/* Details Modal */}

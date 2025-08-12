@@ -182,3 +182,34 @@
   color: white;
   border-color: #204080;
 }
+
+.table-controls {
+  display: flex;
+  justify-content: space-between;
+  /* background-color: red; */
+  gap: 1rem;
+  align-items: center;
+}
+
+/* .table-controls select {
+  flex-grow: 0;
+  min-width: 150px;
+} */
+
+.table-search {
+  flex-grow: 0.5;
+  max-width: 400px;
+  min-width: 200px;
+}
+
+@media (max-width: 509px) {
+  .table-controls {
+    flex-direction: column;
+    align-items: start;
+    gap: 0rem;
+  }
+
+  .table-search {
+    flex-grow: 0.2;
+  }
+}
