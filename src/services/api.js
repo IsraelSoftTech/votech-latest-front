@@ -1871,6 +1871,88 @@ class ApiService {
     });
     return await this.handleResponse(response);
   }
+
+  // === Events API ===
+  async getEvents() {
+    const response = await fetch(`${API_URL}/events`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getMyEvents() {
+    const response = await fetch(`${API_URL}/events/my-events`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getEventsByRange(startDate, endDate) {
+    const params = new URLSearchParams();
+    params.set('start_date', startDate);
+    params.set('end_date', endDate);
+    
+    const response = await fetch(`${API_URL}/events/range?${params.toString()}`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getUpcomingEvents() {
+    const response = await fetch(`${API_URL}/events/upcoming`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getEventStats() {
+    const response = await fetch(`${API_URL}/events/stats`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async createEvent(eventData) {
+    const response = await fetch(`${API_URL}/events`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(eventData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      if (response.status === 409) {
+        throw new Error(`Event creation failed: ${errorData.error}`);
+      }
+      throw new Error(errorData.error || 'Failed to create event');
+    }
+    
+    return await this.handleResponse(response);
+  }
+
+  async updateEvent(id, eventData) {
+    const response = await fetch(`${API_URL}/events/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(eventData)
+    });
+    return await this.handleResponse(response);
+  }
+
+  async deleteEvent(id) {
+    const response = await fetch(`${API_URL}/events/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getEvent(id) {
+    const response = await fetch(`${API_URL}/events/${id}`, {
+      headers: this.getAuthHeaders()
+    });
+    return await this.handleResponse(response);
+  }
 }
 
 export default new ApiService(); 

@@ -23,6 +23,7 @@ import DeanMessage from './components/DeanMessage.jsx';
 import Subjects from './components/Subjects.jsx';
 import LessonPlan from './components/LessonPlan.jsx';
 import DeanEvent from './components/DeanEvent';
+import UserEvents from './components/UserEvents';
 import Admin2Dash from './components/Admin2Dash.jsx';
 import Application from './components/Application.jsx';
 import DeanLessonPlan from './components/DeanLessonPlan.jsx';
@@ -45,6 +46,7 @@ import DisciplineDashboard from './components/DisciplineDashboard';
 import DiscMessage from './components/DiscMessage.jsx';
 import DiscUserChat from './components/DiscUserChat.jsx';
 import DisciplineCases from './components/DisciplineCases';
+import DiscEvents from './components/DiscEvents.jsx';
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -151,6 +153,7 @@ function App() {
         </DisciplineSideTop>
       } />
       <Route path="/discipline-lesson-plans" element={<LessonPlan />} />
+      <Route path="/discipline-events" element={<DiscEvents />} />
       <Route path="/teacher-dashboard" element={<TeacherDash />} />
       <Route path="/teacher-messages" element={<TeacherMessage />} />
       <Route path="/teacher-messages/:userId" element={<TeacherMessage />} />
@@ -159,6 +162,7 @@ function App() {
       <Route path="/dean-messages" element={<DeanMessage />} />
       <Route path="/dean-messages/:userId" element={<DeanMessage />} />
       <Route path="/dean-events" element={<DeanEvent />} />
+      <Route path="/my-events" element={<UserEvents />} />
       <Route path="/dean-operations" element={<Dean />} />
       <Route path="/dean-inventory" element={<Dean />} />
       <Route path="/dean-scheduling" element={<Dean />} />

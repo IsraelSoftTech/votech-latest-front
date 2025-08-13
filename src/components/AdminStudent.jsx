@@ -659,13 +659,9 @@ export default function AdminStudent() {
                 <b>Expected columns:</b> Full Names, Sex, Date of Birth, Place of Birth, Father's Name, Mother's Name, Specialty, Contact, <b>Class</b><br />
                 (Row 1 = headers, data from row 2; <b>Class</b> must match a class name in your system)
               </div>
-              <a
-                href={require('../assets/student_import_template.xlsx')}
-                download="student_import_template.xlsx"
-                style={{ display: 'inline-block', marginBottom: 12, color: '#217346', fontWeight: 600 }}
-              >
-                Download Excel Template
-              </a>
+              <div style={{ fontSize: 13, color: '#888', marginBottom: 12, padding: '8px 12px', background: '#f8f9fa', borderRadius: 6, border: '1px solid #e9ecef' }}>
+                <strong>Note:</strong> Download a sample Excel file from your system or create one with the expected column headers.
+              </div>
               {excelPreview.length > 0 && (
                 <div style={{ marginBottom: 12, overflowX: 'auto' }}>
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>Preview (first 10 rows):</div>

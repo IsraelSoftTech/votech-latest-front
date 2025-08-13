@@ -1,34 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { FaCheckCircle, FaTimes, FaInfoCircle, FaExclamationTriangle, FaExclamationCircle } from 'react-icons/fa';
 import './SuccessMessage.css';
 
-export default function SuccessMessage({ message, onClose, status }) {
-  if (!message && !status) return null;
+const SuccessMessage = ({ 
+  message, 
+  type = 'success', 
+  duration = 3000, 
+  onClose, 
+  show = false 
+}) => {
+  const [isVisible, setIsVisible] = useState(show);
 
-  const normalize = (text) => (text || '').toString().toLowerCase();
-  const deriveIsSuccess = () => {
-    if (status) return status === 'success';
-    const t = normalize(message);
-    if (!t) return true;
-    // If it mentions success and not explicitly negated, treat as success
-    if (t.includes('success') && !t.includes('not')) return true;
-    // Common failure indicators
-    const failureHints = ['fail', 'error', 'denied', 'rejected', 'unable', 'invalid', 'not'];
-    return !failureHints.some(h => t.includes(h)) ? true : false;
+  useEffect(() => {
+    setIsVisible(show);
+    
+    if (show && duration > 0) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        if (onClose) onClose();
+      }, duration);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [show, duration, onClose]);
+
+  if (!isVisible) return null;
+
+  const getIcon = () => {
+    switch (type) {
+      case 'success':
+        return <FaCheckCircle />;
+      case 'error':
+        return <FaExclamationCircle />;
+      case 'warning':
+        return <FaExclamationTriangle />;
+      case 'info':
+        return <FaInfoCircle />;
+      default:
+        return <FaCheckCircle />;
+    }
   };
 
-  const isSuccess = deriveIsSuccess();
-  const displayText = isSuccess ? 'Success' : 'not successful';
+  const getMessageClass = () => {
+    switch (type) {
+      case 'success':
+        return 'success-message success';
+      case 'error':
+        return 'success-message error';
+      case 'warning':
+        return 'success-message warning';
+      case 'info':
+        return 'success-message info';
+      default:
+        return 'success-message success';
+    }
+  };
 
   return (
-    <div className={`sm-wrapper ${isSuccess ? 'sm-success' : 'sm-error'}`}>
-      <div className="sm-card">
-        <div className="sm-text">{displayText}</div>
-        {onClose && (
-          <button className="sm-close" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        )}
+    <div className={getMessageClass()}>
+      <div className="message-content">
+        <div className="message-icon">
+          {getIcon()}
+        </div>
+        <div className="message-text">
+          {message}
+        </div>
       </div>
+      <button 
+        className="message-close" 
+        onClick={() => {
+          setIsVisible(false);
+          if (onClose) onClose();
+        }}
+      >
+        <FaTimes />
+      </button>
     </div>
   );
-} 
+};
+
+export default SuccessMessage; 

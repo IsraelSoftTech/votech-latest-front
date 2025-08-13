@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie, FaCalendarAlt, FaUsers } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie, FaCalendarAlt, FaUsers, FaBell, FaUser, FaCamera, FaTimes } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import ReactDOM from 'react-dom';
 import './SideTop.css';
@@ -10,6 +10,14 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState(null);
+  const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileData, setProfileData] = useState({
+    username: '',
+    profileImage: null,
+    profileImageUrl: null
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
@@ -31,6 +39,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Reports', icon: <FaFileAlt /> },
       { label: 'Exam/Marks', icon: <FaChartBar /> },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+      { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
     ];
   } else if (authUser?.role === 'Admin2') {
     menuItems = [
@@ -44,6 +53,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
       { label: 'Marks', icon: <FaChartBar />, path: '/admin-marks' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
+      { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
     ];
   } else if (authUser?.role === 'Admin3') {
     menuItems = [
@@ -61,6 +71,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Display Users', icon: <FaUserGraduate />, path: '/admin-users' },
       { label: 'Monitor Users', icon: <FaUsers />, path: '/monitor-users' },
+      { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
     ];
   } else if (authUser?.role === 'Admin4') {
     menuItems = [
@@ -77,6 +88,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/dean-lesson-plans' },
       { label: 'Events', icon: <FaCalendarAlt />, path: '/dean-events' },
+      { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
       { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
     ];
   } else if (authUser?.role === 'Teacher') {
@@ -87,6 +99,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/teacher-lesson-plans' },
       { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
+      { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
     ];
   } else if (authUser?.role === 'Discipline') {
     menuItems = [
@@ -102,6 +115,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/discipline-lesson-plans' },
+      { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
     ];
   } else if (authUser?.role === 'Psychosocialist') {
     menuItems = [
@@ -111,6 +125,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Cases', icon: <FaClipboardList />, path: '/psycho-cases' },
       { label: 'Lesson Plan', icon: <FaPenFancy />, path: '/psychosocialist-lesson-plans' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/psycho-messages' },
+      { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
     ];
   }
 
@@ -178,12 +193,6 @@ export default function SideTop({ children, hasUnread, activeTab }) {
                                t.contact?.toLowerCase().includes(authUser.username.toLowerCase()));
           }
           
-          console.log('Teacher matching:', { 
-            authUser: { id: authUser?.id, contact: authUser?.contact, name: authUser?.name, username: authUser?.username },
-            foundRecord: rec,
-            allTeachers: all.length
-          });
-          
           if (isMounted) {
             setTeacherStatus(rec?.status || 'pending');
           }
@@ -212,6 +221,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
     { label: 'Attendance', icon: <FaClipboardList />, path: '/teacher-attendance' },
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/teacher-lesson-plans' },
+    { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
   ];
 
   // Dean/Admin4 menu items (from provided image)
@@ -225,6 +235,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
     { label: 'Events', icon: <FaClipboardList />, path: '/dean-events' },
+    { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
     { label: 'Timetables', icon: <FaClipboardList />, path: '/timetables' },
     { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/dean-lesson-plans' },
@@ -234,6 +245,141 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   if (isTeacher) menuToShow = filterMenuItems(teacherMenuItems);
   if (authUser?.role === 'Admin4') menuToShow = filterMenuItems(deanMenuItems);
   if (authUser?.role === 'Admin3') menuToShow = filterMenuItems(menuItems);
+
+  // Fetch upcoming events count
+  useEffect(() => {
+    const fetchUpcomingEvents = async () => {
+      try {
+        const events = await api.getEvents();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const upcomingEvents = events.filter(event => {
+          const eventDate = new Date(event.event_date);
+          eventDate.setHours(0, 0, 0, 0);
+          return eventDate >= today;
+        });
+        
+        setUpcomingEventsCount(upcomingEvents.length);
+      } catch (error) {
+        console.error('Error fetching upcoming events:', error);
+        setUpcomingEventsCount(0);
+      }
+    };
+
+    fetchUpcomingEvents();
+
+    // Set up periodic refresh every hour to update count when dates pass
+    const interval = setInterval(fetchUpcomingEvents, 3600000); // 1 hour
+
+    // Listen for custom events when events are created/updated/deleted
+    const handleEventChange = () => {
+      fetchUpcomingEvents();
+    };
+
+    window.addEventListener('eventCreated', handleEventChange);
+    window.addEventListener('eventUpdated', handleEventChange);
+    window.addEventListener('eventDeleted', handleEventChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('eventCreated', handleEventChange);
+      window.removeEventListener('eventUpdated', handleEventChange);
+      window.removeEventListener('eventDeleted', handleEventChange);
+    };
+  }, []);
+
+  // Function to refresh events count (can be called from other components)
+  const refreshEventsCount = async () => {
+    try {
+      const events = await api.getEvents();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const upcomingEvents = events.filter(event => {
+        const eventDate = new Date(event.event_date);
+        eventDate.setHours(0, 0, 0, 0);
+        return eventDate >= today;
+      });
+      
+      setUpcomingEventsCount(upcomingEvents.length);
+    } catch (error) {
+      console.error('Error refreshing events count:', error);
+      setUpcomingEventsCount(0);
+    }
+  };
+
+  // Handle bell click to navigate to events
+  const handleBellClick = () => {
+    // Navigate to the appropriate events page based on user role
+    if (authUser?.role === 'Admin4') {
+      navigate('/dean-events');
+    } else {
+      navigate('/my-events');
+    }
+  };
+
+  // Profile management functions
+  const openProfileModal = () => {
+    setProfileData({
+      username: authUser?.username || '',
+      profileImage: null,
+      profileImageUrl: authUser?.profileImageUrl || null
+    });
+    setShowProfileModal(true);
+    setUserMenuOpen(false);
+  };
+
+  const handleImageSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfileData(prev => ({
+          ...prev,
+          profileImage: file,
+          profileImageUrl: e.target.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfileUpdate = async () => {
+    if (!profileData.username.trim()) return;
+    
+    setIsUpdating(true);
+    try {
+      // Here you would typically send the data to your API
+      // For now, we'll just update the local state
+      const updatedUser = {
+        ...authUser,
+        username: profileData.username,
+        profileImageUrl: profileData.profileImageUrl
+      };
+      
+      // Update sessionStorage
+      sessionStorage.setItem('authUser', JSON.stringify(updatedUser));
+      
+      // Close modal
+      setShowProfileModal(false);
+      
+      // Force re-render
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const removeProfileImage = () => {
+    setProfileData(prev => ({
+      ...prev,
+      profileImage: null,
+      profileImageUrl: null
+    }));
+  };
 
   return (
     <div className="admin-container">
@@ -280,13 +426,48 @@ export default function SideTop({ children, hasUnread, activeTab }) {
             </div>
           </div>
           <div className="admin-actions">
+            <div className="notification-bell" style={{ position: 'relative', cursor: 'pointer' }} onClick={handleBellClick}>
+              <FaBell style={{ fontSize: '1.3rem', color: '#204080' }} />
+              {upcomingEventsCount > 0 && (
+                <span className="notification-badge" style={{
+                  position: 'absolute',
+                  top: -7,
+                  right: -7,
+                  background: '#e53e3e',
+                  color: '#fff',
+                  fontSize: '0.7rem',
+                  borderRadius: '50%',
+                  padding: '2px 6px',
+                  fontWeight: 'bold',
+                  minWidth: '16px',
+                  textAlign: 'center',
+                  zIndex: 1000
+                }}>
+                  {upcomingEventsCount}
+                </span>
+              )}
+            </div>
             <button
               style={{ background: 'none', border: 'none', color: '#204080', fontWeight: 600, fontSize: 17, cursor: 'pointer', position: 'relative', padding: '4px 12px', borderRadius: 6 }}
               onClick={() => setUserMenuOpen(v => !v)}
               onBlur={() => setTimeout(() => setUserMenuOpen(false), 180)}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {username}
+                {authUser?.profileImageUrl ? (
+                  <img 
+                    src={authUser.profileImageUrl} 
+                    alt="Profile" 
+                    style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '50%', 
+                      objectFit: 'cover',
+                      border: '2px solid #eaf3ff'
+                    }} 
+                  />
+                ) : (
+                  <span>{username}</span>
+                )}
                 {isTeacher && (
                   <div 
                     className={`status-dot ${teacherStatus === 'approved' ? 'approved' : teacherStatus === 'pending' ? 'pending' : 'rejected'}`}
@@ -306,7 +487,10 @@ export default function SideTop({ children, hasUnread, activeTab }) {
             </button>
             {userMenuOpen && ReactDOM.createPortal(
               <div style={{ position: 'fixed', top: 64, right: 24, background: '#fff', borderRadius: 10, boxShadow: '0 4px 24px rgba(32,64,128,0.13)', minWidth: 160, zIndex: 99999, padding: '10px 0', display: 'flex', flexDirection: 'column', alignItems: 'stretch', overflow: 'visible' }}>
-                <button style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#204080', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}>
+                <button 
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#204080', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}
+                  onClick={openProfileModal}
+                >
                   <FaCog style={{ fontSize: 17 }} /> Settings
                 </button>
                 <button
@@ -326,6 +510,91 @@ export default function SideTop({ children, hasUnread, activeTab }) {
         <div style={{ marginTop: 32 }}>{children}</div>
       </div>
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
+
+      {/* Profile Settings Modal */}
+      {showProfileModal && ReactDOM.createPortal(
+        <div className="profile-modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="profile-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="profile-modal-header">
+              <h2>Profile Settings</h2>
+              <button 
+                className="profile-modal-close" 
+                onClick={() => setShowProfileModal(false)}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div className="profile-modal-body">
+              {/* Profile Image Section */}
+              <div className="profile-image-section">
+                <div className="profile-image-preview">
+                  {profileData.profileImageUrl ? (
+                    <img 
+                      src={profileData.profileImageUrl} 
+                      alt="Profile Preview" 
+                      className="profile-preview-img"
+                    />
+                  ) : (
+                    <div className="profile-placeholder">
+                      <FaUser />
+                    </div>
+                  )}
+                  <div className="profile-image-overlay">
+                    <label htmlFor="profile-image-input" className="camera-icon">
+                      <FaCamera />
+                    </label>
+                    <input
+                      id="profile-image-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                </div>
+                {profileData.profileImageUrl && (
+                  <button 
+                    className="remove-image-btn"
+                    onClick={removeProfileImage}
+                  >
+                    Remove Image
+                  </button>
+                )}
+              </div>
+
+              {/* Username Section */}
+              <div className="profile-input-section">
+                <label htmlFor="username-input">Username</label>
+                <input
+                  id="username-input"
+                  type="text"
+                  value={profileData.username}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="Enter username"
+                  className="profile-input"
+                />
+              </div>
+            </div>
+
+            <div className="profile-modal-footer">
+              <button 
+                className="profile-cancel-btn"
+                onClick={() => setShowProfileModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="profile-update-btn"
+                onClick={handleProfileUpdate}
+                disabled={isUpdating || !profileData.username.trim()}
+              >
+                {isUpdating ? 'Updating...' : 'Update Profile'}
+              </button>
+            </div>
+          </div>
+        </div>, document.body
+      )}
     </div>
   );
 }
