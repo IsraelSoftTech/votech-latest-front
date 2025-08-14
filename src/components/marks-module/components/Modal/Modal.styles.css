@@ -21,8 +21,9 @@
   position: relative;
   background: #ffffff;
   border-radius: 16px;
-  width: 100%;
-  max-width: 460px;
+  width: 60vw;
+  max-width: 800px;
+  min-width: 300px;
   padding: 1rem;
   box-sizing: border-box;
   box-shadow: none;

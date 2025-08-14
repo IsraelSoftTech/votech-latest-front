@@ -1,6 +1,6 @@
 import SideTop from "../../../SideTop";
 import "./Subject.styles.css";
-import api from "../../utils/api";
+import api, { baseURL, headers, subBaseURL } from "../../utils/api";
 import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import DataTable from "../../components/DataTable/DataTable.component";
@@ -10,6 +10,8 @@ import {
   CustomInput,
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
+import { FaChalkboardTeacher, FaLink, FaUserPlus } from "react-icons/fa";
+import AssignCourseModal from "../../components/AssignCourseModal/AssignCourseModal.component";
 
 export const SubjectPage = () => {
   const columns = [
@@ -18,9 +20,10 @@ export const SubjectPage = () => {
     { label: "Code", accessor: "code" },
     { label: "Coefficient", accessor: "coefficient" },
     { label: "Category", accessor: "category" },
-    { label: "Class", accessor: "className" },
-    { label: "Teacher", accessor: "teacherName" },
+    { label: "Classes", accessor: "className" },
+    { label: "Teachers", accessor: "teacherName" },
     { label: "Assigned", accessor: "isAssigned" },
+    { label: "Departments", accessor: "department" },
   ];
 
   const [subjects, setSubjects] = useState([]);
@@ -40,6 +43,10 @@ export const SubjectPage = () => {
   const [formErrors, setFormErrors] = useState({});
   const [createLoading, setCreateLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [filters, setFilters] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [classes, setClasses] = useState([]);
 
   //utilities
   const handleUpdateForm = (key, value) => {
@@ -176,34 +183,75 @@ export const SubjectPage = () => {
     try {
       setIsLoading(true);
       const subjectsRes = await api.get("/subjects");
-      const classSubjectRes = await api.get("/class-subjects");
+      const subFilters = new Set();
 
       // console.log(subjectsRes.data.data);
 
       const subjectData = !subjectsRes.data.data
         ? []
         : subjectsRes.data.data.map((subject, index) => {
-            const isAssigned = subject.classSubjects.some(
-              (cs) => cs.teacher !== null || cs.class !== null
-            )
-              ? "Yes"
-              : "No";
+            const classNames = [];
+            const teacherNames = [];
+            const departmentNames = [];
 
-            const firstCS = subject.classSubjects[0] || {};
-            const className = firstCS.class?.name || "";
-            const teacherName = firstCS.teacher?.name || "";
+            const teacherSet = new Set();
+            const classSet = new Set();
+            const deptSet = new Set();
+
+            subFilters.add(subject.category);
+
+            subject.classSubjects.forEach((cs) => {
+              // classes
+              const fullClassName = `${cs.department.name} ${cs.class.name}`;
+              if (!classSet.has(fullClassName)) {
+                classSet.add(fullClassName);
+                classNames.push(fullClassName);
+              }
+
+              // teachers
+              if (
+                cs.teacher &&
+                cs.teacher.username &&
+                !teacherSet.has(cs.teacher.username)
+              ) {
+                teacherSet.add(cs.teacher.username);
+                teacherNames.push(cs.teacher.username);
+              }
+
+              // departments
+              if (!deptSet.has(cs.department.name)) {
+                deptSet.add(cs.department.name);
+                departmentNames.push(cs.department.name);
+
+                subFilters.add(cs.department.name);
+              }
+            });
 
             return {
-              ...subject,
+              id: subject.id,
               sn: index + 1,
-              isAssigned,
-              className,
-              teacherName,
+              name: subject.name,
+              code: subject.code,
+              coefficient: subject.coefficient,
+              category: subject.category,
+              className: classNames.join(", "),
+              teacherName: teacherNames.join(", "),
+              isAssigned: subject.classSubjects.length > 0 ? "Yes" : "NO",
+              department: departmentNames.join(", "),
             };
           });
+
       console.log(subjectData);
+
+      const actualFilters = [];
+
+      subFilters.forEach((filter) => {
+        actualFilters.push(filter);
+      });
+
+      setFilters(actualFilters);
       setSubjects(subjectData);
-      setClassSubjects(classSubjectRes.data.data || []);
+      // setClassSubjects(classSubjectRes.data.data || []);
     } catch (err) {
       toast.error(err.response?.data.details || "Error fetching subjects.");
       console.log(err);
@@ -212,8 +260,62 @@ export const SubjectPage = () => {
     }
   };
 
+  const fetchDepartments = async () => {
+    try {
+      const res = await fetch(`${subBaseURL}/specialties`, {
+        headers: headers,
+      });
+
+      const data = (await res.json()).map((dep) => ({
+        value: dep.id,
+        label: dep.name,
+      }));
+      setDepartments(data);
+      // console.log(data);
+    } catch (err) {
+      toast.error("Error fetching departments.");
+      console.log(err);
+    }
+  };
+
+  const fetchClasses = async () => {
+    try {
+      const res = await api.get("/classes");
+
+      const classesWithDeptId = !res.data.data ? [] : res.data.data;
+      console.log(res.data.data);
+      setClasses(classesWithDeptId);
+    } catch (err) {
+      toast.error(err?.response?.data.details || "Error fetching classes.");
+      console.log(err);
+    }
+  };
+
+  const fetchTeachers = async () => {
+    try {
+      const res = await api.get("/teachers");
+
+      const data = !res.data.data
+        ? []
+        : res.data.data.map((teach, index) => {
+            return {
+              value: teach.id,
+              label: teach.name || teach.username || `Teacher ${index}`,
+            };
+          });
+      // console.log(res.data);
+      setTeachers(data);
+    } catch (err) {
+      toast.error(err?.response?.data.details || "Error fetching classes.");
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
     fetchSubjects();
+    fetchDepartments();
+    fetchClasses();
+    fetchTeachers();
   }, []);
 
   const handleRowClick = (row) => setSelectedRow(row);
@@ -231,6 +333,25 @@ export const SubjectPage = () => {
   const closeEditModal = () => {
     resetForm();
     setEditModalOpen(false);
+  };
+
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [assignSubject, setAssignSubject] = useState(null);
+
+  const extraActions = [
+    {
+      icon: <FaUserPlus color="#204080" />,
+      title: "Assign Class & Teacher",
+      onClick: (row) => {
+        setAssignSubject(row);
+        setAssignModalOpen(true);
+      },
+    },
+  ];
+
+  const closeAssignModal = () => {
+    setAssignSubject(null);
+    setAssignModalOpen(false);
   };
 
   return (
@@ -255,7 +376,8 @@ export const SubjectPage = () => {
               "Warning: Deleting this subject may cause issues because students, marks, and other data are linked to it."
             );
           }}
-          filterCategories={["active"]}
+          filterCategories={filters}
+          extraActions={extraActions}
         />
       </div>
 
@@ -405,34 +527,42 @@ export const SubjectPage = () => {
               <span className="label">Assigned:</span>
               <span>{selectedRow.isAssigned}</span>
 
-              <span className="label">Class:</span>
+              <span className="label">Classes:</span>
               <span>
-                {selectedRow.classSubjects.length > 0
-                  ? selectedRow.classSubjects
-                      .map((cs) => cs.class?.name)
-                      .filter(Boolean)
-                      .join(", ")
-                  : "None"}
+                {selectedRow.className ? selectedRow.className : "None"}
               </span>
 
-              <span className="label">Teacher:</span>
+              <span className="label">Teachers:</span>
               <span>
-                {selectedRow.classSubjects.length > 0
-                  ? selectedRow.classSubjects
-                      .map((cs) => cs.teacher?.name)
-                      .filter(Boolean)
-                      .join(", ")
-                  : "None"}
+                {selectedRow.teacherName ? selectedRow.teacherName : "None"}
               </span>
 
-              <span className="label">Created At:</span>
+              {/* <span className="label">Created At:</span>
               <span>{new Date(selectedRow.createdAt).toLocaleString()}</span>
 
               <span className="label">Updated At:</span>
-              <span>{new Date(selectedRow.updatedAt).toLocaleString()}</span>
+              <span>{new Date(selectedRow.updatedAt).toLocaleString()}</span> */}
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Assign Teacher and Class Modal*/}
+
+      <Modal
+        isOpen={assignModalOpen}
+        onClose={closeAssignModal}
+        title={`Assign ${
+          `${assignSubject?.name} (${assignSubject?.code || ""})` || "Subject"
+        } To Classes and Teachers`}
+      >
+        <AssignCourseModal
+          departmentsOptions={departments}
+          classesOptions={classes}
+          teachersOptions={teachers}
+          subject={assignSubject}
+          onUpdate={fetchSubjects}
+        />
       </Modal>
     </SideTop>
   );
