@@ -44,6 +44,7 @@ import { AcademicYear } from "./components/marks-module/pages/AccademicYearPage/
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subject.page";
+import { ClassPage } from "./components/marks-module/pages/ClassPage/Class.page";
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -172,6 +173,7 @@ function App() {
 
         <Route path="/academics/academic-years" element={<AcademicYear />} />
         <Route path="/academics/subjects" element={<SubjectPage />} />
+        <Route path="/academics/classes" element={<ClassPage />} />
 
         {/* Psychosocialist Routes */}
         <Route path="/psycho-dashboard" element={<PsycoDash />} />

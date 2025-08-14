@@ -282,7 +282,9 @@ export const SubjectPage = () => {
     try {
       const res = await api.get("/classes");
 
-      const classesWithDeptId = !res.data.data ? [] : res.data.data;
+      const classesWithDeptId = !res.data.data
+        ? []
+        : res.data.data.map((el) => ({ ...el, label: el.name, value: el.id }));
       console.log(res.data.data);
       setClasses(classesWithDeptId);
     } catch (err) {

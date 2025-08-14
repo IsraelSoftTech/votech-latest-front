@@ -87,7 +87,7 @@ export default function AssignCourseModal({
       payload.push({
         class_id: Number(cls.value),
         subject_id: Number(subject.id),
-        department_id: Number(cls.departmentId),
+        department_id: Number(cls.department_id),
         teacher_id: Number(teacher.value),
       });
     }
@@ -108,7 +108,7 @@ export default function AssignCourseModal({
   const filteredClasses = selectedDepartments.length
     ? classesOptions.filter(
         (cls) =>
-          selectedDepartments.some((dep) => dep.value === cls.departmentId) ||
+          selectedDepartments.some((dep) => dep.value === cls.department.id) ||
           selectedClasses.some((sc) => sc.value === cls.value)
       )
     : classesOptions;

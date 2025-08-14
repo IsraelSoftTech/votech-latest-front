@@ -51,7 +51,8 @@ export default function Modal({ isOpen, onClose, title, children, icon }) {
               </p>
             )}
 
-            {children}
+            {/* Scrollable content */}
+            <div className="clean-modal-scroll">{children}</div>
           </motion.div>
         </motion.div>
       )}

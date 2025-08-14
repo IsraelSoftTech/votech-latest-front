@@ -80,6 +80,12 @@ export default function SideTop({ children, hasUnread, activeTab }) {
             path: "/academics/academic-years",
             icon: <FaCalendar />,
           },
+          {
+            label: "Classes",
+            path: "/academics/classes",
+            icon: <FaChalkboard />,
+          },
+
           // { label: "Exams", path: "/marks-exams" },
           // { label: "Reports", path: "/marks-reports" },
         ],
@@ -463,7 +469,10 @@ export default function SideTop({ children, hasUnread, activeTab }) {
                         location.pathname === sub.path ? " active" : ""
                       }`}
                       onClick={() => navigate(sub.path)}
-                      style={{ paddingLeft: 32, cursor: "pointer" }}
+                      style={{
+                        paddingLeft: 20,
+                        cursor: "pointer",
+                      }}
                     >
                       {sub.icon}
                       {sub.label}
