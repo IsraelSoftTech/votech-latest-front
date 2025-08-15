@@ -27,6 +27,7 @@ import {
   FaChevronCircleUp,
   FaChevronCircleDown,
   FaCalendar,
+  FaLayerGroup,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
@@ -84,6 +85,11 @@ export default function SideTop({ children, hasUnread, activeTab }) {
             label: "Classes",
             path: "/academics/classes",
             icon: <FaChalkboard />,
+          },
+          {
+            label: "Academic Bands",
+            path: "/academics/bands",
+            icon: <FaLayerGroup />,
           },
 
           // { label: "Exams", path: "/marks-exams" },

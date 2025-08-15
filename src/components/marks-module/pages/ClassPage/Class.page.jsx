@@ -125,7 +125,9 @@ export const ClassPage = () => {
             ...el,
             sn: index + 1,
             department: el.department?.name || "-",
-            classMaster: el.classMaster?.name || el.classMaster.username || "-",
+            classMaster: el.classMaster
+              ? el.classMaster?.name || el.classMaster.username
+              : "-",
             suspended: el.suspended ? "Suspended" : "Active",
             registration_fee: el.registration_fee
               ? Number(el.registration_fee).toLocaleString("fr-CM")
