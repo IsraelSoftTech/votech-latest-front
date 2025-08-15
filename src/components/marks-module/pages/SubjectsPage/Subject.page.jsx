@@ -3,6 +3,7 @@ import "./Subject.styles.css";
 import api, { baseURL, headers, subBaseURL } from "../../utils/api";
 import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTable from "../../components/DataTable/DataTable.component";
 import Modal from "../../components/Modal/Modal.component";
 import {
@@ -10,7 +11,12 @@ import {
   CustomInput,
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
-import { FaChalkboardTeacher, FaLink, FaUserPlus } from "react-icons/fa";
+import {
+  FaChalkboardTeacher,
+  FaFileAlt,
+  FaLink,
+  FaUserPlus,
+} from "react-icons/fa";
 import AssignCourseModal from "../../components/AssignCourseModal/AssignCourseModal.component";
 
 export const SubjectPage = () => {
@@ -30,6 +36,7 @@ export const SubjectPage = () => {
   const [classSubjects, setClassSubjects] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const navigate = useNavigate();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -347,6 +354,13 @@ export const SubjectPage = () => {
       onClick: (row) => {
         setAssignSubject(row);
         setAssignModalOpen(true);
+      },
+    },
+    {
+      icon: <FaFileAlt color="#204080" />,
+      title: "Fill in marks",
+      onClick: (row) => {
+        navigate(`/academics/mark-upload/${row.id}`);
       },
     },
   ];

@@ -1,6 +1,7 @@
 import "./AssignCourseModal.styles.css";
 import React, { useState, useEffect } from "react";
 import Select from "react-select";
+import PropTypes from "prop-types";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
 
@@ -36,7 +37,8 @@ export default function AssignCourseModal({
         // Prefill classes only in those departments & in DB records
         const prefilledClasses = classesOptions.filter(
           (cls) =>
-            deptIds.includes(cls.departmentId) &&
+            cls.department?.id &&
+            deptIds.includes(cls.department.id) &&
             existing.some((item) => item.class_id === cls.value)
         );
 
@@ -62,7 +64,7 @@ export default function AssignCourseModal({
 
     fetchExistingSubjectClasses();
     setStep(1);
-  }, [subject]);
+  }, [subject, departmentsOptions, classesOptions, teachersOptions]);
 
   const handleAssignTeacher = (classId, teacher) => {
     setTeacherAssignments((prev) => ({
@@ -87,7 +89,7 @@ export default function AssignCourseModal({
       payload.push({
         class_id: Number(cls.value),
         subject_id: Number(subject.id),
-        department_id: Number(cls.department_id),
+        department_id: Number(cls.department?.id || 0),
         teacher_id: Number(teacher.value),
       });
     }
@@ -105,13 +107,18 @@ export default function AssignCourseModal({
     }
   };
 
-  const filteredClasses = selectedDepartments.length
-    ? classesOptions.filter(
-        (cls) =>
-          selectedDepartments.some((dep) => dep.value === cls.department.id) ||
-          selectedClasses.some((sc) => sc.value === cls.value)
-      )
-    : classesOptions;
+  // Null-safe filtered classes
+  const filteredClasses =
+    selectedDepartments.length > 0
+      ? classesOptions.filter(
+          (cls) =>
+            (cls.department?.id &&
+              selectedDepartments.some(
+                (dep) => dep.value === cls.department.id
+              )) ||
+            selectedClasses.some((sc) => sc.value === cls.value)
+        )
+      : classesOptions;
 
   return (
     <div className="assign-course-modal">
@@ -156,10 +163,7 @@ export default function AssignCourseModal({
 
       {/* Step 3 - Teachers */}
       {step === 3 && (
-        <div
-          className="step-content"
-          // style={{ overflowY: "auto", minWidth: "30vh" }}
-        >
+        <div className="step-content">
           {selectedClasses.length === 0 ? (
             <p className="info-text">Please select classes first.</p>
           ) : (
@@ -243,3 +247,11 @@ export default function AssignCourseModal({
     </div>
   );
 }
+
+AssignCourseModal.propTypes = {
+  departmentsOptions: PropTypes.array.isRequired,
+  classesOptions: PropTypes.array.isRequired,
+  teachersOptions: PropTypes.array.isRequired,
+  subject: PropTypes.object,
+  onUpdate: PropTypes.func,
+};
