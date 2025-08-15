@@ -67,7 +67,9 @@ export default function AdminStudent() {
   });
   const [registering, setRegistering] = useState(false);
   const [success, setSuccess] = useState('');
+  const [successType, setSuccessType] = useState('success');
   const [error, setError] = useState('');
+  const [errorType, setErrorType] = useState('error');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -185,8 +187,18 @@ export default function AdminStudent() {
       formData.append('dept', form.dept);
       formData.append('contact', form.contact);
       if (form.photo) formData.append('photo', form.photo);
-      await api.createStudent(formData);
-      setSuccess('success');
+      
+      if (editId) {
+        // Update existing student
+        await api.updateStudent(editId, formData);
+        setSuccess('Student updated successfully!');
+      } else {
+        // Register new student
+        await api.createStudent(formData);
+        setSuccess('Student registered successfully!');
+      }
+      
+      setSuccessType('success');
       const students = await api.getStudents();
       setStudentList(students);
       setTimeout(() => {
@@ -207,9 +219,10 @@ export default function AdminStudent() {
           photo: null
         });
         setEditId(null);
-      }, 1200);
+      }, 3000);
     } catch (err) {
       setError('Failed to register student.');
+      setErrorType('error');
     }
     setRegistering(false);
   };
@@ -223,11 +236,14 @@ export default function AdminStudent() {
     const studentToDelete = studentList[deleteIdx];
     try {
       await api.deleteStudent(studentToDelete.id);
-      setSuccess('success');
+      setSuccess('Student deleted successfully!');
+      setSuccessType('success');
       const students = await api.getStudents();
       setStudentList(students);
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError('Failed to delete student.');
+      setErrorType('error');
     }
     setShowDeleteModal(false);
     setDeleteIdx(null);
@@ -318,6 +334,7 @@ export default function AdminStudent() {
   const generateStudentListReport = () => {
     if (!printClass) {
       setError('Please select a class first.');
+      setErrorType('error');
       return;
     }
 
@@ -325,6 +342,7 @@ export default function AdminStudent() {
     
     if (classStudents.length === 0) {
       setError('No students found for the selected class.');
+      setErrorType('error');
       return;
     }
 
@@ -631,8 +649,8 @@ export default function AdminStudent() {
                   <input className="input-field" type="file" name="photo" accept="image/*" onChange={handleFormChange} />
                 </div>
               </div>
-              {error && <div className="error-message">{error}</div>}
-              {success && <SuccessMessage message={success} />}
+              {error && <SuccessMessage message={error} type={errorType} onClose={() => setError('')} />}
+              {success && <SuccessMessage message={success} type={successType} onClose={() => setSuccess('')} />}
               <button type="submit" className="signup-btn" disabled={registering || isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : (editId ? 'Update' : 'Register')}>{registering ? (editId ? 'Updating...' : 'Registering...') : (editId ? 'Update' : 'Register')}</button>
             </form>
           </div>
@@ -685,8 +703,8 @@ export default function AdminStudent() {
                   </table>
                 </div>
               )}
-              {excelError && <div className="error-message">{excelError}</div>}
-              {excelSuccess && <SuccessMessage message={excelSuccess} />}
+              {excelError && <SuccessMessage message={excelError} type="error" onClose={() => setExcelError('')} />}
+              {excelSuccess && <SuccessMessage message={excelSuccess} type="success" onClose={() => setExcelSuccess('')} />}
               <button
                 type="submit"
                 className="signup-btn"
@@ -756,8 +774,8 @@ export default function AdminStudent() {
                   </table>
                 </div>
               )}
-              {uploadManyError && <div className="error-message">{uploadManyError}</div>}
-              {uploadManySuccess && <SuccessMessage message={uploadManySuccess} />}
+              {uploadManyError && <SuccessMessage message={uploadManyError} type="error" onClose={() => setUploadManyError('')} />}
+              {uploadManySuccess && <SuccessMessage message={uploadManySuccess} type="success" onClose={() => setUploadManySuccess('')} />}
               <button
                 type="submit"
                 className="signup-btn"

@@ -38,14 +38,24 @@ export default function StudentFeeDetails() {
 
   // Only define these after data is loaded
   let s, balance, feeTypes, paid, total, left, status;
+  const safeNum = (v) => {
+    if (v === null || v === undefined) return 0;
+    const n = parseFloat(String(v).replace(/,/g, ''));
+    return isNaN(n) ? 0 : n;
+  };
   if (studentFeeStats && studentFeeStats.student) {
     s = studentFeeStats.student;
     balance = studentFeeStats.balance;
     feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
-    paid = feeTypes.reduce((sum, type) => sum + ((parseFloat(s[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)), 0);
-    total = feeTypes.reduce((sum, type) => sum + (parseFloat(s[type.toLowerCase() + '_fee']) || 0), 0);
-    left = total - paid;
-    status = left <= 0 ? 'Completed' : 'Uncompleted';
+    const paidPerType = feeTypes.map(type => {
+      const expected = safeNum(s[type.toLowerCase() + '_fee']);
+      const leftAmt = safeNum(balance[type]);
+      return Math.max(0, expected - leftAmt);
+    });
+    paid = paidPerType.reduce((sum, v) => sum + v, 0);
+    total = feeTypes.reduce((sum, type) => sum + safeNum(s[type.toLowerCase() + '_fee']), 0);
+    left = Math.max(0, total - paid);
+    status = total > 0 && paid >= total - 0.0001 ? 'Completed' : 'Uncompleted';
   }
 
   // When payType changes, set payAmount to the remaining balance for that type
@@ -196,11 +206,17 @@ export default function StudentFeeDetails() {
                 <select value={payType} onChange={e => setPayType(e.target.value)} required className="text-select">
                   <option value="">Select</option>
                   {feeTypes.map(type => (
-                    <option key={type} value={type} disabled={(balance[type] || 0) <= 0}>{type}</option>
+                    <option
+                      key={type}
+                      value={type}
+                      disabled={safeNum(s[type.toLowerCase() + '_fee']) > 0 && safeNum(balance?.[type]) <= 0}
+                    >
+                      {type}
+                    </option>
                   ))}
                 </select>
                 <label>Amount</label>
-                <input type="number" min="1" max={payType ? (balance[payType] || 0) : undefined} value={payAmount} onChange={e => setPayAmount(e.target.value)} className="text-input" required />
+                <input type="number" min="1" max={payType ? safeNum(balance?.[payType]) : undefined} value={payAmount} onChange={e => setPayAmount(e.target.value)} className="text-input" required />
                 <button type="submit" className="text-button no-hover" disabled={paying || !payType}>{paying ? 'Paying...' : 'Pay'}</button>
               </form>
             </div>

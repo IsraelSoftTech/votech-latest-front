@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie, FaCalendarAlt, FaUsers, FaBell, FaUser, FaCamera, FaTimes } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie, FaCalendarAlt, FaUsers, FaUser, FaCamera, FaTimes } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import ReactDOM from 'react-dom';
 import './SideTop.css';
 import api from '../services/api';
+import NotificationBell from './NotificationBell';
+import MessageIcon from './MessageIcon';
 
 export default function SideTop({ children, hasUnread, activeTab }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState(null);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileData, setProfileData] = useState({
     username: '',
@@ -34,10 +37,9 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
       { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
-      { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
+     
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
-      { label: 'Reports', icon: <FaFileAlt /> },
-      { label: 'Exam/Marks', icon: <FaChartBar /> },
+     
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
     ];
@@ -71,6 +73,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Display Users', icon: <FaUserGraduate />, path: '/admin-users' },
       { label: 'Monitor Users', icon: <FaUsers />, path: '/monitor-users' },
+      { label: 'Staff Attendance', icon: <FaClipboardList />, path: '/staff-attendance' },
       { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
     ];
   } else if (authUser?.role === 'Admin4') {
@@ -219,7 +222,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
     { label: 'Students', icon: <FaUserGraduate />, path: '/teacher-students' },
     { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
-    { label: 'Attendance', icon: <FaClipboardList />, path: '/teacher-attendance' },
+  
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/teacher-lesson-plans' },
     { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
   ];
@@ -289,6 +292,38 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     };
   }, []);
 
+  // Fetch unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await api.getTotalUnreadCount();
+        setUnreadMessageCount(count);
+      } catch (error) {
+        console.error('Error fetching unread message count:', error);
+        setUnreadMessageCount(0);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Set up periodic refresh every 30 seconds for messages
+    const interval = setInterval(fetchUnreadCount, 30000);
+
+    // Listen for custom events when messages are sent/received
+    const handleMessageChange = () => {
+      fetchUnreadCount();
+    };
+
+    window.addEventListener('messageSent', handleMessageChange);
+    window.addEventListener('messageReceived', handleMessageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('messageSent', handleMessageChange);
+      window.removeEventListener('messageReceived', handleMessageChange);
+    };
+  }, []);
+
   // Function to refresh events count (can be called from other components)
   const refreshEventsCount = async () => {
     try {
@@ -316,6 +351,15 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       navigate('/dean-events');
     } else {
       navigate('/my-events');
+    }
+  };
+
+  // Handle message click to navigate to messages
+  const handleMessageClick = () => {
+    if (authUser?.role === 'Admin4') {
+      navigate('/dean-messages');
+    } else {
+      navigate('/admin-messages');
     }
   };
 
@@ -350,21 +394,11 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     
     setIsUpdating(true);
     try {
-      // Here you would typically send the data to your API
-      // For now, we'll just update the local state
-      const updatedUser = {
-        ...authUser,
-        username: profileData.username,
-        profileImageUrl: profileData.profileImageUrl
-      };
-      
-      // Update sessionStorage
-      sessionStorage.setItem('authUser', JSON.stringify(updatedUser));
-      
-      // Close modal
+      const fileToUpload = profileData.profileImage || null;
+      const result = await api.updateMyProfile({ username: profileData.username, profileFile: fileToUpload });
+      const updated = result?.user ? { ...authUser, ...result.user, profileImageUrl: result.user.profileImageUrl || result.user.profile_image_url || null } : { ...authUser, username: profileData.username };
+      sessionStorage.setItem('authUser', JSON.stringify(updated));
       setShowProfileModal(false);
-      
-      // Force re-render
       window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -426,36 +460,23 @@ export default function SideTop({ children, hasUnread, activeTab }) {
             </div>
           </div>
           <div className="admin-actions">
-            <div className="notification-bell" style={{ position: 'relative', cursor: 'pointer' }} onClick={handleBellClick}>
-              <FaBell style={{ fontSize: '1.3rem', color: '#204080' }} />
-              {upcomingEventsCount > 0 && (
-                <span className="notification-badge" style={{
-                  position: 'absolute',
-                  top: -7,
-                  right: -7,
-                  background: '#e53e3e',
-                  color: '#fff',
-                  fontSize: '0.7rem',
-                  borderRadius: '50%',
-                  padding: '2px 6px',
-                  fontWeight: 'bold',
-                  minWidth: '16px',
-                  textAlign: 'center',
-                  zIndex: 1000
-                }}>
-                  {upcomingEventsCount}
-                </span>
-              )}
-            </div>
+            <MessageIcon
+              count={unreadMessageCount}
+              onClick={handleMessageClick}
+            />
+            <NotificationBell
+              count={upcomingEventsCount}
+              onClick={handleBellClick}
+            />
             <button
               style={{ background: 'none', border: 'none', color: '#204080', fontWeight: 600, fontSize: 17, cursor: 'pointer', position: 'relative', padding: '4px 12px', borderRadius: 6 }}
               onClick={() => setUserMenuOpen(v => !v)}
               onBlur={() => setTimeout(() => setUserMenuOpen(false), 180)}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {authUser?.profileImageUrl ? (
+                {authUser?.profileImageUrl || authUser?.profile_image_url ? (
                   <img 
-                    src={authUser.profileImageUrl} 
+                    src={authUser.profileImageUrl || authUser.profile_image_url} 
                     alt="Profile" 
                     style={{ 
                       width: '32px', 

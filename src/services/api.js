@@ -99,6 +99,30 @@ class ApiService {
     }
   }
 
+  async updateMyProfile({ username, profileFile }) {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    if (authHeaders['Authorization']) headers['Authorization'] = authHeaders['Authorization'];
+    const form = new FormData();
+    if (username) form.append('username', username);
+    if (profileFile) form.append('profile', profileFile);
+
+    const response = await fetch(`${API_URL}/profile`, {
+      method: 'PUT',
+      headers: headers,
+      body: form
+    });
+
+    const data = await this.handleResponse(response);
+    if (data && data.user) {
+      // Keep client-side camelCase convenience
+      const merged = { ...this.user, ...data.user, profileImageUrl: data.user.profileImageUrl || data.user.profile_image_url || null };
+      this.user = merged;
+      sessionStorage.setItem('authUser', JSON.stringify(merged));
+    }
+    return data;
+  }
+
   async createAccount({ username, contact, password, role }) {
     try {
       const response = await fetch(`${API_URL}/register`, {
@@ -437,6 +461,14 @@ class ApiService {
     return await this.handleResponse(response);
   }
 
+  async clearAllMonitoringData() {
+    const response = await fetch(`${API_URL}/monitor/clear-all`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
   async createStudent(formData) {
     const authHeaders = this.getAuthHeaders();
     const headers = {};
@@ -682,12 +714,37 @@ class ApiService {
     return await response.json();
   }
 
+  // Get total unread message count across all chats
+  async getTotalUnreadCount() {
+    try {
+      const chatList = await this.getChatList();
+      if (Array.isArray(chatList)) {
+        const totalUnread = chatList.reduce((sum, chat) => sum + (parseInt(chat.unread) || 0), 0);
+        return totalUnread;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error getting total unread count:', error);
+      return 0;
+    }
+  }
+
   // Teacher endpoints
   async getAllTeachers() {
     const response = await fetch(`${API_URL}/teachers`, {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch teachers');
+    return await response.json();
+  }
+
+  // Fee endpoints
+  async getTotalFees(year = null) {
+    const url = year ? `${API_URL}/fees/total/yearly?year=${year}` : `${API_URL}/fees/total/yearly`;
+    const response = await fetch(url, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch total fees');
     return await response.json();
   }
   async addTeacher(data) {

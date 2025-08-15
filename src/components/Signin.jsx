@@ -15,6 +15,7 @@ const Signin = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successType, setSuccessType] = useState('success');
   const navigate = useNavigate();
   const location = useLocation();
   const [showLoader, setShowLoader] = useState(false);
@@ -48,7 +49,8 @@ const Signin = () => {
       // Support both response.data.user and response.user
       const user = response.data?.user || response.user;
       if (user) {
-        setSuccess('success');
+        setSuccess('Sign in successful! Redirecting...');
+        setSuccessType('success');
         setShowSuccess(true);
         // Clear success message after 3 seconds
         setTimeout(() => setShowSuccess(false), 3000);
@@ -71,13 +73,15 @@ const Signin = () => {
         }, 3000);
       } else {
         setError('Invalid username or password.');
-        setSuccess('failed');
+        setSuccess('Sign in failed. Please try again.');
+        setSuccessType('error');
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2500);
       }
     } catch (err) {
       setError('Signin failed. Try again.');
-      setSuccess('failed');
+      setSuccess('Sign in failed. Please try again.');
+      setSuccessType('error');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2500);
     }
@@ -160,7 +164,7 @@ const Signin = () => {
 
   return (
     <div className="signin-root">
-      {showSuccess && <SuccessMessage message={success} onClose={() => setShowSuccess(false)} />}
+      {showSuccess && <SuccessMessage message={success} type={successType} onClose={() => setShowSuccess(false)} />}
       <header className="signin-header">
         <div className="signin-header-group">
           <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />

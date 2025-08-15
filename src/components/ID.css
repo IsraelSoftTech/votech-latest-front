@@ -347,3 +347,84 @@
     display: none !important;
   }
 } 
+
+/* Print-specific styles for ID cards */
+@media print {
+  .idcard-template {
+    width: 85.60mm !important;
+    height: 53.98mm !important;
+    border-radius: 8px !important;
+    padding: 4px 6px 4px 4px !important;
+    margin: 2mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
+  .idcard-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 85.60mm) !important;
+    gap: 4mm !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 4mm !important;
+  }
+  
+  .idcard-photo {
+    width: 20mm !important;
+    height: 20mm !important;
+    border: 2px solid #fff !important;
+  }
+  
+  .idcard-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  .idcard-header {
+    font-size: 0.6rem !important;
+  }
+  
+  .idcard-motto {
+    font-size: 0.7rem !important;
+  }
+  
+  .idcard-info-fields {
+    font-size: 0.55rem !important;
+    padding: 2px 2px 2px 3px !important;
+  }
+  
+  .idcard-info-fields > div {
+    margin-bottom: 1px !important;
+    line-height: 1.1 !important;
+  }
+  
+  .idcard-logo-small {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  
+  .idcard-stamp {
+    width: 16px !important;
+    height: 16px !important;
+    right: -6px !important;
+    bottom: -6px !important;
+  }
+  
+  .idcard-row-main {
+    height: 35mm !important;
+  }
+  
+  .idcard-photo-stamp-col {
+    min-width: 22mm !important;
+    max-width: 22mm !important;
+  }
+  
+  .idcard-info {
+    margin-left: 8px !important;
+  }
+} 

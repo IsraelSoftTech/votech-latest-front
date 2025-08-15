@@ -58,18 +58,36 @@ function Admin() {
   const location = useLocation();
 
   const [studentList, setStudentList] = useState([]);
+  const [teacherList, setTeacherList] = useState([]);
+  const [totalFees, setTotalFees] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   // Get username from sessionStorage
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const username = authUser?.username || 'User';
+  
   useEffect(() => {
-    async function fetchStudents() {
+    async function fetchData() {
+      setLoading(true);
       try {
+        // Fetch students
         const students = await api.getStudents();
         setStudentList(students);
-      } catch (err) {}
+        
+        // Fetch teachers/staff
+        const teachers = await api.getAllTeachers();
+        setTeacherList(teachers);
+        
+        // Fetch total fees for current year
+        const feesData = await api.getTotalFees();
+        setTotalFees(feesData.total || 0);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
     }
-    fetchStudents();
+    fetchData();
   }, []);
 
   // Helper to count today's students
@@ -107,25 +125,25 @@ function Admin() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 12 }}>
             <div style={{ textAlign: 'left', flex: 1 }}>
               <div style={{ fontSize: 18, fontWeight: 600 }}>Today</div>
-              <div className="count" style={{ fontSize: 22 }}>{todayCount}</div>
+              <div className="count" style={{ fontSize: 22 }}>{loading ? '...' : todayCount}</div>
               <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Registered Students Today</div>
             </div>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.3)', height: 48, margin: '0 10px' }}></div>
             <div style={{ textAlign: 'right', flex: 1 }}>
               <div style={{ fontSize: 18, fontWeight: 600 }}>Total</div>
-              <div className="count" style={{ fontSize: 22 }}>{studentList.length}</div>
+              <div className="count" style={{ fontSize: 22 }}>{loading ? '...' : studentList.length}</div>
               <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Registered Students</div>
             </div>
           </div>
         </div>
         <div className="card teachers">
           <div className="icon"><FaChalkboardTeacher /></div>
-          <div className="count">47</div>
+          <div className="count">{loading ? '...' : teacherList.length}</div>
           <div className="desc">Registered Staff</div>
         </div>
         <div className="card fees">
           <div className="icon"><FaMoneyBill /></div>
-          <div className="count">2000000 XAF</div>
+          <div className="count">{loading ? '...' : `${totalFees.toLocaleString()} XAF`}</div>
           <div className="desc">Total Fee Paid</div>
         </div>
       </div>

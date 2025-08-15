@@ -24,7 +24,21 @@ const SuccessMessage = ({
     }
   }, [show, duration, onClose]);
 
-  if (!isVisible) return null;
+  // Auto-show if message is provided and show is not explicitly set
+  useEffect(() => {
+    if (message && !show && !isVisible) {
+      setIsVisible(true);
+      if (duration > 0) {
+        const timer = setTimeout(() => {
+          setIsVisible(false);
+          if (onClose) onClose();
+        }, duration);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [message, show, duration, onClose, isVisible]);
+
+  if (!isVisible || !message) return null;
 
   const getIcon = () => {
     switch (type) {

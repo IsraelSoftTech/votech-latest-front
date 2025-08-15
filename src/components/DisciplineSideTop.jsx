@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './DisciplineSideTop.css';
 import logo from '../assets/logo.png';
-import { FaTachometerAlt, FaEnvelope, FaUserGraduate, FaClipboardList, FaGavel, FaFileAlt, FaComments, FaShieldAlt, FaCog, FaBars, FaSignOutAlt, FaUser, FaCamera, FaTimes, FaBell } from 'react-icons/fa';
+import { FaTachometerAlt, FaEnvelope, FaUserGraduate, FaClipboardList, FaGavel, FaFileAlt, FaComments, FaShieldAlt, FaCog, FaBars, FaSignOutAlt, FaUser, FaCamera, FaTimes } from 'react-icons/fa';
 import ReactDOM from 'react-dom';
 import api from '../services/api';
+import NotificationBell from './NotificationBell';
+import MessageIcon from './MessageIcon';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/discipline' },
@@ -27,6 +29,7 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
@@ -63,21 +66,11 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
     
     setIsUpdating(true);
     try {
-      // Here you would typically send the data to your API
-      // For now, we'll just update the local state
-      const updatedUser = {
-        ...authUser,
-        username: profileData.username,
-        profileImageUrl: profileData.profileImageUrl
-      };
-      
-      // Update sessionStorage
-      sessionStorage.setItem('authUser', JSON.stringify(updatedUser));
-      
-      // Close modal
+      const fileToUpload = profileData.profileImage || null;
+      const result = await api.updateMyProfile({ username: profileData.username, profileFile: fileToUpload });
+      const updated = result?.user ? { ...authUser, ...result.user, profileImageUrl: result.user.profileImageUrl || result.user.profile_image_url || null } : { ...authUser, username: profileData.username };
+      sessionStorage.setItem('authUser', JSON.stringify(updated));
       setShowProfileModal(false);
-      
-      // Force re-render
       window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -170,6 +163,38 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
     };
   }, []);
 
+  // Fetch unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await api.getTotalUnreadCount();
+        setUnreadMessageCount(count);
+      } catch (error) {
+        console.error('DisciplineSideTop: Error fetching unread message count:', error);
+        setUnreadMessageCount(0);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Set up periodic refresh every 30 seconds for messages
+    const interval = setInterval(fetchUnreadCount, 30000);
+
+    // Listen for custom events when messages are sent/received
+    const handleMessageChange = () => {
+      fetchUnreadCount();
+    };
+
+    window.addEventListener('messageSent', handleMessageChange);
+    window.addEventListener('messageReceived', handleMessageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('messageSent', handleMessageChange);
+      window.removeEventListener('messageReceived', handleMessageChange);
+    };
+  }, []);
+
   // Function to refresh events count
   const refreshEventsCount = async () => {
     try {
@@ -213,6 +238,11 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
     navigate('/discipline-events');
   };
 
+  // Handle message click to navigate to messages
+  const handleMessageClick = () => {
+    navigate('/discipline-messages');
+  };
+
   return (
     <div className="ds-container">
       <aside className={`ds-sidebar${sidebarOpen ? ' open' : ''}`}> 
@@ -252,15 +282,16 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
             </div>
           </div>
           <div className="ds-actions">
+            {/* Message Icon */}
+            <MessageIcon
+              count={unreadMessageCount}
+              onClick={handleMessageClick}
+            />
             {/* Notification Bell */}
-            <div className="notification-bell" onClick={handleBellClick}>
-              <FaBell />
-              {upcomingEventsCount > 0 && (
-                <div className="notification-badge">
-                  {upcomingEventsCount}
-                </div>
-              )}
-            </div>
+            <NotificationBell
+              count={upcomingEventsCount}
+              onClick={handleBellClick}
+            />
             
             <button
               style={{ background: 'none', border: 'none', color: '#204080', fontWeight: 600, fontSize: 17, cursor: 'pointer', position: 'relative', padding: '4px 12px', borderRadius: 6 }}
@@ -268,9 +299,9 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
               onBlur={() => setTimeout(() => setUserMenuOpen(false), 180)}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {authUser?.profileImageUrl ? (
+                {authUser?.profileImageUrl || authUser?.profile_image_url ? (
                   <img 
-                    src={authUser.profileImageUrl} 
+                    src={authUser.profileImageUrl || authUser.profile_image_url} 
                     alt="Profile" 
                     style={{ 
                       width: '32px', 

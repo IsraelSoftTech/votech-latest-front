@@ -74,6 +74,35 @@ export default function Specialty(props) {
     fetchSpecialties();
   };
 
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteTargetName, setDeleteTargetName] = useState('this specialty');
+
+  const askDelete = (s) => {
+    if (isAdmin1) return;
+    setDeleteId(s.id);
+    setDeleteTargetName(typeof s.name === 'string' ? s.name : 'this specialty');
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setDeleteLoading(true);
+    try {
+      await api.deleteSpecialty(deleteId);
+      setShowDeleteConfirm(false);
+      setDeleteId(null);
+      setDeleteTargetName('this specialty');
+      await fetchSpecialties();
+    } catch (e) {
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const handleFormChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
@@ -144,7 +173,7 @@ export default function Specialty(props) {
                   </td>
                   <td>
                     <button className="action-btn edit" onClick={() => handleEdit(s)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}><FaEdit /></button>
-                    <button className="action-btn delete" onClick={() => handleDelete(s.id)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}><FaTrash /></button>
+                    <button className="action-btn delete" onClick={() => askDelete(s)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}><FaTrash /></button>
                   </td>
                 </tr>
               ))}
@@ -192,6 +221,18 @@ export default function Specialty(props) {
           </div>
         )}
         {success && <SuccessMessage message={success} />}
+        {showDeleteConfirm && (
+          <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <h2>Confirm Deletion</h2>
+              <p>Are you sure you want to delete {deleteTargetName}?</p>
+              <div className="modal-actions">
+                <button className="modal-btn cancel" onClick={() => setShowDeleteConfirm(false)} disabled={deleteLoading}>Cancel</button>
+                <button className="modal-btn confirm" onClick={confirmDelete} disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </SideTop>
   );

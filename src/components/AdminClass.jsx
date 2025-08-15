@@ -164,6 +164,35 @@ export default function AdminClass() {
     fetchClasses();
   };
 
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteTargetName, setDeleteTargetName] = useState('');
+
+  const askDelete = (c) => {
+    if (isAdmin1) return;
+    setDeleteId(c.id);
+    setDeleteTargetName(typeof c.name === 'string' ? c.name : 'this class');
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setDeleteLoading(true);
+    try {
+      await api.deleteClass(deleteId);
+      setShowDeleteConfirm(false);
+      setDeleteId(null);
+      setDeleteTargetName('');
+      await fetchClasses();
+    } catch (e) {
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <SideTop>
       {/* Place the main content of AdminClass here, excluding sidebar/topbar */}
@@ -214,7 +243,7 @@ export default function AdminClass() {
                     <td>{c.total_fee}</td>
                     <td className="actions">
                       <button className="action-btn edit" title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'} onClick={() => handleEdit(c)} disabled={isAdmin1}><FaEdit /></button>
-                      <button className="action-btn delete" title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'} onClick={() => handleDelete(c.id)} disabled={isAdmin1}><FaTrash /></button>
+                      <button className="action-btn delete" title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'} onClick={() => askDelete(c)} disabled={isAdmin1}><FaTrash /></button>
                     </td>
                   </tr>
                 ))
@@ -253,6 +282,20 @@ export default function AdminClass() {
               {success && <SuccessMessage message={success} />}
               <button type="submit" className="signup-btn" disabled={registering || isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : (editId ? 'Update' : 'Create')}>{registering ? (editId ? 'Updating...' : 'Creating...') : (editId ? 'Update' : 'Create')}</button>
             </form>
+          </div>
+        </div>
+      )}
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete {deleteTargetName}?</p>
+            <div className="modal-actions">
+              <button className="modal-btn cancel" onClick={() => setShowDeleteConfirm(false)} disabled={deleteLoading}>Cancel</button>
+              <button className="modal-btn confirm" onClick={confirmDelete} disabled={deleteLoading}>
+                {deleteLoading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

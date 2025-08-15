@@ -263,7 +263,56 @@
     padding-left: 8px;
     padding-right: 4px;
   }
-} 
+}
+
+/* Mobile-specific optimizations for MessageIcon and NotificationBell */
+@media (max-width: 480px) {
+  .admin-actions {
+    gap: 6px;
+  }
+  
+  .admin-header-left {
+    gap: 4px;
+  }
+  
+  .admin-header {
+    padding: 6px 2px 0 2px;
+  }
+  
+  /* Optimize logo and text for mobile */
+  .admin-header-left img {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .admin-header-left span {
+    font-size: 1.2rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-actions {
+    gap: 4px;
+  }
+  
+  .admin-header-left {
+    gap: 3px;
+  }
+  
+  .admin-header {
+    padding: 4px 1px 0 1px;
+  }
+  
+  /* Further optimize logo and text for very small screens */
+  .admin-header-left img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  .admin-header-left span {
+    font-size: 1.1rem !important;
+  }
+}
 
 .submenu-list { margin-left: 32px; }
 .submenu-item {

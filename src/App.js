@@ -16,6 +16,7 @@ import Fee from './components/Fee';
 import StudentFeeDetails from './components/StudentFeeDetails';
 import UserChat from './components/UserChat';
 import Attendance from './components/Attendance.jsx';
+import StaffAttendance from './components/StaffAttendance.jsx';
 import TeacherDash from './components/TeacherDash';
 import TeacherMessage from './components/TeacherMessage.jsx';
 import Dean from './components/Dean.jsx';
@@ -40,6 +41,7 @@ import PsychoChat from './components/PsychoChat.jsx';
 import PaySlip from './components/PaySlip';
 import TimeTable from './components/TimeTable.jsx';
 import MonitorUsers from './components/MonitorUsers.jsx';
+import SideTop from './components/SideTop.jsx';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -127,6 +129,7 @@ function App() {
       <Route path="/admin-idcards" element={<ID />} />
       <Route path="/admin-users" element={<Users />} />
       <Route path="/monitor-users" element={<MonitorUsers />} />
+      <Route path="/staff-attendance" element={<SideTop><StaffAttendance /></SideTop>} />
       <Route path="/admin-fee" element={<Fee />} />
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
       <Route path="/admin-salary" element={<Salary authUser={authUser} />} />

@@ -49,6 +49,33 @@ export default function MonitorUsers() {
     setTimeout(() => setSuccess(''), 3000);
   };
 
+  const handleClearOff = async () => {
+    if (window.confirm('Are you sure you want to clear all monitored activities? This action cannot be undone and will start everything fresh.')) {
+      setLoading(true);
+      try {
+        // Clear all monitored data
+        await api.clearAllMonitoringData();
+        
+        // Reset all state
+        setUsers([]);
+        setActivities([]);
+        setSessions([]);
+        setSearchTerm('');
+        setFilterStatus('all');
+        setSelectedUser(null);
+        setShowUserDetails(false);
+        
+        setSuccess('All monitored activities cleared successfully. Starting fresh...');
+        setTimeout(() => setSuccess(''), 5000);
+      } catch (err) {
+        setError('Failed to clear monitoring data');
+        console.error('Error clearing monitoring data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('en-US', {
       year: 'numeric',
@@ -141,6 +168,13 @@ export default function MonitorUsers() {
             >
               <FaSync className={loading ? 'monitor-spinning' : ''} />
               {loading ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button 
+              className="monitor-action-btn monitor-clear-btn" 
+              onClick={handleClearOff}
+              disabled={loading}
+            >
+              Clear Off
             </button>
           </div>
         </div>

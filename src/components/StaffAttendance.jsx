@@ -6,10 +6,12 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logo from '../assets/logo.png';
 
-export default function Attendance() {
-  const [summary, setSummary] = useState({ students: { present: 0, absent: 0 } });
+export default function StaffAttendance() {
+  const [summary, setSummary] = useState({ teachers: { present: 0, absent: 0 } });
   const [classes, setClasses] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [selectedClass, setSelectedClass] = useState('');
+  const [selectedTeacher, setSelectedTeacher] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [students, setStudents] = useState([]);
@@ -17,6 +19,7 @@ export default function Attendance() {
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showClassModal, setShowClassModal] = useState(false);
+  const [showTeacherModal, setShowTeacherModal] = useState(false);
   const [showDateTimeModal, setShowDateTimeModal] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -24,29 +27,30 @@ export default function Attendance() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Export state
-  const [showExportClassModal, setShowExportClassModal] = useState(false);
   const [showExportDateModal, setShowExportDateModal] = useState(false);
-  const [exportClassId, setExportClassId] = useState('');
   const [exportDate, setExportDate] = useState('');
   const [exportReport, setExportReport] = useState(null);
   const exportRef = useRef();
 
   useEffect(() => {
-    console.log('Loading initial attendance data...');
+    console.log('Loading initial staff attendance data...');
     const loadData = async () => {
       try {
-        const [summaryData, classesData, sessionsData] = await Promise.all([
+        const [summaryData, classesData, teachersData, sessionsData] = await Promise.all([
           api.getTodayAttendanceSummary(),
           api.getClasses(),
+          api.getAttendanceTeachers(),
           api.getTodaySessions()
         ]);
         console.log('Initial data loaded:', {
           summary: summaryData,
           classes: classesData.length,
+          teachers: teachersData.length,
           sessions: sessionsData
         });
         setSummary(summaryData);
         setClasses(classesData);
+        setTeachers(teachersData);
         setTodaySessions(sessionsData);
       } catch (error) {
         console.error('Error loading initial data:', error);
@@ -97,10 +101,11 @@ export default function Attendance() {
     }
   };
 
-  const totalStudentToday = useMemo(() => summary.students.present + summary.students.absent, [summary]);
+  const totalTeacherToday = useMemo(() => summary.teachers.present + summary.teachers.absent, [summary]);
 
   const openTakeAttendance = () => {
     setSelectedClass('');
+    setSelectedTeacher('');
     setSelectedDate('');
     setSelectedTime('');
     setStudents([]);
@@ -111,24 +116,17 @@ export default function Attendance() {
   };
 
   const openExport = () => {
-    setExportClassId('');
     setExportDate('');
     setExportReport(null);
-    setShowExportClassModal(true);
-  };
-
-  const proceedExportClass = () => {
-    setShowExportClassModal(false);
     setShowExportDateModal(true);
   };
 
   const proceedExportDate = async () => {
-    if (!exportClassId) return;
     if (!exportDate) return;
     setLoading(true);
     try {
-      console.log('Exporting attendance:', { type: 'student', classId: exportClassId, date: exportDate });
-      const report = await api.exportAttendance({ type: 'student', classId: exportClassId, date: exportDate });
+      console.log('Exporting teacher attendance:', { type: 'teacher', date: exportDate });
+      const report = await api.exportAttendance({ type: 'teacher', date: exportDate });
       console.log('Export report received:', report);
       setExportReport(report);
       setShowExportDateModal(false);
@@ -157,30 +155,35 @@ export default function Attendance() {
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
     }
-    const fileName = `attendance_report_student_${exportReport.date}_${new Date().toISOString().split('T')[0]}.pdf`;
+    const fileName = `staff_attendance_report_${exportReport.date}_${new Date().toISOString().split('T')[0]}.pdf`;
     pdf.save(fileName);
   };
 
   const proceedClass = () => {
     setShowClassModal(false);
+    setShowTeacherModal(true);
+  };
+
+  const proceedTeacher = () => {
+    setShowTeacherModal(false);
     setShowDateTimeModal(true);
   };
 
   const proceedDateTime = async () => {
-    if (!selectedClass) return;
+    if (!selectedClass || !selectedTeacher) return;
     if (!selectedDate || !selectedTime) return;
 
     setLoading(true);
     try {
       // Create date in local timezone to avoid timezone shifting
       const localDate = `${selectedDate}T${selectedTime}:00`;
-      console.log('Creating session with local time:', localDate);
-      const session = await api.startAttendanceSession({ type: 'student', class_id: selectedClass, session_time: localDate });
+      console.log('Creating teacher session with local time:', localDate);
+      const session = await api.startAttendanceSession({ type: 'teacher', class_id: selectedClass, session_time: localDate });
       console.log('Session created:', session);
       setSessionId(session.id);
       
-      const list = await api.getAttendanceStudents(selectedClass);
-      setStudents(list);
+      // For teachers, we'll show a single teacher attendance sheet
+      setStudents([{ id: selectedTeacher, full_name: teachers.find(t => t.id === selectedTeacher)?.full_name || 'Unknown Teacher', sex: 'N/A' }]);
       setAttendance({});
       setShowDateTimeModal(false);
       setShowSheet(true);
@@ -201,21 +204,21 @@ export default function Attendance() {
     setLoading(false);
   };
 
-  const mark = (studentId, status) => {
-    setAttendance(prev => ({ ...prev, [studentId]: status }));
+  const mark = (teacherId, status) => {
+    setAttendance(prev => ({ ...prev, [teacherId]: status }));
   };
 
   const saveAttendance = async () => {
     if (!sessionId) return;
     const records = students.map(s => ({
-      student_id: s.id, 
+      teacher_id: s.id, 
       status: attendance[s.id] || 'absent'
     }));
-    console.log('Saving attendance:', { sessionId, records });
+    console.log('Saving teacher attendance:', { sessionId, records });
     setLoading(true);
     try {
       await api.saveAttendanceBulk(sessionId, records);
-      console.log('Attendance saved successfully');
+      console.log('Teacher attendance saved successfully');
       setShowSheet(false);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2500);
@@ -259,17 +262,17 @@ export default function Attendance() {
 
       <div className="attendance-cards">
         <div className="attendance-card">
-          <div className="title">Recent Student Attendance</div>
+          <div className="title">Recent Staff Attendance</div>
           <div className="stats">
-            <span className="present">Present: {summary.students.present}</span>
-            <span className="absent">Absent: {summary.students.absent}</span>
+            <span className="present">Present: {summary.teachers.present}</span>
+            <span className="absent">Absent: {summary.teachers.absent}</span>
           </div>
-          <div className="total">Total: {totalStudentToday}</div>
+          <div className="total">Total: {totalTeacherToday}</div>
         </div>
       </div>
 
       <div className="actions-row" style={{ gap: 8 }}>
-        <button className="att-primary-btn" onClick={openTakeAttendance}>Take Attendance</button>
+        <button className="att-primary-btn" onClick={openTakeAttendance}>Take Staff Attendance</button>
         <button className="att-primary-btn" onClick={openExport}>Export</button>
         <button className="att-ghost-btn" onClick={confirmDeleteAll}>Delete All</button>
       </div>
@@ -283,20 +286,19 @@ export default function Attendance() {
               </div>
               <div className="att-report-title-group">
                 <h1>VOTECH(S7) ACADEMY</h1>
-                <h2>ATTENDANCE REPORT</h2>
-                <h3>Class: {exportReport.className} | Date: {exportReport.date}</h3>
+                <h2>STAFF ATTENDANCE REPORT</h2>
+                <h3>Teachers | Date: {exportReport.date}</h3>
               </div>
             </div>
             <div className="att-report-meta">
               <p><strong>Generated:</strong> {new Date().toLocaleString()}</p>
-              <p><strong>Total Sessions:</strong> {exportReport.sessions.length} | <strong>Total Students:</strong> {exportReport.rows.length}</p>
+              <p><strong>Total Sessions:</strong> {exportReport.sessions.length} | <strong>Total Teachers:</strong> {exportReport.rows.length}</p>
             </div>
             <div className="att-table-wrapper">
               <table className="att-table">
                   <thead>
                     <tr>
                     <th>Names</th>
-                    <th>Sex</th>
                     {exportReport.sessions.map((t, i) => (
                       <th key={i} title={`Session ${i + 1}: ${t}`}>{t}</th>
                     ))}
@@ -308,7 +310,6 @@ export default function Attendance() {
                   {exportReport.rows.map(r => (
                     <tr key={r.id}>
                       <td>{r.full_name}</td>
-                      <td>{r.sex}</td>
                       {r.statuses.map((st, idx) => (
                         <td key={idx} className={st === 'P' ? 'present-cell' : st === 'A' ? 'absent-cell' : ''}>{st}</td>
                       ))}
@@ -328,7 +329,7 @@ export default function Attendance() {
 
       {todaySessions.length > 0 && (
         <div className="att-sessions-table">
-          <h3>Recent Attendance Sessions</h3>
+          <h3>Recent Staff Attendance Sessions</h3>
           <div className="att-table-wrapper">
             <table className="att-table">
               <thead>
@@ -348,7 +349,7 @@ export default function Attendance() {
                   return (
                     <tr key={s.id}>
                       <td>{idx + 1}</td>
-                      <td>Student</td>
+                      <td>Teacher</td>
                       <td>{s.class_name || ''}</td>
                       <td>{dateStr}</td>
                       <td>{timeStr}</td>
@@ -379,6 +380,24 @@ export default function Attendance() {
         </div>
       )}
 
+      {showTeacherModal && (
+        <div className="att-modal-overlay" onClick={() => setShowTeacherModal(false)}>
+          <div className="att-modal" onClick={e => e.stopPropagation()}>
+            <h2>Select Teacher</h2>
+            <select className="att-select" value={selectedTeacher} onChange={(e) => setSelectedTeacher(e.target.value)}>
+              <option value="">-- Select Teacher --</option>
+              {teachers.map(t => (
+                <option key={t.id} value={t.id}>{t.full_name}</option>
+              ))}
+            </select>
+            <div className="att-modal-actions">
+              <button className="att-ghost-btn" onClick={() => setShowTeacherModal(false)}>Cancel</button>
+              <button className="att-primary-btn" disabled={!selectedTeacher} onClick={proceedTeacher}>Next</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showDateTimeModal && (
         <div className="att-modal-overlay" onClick={() => setShowDateTimeModal(false)}>
           <div className="att-modal" onClick={e => e.stopPropagation()}>
@@ -395,7 +414,7 @@ export default function Attendance() {
             </div>
             <div className="att-modal-actions">
               <button className="att-ghost-btn" onClick={() => setShowDateTimeModal(false)}>Cancel</button>
-              <button className="att-primary-btn" disabled={loading || !selectedDate || !selectedTime || !selectedClass} onClick={proceedDateTime}>
+              <button className="att-primary-btn" disabled={loading || !selectedDate || !selectedTime || !selectedClass || !selectedTeacher} onClick={proceedDateTime}>
                 {loading ? 'Starting...' : 'Mark Attendance'}
               </button>
             </div>
@@ -406,7 +425,7 @@ export default function Attendance() {
       {showSheet && (
         <div className="att-sheet">
           <div className="att-sheet-header">
-            <h3>Mark Attendance</h3>
+            <h3>Mark Staff Attendance</h3>
           </div>
           <div className="att-table-wrapper">
             <table className="att-table">
@@ -468,24 +487,6 @@ export default function Attendance() {
       )}
 
       {/* Export Modals */}
-      {showExportClassModal && (
-        <div className="att-modal-overlay" onClick={() => setShowExportClassModal(false)}>
-          <div className="att-modal" onClick={e => e.stopPropagation()}>
-            <h2>Select Class</h2>
-            <select className="att-select" value={exportClassId} onChange={(e) => setExportClassId(e.target.value)}>
-                  <option value="">-- Select Class --</option>
-                  {classes.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-            <div className="att-modal-actions">
-              <button className="att-ghost-btn" onClick={() => setShowExportClassModal(false)}>Cancel</button>
-              <button className="att-primary-btn" disabled={!exportClassId} onClick={proceedExportClass}>Next</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {showExportDateModal && (
         <div className="att-modal-overlay" onClick={() => setShowExportDateModal(false)}>
           <div className="att-modal" onClick={e => e.stopPropagation()}>
@@ -496,7 +497,7 @@ export default function Attendance() {
             </div>
             <div className="att-modal-actions">
               <button className="att-ghost-btn" onClick={() => setShowExportDateModal(false)}>Cancel</button>
-              <button className="att-primary-btn" disabled={loading || !exportDate || !exportClassId} onClick={proceedExportDate}>
+              <button className="att-primary-btn" disabled={loading || !exportDate} onClick={proceedExportDate}>
                 {loading ? 'Generating...' : 'Generate'}
               </button>
             </div>
@@ -505,4 +506,4 @@ export default function Attendance() {
       )}
     </div>
   );
-}
+} 

@@ -22,6 +22,8 @@ const Signup = () => {
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
+  const [successType, setSuccessType] = useState('success');
+  const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -52,18 +54,25 @@ const Signup = () => {
         email: form.email,
         gender: form.gender
       });
-      setSuccess('success');
+      setSuccess('Account created successfully! Redirecting to sign in...');
+      setSuccessType('success');
+      setShowSuccess(true);
       // Clear success message after 5 seconds
-      setTimeout(() => setSuccess(''), 5000);
+      setTimeout(() => setShowSuccess(false), 5000);
       setTimeout(() => navigate('/signin'), 2000);
     } catch (err) {
       setError('Signup failed. Try another username.');
+      setSuccess('Signup failed. Please try again.');
+      setSuccessType('error');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
     }
     setLoading(false);
   };
 
   return (
     <div className="signup-root">
+      {showSuccess && <SuccessMessage message={success} type={successType} onClose={() => setShowSuccess(false)} />}
       <header className="signup-header">
         <div className="signup-header-group">
           <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
@@ -123,7 +132,6 @@ const Signup = () => {
             Already have an account? <Link to="/signin" className="signup-signin-link">Sign In</Link>
           </div>
           {error && <div className="signup-error-message">{error}</div>}
-          {success && <SuccessMessage message={success} />}
           <button type="submit" className="signup-btn" disabled={loading}>{loading ? 'Signing Up...' : 'Sign Up'}</button>
         </form>
       </main>
