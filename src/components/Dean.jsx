@@ -1,84 +1,106 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SideTop from './SideTop';
-import { FaCalendarAlt, FaUsers, FaBoxes, FaTasks } from 'react-icons/fa';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { FaCalendarAlt, FaUsers, FaClipboardList } from 'react-icons/fa';
+import api from '../services/api';
 
 export default function Dean() {
-  // Placeholder data
-  const events = [
-    { title: 'Parent-Teacher Meeting', date: 'Dec 20, 2024 at 10:00 AM', attendees: 150 },
-    { title: 'Staff Training Workshop', date: 'Dec 22, 2024 at 2:00 PM', attendees: 25 },
-    { title: 'Year-End Celebration', date: 'Dec 25, 2024 at 6:00 PM', attendees: 500 },
-  ];
-  // Enrollment chart data (example, monthly)
-  const enrollmentData = [
-    { month: 'Jan', value: 11 },
-    { month: 'Feb', value: 10 },
-    { month: 'Mar', value: 8 },
-    { month: 'Apr', value: 6 },
-    { month: 'May', value: 13 },
-    { month: 'Jun', value: 17 },
-    { month: 'Jul', value: 3 },
-    { month: 'Aug', value: 17 },
-    { month: 'Sep', value: 16 },
-    { month: 'Oct', value: 12 },
-    { month: 'Nov', value: 9 },
-    { month: 'Dec', value: 12 },
-  ];
+  const [events, setEvents] = useState([]);
+  const [staffCount, setStaffCount] = useState(0);
+  const [applicationsCount, setApplicationsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch upcoming events
+        const allEvents = await api.getEvents();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const upcomingEvents = allEvents
+          .filter(event => {
+            const eventDate = new Date(event.event_date);
+            eventDate.setHours(0, 0, 0, 0);
+            return eventDate >= today;
+          })
+          .slice(0, 3) // Show only 3 upcoming events
+          .map(event => ({
+            title: event.title,
+            date: new Date(event.event_date).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
+            }),
+            attendees: event.attendees || 0
+          }));
+        
+        setEvents(upcomingEvents);
+
+        // Fetch staff count (approved applications)
+        const applications = await api.getApplications();
+        console.log('Dean: All applications:', applications);
+        
+        const approvedApplications = applications.filter(app => app.status === 'approved');
+        console.log('Dean: Approved applications:', approvedApplications);
+        console.log('Dean: Approved count:', approvedApplications.length);
+        
+        setStaffCount(approvedApplications.length);
+
+        // Fetch submitted applications count
+        setApplicationsCount(applications.length);
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
   return (
     <SideTop>
       <div className="dashboard-cards">
         <div className="card" style={{ background: '#eaf3ff' }}>
           <div className="icon"><FaCalendarAlt /></div>
-          <div className="count">8</div>
+          <div className="count">{loading ? '...' : events.length}</div>
           <div className="desc">Upcoming events</div>
         </div>
         <div className="card" style={{ background: '#204080', color: '#fff' }}>
           <div className="icon" style={{ color: '#fff' }}><FaUsers /></div>
-          <div className="count">47</div>
+          <div className="count">{loading ? '...' : staffCount}</div>
           <div className="desc">Staff Members</div>
         </div>
         <div className="card" style={{ background: '#388e3c', color: '#fff' }}>
-          <div className="icon"><FaBoxes /></div>
-          <div className="count">89%</div>
-          <div className="desc">Inventory Status</div>
-        </div>
-        <div className="card" style={{ background: '#1b3a4b', color: '#fff' }}>
-          <div className="icon"><FaTasks /></div>
-          <div className="count">12</div>
-          <div className="desc">Scheduled Tasks</div>
+          <div className="icon" style={{ color: '#fff' }}><FaClipboardList /></div>
+          <div className="count">{loading ? '...' : applicationsCount}</div>
+          <div className="desc">Submitted Applications</div>
         </div>
       </div>
       <div className="dashboard-section">
-        <div style={{ flex: 2 }} className="enrolment-chart">
-          <div className="section-title">Upcoming Events</div>
-          {events.map(evt => (
-            <div key={evt.title} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div>
-                <div style={{ fontWeight: 500 }}>{evt.title}</div>
-                <div style={{ color: '#888', fontSize: 14 }}>{evt.date}</div>
-              </div>
-              <div style={{ fontWeight: 600, color: '#204080', fontSize: 15 }}>{evt.attendees} attendees</div>
-            </div>
-          ))}
-        </div>
         <div style={{ flex: 1 }} className="enrolment-chart">
-          <div className="section-title">Students Enrollment</div>
-          <ResponsiveContainer width="100%" height={120}>
-            <AreaChart data={enrollmentData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorDean" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#204080" stopOpacity={0.5}/>
-                  <stop offset="95%" stopColor="#204080" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Area type="monotone" dataKey="value" stroke="#204080" fillOpacity={1} fill="url(#colorDean)" name="Enrollment" />
-            </AreaChart>
-          </ResponsiveContainer>
-          <div className="enrolment-info">50 enrollment this month</div>
+          <div className="section-title">Upcoming Events</div>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>Loading events...</div>
+          ) : events.length > 0 ? (
+            events.map((evt, index) => (
+              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontWeight: 500 }}>{evt.title}</div>
+                  <div style={{ color: '#888', fontSize: 14 }}>{evt.date}</div>
+                </div>
+                <div style={{ fontWeight: 600, color: '#204080', fontSize: 15 }}>{evt.attendees} attendees</div>
+              </div>
+            ))
+          ) : (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>No upcoming events</div>
+          )}
         </div>
       </div>
     </SideTop>

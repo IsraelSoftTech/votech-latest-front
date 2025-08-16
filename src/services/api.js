@@ -544,10 +544,45 @@ class ApiService {
   async payStudentFee({ student_id, class_id, fee_type, amount }) {
     const response = await fetch(`${API_URL}/fees`, {
       method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ student_id, class_id, fee_type, amount })
+      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id, class_id, fee_type, amount }),
     });
-    if (!response.ok) throw new Error('Failed to record payment');
+    if (!response.ok) throw new Error('Failed to pay student fee');
+    return await response.json();
+  }
+
+  async getAllPaymentRecords() {
+    const response = await fetch(`${API_URL}/fees/payments`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch payment records');
+    return await response.json();
+  }
+
+  async getStudentPaymentDetails(studentId) {
+    const response = await fetch(`${API_URL}/fees/payments/student/${studentId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch student payment details');
+    return await response.json();
+  }
+
+  async updatePaymentRecord(paymentId, data) {
+    const response = await fetch(`${API_URL}/fees/payments/${paymentId}`, {
+      method: 'PUT',
+      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update payment record');
+    return await response.json();
+  }
+
+  async deletePaymentRecord(paymentId) {
+    const response = await fetch(`${API_URL}/fees/payments/${paymentId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete payment record');
     return await response.json();
   }
 
@@ -1188,10 +1223,17 @@ class ApiService {
 
   async updateApplicationStatus(id, status) {
     try {
+      const authUser = JSON.parse(sessionStorage.getItem('authUser') || '{}');
+      const approver = authUser.role || 'Unknown';
+      
       const response = await fetch(`${API_URL}/applications/${id}/status`, {
         method: 'PUT',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ 
+          status,
+          approved_by: approver,
+          approved_at: new Date().toISOString()
+        })
       });
       
       // Handle response manually to avoid automatic logout

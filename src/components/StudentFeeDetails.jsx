@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import SideTop from './SideTop';
 import api from '../services/api';
 import './Fee.css';
@@ -22,6 +22,7 @@ function getAcademicYear() {
 export default function StudentFeeDetails() {
   const { studentId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [studentFeeStats, setStudentFeeStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -81,6 +82,21 @@ export default function StudentFeeDetails() {
     }
     fetchStats();
   }, [studentId]);
+
+  // Auto-open Pay modal when payType is present in query params
+  useEffect(() => {
+    if (!studentFeeStats) return;
+    const params = new URLSearchParams(location.search);
+    const type = params.get('payType');
+    const openPay = params.get('openPay');
+    if (type) {
+      setPayType(type);
+      setPayModalOpen(true);
+    } else if (openPay && (openPay === '1' || openPay === 'true')) {
+      setPayType('');
+      setPayModalOpen(true);
+    }
+  }, [location.search, studentFeeStats]);
 
   // Automatically save receipt as PDF when generated
   useEffect(() => {
@@ -283,7 +299,7 @@ export default function StudentFeeDetails() {
         }
         .text-select:focus, .text-input:focus {
           outline: none;
-          border-color: #388e3c;
+          border-color:rgb(46, 44, 153);
         }
         .student-fee-modal-overlay {
           position: fixed;

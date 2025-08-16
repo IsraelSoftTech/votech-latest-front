@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './AdminStudent.css';
 import './StudentListReport.css';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaEnvelope, FaIdCard, FaFileExcel, FaUpload, FaPrint } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTimes, FaEnvelope, FaIdCard, FaFileExcel, FaUpload, FaPrint, FaUser } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 
 import api from '../services/api';
@@ -595,7 +595,7 @@ export default function AdminStudent() {
                   ) : ''}</td>
                   <td className="actions">
                     <button className="action-btn edit" title="Edit" onClick={() => handleEdit(s)}><FaEdit /></button>
-                    <button className="action-btn delete" title="Delete" onClick={() => handleDelete(idx)}><FaTrash /></button>
+                    <button className="action-btn delete" title="Delete" onClick={() => handleDelete(idx)}><FaTimes /></button>
                   </td>
                 </tr>
               ))
@@ -646,7 +646,66 @@ export default function AdminStudent() {
                   <label className="input-label">Contact *</label>
                   <input className="input-field" type="text" name="contact" value={form.contact} onChange={handleFormChange} placeholder="Enter Contact" required />
                   <label className="input-label">Photo</label>
-                  <input className="input-field" type="file" name="photo" accept="image/*" onChange={handleFormChange} />
+                  <div className="photo-input-container">
+                    <div className="photo-preview">
+                      {form.photo ? (
+                        <img 
+                          src={typeof form.photo === 'string' ? form.photo : URL.createObjectURL(form.photo)} 
+                          alt="Student preview" 
+                          className="photo-preview-img"
+                        />
+                      ) : (
+                        <div className="photo-placeholder">
+                          <FaUser style={{ fontSize: '2rem', color: '#ccc' }} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="photo-actions">
+                      <button 
+                        type="button" 
+                        className="camera-btn"
+                        onClick={() => document.getElementById('camera-input').click()}
+                        title="Take Photo with Camera"
+                      >
+                        📷
+                      </button>
+                      <button 
+                        type="button" 
+                        className="file-btn"
+                        onClick={() => document.getElementById('file-input').click()}
+                        title="Select Image File"
+                      >
+                        📁
+                      </button>
+                      {form.photo && (
+                        <button 
+                          type="button" 
+                          className="remove-btn"
+                          onClick={() => setForm(prev => ({ ...prev, photo: null }))}
+                          title="Remove Photo"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                    <input 
+                      id="camera-input"
+                      type="file" 
+                      name="photo" 
+                      accept="image/*" 
+                      capture="environment"
+                      onChange={handleFormChange}
+                      style={{ display: 'none' }}
+                    />
+                    <input 
+                      id="file-input"
+                      type="file" 
+                      name="photo" 
+                      accept="image/*" 
+                      onChange={handleFormChange}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
                 </div>
               </div>
               {error && <SuccessMessage message={error} type={errorType} onClose={() => setError('')} />}
@@ -835,6 +894,114 @@ export default function AdminStudent() {
         }
         .modal-close.thin-x:hover {
           color: #1976d2;
+        }
+        
+        /* Photo Input Styles */
+        .photo-input-container {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          align-items: center;
+        }
+        
+        .photo-preview {
+          width: 120px;
+          height: 120px;
+          border: 2px dashed #ddd;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          background: #f8f9fa;
+          transition: all 0.2s ease;
+        }
+        
+        .photo-preview:hover {
+          border-color: #1976d2;
+          background: #f0f4ff;
+        }
+        
+        .photo-preview-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 6px;
+        }
+        
+        .photo-placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          color: #ccc;
+        }
+        
+        .photo-actions {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+        
+        .camera-btn, .file-btn, .remove-btn {
+          padding: 12px;
+          border: 2px solid #e0e0e0;
+          border-radius: 8px;
+          font-size: 18px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          min-width: 44px;
+          min-height: 44px;
+          background: transparent;
+          color: #666;
+        }
+        
+        .camera-btn:hover {
+          border-color: #1976d2;
+          color: #1976d2;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(25, 118, 210, 0.1);
+        }
+        
+        .file-btn:hover {
+          border-color: #388e3c;
+          color: #388e3c;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(56, 142, 60, 0.1);
+        }
+        
+        .remove-btn:hover {
+          border-color: #d32f2f;
+          color: #d32f2f;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(211, 47, 47, 0.1);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+          .photo-preview {
+            width: 100px;
+            height: 100px;
+          }
+          
+          .photo-actions {
+            flex-direction: column;
+            width: 100%;
+          }
+          
+          .camera-btn, .file-btn, .remove-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 10px 16px;
+          }
         }
       `}</style>
     </SideTop>

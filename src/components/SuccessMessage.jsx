@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { FaCheckCircle, FaTimes, FaInfoCircle, FaExclamationTriangle, FaExclamationCircle } from 'react-icons/fa';
 import './SuccessMessage.css';
 
 const SuccessMessage = ({ 
@@ -40,21 +39,6 @@ const SuccessMessage = ({
 
   if (!isVisible || !message) return null;
 
-  const getIcon = () => {
-    switch (type) {
-      case 'success':
-        return <FaCheckCircle />;
-      case 'error':
-        return <FaExclamationCircle />;
-      case 'warning':
-        return <FaExclamationTriangle />;
-      case 'info':
-        return <FaInfoCircle />;
-      default:
-        return <FaCheckCircle />;
-    }
-  };
-
   const getMessageClass = () => {
     switch (type) {
       case 'success':
@@ -73,9 +57,6 @@ const SuccessMessage = ({
   return (
     <div className={getMessageClass()}>
       <div className="message-content">
-        <div className="message-icon">
-          {getIcon()}
-        </div>
         <div className="message-text">
           {message}
         </div>
@@ -87,7 +68,7 @@ const SuccessMessage = ({
           if (onClose) onClose();
         }}
       >
-        <FaTimes />
+        ×
       </button>
     </div>
   );

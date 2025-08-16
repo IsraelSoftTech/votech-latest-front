@@ -42,6 +42,8 @@ import PaySlip from './components/PaySlip';
 import TimeTable from './components/TimeTable.jsx';
 import MonitorUsers from './components/MonitorUsers.jsx';
 import SideTop from './components/SideTop.jsx';
+import AdminDisciplineCases from './components/AdminDisciplineCases.jsx';
+import AdminCounsellingCases from './components/AdminCounsellingCases.jsx';
 
 import DisciplineSideTop from './components/DisciplineSideTop';
 import DisciplineDashboard from './components/DisciplineDashboard';
@@ -139,6 +141,8 @@ function App() {
       <Route path="/admin-inventory" element={<Inventory />} />
       <Route path="/admin-timetable" element={<TimeTable authUser={authUser} />} />
       <Route path="/timetables" element={<TimeTable authUser={authUser} />} />
+      <Route path="/admin-discipline-cases" element={<SideTop><AdminDisciplineCases /></SideTop>} />
+      <Route path="/admin-counselling-cases" element={<SideTop><AdminCounsellingCases /></SideTop>} />
       <Route path="/admin-group-messages/:groupId" element={<GroupChat />} />
       <Route path="/user-messages/:userId" element={<UserChat />} />
       <Route path="/lesson-plans" element={<LessonPlan />} />

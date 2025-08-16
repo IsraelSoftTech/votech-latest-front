@@ -2,14 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './DisciplineSideTop.css';
 import logo from '../assets/logo.png';
-import { FaTachometerAlt, FaEnvelope, FaUserGraduate, FaClipboardList, FaGavel, FaFileAlt, FaComments, FaShieldAlt, FaCog, FaBars, FaSignOutAlt, FaUser, FaCamera, FaTimes } from 'react-icons/fa';
+import { FaEnvelope, FaUserGraduate, FaClipboardList, FaGavel, FaFileAlt, FaComments, FaShieldAlt, FaCog, FaBars, FaSignOutAlt, FaUser, FaCamera, FaTimes } from 'react-icons/fa';
+import { MdDashboard } from 'react-icons/md';
 import ReactDOM from 'react-dom';
 import api from '../services/api';
 import NotificationBell from './NotificationBell';
 import MessageIcon from './MessageIcon';
 
 const menuItems = [
-  { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/discipline' },
+  { label: 'Dashboard', icon: <MdDashboard />, path: '/discipline' },
   { label: 'Application', icon: <FaClipboardList />, path: '/application' },
   { label: 'My Classes', icon: <FaClipboardList />, path: '/discipline-my-classes' },
   { label: 'Messages', icon: <FaEnvelope />, path: '/discipline-messages' },

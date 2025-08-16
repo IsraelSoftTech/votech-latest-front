@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Admin.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaMoneyCheckAlt, FaUserTie, FaChartPie, FaBoxes, FaFileInvoiceDollar, FaPlus, FaEnvelope, FaIdCard, FaCog, FaCalendarAlt, FaClock } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaMoneyCheckAlt, FaUserTie, FaChartPie, FaBoxes, FaFileInvoiceDollar, FaPlus, FaEnvelope, FaIdCard, FaCog, FaCalendarAlt, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../services/api';
@@ -16,7 +16,8 @@ const menuItems = [
   { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
   { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
   { label: 'Subjects', icon: <FaBook /> },
-  { label: 'Finances', icon: <FaMoneyBill />, path: '/admin-finance' },
+  { label: 'Disciplinary Cases', icon: <FaExclamationTriangle />, path: '/admin-discipline-cases' },
+  { label: 'Counselling Cases', icon: <FaFileAlt />, path: '/admin-counselling-cases' },
   { label: 'Attendance', icon: <FaClipboardList /> },
   { label: 'Reports', icon: <FaFileAlt /> },
   { label: 'Exam/Marks', icon: <FaChartBar /> },
@@ -37,20 +38,6 @@ const enrolmentData = [
   { date: 'October', value: 9 },
 ];
 
-const feeData = [
-  { date: 'Jul 8', fee: 0, salary: 0 },
-  { date: 'Jul 9', fee: 0, salary: 0 },
-  { date: 'Jul 10', fee: 0, salary: 0 },
-  { date: 'Jul 11', fee: 0, salary: 0 },
-  { date: 'Jul 12', fee: 1, salary: 0.5 },
-  { date: 'Jul 13', fee: 3, salary: 2 },
-  { date: 'Jul 14', fee: 1, salary: 1 },
-  { date: 'Jul 15', fee: 2, salary: 1.5 },
-  { date: 'Jul 16', fee: 4, salary: 2.5 },
-  { date: 'Jul 17', fee: 3, salary: 2 },
-  { date: 'Jul 18', fee: 2, salary: 1 },
-];
-
 function Admin() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
@@ -59,7 +46,7 @@ function Admin() {
 
   const [studentList, setStudentList] = useState([]);
   const [teacherList, setTeacherList] = useState([]);
-  const [totalFees, setTotalFees] = useState(0);
+  const [approvedApplications, setApprovedApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   // Get username from sessionStorage
@@ -74,13 +61,16 @@ function Admin() {
         const students = await api.getStudents();
         setStudentList(students);
         
-        // Fetch teachers/staff
-        const teachers = await api.getAllTeachers();
-        setTeacherList(teachers);
+        // Fetch approved applications (staff approved by Admin4)
+        const applications = await api.getApplications();
+        console.log('Admin3: All applications:', applications);
         
-        // Fetch total fees for current year
-        const feesData = await api.getTotalFees();
-        setTotalFees(feesData.total || 0);
+        const approved = applications.filter(app => app.status === 'approved');
+        console.log('Admin3: Approved applications:', approved);
+        console.log('Admin3: Approved count:', approved.length);
+        
+        setApprovedApplications(approved);
+        
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
       } finally {
@@ -138,13 +128,8 @@ function Admin() {
         </div>
         <div className="card teachers">
           <div className="icon"><FaChalkboardTeacher /></div>
-          <div className="count">{loading ? '...' : teacherList.length}</div>
-          <div className="desc">Registered Staff</div>
-        </div>
-        <div className="card fees">
-          <div className="icon"><FaMoneyBill /></div>
-          <div className="count">{loading ? '...' : `${totalFees.toLocaleString()} XAF`}</div>
-          <div className="desc">Total Fee Paid</div>
+          <div className="count">{loading ? '...' : approvedApplications.length}</div>
+          <div className="desc">Registered Staff (Approved)</div>
         </div>
       </div>
       <div className="dashboard-section" style={{ display: 'flex', flexWrap: 'wrap', gap: 32, marginTop: 0 }}>

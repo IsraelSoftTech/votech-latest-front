@@ -6,6 +6,7 @@ import './FeeReport.css';
 import api from '../services/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import FeeReport from './FeeReport';
+import FeeReceipt from './FeeReceipt';
 
 export default function Fee() {
   const location = useLocation();
@@ -39,6 +40,65 @@ export default function Fee() {
   const feeReportRef = React.useRef();
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState({ className: '', classId: '', backendResponse: null });
+  
+  // New state for class filtering
+  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  
+  // New state for fee management
+  const [studentFeeDetails, setStudentFeeDetails] = useState({});
+  const [paymentRecords, setPaymentRecords] = useState([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedFeeType, setSelectedFeeType] = useState('');
+  const [selectedStudentForPayment, setSelectedStudentForPayment] = useState(null);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [paymentStudentsStats, setPaymentStudentsStats] = useState({});
+  const [showPaymentDetailsModal, setShowPaymentDetailsModal] = useState(false);
+  const [selectedStudentDetails, setSelectedStudentDetails] = useState(null);
+  const [studentPaymentDetails, setStudentPaymentDetails] = useState([]);
+  
+  // Receipt modal state
+  const [receiptData, setReceiptData] = useState(null);
+  const receiptRef = React.useRef();
+ 
+  // Fetch payment records
+  const fetchPaymentRecords = async () => {
+    try {
+      const records = await api.getAllPaymentRecords();
+      setPaymentRecords(records);
+      
+      // Update payment students stats
+      const stats = {};
+      records.forEach(record => {
+        stats[record.student_id] = {
+          status: record.payment_status,
+          totalLeft: record.total_balance
+        };
+      });
+      setPaymentStudentsStats(stats);
+    } catch (error) {
+      console.error('Error fetching payment records:', error);
+    }
+  };
+
+  // Fetch student payment details
+  const fetchStudentPaymentDetails = async (studentId) => {
+    try {
+      const details = await api.getStudentPaymentDetails(studentId);
+      setStudentPaymentDetails(details);
+    } catch (error) {
+      console.error('Error fetching student payment details:', error);
+    }
+  };
+
+  // Show payment details modal
+  const handleViewPaymentDetails = async (student) => {
+    setSelectedStudentDetails(student);
+    await fetchStudentPaymentDetails(student.student_id);
+    setShowPaymentDetailsModal(true);
+  };
 
   // Fetch and aggregate total paid/owed
   useEffect(() => {
@@ -91,6 +151,86 @@ export default function Fee() {
       api.getClasses().then(setClasses).catch(() => setClasses([]));
     }
   }, [feeStatsModalOpen, classes.length]);
+
+  // Fetch classes and students on component mount
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const [classesData, studentsData] = await Promise.all([
+          api.getClasses(),
+          api.getStudents()
+        ]);
+        setClasses(classesData);
+        setFilteredStudents(studentsData);
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+        setClasses([]);
+        setFilteredStudents([]);
+      }
+    };
+    fetchInitialData();
+  }, []);
+
+  // Fetch payment records from database
+  useEffect(() => {
+    fetchPaymentRecords();
+  }, []);
+
+  // Refresh payment records when component comes back into focus (e.g., after returning from StudentFeeDetails)
+  useEffect(() => {
+    const handleFocus = () => {
+      refreshPaymentRecords();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
+  // Also refresh when the component mounts or when the URL changes (indicating navigation back)
+  useEffect(() => {
+    refreshPaymentRecords();
+  }, [location.pathname]);
+
+  // Function to refresh payment records
+  const refreshPaymentRecords = async () => {
+    try {
+      await fetchPaymentRecords();
+    } catch (error) {
+      console.error('Error refreshing payment records:', error);
+    }
+  };
+
+  // Filter students when class is selected
+  useEffect(() => {
+    if (!selectedClassName || selectedClassName === 'All Classes') {
+      // Show all students
+      api.getStudents().then(students => {
+        setFilteredStudents(students);
+        // Fetch fee details for all students
+        students.forEach(student => fetchStudentFeeDetails(student.id));
+      }).catch(() => setFilteredStudents([]));
+    } else {
+      // Filter students by selected class
+      setStudentsLoading(true);
+      api.getStudents().then(students => {
+        const filtered = students.filter(student => {
+          let studentClassName = student.class_name || student.class || '';
+          if (!studentClassName && student.class_id && classes.length > 0) {
+            const found = classes.find(c => c.id === student.class_id);
+            if (found) studentClassName = found.name;
+          }
+          return studentClassName === selectedClassName;
+        });
+        setFilteredStudents(filtered);
+        // Fetch fee details for filtered students
+        filtered.forEach(student => fetchStudentFeeDetails(student.id));
+        setStudentsLoading(false);
+      }).catch(() => {
+        setFilteredStudents([]);
+        setStudentsLoading(false);
+      });
+    }
+  }, [selectedClassName, classes]);
 
   // Fetch class stats when proceed is clicked
   useEffect(() => {
@@ -245,6 +385,153 @@ export default function Fee() {
     setReceiptModalOpen(true);
   };
 
+  // Fetch student fee details when class is selected
+  const fetchStudentFeeDetails = async (studentId) => {
+    try {
+      const feeStats = await api.getStudentFeeStats(studentId);
+      setStudentFeeDetails(prev => ({
+        ...prev,
+        [studentId]: feeStats
+      }));
+    } catch (error) {
+      console.error('Error fetching student fee details:', error);
+    }
+  };
+
+  // Handle fee payment
+  const handleOpenPayForStudent = (student) => {
+    // Navigate to StudentFeeDetails and auto-open the standard Pay modal
+    navigate(`/admin-fee/${student.id}?openPay=1`);
+  };
+
+  // Submit fee payment
+  const submitFeePayment = async () => {
+    if (!paymentAmount || !selectedStudentForPayment || !selectedFeeType) return;
+    
+    try {
+      // Here you would call the API to record the payment
+      const paymentData = {
+        studentId: selectedStudentForPayment.id,
+        feeType: selectedFeeType,
+        amount: parseFloat(paymentAmount),
+        date: new Date().toISOString(),
+        status: 'paid'
+      };
+      
+      // Add to payment records
+      setPaymentRecords(prev => [...prev, paymentData]);
+      
+      // Refresh student fee details
+      await fetchStudentFeeDetails(selectedStudentForPayment.id);
+      
+      setShowPaymentModal(false);
+      setSelectedStudentForPayment(null);
+      setSelectedFeeType('');
+      setPaymentAmount('');
+    } catch (error) {
+      console.error('Error submitting payment:', error);
+    }
+  };
+
+  // Edit payment record
+  const editPayment = (payment) => {
+    setEditingPayment(payment);
+    setPaymentAmount(payment.amount.toString());
+    setShowEditModal(true);
+  };
+
+  // Update payment record
+  const updatePayment = async () => {
+    if (!paymentAmount || !editingPayment) return;
+    
+    try {
+      // Client-side validation: prevent exceeding remaining
+      const studentId = editingPayment.student_id;
+      const feeType = editingPayment.fee_type;
+      // Fetch latest stats for the student to compute remaining
+      const stats = await api.getStudentFeeStats(studentId);
+      const remaining = stats && stats.balance && stats.balance[feeType] ? parseFloat(stats.balance[feeType]) : 0;
+      const newAmount = parseFloat(paymentAmount);
+      if (Number.isNaN(newAmount) || newAmount < 0) {
+        alert('Please enter a valid amount.');
+        return;
+      }
+      // Check exceeding: remaining is the total remaining for that type, but since we're editing one record,
+      // we need to add back the current record amount to compute the allowed max.
+      // Fetch total already paid excluding this record via simple approximation using table state if available
+      // For strictness, rely on backend too; here just prevent obvious exceed.
+      if (newAmount > remaining + (editingPayment.amount || 0)) {
+        alert(`Amount exceeds remaining balance for ${feeType}. Max allowed: ${(remaining + (editingPayment.amount || 0)).toLocaleString()} XAF`);
+        return;
+      }
+      // Call API to update the payment record
+      await api.updatePaymentRecord(editingPayment.id, {
+        amount: newAmount
+      });
+      
+      // Refresh payment records from database
+      await refreshPaymentRecords();
+      
+      setShowEditModal(false);
+      setEditingPayment(null);
+      setPaymentAmount('');
+    } catch (error) {
+      console.error('Error updating payment:', error);
+      alert('Failed to update payment record.');
+    }
+  };
+
+  // Delete payment record
+  const deletePayment = async (payment) => {
+    if (window.confirm('Are you sure you want to delete this payment record?')) {
+      try {
+        // Call API to delete the payment record
+        await api.deletePaymentRecord(payment.id);
+        
+        // Refresh payment records from database
+        await refreshPaymentRecords();
+        
+        alert('Payment record deleted successfully.');
+      } catch (error) {
+        console.error('Error deleting payment:', error);
+        alert('Failed to delete payment record.');
+      }
+    }
+  };
+
+  // Generate receipt for student
+  const handleGenerateReceipt = async (student) => {
+    try {
+      // Fetch student fee stats
+      const stats = await api.getStudentFeeStats(student.id);
+      if (stats && stats.student && stats.balance) {
+        setReceiptData({
+          student: stats.student,
+          balance: stats.balance
+        });
+        setReceiptModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Error generating receipt:', error);
+      alert('Failed to generate receipt.');
+    }
+  };
+
+  // Check if student has completed fees
+  const isStudentCompleted = (student) => {
+    const feeDetails = studentFeeDetails[student.id];
+    if (!feeDetails) return false;
+    
+    const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
+    const totalBalance = feeTypes.reduce((sum, type) => {
+      const allocated = feeDetails.balance?.[type] || 0;
+      const paid = feeDetails.paid?.[type] || 0;
+      return sum + (allocated - paid);
+    }, 0);
+    
+    return totalBalance <= 0;
+  };
+
   return (
     <SideTop>
       <div className="fee-main-content">
@@ -262,15 +549,36 @@ export default function Fee() {
           </div>
         </div>
         {/* Responsive search bar and Fee Statistics button */}
-        <div style={{ margin: '32px 0 18px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 18 }}>
+        <div style={{ margin: '32px 0 18px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
           <input
             className="student-search-bar"
             type="text"
             placeholder="Search student by name or ID..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            style={{ width: '100%', maxWidth: 400, fontSize: 17, borderRadius: 8, border: '1.5px solid #1976d2', padding: '12px 16px' }}
+            style={{ width: '100%', maxWidth: 300, fontSize: 17, borderRadius: 8, border: '1.5px solid #1976d2', padding: '12px 16px' }}
           />
+          <select
+            value={selectedClassName}
+            onChange={e => setSelectedClassName(e.target.value)}
+            style={{
+              width: '100%',
+              maxWidth: 200,
+              fontSize: 17,
+              borderRadius: 8,
+              border: '1.5px solid #1976d2',
+              padding: '12px 16px',
+              background: '#fff',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="">All Classes</option>
+            {classes.map((cls) => (
+              <option key={cls.id} value={cls.name}>
+                {cls.name}
+              </option>
+            ))}
+          </select>
           <span
             className="fee-stats-btn-text"
             style={{ color: '#1976d2', fontWeight: 600, fontSize: 17, cursor: 'pointer', userSelect: 'none', borderBottom: '1.5px dashed #1976d2' }}
@@ -279,19 +587,254 @@ export default function Fee() {
             Fee Statistics
           </span>
         </div>
+        {studentsLoading && <div style={{ textAlign: 'center', color: '#888', marginTop: 12 }}>Loading students...</div>}
         {searchLoading && <div style={{ textAlign: 'center', color: '#888', marginTop: 12 }}>Searching...</div>}
         {searchError && <div style={{ textAlign: 'center', color: '#e53e3e', marginTop: 12 }}>{searchError}</div>}
-        <div className="student-search-grid">
-          {searchResults.map(s => (
-            <div
-              key={s.id}
-              className="student-search-result"
-              onClick={() => handleStudentClick(s)}
-            >
-              {s.full_name} ({s.student_id})
-            </div>
-          ))}
+        
+        {/* Payment Records Table - Always Visible */}
+        <div style={{ marginTop: 32 }}>
+          <h3 style={{ color: '#204080', marginBottom: 16, fontSize: '1.2rem' }}>
+            Payment Records (Students with Payment History)
+          </h3>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 12, 
+            boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+            overflow: 'hidden',
+            marginBottom: 24
+          }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#204080', color: '#fff' }}>
+                  <th style={{ padding: '16px 12px', textAlign: 'left', fontSize: '14px', fontWeight: 600 }}>Student</th>
+                  <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Student ID</th>
+                  <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Class</th>
+                  <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Total Paid</th>
+                  <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Total Balance</th>
+                  <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Status</th>
+                  <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Last Payment</th>
+                  <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentRecords.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" style={{ padding: '32px 16px', textAlign: 'center', color: '#888', fontSize: '14px' }}>
+                      No students with payment history found. This table only shows students who have started paying fees or have completed all their payments.
+                    </td>
+                  </tr>
+                ) : (
+                  paymentRecords.map((record, index) => (
+                    <tr key={record.student_id || index} style={{ 
+                      borderBottom: '1px solid #e5e7eb',
+                      background: index % 2 === 0 ? '#fff' : '#f9fafb'
+                    }}>
+                      <td style={{ padding: '16px 12px', fontSize: '14px', fontWeight: 600 }}>
+                        {record.student_name || 'Unknown'}
+                      </td>
+                      <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
+                        {record.student_number || 'N/A'}
+                      </td>
+                      <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
+                        {record.class_name || 'N/A'}
+                      </td>
+                      <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#2ecc71' }}>
+                        {(record.total_paid || 0).toLocaleString()} XAF
+                      </td>
+                      <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#e53e3e' }}>
+                        {(record.total_balance || 0).toLocaleString()} XAF
+                      </td>
+                      <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 700, color: (record.payment_status === 'Completed' ? '#2ecc71' : record.payment_status === 'Partial' ? '#ffc107' : '#e53e3e') }}>
+                        {record.payment_status || 'Pending'}
+                      </td>
+                      <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
+                        {record.last_payment_date ? new Date(record.last_payment_date).toLocaleDateString() : 'No payments'}
+                      </td>
+                      <td style={{ padding: '16px 12px', textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleViewPaymentDetails(record)}
+                          style={{
+                            background: '#1976d2',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '6px 12px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            marginRight: '8px'
+                          }}
+                        >
+                          View Details
+                        </button>
+                        {record.payment_status !== 'Completed' && (
+                          <button
+                            onClick={() => handleOpenPayForStudent({ id: record.student_id })}
+                            style={{
+                              background: '#204080',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '6px 12px',
+                              fontSize: '11px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Pay
+                          </button>
+                        )}
+                        {isStudentCompleted(record) && (
+                          <button
+                            onClick={() => handleGenerateReceipt(record)}
+                            style={{
+                              background: '#4CAF50',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '6px 12px',
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                              marginLeft: '8px'
+                            }}
+                          >
+                            Receipt
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+        
+        {/* Show filtered students when class is selected and no search query */}
+        {!searchQuery && selectedClassName && (
+          <div style={{ marginTop: 20 }}>
+            <h3 style={{ color: '#204080', marginBottom: 16, fontSize: '1.2rem' }}>
+              Students in {selectedClassName} ({filteredStudents.length})
+            </h3>
+            
+            {/* Fee Management Table */}
+            <div style={{ 
+              background: '#fff', 
+              borderRadius: 12, 
+              boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+              overflow: 'hidden',
+              marginBottom: 24
+            }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#1976d2', color: '#fff' }}>
+                    <th style={{ padding: '16px 12px', textAlign: 'left', fontSize: '14px', fontWeight: 600 }}>Student</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Registration</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Bus</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Tuition</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Internship</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Remedial</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>PTA</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Total Paid</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Balance</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStudents.map((student, index) => {
+                    const feeDetails = studentFeeDetails[student.id];
+                    const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
+                    
+                    return (
+                      <tr key={student.id} style={{ 
+                        borderBottom: '1px solid #e5e7eb',
+                        background: index % 2 === 0 ? '#fff' : '#f9fafb'
+                      }}>
+                        <td style={{ padding: '16px 12px', fontSize: '14px' }}>
+                          <div style={{ fontWeight: 600, color: '#204080' }}>{student.full_name}</div>
+                          <div style={{ fontSize: '12px', color: '#666' }}>ID: {student.student_id}</div>
+                        </td>
+                        {feeTypes.map(feeType => {
+                          const allocated = feeDetails?.balance?.[feeType] || 0;
+                          const paid = feeDetails?.paid?.[feeType] || 0;
+                          const balance = allocated - paid;
+                          return (
+                            <td key={feeType} style={{ padding: '16px 8px', textAlign: 'center', fontSize: '13px' }}>
+                              <div style={{ marginBottom: '4px' }}>
+                                <span style={{ fontWeight: 600, color: '#1976d2' }}>{allocated.toLocaleString()}</span>
+                              </div>
+                              <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>
+                                Paid: {paid.toLocaleString()}
+                              </div>
+                              <div style={{ marginBottom: '0', fontSize: '12px', color: balance > 0 ? '#e53e3e' : '#2ecc71' }}>
+                                Balance: {balance.toLocaleString()}
+                              </div>
+                            </td>
+                          );
+                        })}
+                        <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#2ecc71' }}>
+                          {(feeDetails?.total_paid || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#e53e3e' }}>
+                          {(feeDetails?.total_balance || 0).toLocaleString()}
+                        </td>
+                        <td style={{ padding: '16px 12px', textAlign: 'center' }}>
+                          {isStudentCompleted(student) ? (
+                            <button
+                              onClick={() => handleGenerateReceipt(student)}
+                              style={{
+                                background: '#4CAF50',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: 600
+                              }}
+                            >
+                              Receipt
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleOpenPayForStudent(student)}
+                              style={{
+                                background: '#204080',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: 600
+                              }}
+                            >
+                              Pay Fee
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            
+          </div>
+        )}
+        
+        {/* Show search results when there's a search query */}
+        {searchQuery && (
+          <div className="student-search-grid">
+            {searchResults.map(s => (
+              <div
+                key={s.id}
+                className="student-search-result"
+                onClick={() => handleStudentClick(s)}
+              >
+                {s.full_name} ({s.student_id})
+              </div>
+            ))}
+          </div>
+        )}
         {/* Fee Statistics Modal */}
         {feeStatsModalOpen && (
           <div className="fee-stats-modal-overlay" style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(32,64,128,0.13)',zIndex:2000,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto'}}>
@@ -413,6 +956,244 @@ export default function Fee() {
           </div>
         )}
       </div>
+      
+      {/* Payment Modal removed in favor of navigating to Student Fee Details modal */}
+      
+      {/* Edit Payment Modal */}
+      {showEditModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '32px',
+            borderRadius: '12px',
+            minWidth: '400px',
+            maxWidth: '500px'
+          }}>
+            <h3 style={{ margin: '0 0 24px 0', color: '#204080', fontSize: '1.5rem' }}>
+              Edit Payment
+            </h3>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
+                Student:
+              </label>
+              <div style={{ padding: '12px', background: '#f5f5f5', borderRadius: '6px', fontSize: '14px' }}>
+                {editingPayment?.studentName || 'Unknown'}
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
+                Fee Type:
+              </label>
+              <div style={{ padding: '12px', background: '#f5f5f5', borderRadius: '6px', fontSize: '14px' }}>
+                {editingPayment?.feeType}
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
+                Amount (XAF):
+              </label>
+              <input
+                type="number"
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1.5px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+                placeholder="Enter amount"
+              />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowEditModal(false)}
+                style={{
+                  padding: '12px 24px',
+                  border: '1px solid #ddd',
+                  background: 'white',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={updatePayment}
+                disabled={!paymentAmount}
+                style={{
+                  padding: '12px 24px',
+                  border: 'none',
+                  background: paymentAmount ? '#1976d2' : '#ccc',
+                  color: 'white',
+                  borderRadius: '6px',
+                  cursor: paymentAmount ? 'pointer' : 'not-allowed',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                Update Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Details Modal */}
+      {showPaymentDetailsModal && selectedStudentDetails && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            maxWidth: '800px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '24px',
+              borderBottom: '1px solid #e9ecef',
+              background: '#f8f9fa',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h3 style={{ margin: '0 0 8px 0', color: '#204080', fontSize: '1.5rem' }}>
+                  Payment Details
+                </h3>
+                <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
+                  {selectedStudentDetails.student_name} ({selectedStudentDetails.student_number})
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPaymentDetailsModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  color: '#666',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '4px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+              {studentPaymentDetails.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                  <p>No individual payment records found for this student.</p>
+                </div>
+              ) : (
+                <div>
+                  <h4 style={{ margin: '0 0 16px 0', color: '#204080' }}>Individual Payment Records</h4>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                    <thead>
+                      <tr style={{ background: '#f8f9fa', borderBottom: '1px solid #e9ecef' }}>
+                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Date</th>
+                        <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600' }}>Fee Type</th>
+                        <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600' }}>Amount</th>
+                        <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {studentPaymentDetails.map((payment, index) => (
+                        <tr key={payment.id} style={{ 
+                          borderBottom: '1px solid #e9ecef',
+                          background: index % 2 === 0 ? '#fff' : '#f9fafb'
+                        }}>
+                          <td style={{ padding: '12px' }}>
+                            {new Date(payment.paid_at).toLocaleDateString()}
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            {payment.fee_type}
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#2ecc71' }}>
+                            {payment.amount.toLocaleString()} XAF
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                            <button
+                              onClick={() => {
+                                setEditingPayment(payment);
+                                setPaymentAmount(payment.amount.toString());
+                                setShowEditModal(true);
+                                setShowPaymentDetailsModal(false);
+                              }}
+                              style={{
+                                background: '#1976d2',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                                marginRight: '4px'
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => deletePayment(payment)}
+                              style={{
+                                background: '#e53e3e',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                fontSize: '11px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Modal/print styles */}
       <style>{`
         .fee-stats-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(32,64,128,0.13); z-index: 2000; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; }
@@ -433,7 +1214,7 @@ export default function Fee() {
         .fee-stats-table-pro tr:last-child td { border-bottom: none; }
         .fee-stats-modal-actions { display: flex; justify-content: flex-end; gap: 18px; margin: 24px 32px 0 0; }
         .fee-stats-print-btn { background: #204080; color: #fff; border: none; border-radius: 7px; padding: 12px 32px; font-size: 1.1rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(32,64,128,0.08); transition: background 0.15s; }
-        .fee-stats-print-btn:hover { background: #388e3c; }
+        .fee-stats-print-btn:hover { background:rgb(35, 46, 150); }
         .fee-stats-modal-close { position: absolute; top: 18px; right: 28px; background: none; border: none; color: #222; font-size: 1.7rem; font-weight: 200; line-height: 1; cursor: pointer; z-index: 1001; padding: 0 6px; }
         .fee-stats-modal-close:hover { color: #1976d2; }
         .fee-stats-loading { color: #888; margin: 18px 0; text-align: center; font-size: 1.1rem; }
@@ -442,6 +1223,35 @@ export default function Fee() {
         @media (max-width: 600px) { .fee-stats-modal-content { max-width: 99vw; padding: 0; } .fee-stats-modal-header { padding: 16px 4px 8px 4px; } .fee-stats-modal-label, .fee-stats-modal-select { margin-left: 4px; width: calc(100% - 8px); } .fee-stats-table-pro th, .fee-stats-table-pro td { padding: 8px 4px; font-size: 0.98rem; } }
         @media print { @page { size: A4 landscape; margin: 10mm; } body, html { background: white !important; } .fee-stats-modal-overlay, .fee-stats-modal-content, .sidebar, .admin-header, .fee-main-content > *:not(.stats-print-area), .print-button, .fee-stats-modal-close { display: none !important; } .stats-print-area { display: block !important; width: 100vw !important; margin: 0 !important; padding: 0 !important; } }
       `}</style>
+      
+      {/* Receipt Modal */}
+      {receiptModalOpen && receiptData && (
+        <div className="fee-receipt-modal-overlay">
+          <div className="fee-receipt-modal-content">
+            <button 
+              className="text-button close-btn black-x always-visible" 
+              onClick={() => setReceiptModalOpen(false)} 
+              style={{
+                position: 'absolute',
+                top: 10,
+                right: 20,
+                zIndex: 10000,
+                color: '#111',
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer'
+              }} 
+              aria-label="Close"
+            >
+              &#10005;
+            </button>
+            <div className="print-area">
+              <FeeReceipt ref={receiptRef} receipt={receiptData} />
+            </div>
+          </div>
+        </div>
+      )}
     </SideTop>
   );
 } 

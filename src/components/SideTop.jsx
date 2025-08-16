@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie, FaCalendarAlt, FaUsers, FaUser, FaCamera, FaTimes } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaSignOutAlt, FaChevronDown, FaEnvelope, FaIdCard, FaCog, FaFileInvoiceDollar, FaBoxes, FaCreditCard, FaUserTie, FaChartPie, FaCalendarAlt, FaUsers, FaUser, FaCamera, FaTimes } from 'react-icons/fa';
+import { MdDashboard } from 'react-icons/md';
 import logo from '../assets/logo.png';
 import ReactDOM from 'react-dom';
 import './SideTop.css';
@@ -30,7 +31,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
 
   if (authUser?.role === 'Admin1') {
     menuItems = [
-      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Dashboard', icon: <MdDashboard />, path: '/admin' },
       { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
       { label: 'Staff', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
@@ -42,10 +43,12 @@ export default function SideTop({ children, hasUnread, activeTab }) {
      
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
+      { label: 'Disciplinary Cases', icon: <FaClipboardList />, path: '/admin-discipline-cases' },
+      { label: 'Counselling Cases', icon: <FaClipboardList />, path: '/admin-counselling-cases' },
     ];
   } else if (authUser?.role === 'Admin2') {
     menuItems = [
-      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Dashboard', icon: <MdDashboard />, path: '/admin' },
       { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Financial Summary', icon: <FaMoneyBill />, path: '/admin-finance' },
@@ -59,7 +62,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     ];
   } else if (authUser?.role === 'Admin3') {
     menuItems = [
-      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Dashboard', icon: <MdDashboard />, path: '/admin' },
       { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
@@ -78,7 +81,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     ];
   } else if (authUser?.role === 'Admin4') {
     menuItems = [
-      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/dean' },
+      { label: 'Dashboard', icon: <MdDashboard />, path: '/dean' },
       { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
@@ -90,13 +93,13 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
       { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/dean-lesson-plans' },
-      { label: 'Events', icon: <FaCalendarAlt />, path: '/dean-events' },
+   
       { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
       { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
     ];
   } else if (authUser?.role === 'Teacher') {
     menuItems = [
-      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/teacher-dashboard' },
+      { label: 'Dashboard', icon: <MdDashboard />, path: '/teacher-dashboard' },
       { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
@@ -106,7 +109,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     ];
   } else if (authUser?.role === 'Discipline') {
     menuItems = [
-      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+      { label: 'Dashboard', icon: <MdDashboard />, path: '/admin' },
       { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
@@ -122,7 +125,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     ];
   } else if (authUser?.role === 'Psychosocialist') {
     menuItems = [
-      { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/psycho-dashboard' },
+      { label: 'Dashboard', icon: <MdDashboard />, path: '/psycho-dashboard' },
       { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Cases', icon: <FaClipboardList />, path: '/psycho-cases' },
@@ -216,28 +219,22 @@ export default function SideTop({ children, hasUnread, activeTab }) {
 
   // Teacher menu items (from deleted TeacherSideTop)
   const teacherMenuItems = [
-    { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/teacher-dashboard' },
+    { label: 'Dashboard', icon: <MdDashboard />, path: '/teacher-dashboard' },
     { label: 'Application', icon: <FaClipboardList />, path: '/application' },
     { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
-    { label: 'Students', icon: <FaUserGraduate />, path: '/teacher-students' },
     { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
-  
+    
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/teacher-lesson-plans' },
     { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
   ];
 
   // Dean/Admin4 menu items (from provided image)
   const deanMenuItems = [
-    { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/dean' },
+    { label: 'Dashboard', icon: <MdDashboard />, path: '/dean' },
     { label: 'Application', icon: <FaClipboardList />, path: '/application' },
     { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
-    { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
-    { label: 'Staff', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
-    { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
-    { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
-    { label: 'Events', icon: <FaClipboardList />, path: '/dean-events' },
     { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
     { label: 'Timetables', icon: <FaClipboardList />, path: '/timetables' },
     { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
@@ -488,21 +485,6 @@ export default function SideTop({ children, hasUnread, activeTab }) {
                   />
                 ) : (
                   <span>{username}</span>
-                )}
-                {isTeacher && (
-                  <div 
-                    className={`status-dot ${teacherStatus === 'approved' ? 'approved' : teacherStatus === 'pending' ? 'pending' : 'rejected'}`}
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      display: 'inline-block',
-                      backgroundColor: teacherStatus === 'approved' ? '#22bb33' : teacherStatus === 'pending' ? '#e53e3e' : '#888',
-                      boxShadow: teacherStatus === 'approved' ? '0 0 0 2px rgba(34, 187, 51, 0.2)' : teacherStatus === 'pending' ? '0 0 0 2px rgba(229, 62, 62, 0.2)' : '0 0 0 2px rgba(136, 136, 136, 0.2)',
-                      transition: 'all 0.2s ease'
-                    }}
-                    title={teacherStatus === 'approved' ? 'Application Approved' : teacherStatus === 'pending' ? 'Application Pending' : 'Application Rejected'}
-                  ></div>
                 )}
               </div>
             </button>

@@ -343,6 +343,9 @@ export default function Application({ authUser }) {
 
   const handleStatusUpdate = async (id, status) => {
     try {
+      const authUser = JSON.parse(sessionStorage.getItem('authUser') || '{}');
+      const approver = authUser.role || 'Unknown';
+      
       await api.updateApplicationStatus(id, status);
       await fetchApplications();
     } catch (error) {
