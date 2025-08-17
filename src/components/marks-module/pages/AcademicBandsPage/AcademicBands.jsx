@@ -240,15 +240,15 @@ export const AcademicBandsPage = () => {
     }))
     .filter((y) => y.departments.length > 0); // remove years without departments
 
-  const clearFilters = () => {
-    setFilters({
-      academic_year_id: null,
-      department_id: null,
-      class_id: null,
-      band_min: "",
-      band_max: "",
-    });
-  };
+  // const clearFilters = () => {
+  //   setFilters({
+  //     academic_year_id: null,
+  //     department_id: null,
+  //     class_id: null,
+  //     band_min: "",
+  //     band_max: "",
+  //   });
+  // };
 
   return (
     <SideTop>

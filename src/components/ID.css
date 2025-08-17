@@ -12,11 +12,11 @@
   background: linear-gradient(135deg, #6ec6ff 0%, #2196f3 100%);
   border: 2px solid #204080;
   border-radius: 18px;
-  box-shadow: 0 4px 16px rgba(32,64,128,0.13);
+  box-shadow: 0 4px 16px rgba(32, 64, 128, 0.13);
   padding: 8px 10px 8px 8px;
   display: flex;
   flex-direction: column;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
@@ -39,7 +39,7 @@
   margin-right: 4px;
   border-radius: 4px;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(32,64,128,0.08);
+  box-shadow: 0 1px 4px rgba(32, 64, 128, 0.08);
 }
 
 .idcard-watermark {
@@ -147,9 +147,9 @@
   overflow: visible;
   font-size: 0.72rem;
   color: #0d2547;
-  background: rgba(255,255,255,0.85);
+  background: rgba(255, 255, 255, 0.85);
   border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(32,64,128,0.07);
+  box-shadow: 0 1px 4px rgba(32, 64, 128, 0.07);
   border: 1.2px solid #e3f2fd;
 }
 .idcard-info-fields > div {
@@ -202,7 +202,7 @@
     height: auto;
     padding: 4px 1px;
   }
-} 
+}
 
 /* Button styles for PDF download */
 .download-pdf-btn {
@@ -272,11 +272,11 @@
   background: linear-gradient(135deg, #6ec6ff 0%, #2196f3 100%);
   border: 2px solid #204080;
   border-radius: 18px;
-  box-shadow: 0 4px 16px rgba(32,64,128,0.13);
+  box-shadow: 0 4px 16px rgba(32, 64, 128, 0.13);
   padding: 8px 10px 8px 8px;
   display: flex;
   flex-direction: column;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
@@ -303,7 +303,8 @@
   body * {
     visibility: hidden;
   }
-  .idcard-print-area, .idcard-print-area * {
+  .idcard-print-area,
+  .idcard-print-area * {
     visibility: visible;
   }
   .idcard-print-area {
@@ -331,7 +332,8 @@
     margin-bottom: 0 !important;
     background: #fff !important;
   }
-  .idcard-header, .idcard-motto {
+  .idcard-header,
+  .idcard-motto {
     color: #1976d2 !important;
   }
   .idcard-template {
@@ -343,7 +345,8 @@
     max-height: 200px !important;
     margin: 0 8px 18px 0 !important;
   }
-  .idcard-print-area select, .idcard-print-area button {
+  .idcard-print-area select,
+  .idcard-print-area button {
     display: none !important;
   }
-} 
+}

@@ -12,7 +12,6 @@ import {
   FaPenFancy,
   FaTachometerAlt,
   FaSignOutAlt,
-  FaChevronDown,
   FaEnvelope,
   FaIdCard,
   FaCog,
@@ -20,7 +19,6 @@ import {
   FaBoxes,
   FaCreditCard,
   FaUserTie,
-  FaChartPie,
   FaCalendarAlt,
   FaGraduationCap,
   FaChalkboard,
@@ -28,13 +26,14 @@ import {
   FaChevronCircleDown,
   FaCalendar,
   FaLayerGroup,
+  FaBookOpen,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
 import "./SideTop.css";
 import api from "../services/api";
 
-export default function SideTop({ children, hasUnread, activeTab }) {
+export default function SideTop({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState(null);
@@ -91,9 +90,11 @@ export default function SideTop({ children, hasUnread, activeTab }) {
             path: "/academics/bands",
             icon: <FaLayerGroup />,
           },
-
-          // { label: "Exams", path: "/marks-exams" },
-          // { label: "Reports", path: "/marks-reports" },
+          {
+            label: "Report Cards",
+            path: "/academics/report-cards",
+            icon: <FaBookOpen />,
+          },
         ],
       },
     ];
@@ -252,12 +253,12 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   }, [location.pathname]);
 
   // Only show Finances for Admin2
-  const filteredMenuItems = menuItems.filter((item) => {
-    if (item.label === "Finances") {
-      return authUser?.role === "Admin2";
-    }
-    return true;
-  });
+  // const filteredMenuItems = menuItems.filter((item) => {
+  //   if (item.label === "Finances") {
+  //     return authUser?.role === "Admin2";
+  //   }
+  //   return true;
+  // });
 
   // Filter out My Classes for Admin1 users (but keep Application)
   const filterMenuItems = (items) => {
@@ -684,3 +685,9 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     </div>
   );
 }
+
+import PropTypes from "prop-types";
+
+SideTop.propTypes = {
+  children: PropTypes.node.isRequired,
+};

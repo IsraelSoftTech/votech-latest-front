@@ -6,7 +6,7 @@
   width: 210mm; /* A4 width */
   min-height: 297mm; /* A4 height */
   box-sizing: border-box;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   color: black;
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
@@ -205,11 +205,11 @@
   .student-list-report-modal-content .student-list-report-container {
     padding: 10mm;
   }
-  
+
   .report-table {
     font-size: 9px;
   }
-  
+
   .report-table th,
   .report-table td {
     padding: 4px 2px;
@@ -220,34 +220,34 @@
   .student-list-report-modal-content .student-list-report-container {
     padding: 8mm;
   }
-  
+
   .report-header {
     flex-direction: column;
     gap: 15px;
     align-items: flex-start;
   }
-  
+
   .report-title-group h1 {
     font-size: 24px;
   }
-  
+
   .report-title-group h2 {
     font-size: 18px;
   }
-  
+
   .report-title-group h3 {
     font-size: 14px;
   }
-  
+
   .report-meta {
     text-align: left;
     font-size: 11px;
   }
-  
+
   .report-table {
     font-size: 8px;
   }
-  
+
   .report-table th,
   .report-table td {
     padding: 3px 1px;
@@ -259,36 +259,36 @@
     margin: 10px;
     max-width: calc(100vw - 20px);
   }
-  
+
   .student-list-report-modal-content .student-list-report-container {
     padding: 5mm;
     width: 100%;
     min-width: 0;
   }
-  
+
   .report-title-group h1 {
     font-size: 20px;
   }
-  
+
   .report-title-group h2 {
     font-size: 16px;
   }
-  
+
   .report-title-group h3 {
     font-size: 12px;
   }
-  
+
   .report-section h4 {
     font-size: 16px;
   }
-  
+
   .report-table {
     font-size: 7px;
     display: block;
     overflow-x: auto;
     white-space: nowrap;
   }
-  
+
   .report-table thead,
   .report-table tbody,
   .report-table tr {
@@ -296,7 +296,7 @@
     width: 100%;
     table-layout: fixed;
   }
-  
+
   .download-pdf-btn {
     top: 10px;
     right: 10px;
@@ -319,7 +319,7 @@
     padding: 0 !important;
     margin: 0 !important;
   }
-  
+
   .student-list-report-container {
     width: 100% !important;
     min-height: auto !important;
@@ -327,34 +327,34 @@
     margin: 0 !important;
     box-shadow: none !important;
   }
-  
+
   .download-pdf-btn {
     display: none !important;
   }
-  
+
   .report-table {
     box-shadow: none !important;
     border: 1px solid #000 !important;
   }
-  
+
   .report-table th {
     background: #f0f0f0 !important;
     color: #000 !important;
     border: 1px solid #000 !important;
   }
-  
+
   .report-table td {
     border: 1px solid #000 !important;
   }
-  
+
   .report-header {
     border-bottom: 2px solid #000 !important;
   }
-  
+
   .report-footer {
     border-top: 1px solid #000 !important;
   }
-  
+
   /* Ensure all text is visible */
   .report-content,
   .report-section,
@@ -365,4 +365,4 @@
     color: #000 !important;
     background: transparent !important;
   }
-} 
+}

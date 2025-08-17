@@ -410,10 +410,20 @@
 
 /* Print styles */
 @media print {
-  .no-print { display: none !important; }
-  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .timetable-auto-container { padding: 0; }
-  .tt-grid th, .tt-grid td { padding: 6px; }
+  .no-print {
+    display: none !important;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .timetable-auto-container {
+    padding: 0;
+  }
+  .tt-grid th,
+  .tt-grid td {
+    padding: 6px;
+  }
 }
 
 /* Responsive */
@@ -421,7 +431,9 @@
   .tt-setup {
     grid-template-columns: 1fr;
   }
-  .tt-cell { min-width: 140px; }
+  .tt-cell {
+    min-width: 140px;
+  }
 }
 
 /* Professional Timetable Styles */
@@ -637,24 +649,24 @@
     box-shadow: none;
     border: 1px solid #000;
   }
-  
+
   .tt-timetable-header {
     background: #1e40af !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  
+
   .tt-time-header,
   .tt-day-header {
     background: #3b82f6 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  
+
   .tt-subject-cell {
     border: 1px solid #000;
   }
-  
+
   .tt-break-cell {
     background: #1e293b !important;
     -webkit-print-color-adjust: exact;

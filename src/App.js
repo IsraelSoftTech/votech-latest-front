@@ -47,6 +47,8 @@ import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subjec
 import { ClassPage } from "./components/marks-module/pages/ClassPage/Class.page";
 import { AcademicBandsPage } from "./components/marks-module/pages/AcademicBandsPage/AcademicBands";
 import { MarksUploadPage } from "./components/marks-module/pages/MarkPage/MarkPage.page";
+import { ReportCardHomePage } from "./components/marks-module/pages/ReportCardHomePage/ReportCardHome.page";
+import { ReportCardPage } from "./components/marks-module/pages/ReportCardPage/ReportCard.page";
 // If you have a Dashboard component, import it:
 // import Dashboard from './components/Dashboard.jsx';
 
@@ -183,6 +185,11 @@ function App() {
           path="/academics/mark-upload/:id"
           element={<MarksUploadPage />}
         />
+        <Route
+          path="/academics/report-cards"
+          element={<ReportCardHomePage />}
+        />
+        <Route path="/academics/report-card/:id" element={<ReportCardPage />} />
 
         {/* ----------------------------------- */}
 

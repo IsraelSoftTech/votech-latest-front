@@ -1,0 +1,123 @@
+.report-card-home-page {
+  padding: 2rem;
+  background: #f9f9f9;
+  min-height: 100vh;
+}
+
+/* Heading */
+.report-card-home-page h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+/* Back Button */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #e0e0e0;
+  color: #333;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: background 0.2s;
+}
+
+.back-btn:hover {
+  background: #d5d5d5;
+}
+
+/* Filters Row */
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-react-select {
+  flex: 1 1 180px;
+  min-width: 150px;
+}
+
+/* Buttons Row */
+.buttons-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-view:hover {
+  background-color: #059669;
+}
+
+/* Upload Wrapper */
+.custom-upload-wrapper {
+  position: relative;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+/* Table Wrapper */
+.students-table-wrapper {
+  width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  overflow-x: auto; /* horizontal scroll for small screens */
+  overflow-y: visible; /* allow dropdowns to expand */
+}
+
+/* Table */
+.students-table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto; /* adjust columns to content */
+}
+
+/* Table cells */
+.students-table-wrapper th,
+.students-table-wrapper td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+/* Table header */
+.students-table-wrapper th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+.students-table-wrapper tr:last-child td {
+  border-bottom: none;
+}
+
+/* Ensure react-select dropdown inside table is visible */
+.students-table-wrapper .react-select__menu {
+  z-index: 1000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: column;
+  }
+
+  .buttons-row {
+    flex-direction: column;
+  }
+
+  .form-react-select {
+    flex: 1 1 100%;
+  }
+}

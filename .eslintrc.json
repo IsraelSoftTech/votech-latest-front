@@ -1,8 +1,30 @@
 {
-  "plugins": ["react-hooks"],
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "plugins": ["react", "react-hooks"],
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:react-hooks/recommended"
-  ]
+  ],
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 13,
+    "sourceType": "module"
+  },
+  "settings": {
+    "react": {
+      "version": "detect" // Automatically detect React version
+    }
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off", // No need to import React in JSX
+    "react/prop-types": "off", // Turn off prop-types checking
+    "react-hooks/exhaustive-deps": "off", // Turn off missing deps warnings
+    "no-unused-vars": "off"
+  }
 }
