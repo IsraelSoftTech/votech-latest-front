@@ -55,12 +55,15 @@ export const MarksUploadPage = () => {
 
   const fetchStudents = async () => {
     try {
-      const res = await fetch(
-        `${subBaseURL}/students?class_id=${filters.class_id}&department_id?=${filters.department_id}`,
-        { headers }
+      const res = await api.get(
+        `/students?class_id=${filters.class_id}&specialty_id=${filters.department_id}&academic_year_id=${filters.academic_year_id}`
       );
-      const data = await res.json();
-      setStudents(data);
+
+      const unfiletered = await api.get("/students");
+
+      setStudents(res.data.data);
+      console.log(res.data);
+      console.log(unfiletered.data);
     } catch (err) {
       toast.error(err.response?.data?.details || "Failed to fetch students.");
     }
@@ -152,8 +155,55 @@ export const MarksUploadPage = () => {
   };
 
   useEffect(() => {
-    fetchStudentsMarks();
-  }, [filters, subjectClasses]);
+    const loadStudentsMarks = async () => {
+      const { academic_year_id, class_id, term_id, sequence_id } = filters;
+      if (!academic_year_id || !class_id || !term_id || !sequence_id) {
+        setStudents([]);
+        setMarks([]);
+        return;
+      }
+
+      setLoadingTable(true);
+
+      try {
+        // Check if the subject is assigned to the selected class
+        const classAssigned = subjectClasses.some(
+          (sc) => sc.class_id === class_id
+        );
+
+        if (!classAssigned) {
+          setStudents([
+            {
+              id: "none",
+              full_name: "Subject has not been assigned to this class",
+              student_id: "-",
+            },
+          ]);
+          setMarks([]);
+          return;
+        }
+
+        // Fetch students in this class/department/academic year
+        const resStudents = await api.get(
+          `/students?class_id=${class_id}&specialty_id=${filters.department_id}&academic_year_id=${academic_year_id}`
+        );
+        const studentsList = resStudents.data.data || [];
+        setStudents(studentsList);
+
+        // Fetch existing marks for these students
+        const resMarks = await api.get(
+          `/marks?subject_id=${subject.id}&academic_year_id=${academic_year_id}&class_id=${class_id}&term_id=${term_id}&sequence_id=${sequence_id}`
+        );
+        setMarks(resMarks.data.data || []);
+      } catch (err) {
+        toast.error("Failed to fetch students or marks.");
+      } finally {
+        setLoadingTable(false);
+      }
+    };
+
+    loadStudentsMarks();
+  }, [filters, subjectClasses, subject.id]);
 
   // --- HANDLERS ---
   const handleMarkChange = (studentId, value) => {
@@ -602,6 +652,7 @@ export const MarksUploadPage = () => {
                                   ?.score ?? ""
                               }
                               onChange={(_, val) => handleMarkChange(s.id, val)}
+                              onClear={() => handleMarkChange(s.id, "")} //or Null, idk man.
                             />
                           )}
                         </td>

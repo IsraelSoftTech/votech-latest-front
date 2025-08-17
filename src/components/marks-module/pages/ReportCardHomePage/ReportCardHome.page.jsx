@@ -34,6 +34,25 @@ export const ReportCardHomePage = () => {
         };
   });
 
+  const fetchReportCards = async () => {
+    try {
+      const { class_id, department_id, academic_year_id } = filters;
+
+      if (!class_id || !department_id || !academic_year_id) {
+        toast.error("Filters incomplete.");
+        return;
+      }
+
+      const res = await api.get(
+        `/report-cards/bulk?academicYearId=${academic_year_id}&departmentId=${department_id}&classId=${class_id}`
+      );
+
+      console.log(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   // save filters to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem("reportCardFilters", JSON.stringify(filters));
@@ -63,19 +82,20 @@ export const ReportCardHomePage = () => {
       setLoadingPage(false);
     }
   };
-
   const fetchStudents = async () => {
-    const { class_id, department_id } = filters;
-    if (!class_id || !department_id) return;
+    const { class_id, department_id, academic_year_id } = filters;
+    if (!class_id || !department_id || !academic_year_id) {
+      setStudents([]); // clear table if filters incomplete
+      return;
+    }
 
     setLoadingTable(true);
     try {
-      const res = await fetch(
-        `${subBaseURL}/students?class_id=${class_id}&department_id=${department_id}`,
-        { headers }
+      const res = await api.get(
+        `/students?class_id=${class_id}&specialty_id=${department_id}&academic_year_id=${academic_year_id}`
       );
-      const data = await res.json();
-      setStudents(data || []);
+      setStudents(res.data.data || []);
+      fetchReportCards();
     } catch (err) {
       toast.error("Failed to fetch students.");
     } finally {
@@ -88,8 +108,12 @@ export const ReportCardHomePage = () => {
   }, []);
 
   useEffect(() => {
-    fetchStudents();
-  }, [filters.class_id, filters.department_id]);
+    const { class_id, department_id, academic_year_id } = filters;
+    if (class_id && department_id && academic_year_id) {
+      fetchStudents();
+      fetchReportCards();
+    }
+  }, [filters]);
 
   // --- NAVIGATE TO REPORT CARD PAGE ---
   const handleGoToReportCard = (student, termObj, sequenceObj) => {
@@ -98,6 +122,7 @@ export const ReportCardHomePage = () => {
         student,
         department: departments.find((d) => d.id === filters.department_id),
         class: classes.find((c) => c.id === filters.class_id),
+        academic_year_id: filters.academic_year_id,
         term: termObj || null,
         sequence: sequenceObj || null,
       },
@@ -148,12 +173,6 @@ export const ReportCardHomePage = () => {
                         (y) => y.id === filters.academic_year_id
                       )?.name,
                     }
-                  }
-                  onChange={(opt) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      academic_year_id: opt?.value || null,
-                    }))
                   }
                 />
               </div>

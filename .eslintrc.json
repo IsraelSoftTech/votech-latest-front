@@ -25,6 +25,7 @@
     "react/react-in-jsx-scope": "off", // No need to import React in JSX
     "react/prop-types": "off", // Turn off prop-types checking
     "react-hooks/exhaustive-deps": "off", // Turn off missing deps warnings
-    "no-unused-vars": "off"
+    "no-unused-vars": "off",
+    "react/no-unescaped-entities": "off"
   }
 }

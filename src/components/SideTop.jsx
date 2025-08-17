@@ -66,6 +66,66 @@ export default function SideTop({ children }) {
         icon: <FaPenFancy />,
         path: "/admin-lesson-plans",
       },
+      // {
+      //   label: "Accademics",
+      //   icon: <FaGraduationCap />,
+      //   submenu: [
+      //     {
+      //       label: "Subjects",
+      //       path: "/academics/subjects",
+      //       icon: <FaChalkboardTeacher />,
+      //     },
+      //     {
+      //       label: "Academic Years",
+      //       path: "/academics/academic-years",
+      //       icon: <FaCalendar />,
+      //     },
+      //     {
+      //       label: "Classes",
+      //       path: "/academics/classes",
+      //       icon: <FaChalkboard />,
+      //     },
+      //     {
+      //       label: "Academic Bands",
+      //       path: "/academics/bands",
+      //       icon: <FaLayerGroup />,
+      //     },
+      //     {
+      //       label: "Report Cards",
+      //       path: "/academics/report-cards",
+      //       icon: <FaBookOpen />,
+      //     },
+      //   ],
+      // },
+    ];
+  } else if (authUser?.role === "Admin2") {
+    menuItems = [
+      { label: "Dashboard", icon: <FaTachometerAlt />, path: "/admin" },
+      { label: "Application", icon: <FaClipboardList />, path: "/application" },
+      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+      {
+        label: "Financial Summary",
+        icon: <FaMoneyBill />,
+        path: "/admin-finance",
+      },
+      { label: "Fee", icon: <FaCreditCard />, path: "/admin-fee" },
+      { label: "Salary", icon: <FaFileInvoiceDollar />, path: "/admin-salary" },
+      { label: "Inventory", icon: <FaBoxes />, path: "/admin-inventory" },
+      { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
+      { label: "Marks", icon: <FaChartBar />, path: "/admin-marks" },
+      {
+        label: "Lesson Plans",
+        icon: <FaPenFancy />,
+        path: "/admin-lesson-plans",
+      },
+    ];
+  } else if (authUser?.role === "Admin3") {
+    menuItems = [
+      { label: "Dashboard", icon: <FaTachometerAlt />, path: "/admin" },
+      { label: "Application", icon: <FaClipboardList />, path: "/application" },
+      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+      { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
+      { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       {
         label: "Accademics",
         icon: <FaGraduationCap />,
@@ -97,35 +157,6 @@ export default function SideTop({ children }) {
           },
         ],
       },
-    ];
-  } else if (authUser?.role === "Admin2") {
-    menuItems = [
-      { label: "Dashboard", icon: <FaTachometerAlt />, path: "/admin" },
-      { label: "Application", icon: <FaClipboardList />, path: "/application" },
-      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
-      {
-        label: "Financial Summary",
-        icon: <FaMoneyBill />,
-        path: "/admin-finance",
-      },
-      { label: "Fee", icon: <FaCreditCard />, path: "/admin-fee" },
-      { label: "Salary", icon: <FaFileInvoiceDollar />, path: "/admin-salary" },
-      { label: "Inventory", icon: <FaBoxes />, path: "/admin-inventory" },
-      { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
-      { label: "Marks", icon: <FaChartBar />, path: "/admin-marks" },
-      {
-        label: "Lesson Plans",
-        icon: <FaPenFancy />,
-        path: "/admin-lesson-plans",
-      },
-    ];
-  } else if (authUser?.role === "Admin3") {
-    menuItems = [
-      { label: "Dashboard", icon: <FaTachometerAlt />, path: "/admin" },
-      { label: "Application", icon: <FaClipboardList />, path: "/application" },
-      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
-      { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
-      { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       { label: "Classes", icon: <FaBook />, path: "/admin-class" },
       {
         label: "Departments",
