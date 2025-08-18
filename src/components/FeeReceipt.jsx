@@ -3,19 +3,6 @@ import './FeeReceipt.css';
 import { FaDownload } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import logo from '../assets/logo.png';
-
-function getAcademicYear() {
-  const startYear = 2025;
-  const now = new Date();
-  const start = new Date('2025-09-01');
-  let diff = (now.getFullYear() - startYear) * 12 + (now.getMonth() - 8);
-  if (diff < 0) diff = 0;
-  const period = Math.floor(diff / 9);
-  const year1 = 2025 + period;
-  const year2 = year1 + 1;
-  return `${year1}/${year2}`;
-}
 
 const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
   if (!receipt) return null;
@@ -39,22 +26,60 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
         downloadBtn.style.display = 'none';
       }
       
-      // Wait for any animations or rendering to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Create a temporary container with two receipts for PDF generation
+      const tempContainer = document.createElement('div');
+      tempContainer.className = 'receipt-container temp-pdf-container';
+      tempContainer.style.cssText = `
+        background: white;
+        width: 210mm;
+        min-height: 280mm;
+        margin: 0 auto;
+        padding: 5mm;
+        box-sizing: border-box;
+        font-family: 'Times New Roman', serif;
+        color: black;
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        overflow: visible;
+        display: flex;
+        flex-direction: column;
+        gap: 15mm;
+      `;
       
-      // Capture the actual rendered content exactly as it appears
-      const canvas = await html2canvas(ref.current, {
+      // Clone the receipt content twice
+      const receiptContent = ref.current.querySelector('.receipt-template');
+      if (receiptContent) {
+        const firstReceipt = receiptContent.cloneNode(true);
+        const secondReceipt = receiptContent.cloneNode(true);
+        tempContainer.appendChild(firstReceipt);
+        tempContainer.appendChild(secondReceipt);
+      }
+      
+      // Add to DOM temporarily
+      document.body.appendChild(tempContainer);
+      
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Capture the temporary container
+      const canvas = await html2canvas(tempContainer, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: ref.current.offsetWidth,
-        height: ref.current.offsetHeight,
+        width: tempContainer.scrollWidth,
+        height: tempContainer.scrollHeight,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: ref.current.offsetWidth,
-        windowHeight: ref.current.offsetHeight
+        windowWidth: tempContainer.scrollWidth,
+        windowHeight: tempContainer.scrollHeight,
+        logging: false,
+        removeContainer: false
       });
+      
+      // Remove temporary container
+      document.body.removeChild(tempContainer);
       
       // Restore the download button
       if (downloadBtn) {
@@ -68,6 +93,7 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
       const imgWidth = 210; // A4 width in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
+      // Add the image to PDF
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
 
       const fileName = `fee_receipt_${student.student_id}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -83,77 +109,117 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
   };
 
   const ReceiptContent = () => (
-    <div className="receipt-content">
+    <div className="receipt-template">
+      {/* Header Section */}
       <div className="receipt-header">
-        <img src={logo} alt="VOTECH Logo" className="receipt-logo" />
-        <div className="receipt-title-group">
-          <h1>VOTECH (S7)</h1>
-          <h2>FEE RECEIPT - {getAcademicYear()}</h2>
+        <div className="school-name">VOTECH(S7) ACADEMY</div>
+        <h1 className="receipt-title">Fee Receipt</h1>
+        <div className="receipt-meta">
+          <div className="meta-row">
+            <span className="meta-label">Date:</span>
+            <span className="meta-underline">{new Date().toLocaleDateString()}</span>
+            <span className="meta-label">Receipt No:</span>
+            <span className="meta-underline">{student.student_id}-{Date.now()}</span>
+          </div>
         </div>
       </div>
-      
-      <div className="receipt-student-info">
-        <div><strong>Student Name:</strong> {student.full_name}</div>
-        <div><strong>Student ID:</strong> {student.student_id}</div>
-        <div><strong>Class:</strong> {student.class_name}</div>
-        <div><strong>Date:</strong> {new Date().toLocaleDateString()}</div>
+
+      {/* Recipient and Amount Section */}
+      <div className="receipt-main">
+        <div className="main-row">
+          <span className="main-label">Received From:</span>
+          <span className="main-underline">{student.full_name}</span>
+          <span className="main-label">the amount of XAF</span>
+          <span className="main-underline">{paid.toLocaleString()}</span>
+        </div>
+        <div className="main-row">
+          <span className="main-label">For Payment of</span>
+          <span className="main-underline-long">School Fees - {student.class_name}</span>
+        </div>
       </div>
-      
-      <div className="status-badge">
-        <span className={`status-${status.toLowerCase()}`}>
-          Status: {status}
-        </span>
+
+      {/* Period Section */}
+      <div className="receipt-period">
+        <div className="period-row">
+          <span className="period-label">From</span>
+          <span className="period-underline">September 2025</span>
+          <span className="period-label">to</span>
+          <span className="period-underline">June 2026</span>
+        </div>
       </div>
-      
-      <table className="receipt-table">
-        <thead>
-          <tr>
-            <th>Fee Type</th>
-            <th>Total (XAF)</th>
-            <th>Paid (XAF)</th>
-            <th>Balance (XAF)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {feeTypes.map(type => {
-            const totalFee = parseFloat(student[type.toLowerCase() + '_fee']) || 0;
-            const balanceOwed = balance[type] || 0;
-            const amountPaid = totalFee - balanceOwed;
-            return (
-              <tr key={type}>
-                <td>{type}</td>
-                <td>{totalFee.toLocaleString()}</td>
-                <td>{amountPaid.toLocaleString()}</td>
-                <td>{balanceOwed.toLocaleString()}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colSpan="2"><strong>Total</strong></td>
-            <td><strong>{paid.toLocaleString()}</strong></td>
-            <td><strong>{left.toLocaleString()}</strong></td>
-          </tr>
-        </tfoot>
-      </table>
-      
+
+      {/* Fee Types Table */}
+      <div className="fee-types-section">
+        <h3 className="fee-types-title">Fee Breakdown</h3>
+        <table className="fee-types-table">
+          <thead>
+            <tr>
+              <th>Fee Type</th>
+              <th>Expected (XAF)</th>
+              <th>Paid (XAF)</th>
+              <th>Balance (XAF)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {feeTypes.map(type => {
+              const expectedFee = parseFloat(student[type.toLowerCase() + '_fee']) || 0;
+              const balanceOwed = balance[type] || 0;
+              const amountPaid = expectedFee - balanceOwed;
+              
+              // If expected fee is 0, show "-" for status
+              let feeStatus = '-';
+              if (expectedFee > 0) {
+                feeStatus = balanceOwed === 0 && amountPaid > 0 ? 'Completed' : 
+                           amountPaid > 0 ? 'Partial' : 'Pending';
+              }
+              
+              return (
+                <tr key={type}>
+                  <td className="fee-type-name">{type}</td>
+                  <td className="fee-expected">{expectedFee.toLocaleString()}</td>
+                  <td className="fee-paid">{amountPaid.toLocaleString()}</td>
+                  <td className="fee-balance">{balanceOwed.toLocaleString()}</td>
+                  <td className={`fee-status ${expectedFee > 0 ? feeStatus.toLowerCase() : 'no-fee'}`}>
+                    {feeStatus}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Amount Summary */}
+      <div className="amount-summary-section">
+        <table className="summary-table">
+          <tbody>
+            <tr>
+              <td className="summary-label">Total Amount to be Received</td>
+              <td className="summary-value">{total.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td className="summary-label">Amount Received</td>
+              <td className="summary-value">{paid.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td className="summary-label">Balance Due</td>
+              <td className="summary-value">{left.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Footer */}
       <div className="receipt-footer">
-        <p>Thank you for your payment!</p>
-        <div className="signature-area">
-          <div className="signature-line"></div>
-          <p>Cashier's Signature</p>
-        </div>
+        {/* Footer content removed */}
       </div>
     </div>
   );
 
   return (
     <div className="receipt-container" ref={ref}>
-      {/* First Receipt */}
-      <ReceiptContent />
-      
-      {/* Second Receipt (Duplicate) */}
+      {/* Single Receipt - will be duplicated when printing/PDF */}
       <ReceiptContent />
       
       <button className="download-pdf-btn" onClick={downloadPDF}>

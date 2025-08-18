@@ -856,7 +856,7 @@ class ApiService {
   // Inventory API
   async getInventory(type = 'income') {
     const response = await fetch(`${API_URL}/inventory?type=${type}`, {
-      headers: this.getAuthHeaders(),
+      headers: this.getAuthHeaders()
     });
     if (!response.ok) throw new Error('Failed to fetch inventory');
     return await response.json();
@@ -865,29 +865,204 @@ class ApiService {
   async registerInventoryItem(data) {
     const response = await fetch(`${API_URL}/inventory`, {
       method: 'POST',
-      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
     });
-    if (!response.ok) throw new Error('Failed to register item');
+    if (!response.ok) throw new Error('Failed to register inventory item');
     return await response.json();
   }
 
   async deleteInventoryItem(id) {
     const response = await fetch(`${API_URL}/inventory/${id}`, {
       method: 'DELETE',
-      headers: this.getAuthHeaders(),
+      headers: this.getAuthHeaders()
     });
-    if (!response.ok) throw new Error('Failed to delete item');
+    if (!response.ok) throw new Error('Failed to delete inventory item');
     return await response.json();
   }
 
   async editInventoryItem(id, data) {
     const response = await fetch(`${API_URL}/inventory/${id}`, {
       method: 'PUT',
-      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
     });
-    if (!response.ok) throw new Error('Failed to update item');
+    if (!response.ok) throw new Error('Failed to edit inventory item');
+    return await response.json();
+  }
+
+  // Budget Heads API
+  async getBudgetHeads() {
+    const response = await fetch(`${API_URL}/budget-heads`, {
+      headers: this.getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch budget heads');
+    return await response.json();
+  }
+
+  async createBudgetHead(data) {
+    const response = await fetch(`${API_URL}/budget-heads`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to create budget head');
+    return await response.json();
+  }
+
+  async updateBudgetHead(id, data) {
+    const response = await fetch(`${API_URL}/budget-heads/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to update budget head');
+    return await response.json();
+  }
+
+  // Update budget head
+  async updateBudgetHead(id, budgetHeadData) {
+    try {
+      const response = await fetch(`${API_URL}/budget-heads/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getToken()}`
+        },
+        body: JSON.stringify(budgetHeadData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update budget head');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  };
+
+  // Delete budget head
+  async deleteBudgetHead(id) {
+    try {
+      const response = await fetch(`${API_URL}/budget-heads/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${this.getToken()}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete budget head');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  };
+
+  // Asset Categories API
+  async getAssetCategories() {
+    const response = await fetch(`${API_URL}/asset-categories`, {
+      headers: this.getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch asset categories');
+    return await response.json();
+  }
+
+  async createAssetCategory(data) {
+    const response = await fetch(`${API_URL}/asset-categories`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to create asset category');
+    return await response.json();
+  }
+
+  async updateAssetCategory(id, data) {
+    const response = await fetch(`${API_URL}/asset-categories/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to update asset category');
+    return await response.json();
+  }
+
+  // Update asset category
+  async updateAssetCategory(id, assetCategoryData) {
+    try {
+      const response = await fetch(`${API_URL}/asset-categories/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getToken()}`
+        },
+        body: JSON.stringify(assetCategoryData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update asset category');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  };
+
+  // Delete asset category
+  async deleteAssetCategory(id) {
+    try {
+      const response = await fetch(`${API_URL}/asset-categories/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${this.getToken()}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete asset category');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  };
+
+  // Financial Reports API
+  async getFinancialSummary(params) {
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(`${API_URL}/financial-summary?${queryString}`, {
+      headers: this.getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch financial summary');
+    return await response.json();
+  }
+
+  async getBalanceSheet(asOfDate = null) {
+    const params = asOfDate ? `?as_of_date=${asOfDate}` : '';
+    const response = await fetch(`${API_URL}/balance-sheet${params}`, {
+      headers: this.getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch balance sheet');
+    return await response.json();
+  }
+
+  async calculateDepreciation(month, year) {
+    const response = await fetch(`${API_URL}/calculate-depreciation`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ month, year })
+    });
+    if (!response.ok) throw new Error('Failed to calculate depreciation');
     return await response.json();
   }
 

@@ -39,6 +39,7 @@ import Cases from './components/Cases.jsx';
 import PsychoMessage from './components/PsychoMessage.jsx';
 import PsychoChat from './components/PsychoChat.jsx';
 import PaySlip from './components/PaySlip';
+import Admin2PaySlip from './components/Admin2PaySlip';
 import TimeTable from './components/TimeTable.jsx';
 import MonitorUsers from './components/MonitorUsers.jsx';
 import SideTop from './components/SideTop.jsx';
@@ -136,6 +137,8 @@ function App() {
       <Route path="/admin-fee/:studentId" element={<StudentFeeDetails />} />
       <Route path="/admin-salary" element={<Salary authUser={authUser} />} />
       <Route path="/admin-payslip" element={<PaySlip authUser={authUser} />} />
+      <Route path="/admin2-payslip" element={<Admin2PaySlip authUser={authUser} />} />
+      <Route path="/payslip" element={<PaySlip />} />
       <Route path="/admin-subjects" element={<Subjects />} />
       <Route path="/admin-lesson-plans" element={<LessonPlan />} />
       <Route path="/admin-inventory" element={<Inventory />} />

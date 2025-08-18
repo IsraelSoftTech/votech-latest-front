@@ -504,15 +504,6 @@ export default function Salary({ authUser }) {
                 <FaMoneyBillWave /> Pay Salary
               </button>
               <button 
-                className="salary-payslip-btn"
-                onClick={() => {
-                  // Navigate to PaySlip component
-                  window.location.href = '/admin-payslip';
-                }}
-              >
-                <FaPrint /> Pay Slip
-              </button>
-              <button 
                 className="salary-delete-all-btn"
                 onClick={() => {
                   showMessage(

@@ -38,9 +38,8 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
       { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
-     
+      { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
-     
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/admin-lesson-plans' },
       { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
       { label: 'Disciplinary Cases', icon: <FaClipboardList />, path: '/admin-discipline-cases' },
@@ -54,6 +53,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Financial Summary', icon: <FaMoneyBill />, path: '/admin-finance' },
       { label: 'Fee', icon: <FaCreditCard />, path: '/admin-fee' },
       { label: 'Salary', icon: <FaFileInvoiceDollar />, path: '/admin-salary' },
+      { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/admin2-payslip' },
       { label: 'Inventory', icon: <FaBoxes />, path: '/admin-inventory' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
       { label: 'Marks', icon: <FaChartBar />, path: '/admin-marks' },
@@ -70,6 +70,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
       { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
+      { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
       { label: 'Marks', icon: <FaChartBar />, path: '/admin-marks' },
@@ -89,11 +90,11 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
       { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
+      { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
       { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/dean-lesson-plans' },
-   
       { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
       { label: 'Staff Management', icon: <FaUserTie />, path: '/dean-staff' },
     ];
@@ -103,6 +104,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
+      { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/teacher-lesson-plans' },
       { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
       { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
@@ -118,6 +120,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Departments', icon: <FaClipboardList />, path: '/admin-specialty' },
       { label: 'Attendance', icon: <FaClipboardList />, path: '/admin-attendance' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/admin-messages' },
+      { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
       { label: 'ID Cards', icon: <FaIdCard />, path: '/admin-idcards' },
       { label: 'Subjects', icon: <FaBook />, path: '/admin-subjects' },
       { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/discipline-lesson-plans' },
@@ -129,6 +132,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
       { label: 'Application', icon: <FaClipboardList />, path: '/application' },
       { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
       { label: 'Cases', icon: <FaClipboardList />, path: '/psycho-cases' },
+      { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
       { label: 'Lesson Plan', icon: <FaPenFancy />, path: '/psychosocialist-lesson-plans' },
       { label: 'Messages', icon: <FaEnvelope />, path: '/psycho-messages' },
       { label: 'Events', icon: <FaCalendarAlt />, path: '/my-events' },
@@ -223,8 +227,8 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     { label: 'Application', icon: <FaClipboardList />, path: '/application' },
     { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/teacher-messages' },
+    { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
     { label: 'Marks', icon: <FaChartBar />, path: '/teacher-marks' },
-    
     { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/teacher-lesson-plans' },
     { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
   ];

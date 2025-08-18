@@ -1,0 +1,1035 @@
+/* Admin2PaySlip.css */
+
+.admin2-payslip-container {
+  padding: 32px 18px 18px 18px;
+  box-sizing: border-box;
+  background: #f7f8fa;
+  min-height: 100vh;
+}
+
+/* Header Styles */
+.admin2-payslip-header {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(32, 64, 128, 0.08);
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.admin2-payslip-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin2-payslip-header-text {
+  flex: 1;
+}
+
+.admin2-payslip-title {
+  color: #204080;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.admin2-payslip-subtitle {
+  color: #666;
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.admin2-payslip-settings-btn {
+  background: #204080;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin2-payslip-settings-btn:hover {
+  background: #1a3373;
+  transform: translateY(-2px);
+}
+
+/* Controls Section */
+.admin2-payslip-controls {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(32, 64, 128, 0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.admin2-payslip-search-section {
+  flex: 1;
+}
+
+.admin2-payslip-search-container {
+  position: relative;
+  max-width: 400px;
+}
+
+.admin2-payslip-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 1rem;
+}
+
+.admin2-payslip-search-input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.admin2-payslip-search-input:focus {
+  outline: none;
+  border-color: #204080;
+}
+
+.admin2-payslip-filters {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.admin2-payslip-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin2-payslip-filter-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.admin2-payslip-filter-select {
+  padding: 8px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.admin2-payslip-filter-select:focus {
+  outline: none;
+  border-color: #204080;
+}
+
+/* Statistics Cards */
+.admin2-payslip-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.admin2-payslip-stat-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(32, 64, 128, 0.08);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.3s ease;
+}
+
+.admin2-payslip-stat-card:hover {
+  transform: translateY(-4px);
+}
+
+.admin2-payslip-stat-icon {
+  font-size: 2rem;
+  color: #204080;
+  background: #eaf3ff;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.admin2-payslip-stat-content h3 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.admin2-payslip-stat-content p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #204080;
+}
+
+/* Table Container */
+.admin2-payslip-table-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(32, 64, 128, 0.08);
+  overflow: hidden;
+}
+
+.admin2-payslip-table-header {
+  padding: 24px;
+  border-bottom: 1px solid #e1e5e9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin2-payslip-table-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #204080;
+}
+
+.admin2-payslip-refresh-btn {
+  background: #204080;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.admin2-payslip-refresh-btn:hover:not(:disabled) {
+  background: #1a3373;
+}
+
+.admin2-payslip-refresh-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Loading State */
+.admin2-payslip-loading {
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.admin2-payslip-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e1e5e9;
+  border-top: 4px solid #204080;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.admin2-payslip-loading p {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Empty State */
+.admin2-payslip-empty-state {
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.admin2-payslip-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.admin2-payslip-empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #204080;
+}
+
+.admin2-payslip-empty-state p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Table Styles */
+.admin2-payslip-table-responsive {
+  overflow-x: auto;
+}
+
+.admin2-payslip-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin2-payslip-table-head {
+  background: #f8f9fa;
+}
+
+.admin2-payslip-table-header-cell {
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #e1e5e9;
+  font-size: 0.9rem;
+}
+
+.admin2-payslip-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+
+.admin2-payslip-sortable:hover {
+  background: #e9ecef;
+}
+
+.admin2-payslip-sort-icon {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.admin2-payslip-table-body {
+  background: white;
+}
+
+.admin2-payslip-table-row {
+  border-bottom: 1px solid #e1e5e9;
+  transition: background-color 0.3s ease;
+}
+
+.admin2-payslip-table-row:hover {
+  background: #f8f9fa;
+}
+
+.admin2-payslip-table-cell {
+  padding: 16px 12px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.admin2-payslip-name-cell {
+  min-width: 200px;
+}
+
+.admin2-payslip-employee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin2-payslip-employee-name {
+  font-weight: 600;
+  color: #204080;
+}
+
+.admin2-payslip-amount-cell {
+  text-align: right;
+}
+
+.admin2-payslip-amount {
+  font-weight: 600;
+  color: #28a745;
+}
+
+.admin2-payslip-period {
+  font-weight: 500;
+  color: #204080;
+}
+
+.admin2-payslip-date {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.admin2-payslip-actions-cell {
+  text-align: center;
+  min-width: 120px;
+}
+
+.admin2-payslip-action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.admin2-payslip-action-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.admin2-payslip-view-btn {
+  color: #204080;
+}
+
+.admin2-payslip-view-btn:hover {
+  background: #eaf3ff;
+  color: #1a3373;
+}
+
+.admin2-payslip-download-btn {
+  color: #28a745;
+}
+
+.admin2-payslip-download-btn:hover {
+  background: #d4edda;
+  color: #1e7e34;
+}
+
+/* Settings Modal */
+.admin2-payslip-settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.admin2-payslip-settings-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.admin2-payslip-settings-modal-header {
+  padding: 24px;
+  border-bottom: 1px solid #e1e5e9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin2-payslip-settings-modal-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #204080;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin2-payslip-settings-modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.admin2-payslip-settings-modal-close-btn:hover {
+  background: #f8f9fa;
+}
+
+.admin2-payslip-settings-modal-body {
+  padding: 24px;
+}
+
+.admin2-payslip-settings-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #204080;
+}
+
+.admin2-payslip-settings-description {
+  margin: 0 0 24px 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.admin2-payslip-settings-input-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.admin2-payslip-settings-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.3s ease;
+}
+
+.admin2-payslip-settings-input:focus {
+  outline: none;
+  border-color: #204080;
+}
+
+.admin2-payslip-settings-add-btn {
+  background: #204080;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.admin2-payslip-settings-add-btn:hover {
+  background: #1a3373;
+}
+
+.admin2-payslip-settings-list {
+  margin-bottom: 16px;
+}
+
+.admin2-payslip-settings-empty {
+  text-align: center;
+  padding: 24px;
+  color: #666;
+  font-style: italic;
+}
+
+.admin2-payslip-settings-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin2-payslip-settings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.admin2-payslip-settings-item-info {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.admin2-payslip-settings-item-description {
+  font-weight: 500;
+  color: #333;
+}
+
+.admin2-payslip-settings-item-percentage {
+  background: #204080;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.admin2-payslip-settings-remove-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.admin2-payslip-settings-remove-btn:hover {
+  background: #c82333;
+}
+
+.admin2-payslip-settings-total {
+  text-align: right;
+  font-weight: 600;
+  color: #204080;
+  padding: 12px;
+  background: #eaf3ff;
+  border-radius: 8px;
+}
+
+.admin2-payslip-settings-modal-footer {
+  padding: 24px;
+  border-top: 1px solid #e1e5e9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.admin2-payslip-settings-modal-cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.admin2-payslip-settings-modal-cancel-btn:hover {
+  background: #5a6268;
+}
+
+.admin2-payslip-settings-modal-save-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin2-payslip-settings-modal-save-btn:hover:not(:disabled) {
+  background: #218838;
+}
+
+.admin2-payslip-settings-modal-save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Pay Slip Modal */
+.admin2-payslip-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.admin2-payslip-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.admin2-payslip-modal-header {
+  padding: 24px;
+  border-bottom: 1px solid #e1e5e9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin2-payslip-modal-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #204080;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin2-payslip-modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.admin2-payslip-modal-close-btn:hover {
+  background: #f8f9fa;
+}
+
+.admin2-payslip-modal-body {
+  padding: 24px;
+}
+
+/* Pay Slip Content */
+.admin2-payslip-content {
+  background: white;
+  padding: 40px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-family: 'Arial', sans-serif;
+}
+
+.admin2-payslip-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  border-bottom: 3px solid #204080;
+  padding-bottom: 20px;
+}
+
+.admin2-payslip-company-info {
+  flex: 1;
+}
+
+.admin2-payslip-company-name {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.admin2-payslip-logo {
+  width: 80px;
+  height: 80px;
+}
+
+.admin2-payslip-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.admin2-payslip-document-info {
+  text-align: right;
+}
+
+.admin2-payslip-document-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.admin2-payslip-period,
+.admin2-payslip-date {
+  margin: 4px 0;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.admin2-payslip-employee-section {
+  margin-bottom: 40px;
+}
+
+.admin2-payslip-employee-details h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #204080;
+  margin: 0 0 20px 0;
+  border-bottom: 2px solid #e1e5e9;
+  padding-bottom: 8px;
+}
+
+.admin2-payslip-employee-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.admin2-payslip-employee-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin2-payslip-employee-field label {
+  font-weight: 600;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.admin2-payslip-employee-field span {
+  font-weight: 500;
+  color: #333;
+  font-size: 1rem;
+}
+
+.admin2-payslip-salary-section {
+  margin-bottom: 40px;
+}
+
+.admin2-payslip-salary-section h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #204080;
+  margin: 0 0 20px 0;
+  border-bottom: 2px solid #e1e5e9;
+  padding-bottom: 8px;
+}
+
+.admin2-payslip-salary-table {
+  width: 100%;
+}
+
+.admin2-payslip-salary-details {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin2-payslip-salary-details tr {
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.admin2-payslip-salary-details tr:last-child {
+  border-bottom: 2px solid #204080;
+}
+
+.admin2-payslip-salary-label {
+  padding: 12px 8px;
+  font-weight: 500;
+  color: #333;
+  text-align: left;
+  width: 60%;
+}
+
+.admin2-payslip-salary-amount {
+  padding: 12px 8px;
+  font-weight: 600;
+  color: #333;
+  text-align: right;
+  width: 40%;
+}
+
+.admin2-payslip-deduction-amount {
+  color: #dc3545;
+}
+
+.admin2-payslip-total-deductions {
+  background: #f8f9fa;
+}
+
+.admin2-payslip-total-deductions .admin2-payslip-salary-label,
+.admin2-payslip-total-deductions .admin2-payslip-salary-amount {
+  font-weight: 600;
+  color: #dc3545;
+}
+
+.admin2-payslip-salary-total {
+  background: #eaf3ff;
+}
+
+.admin2-payslip-salary-total .admin2-payslip-salary-label,
+.admin2-payslip-salary-total .admin2-payslip-salary-amount {
+  font-weight: 700;
+  color: #204080;
+  font-size: 1.1rem;
+}
+
+.admin2-payslip-footer {
+  margin-top: 40px;
+}
+
+.admin2-payslip-signature-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.admin2-payslip-signature-box {
+  text-align: center;
+  flex: 1;
+  margin: 0 20px;
+}
+
+.admin2-payslip-signature-box p {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.admin2-payslip-signature-line {
+  height: 2px;
+  background: #333;
+  margin-top: 40px;
+}
+
+.admin2-payslip-notes {
+  border-top: 1px solid #e1e5e9;
+  padding-top: 20px;
+}
+
+.admin2-payslip-notes p {
+  margin: 0 0 12px 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.admin2-payslip-notes ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.admin2-payslip-notes li {
+  margin-bottom: 4px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.admin2-payslip-modal-footer {
+  padding: 24px;
+  border-top: 1px solid #e1e5e9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.admin2-payslip-modal-close-btn-footer {
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.admin2-payslip-modal-close-btn-footer:hover {
+  background: #5a6268;
+}
+
+.admin2-payslip-modal-download-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin2-payslip-modal-download-btn:hover {
+  background: #218838;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin2-payslip-container {
+    padding: 20px 12px 12px 12px;
+  }
+  
+  .admin2-payslip-header {
+    padding: 24px 20px;
+  }
+  
+  .admin2-payslip-title {
+    font-size: 2rem;
+  }
+  
+  .admin2-payslip-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .admin2-payslip-filters {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .admin2-payslip-stats {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .admin2-payslip-table-responsive {
+    overflow-x: auto;
+  }
+  
+  .admin2-payslip-table {
+    min-width: 800px;
+  }
+  
+  .admin2-payslip-employee-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .admin2-payslip-signature-section {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .admin2-payslip-signature-box {
+    margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin2-payslip-header {
+    padding: 20px 16px;
+  }
+  
+  .admin2-payslip-title {
+    font-size: 1.8rem;
+  }
+  
+  .admin2-payslip-content {
+    padding: 20px;
+  }
+  
+  .admin2-payslip-company-name {
+    font-size: 1.5rem;
+  }
+  
+  .admin2-payslip-document-title {
+    font-size: 2rem;
+  }
+  
+  .admin2-payslip-settings-input-group {
+    flex-direction: column;
+  }
+  
+  .admin2-payslip-settings-item-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+} 
