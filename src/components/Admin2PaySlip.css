@@ -835,12 +835,22 @@
   width: 40%;
 }
 
+.admin2-payslip-section-heading td {
+  padding: 10px 12px;
+  background: #f1f5ff;
+  color: #1a3373;
+  font-weight: 700;
+  border-top: 1px solid #e1e5e9;
+  border-bottom: 1px solid #e1e5e9;
+}
+
 .admin2-payslip-deduction-amount {
-  color: #dc3545;
+  color: #c0392b;
 }
 
 .admin2-payslip-total-deductions {
-  background: #f8f9fa;
+  color: #c0392b;
+  font-weight: 700;
 }
 
 .admin2-payslip-total-deductions .admin2-payslip-salary-label,

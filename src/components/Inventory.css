@@ -63,7 +63,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #22bb33, #1a8a28);
+  background: rgb(10, 10, 99);
 }
 
 .summary-card.expenditure::before {
@@ -92,7 +92,7 @@
   justify-content: center;
   font-size: 24px;
   color: white;
-  background: linear-gradient(135deg, #22bb33, #1a8a28);
+  background: #1e40af;
   margin-bottom: 16px;
 }
 
@@ -170,7 +170,7 @@
 }
 
 .summary-item .amount.positive {
-  color: #22bb33;
+  color: #1c1083;
 }
 
 .summary-item .amount.negative {
@@ -268,7 +268,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #22bb33, #1a8a28);
+  background: #1c1083;
   color: white;
   border: none;
   border-radius: 12px;
@@ -285,7 +285,7 @@
 
 .primary-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(34, 187, 51, 0.4);
+  box-shadow: 0 6px 16px rgba(43, 17, 139, 0.4);
 }
 
 .secondary-btn {

@@ -15,6 +15,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
   const [expandedMenu, setExpandedMenu] = useState(null);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [myPayslipCount, setMyPayslipCount] = useState(0);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileData, setProfileData] = useState({
     username: '',
@@ -170,6 +171,22 @@ export default function SideTop({ children, hasUnread, activeTab }) {
 
   let menuToShow = filterMenuItems(menuItems);
 
+  // Fetch my payslip count for roles that have Pay Slip
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPayslipCount() {
+      try {
+        const list = await api.getMyPaidSalaries();
+        if (isMounted) setMyPayslipCount(Array.isArray(list) ? list.length : 0);
+      } catch (e) {
+        if (isMounted) setMyPayslipCount(0);
+      }
+    }
+    fetchPayslipCount();
+    const interval = setInterval(fetchPayslipCount, 60000);
+    return () => { isMounted = false; clearInterval(interval); };
+  }, [authUser?.id]);
+
   // Determine if user is a teacher
   const isTeacher = authUser?.role === 'Teacher';
   const [teacherStatus, setTeacherStatus] = useState(null);
@@ -239,6 +256,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
     { label: 'Application', icon: <FaClipboardList />, path: '/application' },
     { label: 'My Classes', icon: <FaBook />, path: '/my-classes' },
     { label: 'Messages', icon: <FaEnvelope />, path: '/dean-messages' },
+    { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
     { label: 'My Events', icon: <FaCalendarAlt />, path: '/my-events' },
     { label: 'Timetables', icon: <FaClipboardList />, path: '/timetables' },
     { label: 'Marks', icon: <FaChartBar />, path: '/dean-marks' },
@@ -436,6 +454,20 @@ export default function SideTop({ children, hasUnread, activeTab }) {
                 <span style={{ position: 'absolute', top: 8, right: 8, width: 10, height: 10, background: '#e53e3e', borderRadius: '50%', display: 'inline-block' }}></span>
               )}
               <span>{item.label}</span>
+              {item.label === 'Pay Slip' && myPayslipCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  right: 10,
+                  top: 10,
+                  background: '#204080',
+                  color: '#fff',
+                  borderRadius: 999,
+                  padding: '1px 6px',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  lineHeight: 1
+                }}>{myPayslipCount}</span>
+              )}
             </div>
           ))}
           {/* {!isTeacher && showSeeMore && !expandedMenu && ( // This block is removed

@@ -1,88 +1,70 @@
-/* PaySlip.css - Placeholder styling */
+/* PaySlip.css - Teacher Payslip UI */
 
-.payslip-container {
+.teacher-payslip-container {
   padding: 32px 18px 18px 18px;
   box-sizing: border-box;
   background: #f7f8fa;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.payslip-content {
+.teacher-payslip-header {
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(32, 64, 128, 0.08);
-  padding: 60px 40px;
-  text-align: center;
-  max-width: 500px;
-  width: 100%;
+  padding: 24px;
+  margin-bottom: 24px;
 }
 
-.payslip-placeholder h1 {
-  color: #204080;
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin: 0 0 30px 0;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.placeholder-message {
+.teacher-payslip-header-content {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
   gap: 16px;
 }
 
-.placeholder-message p {
-  color: #666;
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0;
-  padding: 20px;
-  background: #f8f9ff;
-  border-radius: 12px;
-  border: 2px dashed #e0e7ff;
-  min-width: 200px;
+.teacher-payslip-header-text { flex: 1; }
+
+.teacher-payslip-title {
+  color: #204080;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 6px 0;
 }
 
-.placeholder-subtitle {
-  color: #999;
-  font-size: 1rem;
-  font-style: italic;
+.teacher-payslip-subtitle { color: #666; margin: 0; }
+
+.teacher-payslip-search { position: relative; max-width: 380px; width: 100%; }
+.teacher-payslip-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #666; }
+.teacher-payslip-search-input { width: 100%; padding: 12px 12px 12px 38px; border: 2px solid #e1e5e9; border-radius: 8px; }
+.teacher-payslip-search-input:focus { outline: none; border-color: #204080; }
+
+.teacher-payslip-table-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(32, 64, 128, 0.08);
+  overflow: hidden;
 }
 
-/* Responsive Design */
+.teacher-payslip-loading { padding: 48px; text-align: center; }
+.teacher-payslip-loading-spinner { width: 36px; height: 36px; border: 4px solid #e1e5e9; border-top: 4px solid #204080; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg);} }
+
+.teacher-payslip-empty { padding: 48px; text-align: center; color: #666; }
+
+.teacher-payslip-table-responsive { overflow-x: auto; }
+.teacher-payslip-table { width: 100%; border-collapse: collapse; }
+.teacher-payslip-table thead { background: #f8f9fa; }
+.teacher-payslip-table th, .teacher-payslip-table td { padding: 14px 12px; border-bottom: 1px solid #e1e5e9; text-align: left; font-size: 0.95rem; }
+.teacher-payslip-table th { font-weight: 700; color: #204080; }
+.teacher-payslip-amount { font-weight: 600; color: #28a745; }
+.teacher-payslip-date { color: #666; font-size: 0.9rem; }
+.teacher-payslip-actions { display: flex; gap: 8px; }
+.teacher-payslip-view-btn, .teacher-payslip-download-btn { background: none; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s ease; display: inline-flex; gap: 6px; align-items: center; color: #204080; }
+.teacher-payslip-view-btn:hover { background: #eaf3ff; }
+.teacher-payslip-download-btn { color: #155724; }
+.teacher-payslip-download-btn:hover { background: #e9f7ef; }
+
 @media (max-width: 768px) {
-  .payslip-container {
-    padding: 20px 12px 12px 12px;
-  }
-  
-  .payslip-content {
-    padding: 40px 20px;
-  }
-  
-  .payslip-placeholder h1 {
-    font-size: 2rem;
-  }
-  
-  .placeholder-message p {
-    font-size: 1.2rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .payslip-content {
-    padding: 30px 16px;
-  }
-  
-  .payslip-placeholder h1 {
-    font-size: 1.8rem;
-  }
-  
-  .placeholder-message p {
-    font-size: 1.1rem;
-  }
+  .teacher-payslip-header-content { flex-direction: column; align-items: stretch; }
+  .teacher-payslip-title { font-size: 1.6rem; }
 } 

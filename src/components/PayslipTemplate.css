@@ -1,0 +1,29 @@
+.template-wrapper { background: #fff; color: #000; padding: 16px; }
+.template-header { margin-bottom: 10px; }
+.template-row { font-size: 12px; margin: 2px 0; }
+.template-label { display: inline-block; min-width: 170px; font-weight: 700; }
+.template-value { display: inline-block; }
+.template-bold { font-weight: 700; font-style: italic; }
+
+.template-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.template-table th, .template-table td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
+
+.col-sn { width: 50px; }
+.col-heading { width: auto; }
+.col-credit { width: 120px; }
+.col-debit { width: 120px; }
+.col-percent { width: 60px; }
+.col-remark { width: 180px; }
+
+.cell.number { text-align: right; }
+.cell.text { text-align: left; }
+.cell.sn { text-align: center; }
+.row-section .heading { font-weight: 700; }
+.row-subtotal td { font-weight: 700; }
+.row-total td { font-weight: 700; }
+.row-net td { font-size: 13px; }
+
+@media print {
+	.template-wrapper { padding: 0; }
+	.template-table th, .template-table td { padding: 4px 6px; }
+} 

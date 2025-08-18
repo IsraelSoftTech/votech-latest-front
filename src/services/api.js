@@ -2227,6 +2227,34 @@ class ApiService {
     });
     return await this.handleResponse(response);
   }
+
+  async getMyPaidSalaries() {
+    try {
+      const response = await fetch(`${API_URL}/salary/my/paid`, {
+        headers: this.getAuthHeaders()
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Get my paid salaries error:', error);
+      throw error;
+    }
+  }
+
+  async getPayslipSettings() {
+    const response = await fetch(`${API_URL}/salary/payslip-settings`, {
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async savePayslipSettings(settings) {
+    const response = await fetch(`${API_URL}/salary/payslip-settings`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ settings })
+    });
+    return this.handleResponse(response);
+  }
 }
 
 export default new ApiService(); 
