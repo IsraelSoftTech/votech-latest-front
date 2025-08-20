@@ -1,0 +1,143 @@
+/* MarksUpload.styles.css */
+
+.marks-upload-page {
+  padding: 20px;
+  background-color: #f9f9f9;
+  min-height: 100%;
+}
+
+.marks-upload-page h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.form-react-select {
+  min-width: 200px;
+  flex: 1;
+}
+
+.marks-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.marks-table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.marks-table-wrapper th,
+.marks-table-wrapper td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* .marks-table-wrapper tr input {
+  display: grid;
+  grid-template-columns: 1fr 2rem;
+} */
+
+.marks-table-wrapper th {
+  background-color: #f0f0f0;
+  font-weight: 600;
+  color: #555;
+}
+
+.marks-table-wrapper tr:hover {
+  background-color: #f9f9f9;
+}
+
+.buttons-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+}
+
+input[type="file"] {
+  cursor: pointer;
+}
+
+.CustomInput {
+  width: 100%;
+}
+
+/* .form-react-select {
+  margin-bottom: 1rem;
+} */
+
+.no-data-msg {
+  color: #888;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: none;
+  color: #081435;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.back-btn:hover,
+.btn-upload-excel:hover {
+  opacity: 0.8;
+}
+
+.back-btn:active,
+.btn-upload-excel:active {
+  opacity: 0.6;
+}
+
+.buttons-row {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.btn-upload-excel {
+  /* background-color: #f59e0b; */
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: white;
+  transition: background-color 0.2s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .filters-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* row-gap: 0.5rem; */
+  }
+
+  .form-react-select {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .buttons-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
