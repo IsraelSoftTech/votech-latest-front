@@ -198,28 +198,28 @@ export default function SideTop({ children, hasUnread, activeTab }) {
         try {
           const all = await api.getAllTeachers();
           let rec = null;
-          
+
           // Try to match by user_id first (most reliable)
           if (authUser?.id) {
             rec = all.find(t => t.user_id === authUser.id);
           }
-          
+
           // If not found, try to match by contact (same as DeanManager logic)
           if (!rec && authUser?.contact) {
             rec = all.find(t => t.contact === authUser.contact);
           }
-          
+
           // If still not found, try to match by full_name (same as DeanManager logic)
           if (!rec && authUser?.name) {
             rec = all.find(t => t.full_name === authUser.name);
           }
-          
+
           // If still not found, try to match by username (fallback)
           if (!rec && authUser?.username) {
             rec = all.find(t => t.full_name?.toLowerCase().includes(authUser.username.toLowerCase()) || 
                                t.contact?.toLowerCase().includes(authUser.username.toLowerCase()));
           }
-          
+
           if (isMounted) {
             setTeacherStatus(rec?.status || 'pending');
           }
@@ -448,8 +448,8 @@ export default function SideTop({ children, hasUnread, activeTab }) {
               className={`menu-item${(activeTab && item.label === activeTab) || location.pathname === item.path || (item.path && location.pathname.startsWith(item.path + '/')) ? ' active' : ''}`}
               onClick={() => item.path && navigate(item.path)}
               style={{ position: 'relative' }}
-            >
-              <span className="icon">{item.icon}</span>
+              >
+                <span className="icon">{item.icon}</span>
               {item.label === 'Messages' && hasUnread && (
                 <span style={{ position: 'absolute', top: 8, right: 8, width: 10, height: 10, background: '#e53e3e', borderRadius: '50%', display: 'inline-block' }}></span>
               )}
@@ -511,7 +511,7 @@ export default function SideTop({ children, hasUnread, activeTab }) {
                   <img 
                     src={authUser.profileImageUrl || authUser.profile_image_url} 
                     alt="Profile" 
-                    style={{ 
+                    style={{
                       width: '32px', 
                       height: '32px', 
                       borderRadius: '50%', 
@@ -529,21 +529,21 @@ export default function SideTop({ children, hasUnread, activeTab }) {
                 <button 
                   style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#204080', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}
                   onClick={openProfileModal}
-                >
-                  <FaCog style={{ fontSize: 17 }} /> Settings
-                </button>
-                <button
+                  >
+                    <FaCog style={{ fontSize: 17 }} /> Settings
+                  </button>
+                  <button
                   style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#e53e3e', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}
-                  onClick={() => {
+                    onClick={() => {
                     sessionStorage.removeItem('token');
                     sessionStorage.removeItem('authUser');
                     window.location.href = '/signin';
-                  }}
-                >
-                  <FaSignOutAlt style={{ fontSize: 17 }} /> Logout
-                </button>
+                    }}
+                  >
+                    <FaSignOutAlt style={{ fontSize: 17 }} /> Logout
+                  </button>
               </div>, document.body
-            )}
+              )}
           </div>
         </header>
         <div style={{ marginTop: 32 }}>{children}</div>
