@@ -2,35 +2,47 @@ import axios from "axios";
 
 export const baseURL = "http://localhost:5000/api/v1/";
 export const subBaseURL = "http://localhost:5000/api";
-const token = sessionStorage.getItem("token");
-
-//TODO: convert to production base url on push, dont forget.🙏🏿
 
 const api = axios.create({
   baseURL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-export const headers = {
-  Authorization: `Bearer ${token}`,
-  "Content-Type": "application/json",
+export const headers = () => {
+  const token = sessionStorage.getItem("token");
+  return {
+    Authorization: token ? `Bearer ${token}` : undefined,
+    "Content-Type": "application/json",
+  };
 };
 
-// Add the token dynamically before every request
 api.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
-      delete config.headers.Authorization; // Just to be safe
+      delete config.headers.Authorization;
     }
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.code === "ECONNABORTED" && error.message.includes("timeout")) {
+      if (!error.config._retry) {
+        error.config._retry = true;
+        return api(error.config);
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default api;
