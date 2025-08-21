@@ -121,7 +121,7 @@ export const ReportCardHomePage = () => {
       state: {
         student,
         department: departments.find((d) => d.id === filters.department_id),
-        class: classes.find((c) => c.id === filters.class_id),
+        studentClass: classes.find((c) => c.id === filters.class_id),
         academic_year_id: filters.academic_year_id,
         term: termObj || null,
         sequence: sequenceObj || null,

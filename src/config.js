@@ -1,11 +1,13 @@
 // Configuration file for API endpoints
 const config = {
   // API URL configuration - use local for development, production for live
-  // API_URL: process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development'
-  //   ? 'http://localhost:5000/api'
-  //   : 'https://api.votechs7academygroup.com/api'),
+  API_URL:
+    process.env.REACT_APP_API_URL ||
+    (process.env.NODE_ENV === "development"
+      ? "http://localhost:5000/api"
+      : "https://api.votechs7academygroup.com/api"),
 
-  API_URL: "http://localhost:5000/api",
+  // API_URL: "http://localhost:5000/api",
 
   // Frontend URL
   FRONTEND_URL:
