@@ -26,26 +26,26 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
         downloadBtn.style.display = 'none';
       }
       
-      // Create a temporary container with two receipts for PDF generation
-      const tempContainer = document.createElement('div');
-      tempContainer.className = 'receipt-container temp-pdf-container';
-      tempContainer.style.cssText = `
-        background: white;
-        width: 210mm;
-        min-height: 280mm;
-        margin: 0 auto;
-        padding: 5mm;
-        box-sizing: border-box;
-        font-family: 'Times New Roman', serif;
-        color: black;
-        position: absolute;
-        left: -9999px;
-        top: -9999px;
-        overflow: visible;
-        display: flex;
-        flex-direction: column;
-        gap: 15mm;
-      `;
+             // Create a temporary container with two receipts for PDF generation
+       const tempContainer = document.createElement('div');
+       tempContainer.className = 'receipt-container temp-pdf-container';
+       tempContainer.style.cssText = `
+         background: white;
+         width: 210mm;
+         height: 297mm;
+         margin: 0 auto;
+         padding: 6mm;
+         box-sizing: border-box;
+         font-family: 'Times New Roman', serif;
+         color: black;
+         position: absolute;
+         left: -9999px;
+         top: -9999px;
+         overflow: visible;
+         display: flex;
+         flex-direction: column;
+         gap: 8mm;
+       `;
       
       // Clone the receipt content twice
       const receiptContent = ref.current.querySelector('.receipt-template');
@@ -75,7 +75,15 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
         windowWidth: tempContainer.scrollWidth,
         windowHeight: tempContainer.scrollHeight,
         logging: false,
-        removeContainer: false
+        removeContainer: false,
+                 onclone: (clonedDoc) => {
+           // Ensure proper spacing in cloned document
+           const clonedContainer = clonedDoc.querySelector('.temp-pdf-container');
+           if (clonedContainer) {
+             clonedContainer.style.padding = '6mm';
+             clonedContainer.style.gap = '8mm';
+           }
+         }
       });
       
       // Remove temporary container
@@ -93,8 +101,17 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
       const imgWidth = 210; // A4 width in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      // Add the image to PDF
+      // Add the image to PDF with proper positioning
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      
+      // If the content is taller than A4, add a second page
+      if (imgHeight > 297) {
+        const remainingHeight = imgHeight - 297;
+        if (remainingHeight > 0) {
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, -297, imgWidth, imgHeight);
+        }
+      }
 
       const fileName = `fee_receipt_${student.student_id}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);

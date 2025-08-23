@@ -732,8 +732,9 @@ export default function AdminStudent() {
             setShowModal(true);
             setEditId(null);
           }}
-          title="Register Student"
+          title={isAdmin1 ? 'Not allowed for Admin1' : 'Register Student'}
           style={{ position: "static", marginLeft: 0 }}
+          disabled={isAdmin1}
         >
           <FaPlus style={{ fontSize: 28, color: "#fff" }} />
         </button>
@@ -770,8 +771,9 @@ export default function AdminStudent() {
             alignItems: "center",
             gap: 8,
           }}
-          title="Upload Many"
+          title={isAdmin1 ? 'Not allowed for Admin1' : 'Upload Many'}
           onClick={() => setUploadManyModalOpen(true)}
+          disabled={isAdmin1}
         >
           <FaUpload /> Upload Many
         </button>
@@ -922,15 +924,17 @@ export default function AdminStudent() {
                   <td className="actions">
                     <button
                       className="action-btn edit"
-                      title="Edit"
+                      title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}
                       onClick={() => handleEdit(s)}
+                      disabled={isAdmin1}
                     >
                       <FaEdit />
                     </button>
                     <button
                       className="action-btn delete"
-                      title="Delete"
+                      title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}
                       onClick={() => handleDelete(idx)}
+                      disabled={isAdmin1}
                     >
                       <FaTrash />
                     </button>
@@ -1306,8 +1310,7 @@ export default function AdminStudent() {
               Delete Student
             </div>
             <div style={{ fontSize: 16, marginBottom: 24, color: "#444" }}>
-              Are you sure you want to delete this student? This action cannot
-              be undone.
+              Are you sure you want to delete this student? This action cannot be undone.
             </div>
             <div
               style={{
@@ -1358,6 +1361,7 @@ export default function AdminStudent() {
           </div>
         </div>
       )}
+
       {/* Upload Many Modal */}
       {uploadManyModalOpen && (
         <div

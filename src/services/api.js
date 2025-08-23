@@ -586,6 +586,15 @@ class ApiService {
     return await response.json();
   }
 
+  async clearStudentFees(studentId) {
+    const response = await fetch(`${API_URL}/fees/student/${studentId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to clear student fees');
+    return await response.json();
+  }
+
   // Message endpoints
   async getMessages(userId) {
     const response = await fetch(`${API_URL}/messages/${userId}`, {
@@ -1274,7 +1283,9 @@ class ApiService {
         throw new Error(error.details || error.error || 'Failed to fetch applications');
       }
       
-      return await response.json();
+      const result = await response.json();
+      // Return the data array from the response
+      return result.data || result;
     } catch (error) {
       console.error('Get applications error:', error);
       throw error;
@@ -1292,7 +1303,9 @@ class ApiService {
         return null;
       }
       
-      return this.handleResponse(response);
+      const result = this.handleResponse(response);
+      // Return the first application from the array, or null if no applications
+      return result.data && result.data.length > 0 ? result.data[0] : null;
     } catch (error) {
       console.error('Get user application error:', error);
       // Don't throw error for 404, just return null
@@ -1349,7 +1362,9 @@ class ApiService {
         throw new Error(error.details || error.error || 'Failed to submit application');
       }
       
-      return await response.json();
+      const result = await response.json();
+      // Return the data from the response
+      return result.data || result;
     } catch (error) {
       console.error('Submit application error:', error);
       throw error;
@@ -1389,7 +1404,9 @@ class ApiService {
         throw new Error(error.details || error.error || 'Failed to update application');
       }
       
-      return await response.json();
+      const result = await response.json();
+      // Return the data from the response
+      return result.data || result;
     } catch (error) {
       console.error('Update application error:', error);
       throw error;
@@ -1430,7 +1447,9 @@ class ApiService {
         throw new Error(error.details || error.error || 'Failed to update application status');
       }
       
-      return await response.json();
+      const result = await response.json();
+      // Return the data from the response
+      return result.data || result;
     } catch (error) {
       console.error('Update application status error:', error);
       throw error;
@@ -1463,7 +1482,9 @@ class ApiService {
         throw new Error(error.details || error.error || 'Failed to delete application');
       }
       
-      return await response.json();
+      const result = await response.json();
+      // Return the data from the response
+      return result.data || result;
     } catch (error) {
       console.error('Delete application error:', error);
       throw error;

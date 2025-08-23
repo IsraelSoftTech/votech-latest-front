@@ -77,7 +77,6 @@ export default function SideTop({ children }) {
   if (authUser?.role === "Admin1") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
-      ,
       { label: "Application", icon: <FaClipboardList />, path: "/application" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
@@ -88,11 +87,10 @@ export default function SideTop({ children }) {
         path: "/admin-specialty",
       },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
-      { label: "ID Cards", icon: <FaIdCard />, path: "/admin-idcards" },
+   
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
-      { label: "Reports", icon: <FaFileAlt /> },
-      { label: "Exam/Marks", icon: <FaChartBar /> },
+     
       {
         label: "Lesson Plans",
         icon: <FaPenFancy />,

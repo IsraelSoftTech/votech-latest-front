@@ -28,6 +28,8 @@ export default function Fee() {
   const [feeStatsError, setFeeStatsError] = React.useState('');
   const [paymentModalOpen, setPaymentModalOpen] = React.useState(false);
   const [receiptModalOpen, setReceiptModalOpen] = React.useState(false);
+  const [payType, setPayType] = React.useState('');
+  const [payAmount, setPayAmount] = React.useState('');
   const [feeStatsModalOpen, setFeeStatsModalOpen] = useState(false);
   const [classes, setClasses] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState('');
@@ -53,47 +55,124 @@ export default function Fee() {
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [selectedClassFilter, setSelectedClassFilter] = useState('');
 
-  // Fetch students and their fee details
-  useEffect(() => {
-    const fetchStudentsAndFees = async () => {
-      try {
-        setStudentsLoading(true);
-        const studentsData = await api.getStudents();
-        const classesData = await api.getClasses();
-      
-      setStudents(studentsData);
-        setClasses(classesData);
-        setFilteredStudents(studentsData);
-      
-        // Fetch fee details for all students
-        const feeDetailsPromises = studentsData.map(async (student) => {
-          try {
-            const feeStats = await api.getStudentFeeStats(student.id);
-            return { studentId: student.id, feeStats };
-          } catch (error) {
-            console.error(`Error fetching fee stats for student ${student.id}:`, error);
-            return { studentId: student.id, feeStats: null };
-          }
-        });
-        
-        const feeDetailsResults = await Promise.all(feeDetailsPromises);
-        const feeDetailsMap = {};
-        feeDetailsResults.forEach(({ studentId, feeStats }) => {
-          feeDetailsMap[studentId] = feeStats;
-        });
-        
-        setStudentFeeDetails(feeDetailsMap);
-    } catch (error) {
-        console.error('Error fetching students and fees:', error);
-        setStudents([]);
-        setFilteredStudents([]);
-    } finally {
-        setStudentsLoading(false);
-      }
-    };
+  // Function to fetch students and their fee details
+  const fetchStudentsAndFees = async () => {
+    try {
+      setStudentsLoading(true);
+      const studentsData = await api.getStudents();
+      const classesData = await api.getClasses();
     
+      setStudents(studentsData);
+      setClasses(classesData);
+      setFilteredStudents(studentsData);
+    
+      // Fetch fee details for all students
+      const feeDetailsPromises = studentsData.map(async (student) => {
+        try {
+          const feeStats = await api.getStudentFeeStats(student.id);
+          return { studentId: student.id, feeStats };
+        } catch (error) {
+          console.error(`Error fetching fee stats for student ${student.id}:`, error);
+          return { studentId: student.id, feeStats: null };
+        }
+      });
+      
+      const feeDetailsResults = await Promise.all(feeDetailsPromises);
+      const feeDetailsMap = {};
+      feeDetailsResults.forEach(({ studentId, feeStats }) => {
+        feeDetailsMap[studentId] = feeStats;
+      });
+      
+      setStudentFeeDetails(feeDetailsMap);
+
+      // Also update the totals
+      await updateTotals(studentsData, classesData);
+    } catch (error) {
+      console.error('Error fetching students and fees:', error);
+      setStudents([]);
+      setFilteredStudents([]);
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  // Function to update totals
+  const updateTotals = async (studentsData, classesData) => {
+    setLoadingTotals(true);
+    try {
+      // Build a map of classId -> class total_fee
+      const classMap = {};
+      classesData.forEach(cls => {
+        classMap[cls.id] = parseFloat(cls.total_fee) || 0;
+      });
+      let paidSum = 0;
+      let overallFee = 0;
+      // Fetch all student fee stats in parallel
+      const feeStatsArr = await Promise.all(studentsData.map(async student => {
+        try {
+          const stats = await api.getStudentFeeStats(student.id);
+          return { student, stats };
+        } catch (e) {
+          return { student, stats: null };
+        }
+      }));
+      for (const { student, stats } of feeStatsArr) {
+        const classTotalFee = classMap[student.class_id] || 0;
+        overallFee += classTotalFee;
+        let paid = 0;
+        if (stats && stats.balance) {
+          // Paid = class total fee - sum of balances
+          const sumBalance = Object.values(stats.balance).reduce((a, b) => a + (b || 0), 0);
+          paid = classTotalFee - sumBalance;
+        }
+        paidSum += paid;
+      }
+      setTotalPaid(paidSum);
+      setTotalOwed(overallFee - paidSum);
+    } catch (e) {
+      setTotalPaid(0);
+      setTotalOwed(0);
+    }
+    setLoadingTotals(false);
+  };
+
+  // Fetch students and their fee details on mount
+  useEffect(() => {
     fetchStudentsAndFees();
   }, []);
+
+  // Refresh data when component comes into focus (user returns from payment page)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Refresh data when window gains focus (user returns to tab)
+      fetchStudentsAndFees();
+    };
+
+    const handleVisibilityChange = () => {
+      // Refresh data when page becomes visible (user switches back to tab)
+      if (!document.hidden) {
+        fetchStudentsAndFees();
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Refresh data when location changes (user navigates back to this component)
+  useEffect(() => {
+    // If we're on the main fee page (not a specific student), refresh data
+    if (location.pathname === '/admin-fee') {
+      fetchStudentsAndFees();
+    }
+  }, [location.pathname]);
 
   // Filter students based on search query and class filter
   useEffect(() => {
@@ -170,23 +249,23 @@ export default function Fee() {
     navigate(`/admin-fee/${student.id}`);
   };
 
-  // Handle edit student
-  const handleEditStudent = (student) => {
-    navigate(`/admin-student?edit=${student.id}`);
+  // Handle edit student fees
+  const handleEditStudentFees = (student) => {
+    setSelectedStudent(student);
+    setPaymentModalOpen(true);
   };
 
-  // Handle delete student
-  const handleDeleteStudent = async (student) => {
-    if (window.confirm(`Are you sure you want to delete ${student.full_name}? This action cannot be undone.`)) {
+  // Handle clear student fees
+  const handleClearStudentFees = async (student) => {
+    if (window.confirm(`Are you sure you want to clear all fee records for ${student.full_name}? This action will permanently delete all payment records and cannot be undone.`)) {
       try {
-        await api.deleteStudent(student.id);
-        // Refresh the students list
-        const updatedStudents = students.filter(s => s.id !== student.id);
-        setStudents(updatedStudents);
-        setFilteredStudents(updatedStudents);
+        await api.clearStudentFees(student.id);
+        // Refresh the students and their fee details
+        await fetchStudentsAndFees();
+        alert('Student fees cleared successfully!');
       } catch (error) {
-        console.error('Error deleting student:', error);
-        alert('Failed to delete student. Please try again.');
+        console.error('Error clearing student fees:', error);
+        alert('Failed to clear student fees. Please try again.');
       }
     }
   };
@@ -208,49 +287,21 @@ export default function Fee() {
     }
   };
 
-  // Fetch and aggregate total paid/owed
+  // Fetch and aggregate total paid/owed on mount
   useEffect(() => {
-    async function fetchTotals() {
-      setLoadingTotals(true);
+    const fetchInitialTotals = async () => {
       try {
         const students = await api.getStudents();
         const classes = await api.getClasses();
-        // Build a map of classId -> class total_fee
-        const classMap = {};
-        classes.forEach(cls => {
-          classMap[cls.id] = parseFloat(cls.total_fee) || 0;
-        });
-        let paidSum = 0;
-        let overallFee = 0;
-        // Fetch all student fee stats in parallel
-        const feeStatsArr = await Promise.all(students.map(async student => {
-          try {
-            const stats = await api.getStudentFeeStats(student.id);
-            return { student, stats };
-          } catch (e) {
-            return { student, stats: null };
-          }
-        }));
-        for (const { student, stats } of feeStatsArr) {
-          const classTotalFee = classMap[student.class_id] || 0;
-          overallFee += classTotalFee;
-          let paid = 0;
-          if (stats && stats.balance) {
-            // Paid = class total fee - sum of balances
-            const sumBalance = Object.values(stats.balance).reduce((a, b) => a + (b || 0), 0);
-            paid = classTotalFee - sumBalance;
-          }
-          paidSum += paid;
-        }
-        setTotalPaid(paidSum);
-        setTotalOwed(overallFee - paidSum);
-      } catch (e) {
+        await updateTotals(students, classes);
+      } catch (error) {
+        console.error('Error fetching initial totals:', error);
         setTotalPaid(0);
         setTotalOwed(0);
+        setLoadingTotals(false);
       }
-      setLoadingTotals(false);
-    }
-    fetchTotals();
+    };
+    fetchInitialTotals();
   }, []);
 
   // Fetch classes on mount for modal
@@ -407,10 +458,40 @@ export default function Fee() {
     setPaymentModalOpen(true);
   };
 
-  // Close payment modal and open receipt modal
-  const handlePaymentSubmit = () => {
+  // Handle payment submission
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedStudent || !payType || !payAmount) return;
+    
+    try {
+      await api.payStudentFee({
+        student_id: selectedStudent.id,
+        class_id: selectedStudent.class_id,
+        fee_type: payType,
+        amount: parseFloat(payAmount)
+      });
+      
+      // Refresh the data
+      await fetchStudentsAndFees();
+      
+      // Close modal and show success message
+      setPaymentModalOpen(false);
+      setPayType('');
+      setPayAmount('');
+      setSelectedStudent(null);
+      alert('Fee updated successfully!');
+    } catch (error) {
+      console.error('Error updating fee:', error);
+      alert('Failed to update fee. Please try again.');
+    }
+  };
+
+  // Close payment modal
+  const handleClosePaymentModal = () => {
     setPaymentModalOpen(false);
-    setReceiptModalOpen(true);
+    setPayType('');
+    setPayAmount('');
+    setSelectedStudent(null);
   };
 
   return (
@@ -467,6 +548,28 @@ export default function Fee() {
           >
             Fee Statistics
           </span>
+          <button
+            onClick={fetchStudentsAndFees}
+            disabled={studentsLoading}
+            style={{
+              background: studentsLoading ? '#ccc' : '#28a745',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '17px',
+              fontWeight: 600,
+              cursor: studentsLoading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background 0.2s'
+            }}
+            title="Refresh fee data"
+          >
+            <span style={{ fontSize: '16px' }}>🔄</span>
+            {studentsLoading ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
         {searchLoading && <div style={{ textAlign: 'center', color: '#888', marginTop: 12 }}>Searching...</div>}
         {searchError && <div style={{ textAlign: 'center', color: '#e53e3e', marginTop: 12 }}>{searchError}</div>}
@@ -606,7 +709,7 @@ export default function Fee() {
                                 </button>
                               )}
                               <button
-                                onClick={() => handleEditStudent(student)}
+                                onClick={() => handleEditStudentFees(student)}
                                 style={{
                                   background: '#ffc107',
                                   color: '#000',
@@ -619,14 +722,14 @@ export default function Fee() {
                                   alignItems: 'center',
                                   gap: '4px'
                                 }}
-                                title="Edit Student"
+                                title="Edit Fees"
                               >
                                 <FaEdit size={12} />
                           </button>
                           <button
-                                onClick={() => handleDeleteStudent(student)}
+                                onClick={() => handleClearStudentFees(student)}
                                 style={{
-                                  background: '#dc3545',
+                                  background: '#ff9500',
                                   color: '#fff',
                                   border: 'none',
                                   borderRadius: '4px',
@@ -637,7 +740,7 @@ export default function Fee() {
                                   alignItems: 'center',
                                   gap: '4px'
                                 }}
-                                title="Delete Student"
+                                title="Clear Student Fees"
                               >
                                 <FaTrash size={12} />
                           </button>
@@ -817,37 +920,158 @@ export default function Fee() {
         @media (max-width: 900px) { .fee-stats-modal-header { flex-direction: column; align-items: flex-start; gap: 12px; padding: 24px 12px 12px 12px; } .fee-stats-modal-label, .fee-stats-modal-select { margin-left: 12px; width: calc(100% - 24px); } .fee-stats-table-wrapper { padding: 0 8px; } }
         @media (max-width: 600px) { .fee-stats-modal-content { max-width: 99vw; padding: 0; } .fee-stats-modal-header { padding: 16px 4px 8px 4px; } .fee-stats-modal-label, .fee-stats-modal-select { margin-left: 4px; width: calc(100% - 8px); } .fee-stats-table-pro th, .fee-stats-table-pro td { padding: 8px 4px; font-size: 0.98rem; } }
         @media print { @page { size: A4 landscape; margin: 10mm; } body, html { background: white !important; } .fee-stats-modal-overlay, .fee-stats-modal-content, .sidebar, .admin-header, .fee-main-content > *:not(.stats-print-area), .print-button, .fee-stats-modal-close { display: none !important; } .stats-print-area { display: block !important; width: 100vw !important; margin: 0 !important; padding: 0 !important; } }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      `}</style>
+                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+         
+         /* Payment Modal Styles */
+         .student-fee-modal-overlay {
+           position: fixed;
+           top: 0; left: 0; right: 0; bottom: 0;
+           background: rgba(32,64,128,0.13);
+           z-index: 1000;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+         }
+         .student-fee-modal-content {
+           background: #fff;
+           border-radius: 16px;
+           box-shadow: 0 8px 40px rgba(32,64,128,0.18);
+           padding: 36px 28px 28px 28px;
+           max-width: 420px;
+           width: 98vw;
+           min-width: 0;
+           position: relative;
+           text-align: center;
+         }
+         .text-select:focus, .text-input:focus {
+           outline: none;
+           border-color: rgb(46, 44, 153);
+         }
+       `}</style>
       
-      {/* Receipt Modal */}
-      {receiptModalOpen && receiptData && (
-        <div className="fee-receipt-modal-overlay">
-          <div className="fee-receipt-modal-content">
-            <button 
-              className="text-button close-btn black-x always-visible" 
-              onClick={() => setReceiptModalOpen(false)} 
-              style={{
-                position: 'absolute',
-                top: 10,
-                right: 20,
-                zIndex: 10000,
-                color: '#111',
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer'
-              }} 
-              aria-label="Close"
-            >
-              &#10005;
-            </button>
-            <div className="print-area">
-              <FeeReceipt ref={receiptRef} receipt={receiptData} />
-            </div>
-          </div>
-        </div>
-      )}
-    </SideTop>
-  );
-} 
+             {/* Payment Modal */}
+       {paymentModalOpen && selectedStudent && (
+         <div className="student-fee-modal-overlay" onClick={e => e.stopPropagation()}>
+           <div className="student-fee-modal-content" onClick={e => e.stopPropagation()}>
+             <button 
+               className="text-button close-btn black-x always-visible" 
+               onClick={handleClosePaymentModal} 
+               style={{
+                 position: 'absolute',
+                 top: 10,
+                 right: 20,
+                 zIndex: 10000,
+                 color: '#111',
+                 background: 'none',
+                 border: 'none',
+                 fontSize: '24px',
+                 cursor: 'pointer'
+               }} 
+               aria-label="Close"
+             >
+               &#10005;
+             </button>
+             <h2>Edit Fee Payment</h2>
+             <p style={{ marginBottom: '20px', color: '#666' }}>
+               Student: <strong>{selectedStudent.full_name}</strong>
+             </p>
+             <form onSubmit={handlePaymentSubmit}>
+               <label>Fee Type</label>
+               <select 
+                 value={payType} 
+                 onChange={e => setPayType(e.target.value)} 
+                 required 
+                 className="text-select"
+                 style={{
+                   background: 'none',
+                   border: '1.5px solid #204080',
+                   borderRadius: '7px',
+                   fontSize: '1.08rem',
+                   padding: '10px 12px',
+                   marginBottom: '18px',
+                   width: '100%',
+                   color: '#204080'
+                 }}
+               >
+                 <option value="">Select Fee Type</option>
+                 {['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'].map(type => (
+                   <option key={type} value={type}>
+                     {type}
+                   </option>
+                 ))}
+               </select>
+               <label>Amount to Pay/Edit (XAF)</label>
+               <input 
+                 type="number" 
+                 min="0" 
+                 step="0.01"
+                 value={payAmount} 
+                 onChange={e => setPayAmount(e.target.value)} 
+                 className="text-input" 
+                 required 
+                 placeholder="Enter amount"
+                 style={{
+                   background: 'none',
+                   border: '1.5px solid #204080',
+                   borderRadius: '7px',
+                   fontSize: '1.08rem',
+                   padding: '10px 12px',
+                   marginBottom: '18px',
+                   width: '100%',
+                   color: '#204080'
+                 }}
+               />
+               <button 
+                 type="submit" 
+                 className="text-button no-hover" 
+                 disabled={!payType || !payAmount}
+                 style={{
+                   background: '#1976d2',
+                   color: '#fff',
+                   border: 'none',
+                   borderRadius: '7px',
+                   padding: '12px 32px',
+                   fontSize: '1.1rem',
+                   fontWeight: '700',
+                   cursor: 'pointer',
+                   width: '100%'
+                 }}
+               >
+                 Update Fee
+               </button>
+             </form>
+           </div>
+         </div>
+       )}
+
+       {/* Receipt Modal */}
+       {receiptModalOpen && receiptData && (
+         <div className="fee-receipt-modal-overlay">
+           <div className="fee-receipt-modal-content">
+             <button 
+               className="text-button close-btn black-x always-visible" 
+               onClick={() => setReceiptModalOpen(false)} 
+               style={{
+                 position: 'absolute',
+                 top: 10,
+                 right: 20,
+                 zIndex: 10000,
+                 color: '#111',
+                 background: 'none',
+                 border: 'none',
+                 fontSize: '24px',
+                 cursor: 'pointer'
+               }} 
+               aria-label="Close"
+             >
+               &#10005;
+             </button>
+             <div className="print-area">
+               <FeeReceipt ref={receiptRef} receipt={receiptData} />
+             </div>
+           </div>
+         </div>
+       )}
+     </SideTop>
+   );
+ } 

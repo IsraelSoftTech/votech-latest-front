@@ -8,6 +8,8 @@ import api from '../services/api';
 export default function Subjects() {
   const [subjects, setSubjects] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
+  const isAdmin1 = authUser?.role === 'Admin1';
   const [form, setForm] = useState({ name: '', code: '' });
   const [editingId, setEditingId] = useState(null);
   const [success, setSuccess] = useState('');
@@ -79,7 +81,14 @@ export default function Subjects() {
       </div>
       <div className="teacher-section">
         <div className="teacher-header-row">
-          <button className="add-teacher-btn" onClick={() => { setShowModal(true); setEditingId(null); setForm({ name: '', code: '' }); }}><FaPlus /> Create Subject</button>
+          <button 
+            className="add-teacher-btn" 
+            onClick={() => { setShowModal(true); setEditingId(null); setForm({ name: '', code: '' }); }}
+            disabled={isAdmin1}
+            title={isAdmin1 ? 'Not allowed for Admin1' : 'Create Subject'}
+          >
+            <FaPlus /> Create Subject
+          </button>
         </div>
         <div className="teacher-table-wrapper">
           <table className="teacher-table">
@@ -96,8 +105,22 @@ export default function Subjects() {
                   <td>{typeof s.name === 'string' ? s.name : 'Unknown Subject'}</td>
                   <td>{s.code}</td>
                   <td className="actions">
-                    <button className="action-btn edit" onClick={() => handleEdit(s)}><FaEdit /></button>
-                    <button className="action-btn delete" onClick={() => handleDelete(s.id)}><FaTrash /></button>
+                    <button 
+                      className="action-btn edit" 
+                      onClick={() => handleEdit(s)}
+                      disabled={isAdmin1}
+                      title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}
+                    >
+                      <FaEdit />
+                    </button>
+                    <button 
+                      className="action-btn delete" 
+                      onClick={() => handleDelete(s.id)}
+                      disabled={isAdmin1}
+                      title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}
+                    >
+                      <FaTrash />
+                    </button>
                   </td>
                 </tr>
               ))}
