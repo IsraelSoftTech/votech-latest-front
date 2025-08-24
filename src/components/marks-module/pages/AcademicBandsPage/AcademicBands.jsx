@@ -567,6 +567,7 @@ export const AcademicBandsPage = () => {
                   type="number"
                   value={b.band_max}
                   onChange={(_, val) => handleBandChange(idx, "band_max", val)}
+                  // onClear={() => handleBandChange(idx, "")}
                 />
                 <CustomInput
                   label="Comment"

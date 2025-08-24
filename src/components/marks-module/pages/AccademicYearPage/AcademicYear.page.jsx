@@ -93,7 +93,7 @@ export const AcademicYear = () => {
   const validateForm = () => {
     const errors = {};
 
-    if (!form.name.trim()) errors.name = "Academic year name is required.";
+    // if (!form.name.trim()) errors.name = "Academic year name is required.";
     if (!form.start_date) errors.start_date = "Start date is required.";
     if (!form.end_date) errors.end_date = "End date is required.";
 
@@ -286,7 +286,7 @@ export const AcademicYear = () => {
           title="Create Academic Year"
         >
           <form onSubmit={handleCreateSubmit} className="modal-form">
-            <CustomInput
+            {/* <CustomInput
               label="Name"
               type="text"
               value={form.name}
@@ -296,7 +296,7 @@ export const AcademicYear = () => {
               onChange={handleUpdateForm}
               error={formErrors.name}
               onClear={() => handleUpdateForm("name", "")}
-            />
+            /> */}
 
             <CustomDatePicker
               label="Start Date"
@@ -347,7 +347,7 @@ export const AcademicYear = () => {
           title="Edit Academic Year"
         >
           <form onSubmit={handleEditSubmit} className="modal-form">
-            <CustomInput
+            {/* <CustomInput
               label="Name"
               type="text"
               value={form.name}
@@ -357,7 +357,7 @@ export const AcademicYear = () => {
               onChange={handleUpdateForm}
               error={formErrors.name}
               onClear={() => handleUpdateForm("name", "")}
-            />
+            /> */}
 
             <CustomDatePicker
               label="Start Date"

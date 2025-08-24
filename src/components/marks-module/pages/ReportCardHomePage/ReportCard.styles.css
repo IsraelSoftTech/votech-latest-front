@@ -109,9 +109,9 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .filters-row {
+  /* .filters-row {
     flex-direction: column;
-  }
+  } */
 
   .buttons-row {
     flex-direction: column;

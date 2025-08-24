@@ -165,14 +165,16 @@ export const ReportCardHomePage = () => {
                     label: y.name,
                   }))}
                   value={
-                    academicYears.find(
-                      (y) => y.id === filters.academic_year_id
-                    ) && {
-                      value: filters.academic_year_id,
-                      label: academicYears.find(
-                        (y) => y.id === filters.academic_year_id
-                      )?.name,
-                    }
+                    academicYears
+                      .map((y) => ({ value: y.id, label: y.name }))
+                      .find((opt) => opt.value === filters.academic_year_id) ||
+                    null
+                  }
+                  onChange={(opt) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      academic_year_id: opt?.value || null,
+                    }))
                   }
                 />
               </div>

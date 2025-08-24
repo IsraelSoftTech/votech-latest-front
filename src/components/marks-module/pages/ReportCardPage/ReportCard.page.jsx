@@ -13,10 +13,15 @@ export const ReportCardPage = () => {
   const navigate = useNavigate();
 
   const location = useLocation();
-  const { student, academic_year_id, term } = location.state || {};
+  const { student, academic_year_id, term, department, studentClass } =
+    location.state || {};
+
+  // console.log("data", location.state);
   const [reportCard, setReportCard] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [academicBands, setAcademicBands] = useState([]);
 
+  // console.log("Student Data", student);
   // console.log("Term", term);
 
   const handleGoBack = () => {
@@ -34,7 +39,22 @@ export const ReportCardPage = () => {
           `/report-cards/single?studentId=${student.id}&academicYearId=${academic_year_id}`
         );
         res.data.data.reportCard.student.term = term.name.toUpperCase();
-        setReportCard(res.data.data.reportCard);
+        res.data.data.reportCard.student.term;
+        let parents = [];
+
+        if (student?.father_name) parents.push(student.father_name);
+        if (student?.mother_name) parents.push(student.mother_name);
+
+        res.data.data.reportCard.administration.parents =
+          parents.length > 0 ? parents.join(", ") : "N/A";
+
+        res.data.data.reportCard.administration.parents = parents.join(", ");
+        const academicBandsRes = await api.get(
+          `/academic-bands?academic_year_id=${academic_year_id}&class_id=${studentClass.id}`
+        );
+        setAcademicBands(academicBandsRes.data.data || []);
+        setReportCard(res.data.data.reportCard || []);
+        console.log(academicBands);
       } catch (err) {
         toast.error("Failed to load student transcript");
         console.error("Failed to fetch report card", err);
@@ -88,7 +108,7 @@ export const ReportCardPage = () => {
           ) : !reportCard ? (
             <p>No report card found</p>
           ) : (
-            <ReportCard data={reportCard} />
+            <ReportCard data={reportCard} grading={academicBands} />
           )}
         </div>
       </div>
