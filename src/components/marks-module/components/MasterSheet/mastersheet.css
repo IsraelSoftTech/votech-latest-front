@@ -1,0 +1,262 @@
+/* ========== Theme ========== */
+:root {
+  --brand-blue: #204080;
+  --brand-blue-600: #1b376f;
+  --brand-gold: #c9a96e;
+
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-150: #f2f2f2;
+  --gray-200: #eaeaea;
+  --gray-300: #d9d9d9;
+  --gray-400: #cfcfcf;
+  --gray-500: #9a9a9a;
+
+  --text: #000000;
+  --paper: #ffffff;
+}
+
+/* ========== Base Layout (Grayscale + subtle brand) ========== */
+.ms-wrapper {
+  padding: 16px;
+  background: var(--paper);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.ms-card {
+  background: var(--paper);
+  border: 1px solid var(--gray-400);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+/* Controls (hidden when printing) */
+.ms-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.ms-btn {
+  background: var(--brand-blue);
+  color: #fff;
+  border: 1px solid var(--brand-blue);
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+.ms-btn:hover {
+  background: var(--brand-blue-600);
+}
+
+/* Header */
+.ms-header {
+  border-bottom: 2px solid var(--brand-blue);
+  padding-bottom: 8px;
+}
+.ms-header h1 {
+  margin: 0 0 6px 0;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--brand-blue);
+}
+.ms-meta {
+  font-size: 13px;
+}
+.ms-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+}
+
+/* Make Class and Department stand out more */
+.ms-meta-row span:nth-child(2), /* Department */
+  .ms-meta-row span:nth-child(3)  /* Class */ {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--brand-blue);
+}
+
+/* ========== Table ========== */
+.ms-table-wrapper {
+  overflow-x: auto; /* normal horizontal scrolling */
+  margin-top: 10px;
+}
+
+.ms-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+  background: var(--paper);
+}
+
+/* Header cells */
+.ms-table thead th {
+  background: #f1f4fb; /* light blue-tinted header */
+  color: var(--text);
+  border: 1px solid var(--gray-500);
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 6px;
+  white-space: nowrap;
+  vertical-align: middle;
+  border-bottom: 2px solid var(--brand-blue);
+}
+
+/* Group headers (row 1) */
+.ms-group {
+  background: #eaf0fb; /* slightly stronger blue tint */
+  border-top: 3px solid var(--brand-blue);
+}
+
+/* Subject headers and subheaders (rows 2–3) */
+.ms-subject,
+.ms-subcol {
+  background: var(--gray-150);
+}
+
+/* Make coefficient column visibly distinct using brand gold */
+.ms-subcol.ms-coef,
+.ms-cell.ms-coef {
+  background: #fbf6ea; /* faint gold tint */
+  font-weight: 700;
+  border-color: var(--brand-gold);
+}
+
+/* Body cells */
+.ms-table td {
+  border: 1px solid var(--gray-400);
+  padding: 6px 6px;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+/* Subtle row striping with light blue for readability */
+.ms-table tbody tr:nth-child(even) td {
+  background: #fbfcff; /* very light blue */
+}
+
+.ms-name {
+  text-align: left;
+}
+
+/* Remove sticky to avoid scroll overlap; student info scrolls with table */
+.ms-sticky-col {
+  position: static !important;
+  left: auto !important;
+  background: inherit !important;
+  z-index: auto !important;
+}
+
+/* Distinct end of each subject block with brand gold */
+.ms-block-end {
+  border-right: 2px solid var(--brand-gold);
+}
+
+/* Footer */
+.ms-footer {
+  margin-top: 12px;
+}
+.ms-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  border: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.ms-signatures {
+  margin-top: 12px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  max-width: 600px;
+}
+.ms-sign {
+  text-align: center;
+}
+.ms-sign-role {
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: var(--brand-blue);
+}
+.ms-sign-name {
+  border-top: 1px solid var(--brand-blue);
+  padding-top: 6px;
+  min-width: 200px;
+  font-weight: 600;
+}
+
+/* Optional button row holder */
+.master-sheet-btns {
+  display: flex;
+  width: 100%;
+  gap: 2rem;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1rem 0rem;
+}
+
+/* ========== Print (clean, strong gridlines; remove screen colors) ========== */
+@media print {
+  .ms-controls {
+    display: none !important;
+  }
+
+  .ms-wrapper {
+    padding: 0;
+    background: #fff !important;
+  }
+
+  .ms-card {
+    border: none;
+    padding: 0;
+  }
+
+  .ms-table-wrapper {
+    overflow: visible !important;
+  }
+
+  .ms-table thead th,
+  .ms-table td {
+    border: 1px solid #000 !important;
+    background: #fff !important; /* neutral on paper */
+    color: #000 !important;
+    padding: 4px 4px !important;
+  }
+
+  /* Ensure headers appear at the top of each page */
+  thead {
+    display: table-header-group;
+  }
+  tfoot {
+    display: table-footer-group;
+  }
+
+  /* Avoid breaking rows */
+  tr,
+  td,
+  th {
+    page-break-inside: avoid;
+  }
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 900px) {
+  .ms-meta-row {
+    gap: 6px 12px;
+  }
+}

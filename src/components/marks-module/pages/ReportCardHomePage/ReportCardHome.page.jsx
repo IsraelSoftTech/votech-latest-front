@@ -117,14 +117,47 @@ export const ReportCardHomePage = () => {
 
   // --- NAVIGATE TO REPORT CARD PAGE ---
   const handleGoToReportCard = (student, termObj, sequenceObj) => {
+    const academicYear =
+      academicYears.find((y) => y.id === filters.academic_year_id) || null;
+    const department =
+      departments.find((d) => d.id === filters.department_id) || null;
+    const klass = classes.find((c) => c.id === filters.class_id) || null;
+
+    if (!academicYear || !department || !klass) {
+      toast.error("Please select Academic Year, Department, and Class.");
+      return;
+    }
+
     navigate(`/academics/report-card/${student.id}`, {
       state: {
+        // full objects (preferred)
+        academicYear,
+        department,
+        class: klass,
         student,
+        term: termObj || null,
+        sequence: sequenceObj || null,
+
+        // keep ids too (optional/back-compat)
+        academic_year_id: academicYear.id,
+        department_id: department.id,
+        class_id: klass.id,
+        ids: {
+          academic_year_id: academicYear.id,
+          department_id: department.id,
+          class_id: klass.id,
+        },
+      },
+    });
+  };
+  const handleGoToMasterSheet = () => {
+    navigate(`/academics/master-sheets`, {
+      state: {
         department: departments.find((d) => d.id === filters.department_id),
         class: classes.find((c) => c.id === filters.class_id),
         academic_year_id: filters.academic_year_id,
-        term: termObj || null,
-        sequence: sequenceObj || null,
+        term: terms.find((t) => t.id === filters.term_id),
+        sequence: sequences.find((s) => s.id === filters.sequence_id),
       },
     });
   };
@@ -140,6 +173,9 @@ export const ReportCardHomePage = () => {
     ? sequences.filter((s) => s.academic_year_id === filters.academic_year_id)
     : [];
 
+  const isMasterSheetReady = Boolean(
+    filters.academic_year_id && filters.department_id && filters.class_id
+  );
   // --- RENDER ---
   return (
     <SideTop>
@@ -227,6 +263,17 @@ export const ReportCardHomePage = () => {
                   }
                 />
               </div>
+            </div>
+
+            <div className="master-sheet-holder">
+              <button
+                className="btn btn-create"
+                onClick={handleGoToMasterSheet}
+                disabled={!isMasterSheetReady}
+                aria-disabled={!isMasterSheetReady}
+              >
+                View Master Sheet
+              </button>
             </div>
             {/* --- STUDENTS TABLE --- */}
 

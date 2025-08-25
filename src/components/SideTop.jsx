@@ -34,6 +34,7 @@ import {
   FaCalendar,
   FaLayerGroup,
   FaBookOpen,
+  FaTable,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
@@ -192,6 +193,11 @@ export default function SideTop({ children }) {
             path: "/academics/report-cards",
             icon: <FaBookOpen />,
           },
+          // {
+          //   label: "Master Sheets",
+          //   path: "/academics/master-sheets",
+          //   icon: <FaTable />,
+          // },
         ],
       },
       { label: "Monitor Users", icon: <FaUsers />, path: "/monitor-users" },

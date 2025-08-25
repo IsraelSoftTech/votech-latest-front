@@ -13,9 +13,27 @@ export const ReportCardPage = () => {
   const navigate = useNavigate();
 
   const location = useLocation();
-  const { student, academic_year_id, term, department, studentClass } =
-    location.state || {};
+  const {
+    student, // full student object
+    academicYear, // full academic year object
+    department, // full department object
+    class: studentClass, // alias 'class' -> studentClass (full class object)
+    term, // full term object (if provided)
+    sequence, // full sequence object (if provided)
 
+    // optional fallbacks if only IDs were sent
+    ids = {},
+    academic_year_id,
+    department_id,
+    class_id,
+  } = location.state || {};
+
+  // Standardized IDs derived from the objects first, then fall back to ids/flat ids
+  const academicYearId =
+    academicYear?.id ?? ids.academic_year_id ?? academic_year_id ?? null;
+  const departmentId =
+    department?.id ?? ids.department_id ?? department_id ?? null;
+  const classId = studentClass?.id ?? ids.class_id ?? class_id ?? null;
   // console.log("data", location.state);
   const [reportCard, setReportCard] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,7 +54,7 @@ export const ReportCardPage = () => {
       try {
         // if you added optional academicYearId in your controller
         const res = await api.get(
-          `/report-cards/single?studentId=${student.id}&academicYearId=${academic_year_id}`
+          `/report-cards/single?studentId=${student.id}&academicYearId=${academic_year_id}&classId=${class_id}&departmentId=${department_id}`
         );
         res.data.data.reportCard.student.term = term.name.toUpperCase();
         res.data.data.reportCard.student.term;
@@ -56,8 +74,10 @@ export const ReportCardPage = () => {
         setReportCard(res.data.data.reportCard || []);
         console.log(academicBands);
       } catch (err) {
-        toast.error("Failed to load student transcript");
-        console.error("Failed to fetch report card", err);
+        toast.error(
+          err.response?.data?.details || "Failed to load student Report Card"
+        );
+        console.log("Failed to fetch report card", err);
       } finally {
         setLoading(false);
       }
