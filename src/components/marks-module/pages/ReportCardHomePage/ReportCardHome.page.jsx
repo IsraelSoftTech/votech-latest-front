@@ -1,12 +1,12 @@
 import "./ReportCard.styles.css";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SideTop from "../../../SideTop";
 import { toast } from "react-toastify";
 import api, { headers, subBaseURL } from "../../utils/api";
 import Select from "react-select";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaDownload } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 export const ReportCardHomePage = () => {
@@ -25,14 +25,68 @@ export const ReportCardHomePage = () => {
   // --- PERSISTENT FILTERS ---
   const [filters, setFilters] = useState(() => {
     const saved = localStorage.getItem("reportCardFilters");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          academic_year_id: null,
-          department_id: null,
-          class_id: null,
-        };
+    const base = {
+      academic_year_id: null,
+      department_id: null,
+      class_id: null,
+      bulk_term: "annual", // 'annual' or a specific term id
+    };
+    if (!saved) return base;
+    try {
+      const parsed = JSON.parse(saved);
+      return { ...base, ...parsed, bulk_term: parsed?.bulk_term ?? "annual" };
+    } catch {
+      return base;
+    }
   });
+
+  // --- PDF PROGRESS OVERLAY STATE ---
+  const [loadingReportCardPdfs, setLoadingReportCardPdfs] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const pdfTimersRef = useRef([]);
+
+  const clearPdfTimers = () => {
+    pdfTimersRef.current.forEach(clearTimeout);
+    pdfTimersRef.current = [];
+  };
+
+  // Simulate 30% → 50% → 70% then pause until real completion
+  const startPdfSimProgress = () => {
+    setPdfProgress(0);
+    setLoadingReportCardPdfs(true);
+    clearPdfTimers();
+
+    pdfTimersRef.current.push(
+      setTimeout(() => setPdfProgress(30), 600),
+      setTimeout(() => setPdfProgress(50), 1300),
+      setTimeout(() => setPdfProgress(70), 2300)
+    );
+  };
+
+  const finishPdfSimProgress = () => {
+    clearPdfTimers();
+    setPdfProgress(100);
+    pdfTimersRef.current.push(
+      setTimeout(() => {
+        setLoadingReportCardPdfs(false);
+        setPdfProgress(0);
+      }, 900)
+    );
+  };
+
+  const failPdfSimProgress = () => {
+    clearPdfTimers();
+    setTimeout(() => {
+      setLoadingReportCardPdfs(false);
+      setPdfProgress(0);
+    }, 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearPdfTimers();
+    };
+  }, []);
 
   const fetchReportCards = async () => {
     try {
@@ -82,6 +136,7 @@ export const ReportCardHomePage = () => {
       setLoadingPage(false);
     }
   };
+
   const fetchStudents = async () => {
     const { class_id, department_id, academic_year_id } = filters;
     if (!class_id || !department_id || !academic_year_id) {
@@ -95,7 +150,7 @@ export const ReportCardHomePage = () => {
         `/students?class_id=${class_id}&specialty_id=${department_id}&academic_year_id=${academic_year_id}`
       );
       setStudents(res.data.data || []);
-      fetchReportCards();
+      // fetchReportCards();
     } catch (err) {
       toast.error("Failed to fetch students.");
     } finally {
@@ -111,7 +166,7 @@ export const ReportCardHomePage = () => {
     const { class_id, department_id, academic_year_id } = filters;
     if (class_id && department_id && academic_year_id) {
       fetchStudents();
-      fetchReportCards();
+      // fetchReportCards();
     }
   }, [filters]);
 
@@ -150,6 +205,7 @@ export const ReportCardHomePage = () => {
       },
     });
   };
+
   const handleGoToMasterSheet = () => {
     navigate(`/academics/master-sheets`, {
       state: {
@@ -160,6 +216,79 @@ export const ReportCardHomePage = () => {
         sequence: sequences.find((s) => s.id === filters.sequence_id),
       },
     });
+  };
+
+  const handleDownloadBulkPdfs = () => {
+    const downloadPdfs = async () => {
+      try {
+        // Start the simulated progress
+        startPdfSimProgress();
+
+        const termParam = filters.bulk_term || "annual";
+
+        const res = await api.get(
+          `/report-cards/bulk-pdfs?classId=${filters.class_id}&departmentId=${
+            filters.department_id
+          }&academicYearId=${
+            filters.academic_year_id
+          }&term=${encodeURIComponent(termParam)}`,
+          { responseType: "blob", timeout: 0 } // ensure we get raw bytes
+        );
+
+        // fallback values
+        const academicYear =
+          academicYears.find((y) => y.id === filters.academic_year_id)?.name ||
+          "AcademicYear";
+        const department =
+          departments.find((d) => d.id === filters.department_id)?.name ||
+          "Department";
+        const klass =
+          classes.find((c) => c.id === filters.class_id)?.name || "Class";
+
+        // derive term label for filename
+        const termObj = terms.find(
+          (t) => String(t.id) === String(filters.bulk_term)
+        );
+        const termLabel =
+          filters.bulk_term === "annual" ? "Annual" : termObj?.name || "Term";
+
+        // create blob and object URL
+        const blob = new Blob([res.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+
+        // determine filename
+        let fileName = `${academicYear}-${department}-${klass}-${termLabel}-ReportCards.pdf`;
+        const contentDisposition = res.headers["content-disposition"];
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="?(.+)"?/);
+          if (match?.[1]) fileName = match[1];
+        }
+
+        // trigger download
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+
+        // cleanup
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        console.log("Report cards PDF downloaded successfully.");
+        toast.success("Report cards PDF downloaded successfully.");
+
+        // Rush to 100% and close overlay
+        finishPdfSimProgress();
+      } catch (err) {
+        toast.error(
+          err?.response?.data?.details || "Error downloading report cards."
+        );
+        console.error("PDF download error:", err);
+        failPdfSimProgress();
+      }
+    };
+
+    downloadPdfs();
   };
 
   // --- FILTERED ARRAYS ---
@@ -176,9 +305,52 @@ export const ReportCardHomePage = () => {
   const isMasterSheetReady = Boolean(
     filters.academic_year_id && filters.department_id && filters.class_id
   );
+
+  // Options for Bulk PDF term select
+  const bulkTermOptions = [
+    { value: "annual", label: "Annual (All Terms)" },
+    { value: "t1", label: "First Term" },
+    { value: "t2", label: "Second Term" },
+    { value: "t3", label: "Third Term" },
+  ];
+  const bulkTermValue =
+    bulkTermOptions.find(
+      (opt) => String(opt.value) === String(filters.bulk_term)
+    ) || bulkTermOptions[0];
+
   // --- RENDER ---
   return (
     <SideTop>
+      {loadingReportCardPdfs && (
+        <div className="pdf-progress-overlay" role="alert" aria-live="polite">
+          <div className="pdf-progress-card">
+            <div className="pdf-progress-emoji" aria-hidden>
+              ☕
+            </div>
+            <h3>Generating report cards…</h3>
+            <p>
+              We are generating the report cards. This may take some time —
+              please grab a coffee while we work.
+            </p>
+
+            <div
+              className="pdf-progress-bar"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={pdfProgress}
+              aria-label="Report card generation progress"
+            >
+              <div
+                className="pdf-progress-fill"
+                style={{ width: `${pdfProgress}%` }}
+              />
+            </div>
+            <div className="pdf-progress-percent">{pdfProgress}%</div>
+          </div>
+        </div>
+      )}
+
       <div className="report-card-home-page">
         <h2>Generate Report Cards</h2>
 
@@ -210,8 +382,11 @@ export const ReportCardHomePage = () => {
                     setFilters((prev) => ({
                       ...prev,
                       academic_year_id: opt?.value || null,
+                      // reset bulk term when year changes
+                      bulk_term: "annual",
                     }))
                   }
+                  isDisabled={loadingReportCardPdfs}
                 />
               </div>
 
@@ -237,6 +412,7 @@ export const ReportCardHomePage = () => {
                       class_id: null,
                     }))
                   }
+                  isDisabled={loadingReportCardPdfs}
                 />
               </div>
 
@@ -261,6 +437,23 @@ export const ReportCardHomePage = () => {
                       class_id: opt?.value || null,
                     }))
                   }
+                  isDisabled={loadingReportCardPdfs}
+                />
+              </div>
+
+              {/* Term for Bulk PDF */}
+              <div className="form-react-select">
+                <Select
+                  placeholder="Term (Bulk PDF)"
+                  options={bulkTermOptions}
+                  value={bulkTermValue}
+                  onChange={(opt) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      bulk_term: opt?.value || "annual",
+                    }))
+                  }
+                  isDisabled={loadingReportCardPdfs}
                 />
               </div>
             </div>
@@ -273,6 +466,15 @@ export const ReportCardHomePage = () => {
                 aria-disabled={!isMasterSheetReady}
               >
                 View Master Sheet
+              </button>
+
+              <button
+                className="btn btn-create"
+                disabled={!isMasterSheetReady || loadingReportCardPdfs}
+                aria-disabled={!isMasterSheetReady || loadingReportCardPdfs}
+                onClick={handleDownloadBulkPdfs}
+              >
+                Download all Report Cards <FaDownload />
               </button>
             </div>
             {/* --- STUDENTS TABLE --- */}
@@ -313,6 +515,7 @@ export const ReportCardHomePage = () => {
                                 zIndex: 9999,
                               }),
                             }}
+                            isDisabled={loadingReportCardPdfs}
                           />
                         </td>
                       </tr>
