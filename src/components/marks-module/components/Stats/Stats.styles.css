@@ -1,0 +1,130 @@
+/* Flat, clean palette */
+:root {
+  --accent-1: #204080; /* primary blue */
+  --accent-3: #1a5f1a; /* deep green */
+  --accent-2: #f59e0b; /* golden brown */
+  --card-bg: #ffffff;
+  --border: #e5e9f2; /* light neutral border */
+  --title: #475569; /* slate-ish neutral */
+  --value: #1f2937; /* near-black */
+}
+
+/* Responsive grid */
+.stats-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 2rem 0rem;
+}
+
+/* Card */
+.stat-card {
+  --accent: var(--accent-1);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: "Arial", sans-serif;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+  cursor: pointer;
+  box-shadow: unset !important;
+}
+
+.stat-card:hover {
+  /* border-color: var(--accent); */
+  background-color: #fafbff; /* subtle, flat hover */
+}
+
+/* Flat accent bar (no gradient) */
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+/* Icon (flat, outlined, tinted by accent) */
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  flex: 0 0 40px;
+}
+
+/* Text */
+.stat-content {
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.stat-title {
+  font-size: 11px;
+  color: var(--title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-value {
+  margin-top: 2px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--value);
+  line-height: 1.1;
+}
+
+/* Alternating accents (flat colors) */
+.stats-grid .stat-card:nth-child(3n + 1) {
+  --accent: var(--accent-1);
+}
+.stats-grid .stat-card:nth-child(3n + 2) {
+  --accent: var(--accent-2);
+}
+.stats-grid .stat-card:nth-child(3n + 3) {
+  --accent: var(--accent-3);
+}
+
+.stat-icon svg {
+  fill: currentColor !important; /* override any gradients */
+  color: var(--accent) !important; /* flat accent color */
+  background: none !important;
+  border: none !important;
+  font-size: 2rem;
+}
+
+.stat-icon {
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+/* Mobile tweaks */
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .stat-title {
+    font-size: 10px;
+  }
+  .stat-value {
+    font-size: 20px;
+  }
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+}

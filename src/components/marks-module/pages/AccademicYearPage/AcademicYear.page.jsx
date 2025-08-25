@@ -11,6 +11,8 @@ import {
   CustomInput,
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
+import Stats from "../../components/Stats/Stats.component";
+import { FaCalendarAlt, FaCalendarCheck } from "react-icons/fa";
 
 export const AcademicYear = () => {
   const columns = [
@@ -37,6 +39,7 @@ export const AcademicYear = () => {
   const [formErrors, setFormErrors] = useState({});
   const [createLoading, setCreateLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [stats, setStats] = useState([]);
 
   // Confirm modal for "set active" scenario (works for create and edit)
   const [confirmActiveOpen, setConfirmActiveOpen] = useState(false);
@@ -85,8 +88,24 @@ export const AcademicYear = () => {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const res = await api.get("/content/academic-years");
+      const icons = [FaCalendarCheck, FaCalendarAlt];
+
+      res.data.data.stats.forEach((data, index) => {
+        data.icon = icons[index];
+      });
+      setStats(res.data.data.stats);
+    } catch (err) {
+      toast.error(err?.response?.data?.details || "Error fetching statistics");
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
     fetchAcademicYears();
+    fetchStats();
   }, []);
 
   // Validation
@@ -233,6 +252,8 @@ export const AcademicYear = () => {
     <SideTop>
       <div style={{ padding: "20px" }}>
         <h2 className="page-title">Academic Years</h2>
+
+        <Stats data={stats} />
 
         {/* Create Button */}
         <button className="btn btn-create" onClick={openCreateModal}>

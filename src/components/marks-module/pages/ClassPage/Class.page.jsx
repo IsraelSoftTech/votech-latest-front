@@ -12,6 +12,8 @@ import {
   CustomInput,
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
+import Stats from "../../components/Stats/Stats.component";
+import { FaBan, FaCheckCircle, FaLayerGroup } from "react-icons/fa";
 
 export const ClassPage = () => {
   const columns = [
@@ -35,6 +37,7 @@ export const ClassPage = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters] = useState([]);
+  const [stats, setStats] = useState([]);
 
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -208,10 +211,27 @@ export const ClassPage = () => {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const res = await api.get("/content/classes");
+      const icons = [FaLayerGroup, FaCheckCircle, FaBan];
+
+      res.data.data.stats.forEach((data, index) => {
+        data.icon = icons[index];
+      });
+      setStats(res.data.data.stats);
+      console.log(stats);
+    } catch (err) {
+      toast.error(err?.response?.data?.details || "Error fetching statistics");
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
     fetchClasses();
     fetchDepartments();
     fetchTeachers();
+    fetchStats();
   }, []);
 
   // Validation
@@ -323,6 +343,7 @@ export const ClassPage = () => {
     <SideTop>
       <div style={{ padding: "20px" }}>
         <h2 className="page-title">Classes</h2>
+        <Stats data={stats} />
         <button
           className="btn btn-create"
           onClick={() => setCreateModalOpen(true)}

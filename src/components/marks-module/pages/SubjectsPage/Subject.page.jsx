@@ -12,12 +12,17 @@ import {
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
 import {
+  FaBook,
+  FaCalendar,
   FaChalkboardTeacher,
+  FaCheckCircle,
   FaFileAlt,
   FaLink,
+  FaTimesCircle,
   FaUserPlus,
 } from "react-icons/fa";
 import AssignCourseModal from "../../components/AssignCourseModal/AssignCourseModal.component";
+import Stats from "../../components/Stats/Stats.component";
 
 export const SubjectPage = () => {
   const columns = [
@@ -36,6 +41,7 @@ export const SubjectPage = () => {
   const [classSubjects, setClassSubjects] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [data, setData] = useState([]);
   const navigate = useNavigate();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -320,11 +326,27 @@ export const SubjectPage = () => {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const res = await api.get("/content/subjects");
+      const icons = [FaBook, FaCheckCircle, FaTimesCircle];
+
+      res.data.data.stats.forEach((data, index) => {
+        data.icon = icons[index];
+      });
+      setData(res.data.data.stats);
+    } catch (err) {
+      toast.error(err?.response?.data?.details || "Error fetching statistics");
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
     fetchSubjects();
     fetchDepartments();
     fetchClasses();
     fetchTeachers();
+    fetchStats();
   }, []);
 
   const handleRowClick = (row) => setSelectedRow(row);
@@ -370,10 +392,19 @@ export const SubjectPage = () => {
     setAssignModalOpen(false);
   };
 
+  // const data = [
+  //   { title: "Number of students", value: 8, icon: FaUserPlus },
+  //   { title: "Teachers", value: 3, icon: FaChalkboardTeacher },
+  //   { title: "Courses", value: 12, icon: FaBook },
+  //   { title: "Attendance", value: "92%", icon: FaCalendar },
+  // ];
+
   return (
     <SideTop>
       <div style={{ padding: "20px" }}>
         <h2 className="page-title">Subjects</h2>
+
+        <Stats data={data} />
 
         <button className="btn btn-create" onClick={openCreateModal}>
           Create Subject

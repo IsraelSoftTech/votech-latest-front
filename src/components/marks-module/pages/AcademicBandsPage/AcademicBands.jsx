@@ -49,20 +49,24 @@ export const AcademicBandsPage = () => {
 
   // ----- Fetch all required data -----
   const fetchData = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
+      // Parallel API calls
       const [bandsRes, yearsRes, classesRes] = await Promise.all([
         api.get("/academic-bands"),
         api.get("/academic-years"),
         api.get("/classes"),
       ]);
-      fetchDepartments();
-      setAcademicYears(yearsRes.data.data || []);
-      setClasses(classesRes.data.data || []);
 
-      setData(groupBands(bandsRes.data.data || []));
+      // Fetch departments (await if async)
+      if (fetchDepartments) await fetchDepartments();
+
+      // Set state safely
+      setAcademicYears(yearsRes?.data?.data || []);
+      setClasses(classesRes?.data?.data || []);
+      setData(groupBands(bandsRes?.data?.data || []));
     } catch (err) {
-      console.log(err);
+      console.error("Error fetching data:", err);
       toast.error("Failed to load data.");
     } finally {
       setIsLoading(false);
@@ -104,7 +108,7 @@ export const AcademicBandsPage = () => {
     });
 
     return Object.values(grouped).map((y) => ({
-      academic_year_id: y.year.id,
+      academic_year_id: y?.year?.id,
       year: y.year,
       departments: Object.values(y.departments).map((d) => ({
         id: d.department.id,
@@ -430,40 +434,54 @@ export const AcademicBandsPage = () => {
               </button>
             </div>
             <div className="bands-table-wrapper">
-              {filteredData.map((yearData) => (
-                <div key={yearData.academic_year_id} className="year-block">
-                  <h3>{yearData.year.name}</h3>
+              {filteredData.map((yearData) => {
+                // Skip invalid year
+                if (!yearData.year || !yearData.year.name) return null;
 
-                  {yearData.departments.map((dept) => (
-                    <div key={dept.id} className="department-block">
-                      <h4>{dept.department.name}</h4>
-                      {dept.classes.map((cls) => (
-                        <div key={cls.id} className="class-block">
-                          <h5>{`${cls.class.name} (${dept.department.name})`}</h5>
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>Min</th>
-                                <th>Max</th>
-                                <th>Comment</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {cls.bands.map((b, idx) => (
-                                <tr key={idx}>
-                                  <td>{b.band_min}</td>
-                                  <td>{b.band_max}</td>
-                                  <td>{b.comment}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                return (
+                  <div key={yearData.academic_year_id} className="year-block">
+                    <h3>{yearData.year.name}</h3>
+
+                    {yearData.departments.map((dept) => {
+                      if (!dept.department) return null; // skip invalid department
+
+                      return (
+                        <div key={dept.id} className="department-block">
+                          <h4>{dept.department.name}</h4>
+
+                          {dept.classes.map((cls) => {
+                            if (!cls.class) return null; // skip invalid class
+
+                            return (
+                              <div key={cls.id} className="class-block">
+                                <h5>{`${cls.class.name} (${dept.department.name})`}</h5>
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Min</th>
+                                      <th>Max</th>
+                                      <th>Comment</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {cls.bands.map((b, idx) => (
+                                      <tr key={idx}>
+                                        <td>{b.band_min}</td>
+                                        <td>{b.band_max}</td>
+                                        <td>{b.comment}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            );
+                          })}
                         </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              ))}
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
