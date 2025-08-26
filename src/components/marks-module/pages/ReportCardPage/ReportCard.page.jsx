@@ -13,13 +13,33 @@ export const ReportCardPage = () => {
   const navigate = useNavigate();
 
   const location = useLocation();
-  const { student, academic_year_id, term, department, studentClass } =
-    location.state || {};
+  const {
+    student, // full student object
+    academicYear, // full academic year object
+    department, // full department object
+    class: studentClass, // alias 'class' -> studentClass (full class object)
+    term, // full term object (if provided)
+    sequence, // full sequence object (if provided)
 
-  console.log("data", location.state);
+    // optional fallbacks if only IDs were sent
+    ids = {},
+    academic_year_id,
+    department_id,
+    class_id,
+  } = location.state || {};
+
+  // Standardized IDs derived from the objects first, then fall back to ids/flat ids
+  const academicYearId =
+    academicYear?.id ?? ids.academic_year_id ?? academic_year_id ?? null;
+  const departmentId =
+    department?.id ?? ids.department_id ?? department_id ?? null;
+  const classId = studentClass?.id ?? ids.class_id ?? class_id ?? null;
+  // console.log("data", location.state);
   const [reportCard, setReportCard] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [academicBands, setAcademicBands] = useState([]);
 
+  // console.log("Student Data", student);
   // console.log("Term", term);
 
   const handleGoBack = () => {
@@ -32,16 +52,32 @@ export const ReportCardPage = () => {
     const fetchReportCard = async () => {
       setLoading(true);
       try {
-        // if you added optional academicYearId in your controller Missing parameters: studentId=36, academicYearId=23, departmentId=undefined, classId=undefined
+        // if you added optional academicYearId in your controller
         const res = await api.get(
-          `/report-cards/single?studentId=${student.id}&academicYearId=${academic_year_id}&departmentId=${department.id}&classId=${studentClass.id}`
+          `/report-cards/single?studentId=${student.id}&academicYearId=${academic_year_id}&classId=${class_id}&departmentId=${department_id}`
         );
         res.data.data.reportCard.student.term = term.name.toUpperCase();
-        setReportCard(res.data.data.reportCard);
-        console.log(res.data.data.reportCard);
+        res.data.data.reportCard.student.term;
+        let parents = [];
+
+        if (student?.father_name) parents.push(student.father_name);
+        if (student?.mother_name) parents.push(student.mother_name);
+
+        res.data.data.reportCard.administration.parents =
+          parents.length > 0 ? parents.join(", ") : "N/A";
+
+        res.data.data.reportCard.administration.parents = parents.join(", ");
+        const academicBandsRes = await api.get(
+          `/academic-bands?academic_year_id=${academic_year_id}&class_id=${studentClass.id}`
+        );
+        setAcademicBands(academicBandsRes.data.data || []);
+        setReportCard(res.data.data.reportCard || []);
+        console.log(academicBands);
       } catch (err) {
-        toast.error("Failed to load student report card");
-        console.error("Failed to fetch report card", err);
+        toast.error(
+          err.response?.data?.details || "Failed to load student Report Card"
+        );
+        console.log("Failed to fetch report card", err);
       } finally {
         setLoading(false);
       }
@@ -92,7 +128,7 @@ export const ReportCardPage = () => {
           ) : !reportCard ? (
             <p>No report card found</p>
           ) : (
-            <ReportCard data={reportCard} />
+            <ReportCard data={reportCard} grading={academicBands} />
           )}
         </div>
       </div>

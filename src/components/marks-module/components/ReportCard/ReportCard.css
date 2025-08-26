@@ -505,6 +505,12 @@
   /* font-weight: 700; */
 }
 
+.conduct-section h4,
+.grading-scale h4,
+.admin-section h4 {
+  font-size: 0.8rem !important;
+}
+
 /* ===============================
      PROFESSIONAL PRINT STYLES
   =============================== */
@@ -548,6 +554,8 @@
   body {
     overflow: visible !important;
     background: #fff !important;
+    display: flex;
+    align-items: start;
   }
 
   body {
@@ -822,6 +830,29 @@
     color: #cc0000 !important;
     /* font-weight: 700; */
   }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 4px 4px;
+  }
+
+  .summary-table td {
+    padding: 4px 4px;
+    font-size: 8px;
+    font-weight: bold;
+  }
+
+  .summary-label {
+    color: #204080;
+    text-transform: uppercase;
+  }
+
+  .summary-value {
+    color: #333;
+    border-bottom: 1px solid #204080;
+    min-width: 80px;
+  }
 }
 
 /* Responsive design for smaller screens */
@@ -864,5 +895,75 @@
   .signature-section {
     /* flex-direction: column; */
     gap: 10px;
+  }
+}
+
+/* ========== AUTO-FIT TO ONE PAGE (A4) ========== */
+@media print {
+  :root {
+    --page-width-mm: 210;
+    --page-height-mm: 297;
+    --page-margin-mm: 10; /* must match your @page margin */
+    --print-scale: 1; /* JS sets this before printing */
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: calc(var(--page-margin-mm) * 1mm);
+  }
+
+  /* Keep the outer container sized to the printable width */
+  .report-card-container {
+    width: calc(
+      (var(--page-width-mm) - 2 * var(--page-margin-mm)) * 1mm
+    ) !important;
+    margin: 0 auto !important;
+  }
+
+  /* Scale the report to fit in height while keeping printable width */
+  #reportCard {
+    /* Pre-scale width so after transform it visually equals printable width */
+    width: calc(
+      ((var(--page-width-mm) - 2 * var(--page-margin-mm)) * 1mm) /
+        var(--print-scale)
+    ) !important;
+    transform: scale(var(--print-scale)) !important;
+    transform-origin: top center !important;
+  }
+
+  /* Tighter, consistent print type (also fixes the 73px typo) */
+  .report-card {
+    font-size: 11px !important;
+    line-height: 1.12 !important;
+  }
+  .subjects-table th,
+  .subjects-table td {
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+    padding: 1px 2px !important;
+  }
+  .subject-cell {
+    font-size: 10px !important;
+    padding-left: 3px !important;
+  } /* FIXED from 73px */
+  .teacher-cell {
+    font-size: 9px !important;
+    padding-left: 2px !important;
+  }
+  .summary-table td {
+    font-size: 11px !important;
+  }
+
+  /* Avoid extra borders and backgrounds to maximize space */
+  .document-header,
+  .student-info,
+  .subjects-section,
+  .performance-summary,
+  .conduct-section,
+  .grading-scale,
+  .admin-section,
+  .signature-box {
+    background: white !important;
+    box-shadow: none !important;
   }
 }

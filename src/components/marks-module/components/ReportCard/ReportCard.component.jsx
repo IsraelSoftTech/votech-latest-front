@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import "./ReportCard.css";
 import logo from "../../../../assets/logo.png";
 
@@ -274,9 +274,63 @@ const sampleData = {
   },
 };
 
-export default function ReportCard({ data = sampleData }) {
+export default function ReportCard({
+  data = sampleData,
+  grading,
+  disableAutoScale = false,
+}) {
+  // Default grading (fallback)
+  const defaultGrading = [
+    { band_min: 18, band_max: 20, comment: "Excellent" },
+    { band_min: 16, band_max: 17.99, comment: "V.Good" },
+    { band_min: 14, band_max: 15.99, comment: "Good" },
+    { band_min: 12, band_max: 13.99, comment: "Fairly Good" },
+    { band_min: 10, band_max: 11.99, comment: "Average" },
+    { band_min: 0, band_max: 9.99, comment: "Weak" },
+  ];
+
+  // Normalize comments to map to color classes more flexibly
+  const getRemarkClass = (remark) => {
+    const norm = String(remark || "")
+      .toLowerCase()
+      .replace(/\./g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const map = {
+      excellent: "remark-excellent",
+      "v good": "remark-vgood",
+      "very good": "remark-vgood",
+      good: "remark-good",
+      "fairly good": "remark-fairly-good",
+      average: "remark-average",
+      weak: "remark-weak",
+    };
+
+    return map[norm] || "";
+  };
+
+  // Grading to render in the scale (prop or default), sorted high→low
+  const gradingScale = (
+    Array.isArray(grading) && grading.length ? grading : defaultGrading
+  )
+    .slice()
+    .sort((a, b) => b.band_min - a.band_min);
+
+  const formatNum = (n) => (Number.isInteger(n) ? n : Number(n).toFixed(1));
+  const formatRange = (min, max) => `${formatNum(min)}-${formatNum(max)}`;
+
   // Helper function to get remark based on average
   const getRemark = (average) => {
+    // if grading is provided & not empty, use it
+    if (grading && Array.isArray(grading) && grading.length > 0) {
+      const band = grading.find(
+        (g) => average >= g.band_min && average <= g.band_max
+      );
+      return band ? band.comment : "No Remark";
+    }
+
+    // --- fallback default grading ---
     if (average >= 18) return "Excellent";
     if (average >= 16) return "V.Good";
     if (average >= 14) return "Good";
@@ -285,26 +339,25 @@ export default function ReportCard({ data = sampleData }) {
     return "Weak";
   };
 
-  const getRemarkClass = (remark) => {
-    switch (remark.toLowerCase()) {
-      case "excellent":
-        return "remark-excellent";
-      case "v.good":
-        return "remark-vgood";
-      case "good":
-        return "remark-good";
-      case "fairly good":
-        return "remark-fairly-good";
-      case "average":
-        return "remark-average";
-      case "weak":
-        return "remark-weak";
-      default:
-        return "";
-    }
-  };
+  // const getRemarkClass = (remark) => {
+  //   switch (remark.toLowerCase()) {
+  //     case "excellent":
+  //       return "remark-excellent";
+  //     case "v.good":
+  //       return "remark-vgood";
+  //     case "good":
+  //       return "remark-good";
+  //     case "fairly good":
+  //       return "remark-fairly-good";
+  //     case "average":
+  //       return "remark-average";
+  //     case "weak":
+  //       return "remark-weak";
+  //     default:
+  //       return "";
+  //   }
+  // };
 
-  // Calculate what to show based on current term
   // Calculate what to show based on current term
   const getCurrentTermData = () => {
     const term = data.student.term;
@@ -334,7 +387,6 @@ export default function ReportCard({ data = sampleData }) {
           "termAvg",
           "term1Avg",
           "term2Avg",
-          // "yearAvg",
           "finalAvg",
         ],
         columnHeaders: [
@@ -343,7 +395,6 @@ export default function ReportCard({ data = sampleData }) {
           "TERM AVG",
           "T1 AVG",
           "T2 AVG",
-          // "YEAR AVG",
           "FINAL AVG",
         ],
         calculateTermAvg: (subject) =>
@@ -359,6 +410,29 @@ export default function ReportCard({ data = sampleData }) {
   };
 
   const termData = getCurrentTermData();
+
+  // Cumulative average (to date): T1 only in term 1, T1+T2 in term 2, T1+T2+T3 in term 3
+  const getCumulativeAverageToDate = () => {
+    const term = data.student.term;
+    const t1 = data.termTotals?.term1?.average;
+    const t2 = data.termTotals?.term2?.average;
+    const t3 = data.termTotals?.term3?.average;
+
+    if (term === "FIRST TERM") {
+      return typeof t1 === "number" ? Number(t1.toFixed(1)) : null;
+    }
+
+    if (term === "SECOND TERM") {
+      const avgs = [t1, t2].filter((v) => typeof v === "number");
+      if (!avgs.length) return null;
+      return Number((avgs.reduce((a, b) => a + b, 0) / avgs.length).toFixed(1));
+    }
+
+    // THIRD TERM
+    const avgs = [t1, t2, t3].filter((v) => typeof v === "number");
+    if (!avgs.length) return null;
+    return Number((avgs.reduce((a, b) => a + b, 0) / avgs.length).toFixed(1));
+  };
 
   const renderSubjectRow = (subject, index) => {
     const termAvg = termData.calculateTermAvg(subject);
@@ -404,7 +478,7 @@ export default function ReportCard({ data = sampleData }) {
         })}
 
         <td className="coef-cell">{subject.coef}</td>
-        <td className="total-cell">{(termAvg * subject.coef).toFixed(0)}</td>
+        <td className="total-cell">{(termAvg * subject.coef).toFixed(1)}</td>
         <td className="remark-cell">
           <span className={getRemarkClass(remark)}>{remark}</span>
         </td>
@@ -412,6 +486,62 @@ export default function ReportCard({ data = sampleData }) {
       </tr>
     );
   };
+
+  React.useLayoutEffect(() => {
+    const mmToPx = (mm) => (mm / 25.4) * 96; // 96 CSS px per inch
+
+    const setScale = () => {
+      const el = document.getElementById("reportCard");
+      if (!el) return;
+
+      // Ensure we measure with print styles applied
+      document.documentElement.style.setProperty("--print-scale", "1");
+
+      const marginMm = 10; // MUST match --page-margin-mm and @page margin
+      const printableHeightPx = mmToPx(297 - marginMm * 2); // A4 height minus margins
+
+      // Wait for fonts/layout to settle in print mode
+      const measure = () => {
+        const rect = el.getBoundingClientRect();
+        const naturalHeight = rect.height || el.scrollHeight;
+
+        let scale = printableHeightPx / naturalHeight;
+        if (!isFinite(scale) || scale <= 0) scale = 1;
+        scale = Math.min(1, scale); // never enlarge, only shrink
+
+        document.documentElement.style.setProperty(
+          "--print-scale",
+          String(scale)
+        );
+      };
+
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(measure);
+      } else {
+        setTimeout(measure, 50);
+      }
+    };
+
+    const before = () => setScale();
+    const after = () =>
+      document.documentElement.style.setProperty("--print-scale", "1");
+
+    window.addEventListener("beforeprint", before);
+    window.addEventListener("afterprint", after);
+
+    // Chrome print preview
+    const mql = window.matchMedia("print");
+    const onChange = (e) => (e.matches ? setScale() : after());
+    if (mql.addEventListener) mql.addEventListener("change", onChange);
+    else if (mql.addListener) mql.addListener(onChange);
+
+    return () => {
+      window.removeEventListener("beforeprint", before);
+      window.removeEventListener("afterprint", after);
+      if (mql.removeEventListener) mql.removeEventListener("change", onChange);
+      else if (mql.removeListener) mql.removeListener(onChange);
+    };
+  }, [disableAutoScale]);
 
   return (
     <div className="report-card-container">
@@ -451,7 +581,7 @@ export default function ReportCard({ data = sampleData }) {
           <div className="document-title">
             <h1>ACADEMIC REPORT CARD</h1>
             <div className="term-info">
-              {data.student.term} • Academic Year {data.student.academicYear}
+              {data.student.term} • {data.student.academicYear}
             </div>
           </div>
         </div>
@@ -469,7 +599,7 @@ export default function ReportCard({ data = sampleData }) {
               <tr>
                 <td className="label">Registration No:</td>
                 <td className="value">{data.student.registrationNumber}</td>
-                <td className="label">Option:</td>
+                <td className="label">Specialty:</td>
                 <td className="value">{data.student.option}</td>
               </tr>
               <tr>
@@ -505,6 +635,7 @@ export default function ReportCard({ data = sampleData }) {
               {data.generalSubjects.map((subject, index) =>
                 renderSubjectRow(subject, index)
               )}
+              {/* General Subjects Subtotal */}
               <tr className="subtotal-row">
                 <td
                   colSpan={termData.columnHeaders.length + 3}
@@ -512,20 +643,35 @@ export default function ReportCard({ data = sampleData }) {
                 >
                   SUB TOTAL:
                 </td>
-                <td className="subtotal-value">
-                  {data.generalSubjects
-                    .reduce((sum, subject) => {
-                      const avg = parseFloat(
-                        termData.calculateTermAvg(subject)
-                      );
-                      return sum + avg * subject.coef;
-                    }, 0)
-                    .toFixed(0)}
-                </td>
-                <td className="subtotal-remark">
-                  <span className="remark-good">Good</span>
-                </td>
-                <td></td>
+                {(() => {
+                  const { totalWeighted, totalCoef } =
+                    data.generalSubjects.reduce(
+                      (acc, subject) => {
+                        const avg = parseFloat(
+                          termData.calculateTermAvg(subject)
+                        );
+                        acc.totalWeighted += avg * subject.coef;
+                        acc.totalCoef += subject.coef;
+                        return acc;
+                      },
+                      { totalWeighted: 0, totalCoef: 0 }
+                    );
+
+                  const avg = totalWeighted / totalCoef; // subtotal average
+                  const remark = getRemark(avg);
+
+                  return (
+                    <>
+                      <td className="subtotal-value">
+                        {totalWeighted.toFixed(0)}
+                      </td>
+                      <td className="subtotal-remark">
+                        <span className={getRemarkClass(remark)}>{remark}</span>
+                      </td>
+                      <td></td>
+                    </>
+                  );
+                })()}
               </tr>
             </tbody>
           </table>
@@ -554,6 +700,7 @@ export default function ReportCard({ data = sampleData }) {
               {data.professionalSubjects.map((subject, index) =>
                 renderSubjectRow(subject, index)
               )}
+              {/* Professional Subjects Subtotal */}
               <tr className="subtotal-row">
                 <td
                   colSpan={termData.columnHeaders.length + 3}
@@ -561,26 +708,40 @@ export default function ReportCard({ data = sampleData }) {
                 >
                   SUB TOTAL:
                 </td>
-                <td className="subtotal-value">
-                  {data.professionalSubjects
-                    .reduce((sum, subject) => {
-                      const avg = parseFloat(
-                        termData.calculateTermAvg(subject)
-                      );
-                      return sum + avg * subject.coef;
-                    }, 0)
-                    .toFixed(0)}
-                </td>
-                <td className="subtotal-remark">
-                  <span className="remark-vgood">V.Good</span>
-                </td>
-                <td></td>
+                {(() => {
+                  const { totalWeighted, totalCoef } =
+                    data.professionalSubjects.reduce(
+                      (acc, subject) => {
+                        const avg = parseFloat(
+                          termData.calculateTermAvg(subject)
+                        );
+                        acc.totalWeighted += avg * subject.coef;
+                        acc.totalCoef += subject.coef;
+                        return acc;
+                      },
+                      { totalWeighted: 0, totalCoef: 0 }
+                    );
+
+                  const avg = totalWeighted / totalCoef;
+                  const remark = getRemark(avg);
+
+                  return (
+                    <>
+                      <td className="subtotal-value">
+                        {totalWeighted.toFixed(0)}
+                      </td>
+                      <td className="subtotal-remark">
+                        <span className={getRemarkClass(remark)}>{remark}</span>
+                      </td>
+                      <td></td>
+                    </>
+                  );
+                })()}
               </tr>
             </tbody>
           </table>
         </div>
 
-        {/* Performance Summary */}
         {/* Performance Summary */}
         <div className="performance-summary">
           {(() => {
@@ -592,12 +753,20 @@ export default function ReportCard({ data = sampleData }) {
                 : "term3";
             const t = data.termTotals[termKey];
 
+            const cumulativeAvg = getCumulativeAverageToDate();
+            const countedLabel =
+              data.student.term === "FIRST TERM"
+                ? "T1"
+                : data.student.term === "SECOND TERM"
+                ? "T1 + T2"
+                : "T1 + T2 + T3";
+
             return (
               <table className="summary-table">
                 <tbody>
                   <tr>
                     <td className="summary-label">GRAND TOTAL:</td>
-                    <td className="summary-value">{t.total}</td>
+                    <td className="summary-value">{Math.round(t.total)}</td>
                     <td className="summary-label">STUDENT AVERAGE:</td>
                     <td className="summary-value">{t.average}/20</td>
                   </tr>
@@ -610,6 +779,16 @@ export default function ReportCard({ data = sampleData }) {
                     <td className="summary-value">
                       {t.rank}° of {t.outOf}
                     </td>
+                  </tr>
+                  <tr>
+                    <td className="summary-label">
+                      CUMULATIVE AVERAGE ({countedLabel}):
+                    </td>
+                    <td className="summary-value">
+                      {cumulativeAvg !== null ? `${cumulativeAvg}/20` : "N/A"}
+                    </td>
+                    <td></td>
+                    <td></td>
                   </tr>
                 </tbody>
               </table>
@@ -648,42 +827,16 @@ export default function ReportCard({ data = sampleData }) {
               <h4>GRADING SCALE</h4>
               <table className="scale-table">
                 <tbody>
-                  <tr>
-                    <td>18-20:</td>
-                    <td>
-                      <span className="remark-excellent">Excellent</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>16-17:</td>
-                    <td>
-                      <span className="remark-vgood">V.Good</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>14-15:</td>
-                    <td>
-                      <span className="remark-good">Good</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>12-13:</td>
-                    <td>
-                      <span className="remark-fairly-good">Fairly Good</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>10-11:</td>
-                    <td>
-                      <span className="remark-average">Average</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>0-9:</td>
-                    <td>
-                      <span className="remark-weak">Weak</span>
-                    </td>
-                  </tr>
+                  {gradingScale.map((g, i) => (
+                    <tr key={i}>
+                      <td>{formatRange(g.band_min, g.band_max)}:</td>
+                      <td>
+                        <span className={getRemarkClass(g.comment)}>
+                          {g.comment}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -696,7 +849,7 @@ export default function ReportCard({ data = sampleData }) {
                 <tbody>
                   <tr>
                     <td>Class Master:</td>
-                    <td>{data.administration.classMaster}</td>
+                    <td>{data.administration.classMaster?.toUpperCase()}</td>
                   </tr>
                   <tr>
                     <td>Decision:</td>
@@ -722,7 +875,7 @@ export default function ReportCard({ data = sampleData }) {
             <div className="signature-title">CLASS MASTER</div>
             <div className="signature-line"></div>
             <div className="signature-name">
-              {data.administration.classMaster}
+              {data.administration.classMaster?.toUpperCase()}
             </div>
             <div className="signature-date">Date & Signature</div>
           </div>
@@ -731,7 +884,7 @@ export default function ReportCard({ data = sampleData }) {
             <div className="signature-title">PRINCIPAL</div>
             <div className="signature-line"></div>
             <div className="signature-name">
-              {data.administration.principal}
+              {data.administration.principal?.toUpperCase()}
             </div>
             <div className="signature-date">Date, Signature & Seal</div>
           </div>
@@ -739,7 +892,9 @@ export default function ReportCard({ data = sampleData }) {
           <div className="signature-box">
             <div className="signature-title">PARENT/GUARDIAN</div>
             <div className="signature-line"></div>
-            <div className="signature-name">Parent Name</div>
+            <div className="signature-name">
+              {data.administration.parents?.toUpperCase()}
+            </div>
             <div className="signature-date">Date & Signature</div>
           </div>
         </div>

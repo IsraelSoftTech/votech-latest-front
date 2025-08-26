@@ -34,6 +34,7 @@ import {
   FaCalendar,
   FaLayerGroup,
   FaBookOpen,
+  FaTable,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
@@ -87,10 +88,10 @@ export default function SideTop({ children }) {
         path: "/admin-specialty",
       },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
-   
+
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
-     
+
       {
         label: "Lesson Plans",
         icon: <FaPenFancy />,
@@ -142,17 +143,17 @@ export default function SideTop({ children }) {
       { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
-      { label: "Classes", icon: <FaBook />, path: "/admin-class" },
-      {
-        label: "Departments",
-        icon: <FaClipboardList />,
-        path: "/admin-specialty",
-      },
+      // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
+      // {
+      //   label: "Departments",
+      //   icon: <FaClipboardList />,
+      //   path: "/admin-specialty",
+      // },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "ID Cards", icon: <FaIdCard />, path: "/admin-idcards" },
       { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
-      { label: "Marks", icon: <FaChartBar />, path: "/admin-marks" },
+      // { label: "Marks", icon: <FaChartBar />, path: "/admin-marks" },
       {
         label: "Lesson Plans",
         icon: <FaPenFancy />,
@@ -192,6 +193,11 @@ export default function SideTop({ children }) {
             path: "/academics/report-cards",
             icon: <FaBookOpen />,
           },
+          // {
+          //   label: "Master Sheets",
+          //   path: "/academics/master-sheets",
+          //   icon: <FaTable />,
+          // },
         ],
       },
       { label: "Monitor Users", icon: <FaUsers />, path: "/monitor-users" },

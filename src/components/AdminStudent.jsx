@@ -49,8 +49,7 @@ const menuItems = [
   { label: "Exam/Marks", icon: <FaChartBar /> },
   { label: "Lesson Plans", icon: <FaPenFancy /> },
 ];
-
-//Todo:jlkj
+import config from "../config";
 
 const years = Array.from({ length: 26 }, (_, i) => `20${25 + i}/20${26 + i}`);
 
@@ -355,7 +354,7 @@ export default function AdminStudent() {
 
       setSuccess("success");
 
-      await api.createStudent(formData);
+      // await api.createStudent(formData);
       setSuccess("Student registered!");
       const students = await api.getStudents();
       setStudentList(students);
@@ -1104,14 +1103,11 @@ export default function AdminStudent() {
                     required
                   >
                     <option value="">Select</option>
-                    {specialties.map((opt) => (
-                      <option
-                        key={opt.id}
-                        value={typeof opt.name === "string" ? opt.name : ""}
-                      >
+                    {accademicYears.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
                         {typeof opt.name === "string"
                           ? opt.name
-                          : "Unknown Specialty"}
+                          : "Unknown Academic Year"}
                       </option>
                     ))}
                   </select>

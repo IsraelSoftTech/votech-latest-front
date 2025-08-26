@@ -72,6 +72,7 @@ import PsycoDash from "./components/PsycoDash.jsx";
 import Cases from "./components/Cases.jsx";
 import PsychoMessage from "./components/PsychoMessage.jsx";
 import PsychoChat from "./components/PsychoChat.jsx";
+import MasterSheetPage from "./components/marks-module/pages/MasterSheetPage/MasterSheet.page";
 
 function App() {
   const [showLoader, setShowLoader] = React.useState(true);
@@ -303,6 +304,7 @@ function App() {
         <Route path="/psycho-messages" element={<PsychoMessage />} />
         <Route path="/psycho-chat/:userId" element={<PsychoChat />} />
 
+        {/* ----------------------------------------- */}
         {/* Academics - marks-module pages */}
         <Route path="/academics/academic-years" element={<AcademicYear />} />
         <Route path="/academics/subjects" element={<SubjectPage />} />
@@ -317,6 +319,8 @@ function App() {
           element={<ReportCardHomePage />}
         />
         <Route path="/academics/report-card/:id" element={<ReportCardPage />} />
+        <Route path="/academics/master-sheets" element={<MasterSheetPage />} />
+        {/* ----------------------------------------- */}
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
