@@ -13,7 +13,10 @@ export const ReportCardPage = () => {
   const navigate = useNavigate();
 
   const location = useLocation();
-  const { student, academic_year_id, term } = location.state || {};
+  const { student, academic_year_id, term, department, studentClass } =
+    location.state || {};
+
+  console.log("data", location.state);
   const [reportCard, setReportCard] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -29,14 +32,15 @@ export const ReportCardPage = () => {
     const fetchReportCard = async () => {
       setLoading(true);
       try {
-        // if you added optional academicYearId in your controller
+        // if you added optional academicYearId in your controller Missing parameters: studentId=36, academicYearId=23, departmentId=undefined, classId=undefined
         const res = await api.get(
-          `/report-cards/single?studentId=${student.id}&academicYearId=${academic_year_id}`
+          `/report-cards/single?studentId=${student.id}&academicYearId=${academic_year_id}&departmentId=${department.id}&classId=${studentClass.id}`
         );
         res.data.data.reportCard.student.term = term.name.toUpperCase();
         setReportCard(res.data.data.reportCard);
+        console.log(res.data.data.reportCard);
       } catch (err) {
-        toast.error("Failed to load student transcript");
+        toast.error("Failed to load student report card");
         console.error("Failed to fetch report card", err);
       } finally {
         setLoading(false);

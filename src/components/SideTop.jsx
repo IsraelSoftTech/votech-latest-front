@@ -297,18 +297,26 @@ export default function SideTop({ children }) {
   useEffect(() => {
     if (userToggledRef.current) return;
 
-    // If on /admin-fee, expand Finances (kept as-is from your logic; harmless if not present)
+    // If on /admin-fee, expand Finances
     if (location.pathname.startsWith("/admin-fee")) {
       setExpandedMenu("Finances");
       return;
     }
 
-    const activeSubmenu = menuItems.find(
+    // Extra defensive search
+    const activeSubmenu = (Array.isArray(menuItems) ? menuItems : []).find(
       (item) =>
-        item.submenu &&
-        item.submenu.some((sub) => location.pathname.startsWith(sub.path))
+        item &&
+        Array.isArray(item.submenu) &&
+        item.submenu.some(
+          (sub) =>
+            sub &&
+            typeof sub.path === "string" &&
+            location.pathname.startsWith(sub.path)
+        )
     );
-    if (activeSubmenu) {
+
+    if (activeSubmenu?.label) {
       setExpandedMenu(activeSubmenu.label);
     }
   }, [location.pathname, menuItems]);
