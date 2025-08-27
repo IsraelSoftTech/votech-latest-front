@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import "./Input.css";
 import { FaChevronDown } from "react-icons/fa";
+
+import "./Input.css";
 
 const ClearIcon = ({ size = 14 }) => (
   <svg
@@ -20,6 +21,7 @@ const ClearIcon = ({ size = 14 }) => (
   </svg>
 );
 
+/* ------------------- Input ------------------- */
 export const CustomInput = ({
   label,
   type = "text",
@@ -30,46 +32,45 @@ export const CustomInput = ({
   id,
   name,
   onClear,
+  error,
 }) => {
   const inputRef = useRef(null);
   const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    if (!id && inputRef.current)
+    if (!id && inputRef.current) {
       inputRef.current.id = `input-${Math.random().toString(36).slice(2, 9)}`;
+    }
   }, [id]);
 
   const hasValue = String(value || "").length > 0;
 
   return (
     <motion.div
-      className="ci-wrapper"
-      initial={{ opacity: 0, y: 8 }}
+      className={`ci-wrapper ${error ? "has-error" : ""}`}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.25 }}
     >
-      {/* External label */}
-      <label className="ci-external-label">
-        <span className="ci-external-text">
-          {label} {required && <span className="ci-required">*</span>}
-        </span>
+      <label htmlFor={id} className="ci-label">
+        {label} {required && <span className="ci-required">*</span>}
       </label>
 
-      <div className={`ci-field ${focused || hasValue ? "active" : ""}`}>
+      <div className={`ci-field ${focused ? "focused" : ""}`}>
         <input
           ref={inputRef}
           id={id}
           type={type}
+          name={name}
           value={value}
-          onChange={(e) => {
-            onChange(name, e.target.value);
-          }}
+          onChange={(e) => onChange(name, e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           className="ci-input"
+          placeholder={placeholder}
+          aria-invalid={!!error}
           aria-required={required}
           autoComplete="off"
-          placeholder={placeholder}
         />
 
         {hasValue && (
@@ -83,10 +84,13 @@ export const CustomInput = ({
           </button>
         )}
       </div>
+
+      {error && <div className="ci-error">{error}</div>}
     </motion.div>
   );
 };
 
+/* ------------------- Dropdown ------------------- */
 export const CustomDropdown = ({
   label,
   options = [],
@@ -95,9 +99,9 @@ export const CustomDropdown = ({
   required = false,
   name,
   onClear,
+  error,
 }) => {
   const [open, setOpen] = useState(false);
-  const [focused, setFocused] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -112,38 +116,20 @@ export const CustomDropdown = ({
 
   return (
     <motion.div
-      className="ci-wrapper"
-      initial={{ opacity: 0, y: 8 }}
+      className={`ci-wrapper ${error ? "has-error" : ""}`}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.25 }}
     >
-      <label className="ci-external-label">
-        <span className="ci-external-text">
-          {label} {required && <span className="ci-required">*</span>}
-        </span>
+      <label className="ci-label">
+        {label} {required && <span className="ci-required">*</span>}
       </label>
 
-      <div
-        className={`ci-field dropdown ${open ? "open" : ""} ${
-          focused ? "focused" : ""
-        }`}
-        ref={ref}
-      >
+      <div className={`ci-field dropdown`} ref={ref}>
         <button
           type="button"
           className="ci-input ci-select"
-          onClick={(e) => {
-            e.preventDefault();
-            setOpen((s) => !s);
-          }}
-          onFocus={(e) => {
-            e.preventDefault();
-            setFocused(true);
-          }}
-          onBlur={(e) => {
-            e.preventDefault();
-            setFocused(false);
-          }}
+          onClick={() => setOpen((s) => !s)}
           aria-haspopup="listbox"
           aria-expanded={open}
         >
@@ -151,11 +137,11 @@ export const CustomDropdown = ({
             {value || "Select..."}
           </span>
           <span className="ci-arrow" aria-hidden>
-            <FaChevronDown size={9} />
+            <FaChevronDown size={10} />
           </span>
         </button>
 
-        {/* {hasValue && (
+        {hasValue && (
           <button
             type="button"
             onClick={onClear}
@@ -164,22 +150,22 @@ export const CustomDropdown = ({
           >
             <ClearIcon />
           </button>
-        )} */}
+        )}
 
         <AnimatePresence>
           {open && (
             <motion.ul
               className="ci-dropdown"
-              initial={{ opacity: 0, y: -6 }}
+              initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.16 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.18 }}
               role="listbox"
             >
               {options.map((opt, i) => (
                 <li
                   key={i}
-                  className="ci-option"
+                  className={`ci-option ${value === opt ? "active" : ""}`}
                   onClick={() => {
                     onChange(name, opt);
                     setOpen(false);
@@ -193,10 +179,13 @@ export const CustomDropdown = ({
           )}
         </AnimatePresence>
       </div>
+
+      {error && <div className="ci-error">{error}</div>}
     </motion.div>
   );
 };
 
+/* ------------------- Date Picker ------------------- */
 export const CustomDatePicker = ({
   label,
   value = "",
@@ -204,6 +193,7 @@ export const CustomDatePicker = ({
   required = false,
   name,
   onClear,
+  error,
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -211,11 +201,11 @@ export const CustomDatePicker = ({
   const months = [
     "Jan",
     "Feb",
-    "March",
-    "April",
+    "Mar",
+    "Apr",
     "May",
-    "June",
-    "July",
+    "Jun",
+    "Jul",
     "Aug",
     "Sep",
     "Oct",
@@ -246,54 +236,53 @@ export const CustomDatePicker = ({
   const formatted = (y, m, d) =>
     `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 
-  const onCellKey = (e, day) => {
-    if (!day) return;
-    if (e.key === "Enter" || e.key === " ") {
-      onChange(formatted(currentYear, currentMonth, day));
-      setOpen(false);
-    }
-  };
-
   return (
     <motion.div
-      className="ci-wrapper"
-      initial={{ opacity: 0, y: 8 }}
+      className={`ci-wrapper ${error ? "has-error" : ""}`}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.25 }}
     >
-      <label className="ci-external-label">
-        <span className="ci-external-text">
-          {label} {required && <span className="ci-required">*</span>}
-        </span>
+      <label className="ci-label">
+        {label} {required && <span className="ci-required">*</span>}
       </label>
 
-      <div className={`ci-field date ${open ? "open" : ""}`} ref={ref}>
+      <div className={`ci-field date`} ref={ref}>
         <button
           type="button"
           className="ci-input ci-select"
-          onClick={() => setOpen((s) => !s)}
+          onClick={(e) => setOpen((s) => !s)}
           aria-haspopup="dialog"
           aria-expanded={open}
-          aria-label="Open date picker"
         >
           <span className={`ci-select-text ${value ? "filled" : ""}`}>
             {value || "Select date"}
           </span>
           <span className="ci-arrow" aria-hidden>
-            <FaChevronDown size={9} />
+            <FaChevronDown size={10} />
           </span>
         </button>
+
+        {value && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="ci-clear"
+            aria-label="Clear date"
+          >
+            <ClearIcon />
+          </button>
+        )}
 
         <AnimatePresence>
           {open && (
             <motion.div
               className="ci-calendar"
-              initial={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.16 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18 }}
               role="dialog"
-              aria-modal="false"
             >
               <div className="ci-cal-head">
                 <button
@@ -301,51 +290,53 @@ export const CustomDatePicker = ({
                     e.preventDefault();
                     setCurrentYear((y) => y - 1);
                   }}
-                  className="ci-cal-btn"
-                  aria-label="Previous year"
+                  className="ci-btn"
+                  title="Previous Year"
                 >
                   «
                 </button>
-
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    setCurrentMonth((m) => (m === 0 ? 11 : m - 1));
-                    if (currentMonth === 0) {
-                      setCurrentYear((y) => y - 1);
-                    }
+                    setCurrentMonth((m) => {
+                      if (m === 0) {
+                        setCurrentYear((y) => y - 1);
+                        return 11;
+                      }
+                      return m - 1;
+                    });
                   }}
-                  className="ci-cal-btn"
-                  aria-label="Previous month"
+                  className="ci-btn"
+                  title="Previous Month"
                 >
                   ‹
                 </button>
-
                 <div className="ci-cal-title">
-                  {currentYear} — {months[currentMonth]}
+                  {months[currentMonth]} {currentYear}
                 </div>
-
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    setCurrentMonth((m) => (m === 11 ? 0 : m + 1));
-                    if (currentMonth === 11) {
-                      setCurrentYear((y) => y + 1);
-                    }
+                    setCurrentMonth((m) => {
+                      if (m === 11) {
+                        setCurrentYear((y) => y + 1);
+                        return 0;
+                      }
+                      return m + 1;
+                    });
                   }}
-                  className="ci-cal-btn"
-                  aria-label="Next month"
+                  className="ci-btn"
+                  title="Next Month"
                 >
                   ›
                 </button>
-
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     setCurrentYear((y) => y + 1);
                   }}
-                  className="ci-cal-btn"
-                  aria-label="Next year"
+                  className="ci-btn"
+                  title="Next Month"
                 >
                   »
                 </button>
@@ -357,48 +348,41 @@ export const CustomDatePicker = ({
                     {d}
                   </div>
                 ))}
-                {days.map((day, idx) => {
-                  const isToday =
-                    day &&
-                    currentYear === today.getFullYear() &&
-                    currentMonth === today.getMonth() &&
-                    day === today.getDate();
-                  return (
-                    <button
-                      key={idx}
-                      className={`ci-cal-cell ${day ? "clickable" : "empty"} ${
-                        isToday ? "today" : ""
-                      }`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (!day) return;
-                        onChange(
-                          name,
-                          formatted(currentYear, currentMonth, day)
-                        );
-                        setOpen(false);
-                      }}
-                      onKeyDown={(e) => onCellKey(e, day)}
-                      tabIndex={day ? 0 : -1}
-                      aria-label={
-                        day
-                          ? `Select ${day} ${currentMonth + 1} ${currentYear}`
-                          : undefined
-                      }
-                    >
-                      {day || ""}
-                    </button>
-                  );
-                })}
+                {days.map((day, idx) => (
+                  <button
+                    key={idx}
+                    className={`ci-cal-cell ${day ? "clickable" : "empty"} ${
+                      day &&
+                      currentYear === today.getFullYear() &&
+                      currentMonth === today.getMonth() &&
+                      day === today.getDate()
+                        ? "today"
+                        : ""
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!day) return;
+                      onChange(name, formatted(currentYear, currentMonth, day));
+                      setOpen(false);
+                    }}
+                  >
+                    {day || ""}
+                  </button>
+                ))}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {error && <div className="ci-error">{error}</div>}
     </motion.div>
   );
 };
 
-export const SubmitBtn = ({ title }) => {
-  return <button className="submit-btn">{title}</button>;
-};
+/* ------------------- Submit Button ------------------- */
+export const SubmitBtn = ({ title }) => (
+  <button type="submit" className="submit-btn">
+    {title}
+  </button>
+);

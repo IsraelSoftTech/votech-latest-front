@@ -1,0 +1,151 @@
+/* Basic page layout */
+.unauth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #f9faff;
+  font-family: Arial, sans-serif;
+}
+
+.unauth-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+/* Card */
+.unauth-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(32, 64, 128, 0.08);
+}
+
+/* Lock icon */
+.lock-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.lock {
+  width: 64px;
+  height: 64px;
+}
+
+/* Sparkle animations */
+.sparkle {
+  position: absolute;
+  font-size: 1rem;
+  animation: sparkleAnim 1.5s infinite alternate;
+}
+
+.s1 {
+  top: -8px;
+  left: -12px;
+}
+.s2 {
+  top: -6px;
+  right: -10px;
+}
+.s3 {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@keyframes sparkleAnim {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.8) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.2) rotate(15deg);
+  }
+}
+
+/* Text */
+h1 {
+  font-size: 1.6rem;
+  color: #204080;
+  margin: 0.5rem 0;
+}
+
+.lead {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #204080;
+  color: #fff;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #102040;
+}
+
+.btn-outline {
+  border: 2px solid #204080;
+  color: #204080;
+  background: transparent;
+}
+
+.btn-outline:hover {
+  background: #204080;
+  color: #fff;
+}
+
+.btn-ghost {
+  border: none;
+  background: transparent;
+  color: #204080;
+}
+
+.btn-ghost:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+.unauth-footer {
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 1rem 0;
+  color: #888;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .unauth-card {
+    padding: 1.5rem;
+  }
+  h1 {
+    font-size: 1.4rem;
+  }
+}

@@ -129,10 +129,10 @@
 }
 
 /* Modal Form */
-.bands-form {
+/* .bands-form {
   display: flex;
   flex-direction: column;
-}
+} */
 
 .band-row {
   display: flex;

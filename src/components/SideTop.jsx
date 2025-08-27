@@ -81,7 +81,7 @@ export default function SideTop({ children }) {
       { label: "Application", icon: <FaClipboardList />, path: "/application" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
-      { label: "Classes", icon: <FaBook />, path: "/admin-class" },
+      // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
       {
         label: "Departments",
         icon: <FaClipboardList />,
@@ -90,8 +90,12 @@ export default function SideTop({ children }) {
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
 
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
-      { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
-
+      // { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
+      {
+        label: "Subjects",
+        path: "/academics/subjects",
+        icon: <FaBookOpen />,
+      },
       {
         label: "Lesson Plans",
         icon: <FaPenFancy />,
@@ -118,6 +122,11 @@ export default function SideTop({ children }) {
         label: "Financial Summary",
         icon: <FaMoneyBill />,
         path: "/admin-finance",
+      },
+      {
+        label: "Subjects",
+        path: "/academics/subjects",
+        icon: <FaBookOpen />,
       },
       { label: "Fee", icon: <FaCreditCard />, path: "/admin-fee" },
       { label: "Salary", icon: <FaFileInvoiceDollar />, path: "/admin-salary" },
@@ -215,7 +224,7 @@ export default function SideTop({ children }) {
       { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
-      { label: "Classes", icon: <FaBook />, path: "/admin-class" },
+      // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
       {
         label: "Departments",
         icon: <FaClipboardList />,
@@ -224,8 +233,12 @@ export default function SideTop({ children }) {
       { label: "Messages", icon: <FaEnvelope />, path: "/dean-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "ID Cards", icon: <FaIdCard />, path: "/admin-idcards" },
-      { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
-      { label: "Marks", icon: <FaChartBar />, path: "/dean-marks" },
+      {
+        label: "Subjects",
+        path: "/academics/subjects",
+        icon: <FaBookOpen />,
+      },
+      // { label: "Marks", icon: <FaChartBar />, path: "/dean-marks" },
       {
         label: "Lesson Plans",
         icon: <FaPenFancy />,
@@ -251,7 +264,7 @@ export default function SideTop({ children }) {
         icon: <FaPenFancy />,
         path: "/teacher-lesson-plans",
       },
-      { label: "Marks", icon: <FaChartBar />, path: "/teacher-marks" },
+      // { label: "Marks", icon: <FaChartBar />, path: "/teacher-marks" },
       { label: "Events", icon: <FaCalendarAlt />, path: "/my-events" },
     ];
   } else if (authUser?.role === "Discipline") {
@@ -261,7 +274,7 @@ export default function SideTop({ children }) {
       { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
-      { label: "Classes", icon: <FaBook />, path: "/admin-class" },
+      // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
       {
         label: "Departments",
         icon: <FaClipboardList />,
@@ -275,7 +288,11 @@ export default function SideTop({ children }) {
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "ID Cards", icon: <FaIdCard />, path: "/admin-idcards" },
-      { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
+      {
+        label: "Subjects",
+        path: "/academics/subjects",
+        icon: <FaBookOpen />,
+      },
       {
         label: "Lesson Plans",
         icon: <FaPenFancy />,
@@ -289,6 +306,11 @@ export default function SideTop({ children }) {
       { label: "Application", icon: <FaClipboardList />, path: "/application" },
       { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
       { label: "Cases", icon: <FaClipboardList />, path: "/psycho-cases" },
+      {
+        label: "Subjects",
+        path: "/academics/subjects",
+        icon: <FaBookOpen />,
+      },
       {
         label: "Lesson Plan",
         icon: <FaPenFancy />,

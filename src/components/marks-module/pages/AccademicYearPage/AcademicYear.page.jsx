@@ -284,18 +284,29 @@ export const AcademicYear = () => {
         >
           {selectedRow && (
             <div className="academic-year-details">
-              <p>
-                <strong>Name:</strong> {selectedRow.name}
-              </p>
-              <p>
-                <strong>Start Date:</strong> {selectedRow.start_date}
-              </p>
-              <p>
-                <strong>End Date:</strong> {selectedRow.end_date}
-              </p>
-              <p>
-                <strong>Status:</strong> {selectedRow.status}
-              </p>
+              <div className="detail-row">
+                <span className="detail-label">Name:</span>
+                <span className="detail-value">{selectedRow.name}</span>
+              </div>
+
+              <div className="detail-row">
+                <span className="detail-label">Start Date:</span>
+                <span className="detail-value">{selectedRow.start_date}</span>
+              </div>
+
+              <div className="detail-row">
+                <span className="detail-label">End Date:</span>
+                <span className="detail-value">{selectedRow.end_date}</span>
+              </div>
+
+              <div className="detail-row">
+                <span className="detail-label">Status:</span>
+                <span
+                  className={`detail-value status-${selectedRow.status.toLowerCase()}`}
+                >
+                  {selectedRow.status}
+                </span>
+              </div>
             </div>
           )}
         </Modal>
@@ -424,7 +435,7 @@ export const AcademicYear = () => {
           onClose={() => setConfirmActiveOpen(false)}
           title="Set as Active?"
         >
-          <p>
+          <p style={{ marginBottom: "1rem" }}>
             There’s already an active academic year. Do you want to set this one
             as active instead?
           </p>

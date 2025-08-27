@@ -27,9 +27,7 @@ export const AcademicBandsPage = () => {
     academic_year_id: null,
     department_id: null,
     class_id: null,
-    band_min: "",
-    band_max: "",
-    comment: "",
+    search: "", // single search bar
   });
 
   const fetchDepartments = async () => {
@@ -37,31 +35,24 @@ export const AcademicBandsPage = () => {
       const res = await fetch(`${subBaseURL}/specialties`, {
         headers: headers,
       });
-
       const data = await res.json();
       setDepartments(data);
-      console.log(data);
     } catch (err) {
       toast.error("Error fetching departments.");
       console.log(err);
     }
   };
 
-  // ----- Fetch all required data -----
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Parallel API calls
       const [bandsRes, yearsRes, classesRes] = await Promise.all([
         api.get("/academic-bands"),
         api.get("/academic-years"),
         api.get("/classes"),
       ]);
-
-      // Fetch departments (await if async)
       if (fetchDepartments) await fetchDepartments();
 
-      // Set state safely
       setAcademicYears(yearsRes?.data?.data || []);
       setClasses(classesRes?.data?.data || []);
       setData(groupBands(bandsRes?.data?.data || []));
@@ -77,7 +68,6 @@ export const AcademicBandsPage = () => {
     fetchData();
   }, []);
 
-  // ----- Group bands by Year → Department → Class -----
   function groupBands(bands) {
     const grouped = {};
 
@@ -122,7 +112,6 @@ export const AcademicBandsPage = () => {
     }));
   }
 
-  // ----- Form handlers -----
   const handleBandChange = (index, key, value) => {
     setForm((prev) => {
       const newBands = [...prev.bands];
@@ -174,7 +163,6 @@ export const AcademicBandsPage = () => {
     try {
       setSaving(true);
       const payload = flattenBandsPayload(form);
-      console.log(payload);
       await api.post("/academic-bands/save", form);
       toast.success("Bands saved successfully");
       setCreateModalOpen(false);
@@ -186,7 +174,6 @@ export const AcademicBandsPage = () => {
     }
   };
 
-  // ----- Auto populate bands if existing -----
   useEffect(() => {
     if (!form.academic_year_id || !form.department_id || !form.class_id) return;
 
@@ -205,7 +192,6 @@ export const AcademicBandsPage = () => {
     }
   }, [form.academic_year_id, form.department_id, form.class_id, data]);
 
-  // ----- Filter classes by department -----
   const filteredClasses = form.department_id
     ? classes.filter((c) => c.department_id === form.department_id)
     : [];
@@ -226,33 +212,21 @@ export const AcademicBandsPage = () => {
             .filter((c) => !filters.class_id || c.id === filters.class_id)
             .map((c) => ({
               ...c,
-              bands: c.bands.filter(
-                (b) =>
-                  (filters.band_min === "" ||
-                    b.band_min >= Number(filters.band_min)) &&
-                  (filters.band_max === "" ||
-                    b.band_max <= Number(filters.band_max)) &&
-                  (filters.comment === "" ||
-                    b.comment
-                      .toLowerCase()
-                      .includes(filters.comment.toLowerCase()))
-              ),
+              bands: c.bands.filter((b) => {
+                const search = filters.search.trim().toLowerCase();
+                if (!search) return true;
+                return (
+                  b.band_min.toString().includes(search) ||
+                  b.band_max.toString().includes(search) ||
+                  b.comment.toLowerCase().includes(search)
+                );
+              }),
             }))
-            .filter((c) => c.bands.length > 0), // remove classes without bands
+            .filter((c) => c.bands.length > 0),
         }))
-        .filter((d) => d.classes.length > 0), // remove departments without classes
+        .filter((d) => d.classes.length > 0),
     }))
-    .filter((y) => y.departments.length > 0); // remove years without departments
-
-  // const clearFilters = () => {
-  //   setFilters({
-  //     academic_year_id: null,
-  //     department_id: null,
-  //     class_id: null,
-  //     band_min: "",
-  //     band_max: "",
-  //   });
-  // };
+    .filter((y) => y.departments.length > 0);
 
   return (
     <SideTop>
@@ -269,48 +243,54 @@ export const AcademicBandsPage = () => {
 
         {isLoading ? (
           <div className="skeleton-container">
+            {" "}
             {[1, 2, 3].map((i) => (
               <div key={i} className="skeleton-year-block">
+                {" "}
                 <div
                   className="skeleton skeleton-text"
                   style={{ width: "200px", height: "24px" }}
-                />
+                />{" "}
                 {[1, 2].map((j) => (
                   <div key={j} className="skeleton-department-block">
+                    {" "}
                     <div
                       className="skeleton skeleton-text"
                       style={{ width: "150px", height: "20px" }}
-                    />
+                    />{" "}
                     {[1, 2].map((k) => (
                       <div key={k} className="skeleton-class-block">
+                        {" "}
                         <div
                           className="skeleton skeleton-text"
                           style={{ width: "180px", height: "18px" }}
-                        />
+                        />{" "}
                         <div className="skeleton-table">
+                          {" "}
                           {[1, 2, 3].map((r) => (
                             <div key={r} className="skeleton-row">
+                              {" "}
                               <div
                                 className="skeleton"
                                 style={{ width: "50px", height: "16px" }}
-                              />
+                              />{" "}
                               <div
                                 className="skeleton"
                                 style={{ width: "50px", height: "16px" }}
-                              />
+                              />{" "}
                               <div
                                 className="skeleton"
                                 style={{ width: "120px", height: "16px" }}
-                              />
+                              />{" "}
                             </div>
-                          ))}
-                        </div>
+                          ))}{" "}
+                        </div>{" "}
                       </div>
-                    ))}
+                    ))}{" "}
                   </div>
-                ))}
+                ))}{" "}
               </div>
-            ))}
+            ))}{" "}
           </div>
         ) : (
           <>
@@ -323,14 +303,14 @@ export const AcademicBandsPage = () => {
                     label: y.name,
                   }))}
                   value={
-                    academicYears.find(
-                      (y) => y.id === filters.academic_year_id
-                    ) && {
-                      value: filters.academic_year_id,
-                      label: academicYears.find(
-                        (y) => y.id === filters.academic_year_id
-                      )?.name,
-                    }
+                    filters.academic_year_id
+                      ? {
+                          value: filters.academic_year_id,
+                          label: academicYears.find(
+                            (y) => y.id === filters.academic_year_id
+                          )?.name,
+                        }
+                      : null
                   }
                   onChange={(opt) =>
                     setFilters((prev) => ({
@@ -372,13 +352,17 @@ export const AcademicBandsPage = () => {
                   placeholder="Filter Class"
                   options={classes.map((c) => ({
                     value: c.id,
-                    label: c.name,
+                    label: `${c.department?.name || "No Dept"} - ${c.name}`,
                   }))}
                   value={
                     classes.find((c) => c.id === filters.class_id) && {
                       value: filters.class_id,
-                      label: classes.find((c) => c.id === filters.class_id)
-                        ?.name,
+                      label: `${
+                        classes.find((c) => c.id === filters.class_id)
+                          ?.department?.name || "No Dept"
+                      } - ${
+                        classes.find((c) => c.id === filters.class_id)?.name
+                      }`,
                     }
                   }
                   onChange={(opt) =>
@@ -392,29 +376,14 @@ export const AcademicBandsPage = () => {
               </div>
 
               <CustomInput
-                label="Min Band"
-                type="number"
-                value={filters.band_min}
-                onChange={(_, val) =>
-                  setFilters((prev) => ({ ...prev, band_min: val }))
-                }
-              />
-              <CustomInput
-                label="Max Band"
-                type="number"
-                value={filters.band_max}
-                onChange={(_, val) =>
-                  setFilters((prev) => ({ ...prev, band_max: val }))
-                }
-              />
-
-              <CustomInput
-                label="Comment"
+                label="Search Bands"
                 type="text"
-                value={filters.comment}
+                placeholder="Search min, max, or comment"
+                value={filters.search}
                 onChange={(_, val) =>
-                  setFilters((prev) => ({ ...prev, comment: val }))
+                  setFilters((prev) => ({ ...prev, search: val }))
                 }
+                style={{ width: "300px" }}
               />
 
               <button
@@ -424,34 +393,27 @@ export const AcademicBandsPage = () => {
                     academic_year_id: null,
                     department_id: null,
                     class_id: null,
-                    band_min: "",
-                    band_max: "",
-                    comment: "",
+                    search: "",
                   })
                 }
               >
                 Clear Filters
               </button>
             </div>
+
             <div className="bands-table-wrapper">
               {filteredData.map((yearData) => {
-                // Skip invalid year
-                if (!yearData.year || !yearData.year.name) return null;
-
+                if (!yearData.year?.name) return null;
                 return (
                   <div key={yearData.academic_year_id} className="year-block">
                     <h3>{yearData.year.name}</h3>
-
                     {yearData.departments.map((dept) => {
-                      if (!dept.department) return null; // skip invalid department
-
+                      if (!dept.department) return null;
                       return (
                         <div key={dept.id} className="department-block">
                           <h4>{dept.department.name}</h4>
-
                           {dept.classes.map((cls) => {
-                            if (!cls.class) return null; // skip invalid class
-
+                            if (!cls.class) return null;
                             return (
                               <div key={cls.id} className="class-block">
                                 <h5>{`${cls.class.name} (${dept.department.name})`}</h5>
@@ -486,7 +448,6 @@ export const AcademicBandsPage = () => {
           </>
         )}
 
-        {/* Modal Form */}
         <Modal
           isOpen={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
@@ -585,7 +546,6 @@ export const AcademicBandsPage = () => {
                   type="number"
                   value={b.band_max}
                   onChange={(_, val) => handleBandChange(idx, "band_max", val)}
-                  // onClear={() => handleBandChange(idx, "")}
                 />
                 <CustomInput
                   label="Comment"

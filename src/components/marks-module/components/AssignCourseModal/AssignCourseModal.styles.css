@@ -97,6 +97,20 @@
   font-size: 0.9rem;
 }
 
+.btn-danger-assign {
+  background-color: #c0392b;
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+.btn-danger-assign:hover {
+  opacity: 0.8;
+}
+
+.btn-danger-assign:active {
+  opacity: 0.6;
+}
+
 @media (max-width: 600px) {
   .assign-course-modal {
     padding: 0.5rem;

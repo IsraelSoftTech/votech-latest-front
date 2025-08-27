@@ -280,10 +280,23 @@ export const ReportCardHomePage = () => {
         // Rush to 100% and close overlay
         finishPdfSimProgress();
       } catch (err) {
-        toast.error(
-          err?.response?.data?.details || "Error downloading report cards."
-        );
-        console.error("PDF download error:", err);
+        // Handle blob error from server
+        if (err.response?.data) {
+          const blob = err.response.data;
+          try {
+            // convert Blob to text then parse JSON
+            const text = await blob.text();
+            const json = JSON.parse(text);
+            console.error("Server error JSON:", json);
+            toast.error(json.details || json.message || "Server error");
+          } catch (parseErr) {
+            console.error("Failed to parse error blob:", parseErr, blob);
+            toast.error("Server returned an invalid error response");
+          }
+        } else {
+          console.error("Axios error:", err);
+          toast.error(err.message || "Unknown error");
+        }
         failPdfSimProgress();
       }
     };
@@ -367,7 +380,7 @@ export const ReportCardHomePage = () => {
             <div className="filters-row">
               <div className="form-react-select">
                 <Select
-                  placeholder="Academic Year"
+                  placeholder="Select Academic Year"
                   options={academicYears.map((y) => ({
                     value: y.id,
                     label: y.name,
@@ -382,17 +395,17 @@ export const ReportCardHomePage = () => {
                     setFilters((prev) => ({
                       ...prev,
                       academic_year_id: opt?.value || null,
-                      // reset bulk term when year changes
-                      bulk_term: "annual",
+                      bulk_term: "annual", // reset bulk term when year changes
                     }))
                   }
                   isDisabled={loadingReportCardPdfs}
+                  isClearable
                 />
               </div>
 
               <div className="form-react-select">
                 <Select
-                  placeholder="Department"
+                  placeholder="Select Department"
                   options={departments.map((d) => ({
                     value: d.id,
                     label: d.name,
@@ -409,27 +422,30 @@ export const ReportCardHomePage = () => {
                     setFilters((prev) => ({
                       ...prev,
                       department_id: opt?.value || null,
-                      class_id: null,
+                      class_id: null, // reset class when department changes
                     }))
                   }
                   isDisabled={loadingReportCardPdfs}
+                  isClearable
                 />
               </div>
 
               <div className="form-react-select">
                 <Select
-                  placeholder="Class"
+                  placeholder="Select Class"
                   options={filteredClasses.map((c) => ({
                     value: c.id,
                     label: c.name,
                   }))}
                   value={
-                    filteredClasses.find((c) => c.id === filters.class_id) && {
-                      value: filters.class_id,
-                      label: filteredClasses.find(
-                        (c) => c.id === filters.class_id
-                      )?.name,
-                    }
+                    filteredClasses.find((c) => c.id === filters.class_id)
+                      ? {
+                          value: filters.class_id,
+                          label: filteredClasses.find(
+                            (c) => c.id === filters.class_id
+                          )?.name,
+                        }
+                      : null
                   }
                   onChange={(opt) =>
                     setFilters((prev) => ({
@@ -438,6 +454,7 @@ export const ReportCardHomePage = () => {
                     }))
                   }
                   isDisabled={loadingReportCardPdfs}
+                  isClearable
                 />
               </div>
 
@@ -446,7 +463,11 @@ export const ReportCardHomePage = () => {
                 <Select
                   placeholder="Term (Bulk PDF)"
                   options={bulkTermOptions}
-                  value={bulkTermValue}
+                  value={
+                    bulkTermOptions.find(
+                      (opt) => String(opt.value) === String(filters.bulk_term)
+                    ) || bulkTermOptions[0]
+                  }
                   onChange={(opt) =>
                     setFilters((prev) => ({
                       ...prev,
@@ -454,6 +475,7 @@ export const ReportCardHomePage = () => {
                     }))
                   }
                   isDisabled={loadingReportCardPdfs}
+                  isClearable
                 />
               </div>
             </div>

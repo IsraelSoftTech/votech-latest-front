@@ -16,6 +16,12 @@ import Stats from "../../components/Stats/Stats.component";
 import { FaBan, FaCheckCircle, FaLayerGroup } from "react-icons/fa";
 
 export const ClassPage = () => {
+  const capitalizeWords = (str) =>
+    str
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+
   const columns = [
     { label: "S/N", accessor: "sn" },
     { label: "Name", accessor: "name" },
@@ -411,19 +417,19 @@ export const ClassPage = () => {
 
             {/* Fees */}
             {[
-              "registration_fee",
-              "bus_fee",
-              "internship_fee",
-              "remedial_fee",
-              "tuition_fee",
-              "pta_fee",
+              { key: "registration_fee", label: "Registration Fee" },
+              { key: "bus_fee", label: "Bus Fee" },
+              { key: "internship_fee", label: "Internship Fee" },
+              { key: "remedial_fee", label: "Remedial Fee" },
+              { key: "tuition_fee", label: "Tuition Fee" },
+              { key: "pta_fee", label: "PTA Fee" },
             ].map((fee) => (
               <CustomInput
-                key={fee}
-                label={fee.replace("_", " ").toUpperCase()}
-                value={form[fee]}
+                key={fee.key}
+                label={fee.label}
+                value={form[fee.key]}
                 onChange={handleUpdateForm}
-                name={fee}
+                name={fee.key}
               />
             ))}
 
@@ -498,7 +504,7 @@ export const ClassPage = () => {
             ].map((fee) => (
               <CustomInput
                 key={fee}
-                label={fee.replace("_", " ").toUpperCase()}
+                label={capitalizeWords(fee)}
                 value={
                   form[fee] != null ? String(form[fee]).replace(/\s+/g, "") : ""
                 }

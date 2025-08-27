@@ -87,25 +87,56 @@
   }
 }
 
-.academic-year-details {
-  padding: 0rem 1rem;
-  font-family: Arial, sans-serif;
-  color: #333;
-  width: 100%;
-}
-
-.academic-year-details p {
-  margin: 0.5rem 0;
-  font-size: 1rem;
-  text-align: left;
-}
-
-.academic-year-details strong {
-  color: #204080;
-  min-width: 100px;
-  display: inline-block;
-}
-
 .page-title {
   margin-bottom: 0.5rem;
+}
+.academic-year-details {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 1rem;
+  background: #f8f9fc;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(32, 64, 128, 0.06);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.detail-row:hover {
+  background: rgba(32, 64, 128, 0.05);
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #222;
+  font-size: 14px;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.status-active {
+  color: #0a9d58; /* green */
+  font-weight: 600;
+}
+
+.status-inactive {
+  color: #e04b4b; /* red */
+  font-weight: 600;
+}
+
+.status-pending {
+  color: #f0ad4e; /* orange */
+  font-weight: 600;
 }

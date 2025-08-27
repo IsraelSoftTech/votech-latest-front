@@ -15,6 +15,9 @@ const DataTable = ({
   warnDelete,
   filterCategories = [],
   extraActions = [],
+  editRoles,
+  deleteRoles,
+  userRole,
 }) => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,35 +146,43 @@ const DataTable = ({
                   onClick={(e) => e.stopPropagation()}
                   className="action-buttons"
                 >
-                  <button
-                    className="btn btn-edit"
-                    onClick={() => onEdit(row)}
-                    title="Edit"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    className="btn btn-delete"
-                    onClick={() => {
-                      warnDelete();
-                      openDeleteModal(row);
-                    }}
-                    title="Delete"
-                  >
-                    <FaTrash />
-                  </button>
-
-                  {extraActions.map(({ icon, onClick, title }, idx) => (
+                  {(!editRoles || editRoles.includes(userRole)) && (
                     <button
-                      key={idx}
-                      className="btn"
-                      onClick={() => onClick(row)}
-                      title={title}
-                      type="button"
+                      className="btn btn-edit"
+                      onClick={() => onEdit(row)}
+                      title="Edit"
                     >
-                      {icon}
+                      <FaEdit />
                     </button>
-                  ))}
+                  )}
+
+                  {(!deleteRoles || deleteRoles.includes(userRole)) && (
+                    <button
+                      className="btn btn-delete"
+                      onClick={() => {
+                        warnDelete();
+                        openDeleteModal(row);
+                      }}
+                      title="Delete"
+                    >
+                      <FaTrash />
+                    </button>
+                  )}
+
+                  {extraActions.map(
+                    ({ icon, title, onClick, roles }, idx) =>
+                      (!roles || roles.includes(userRole)) && (
+                        <button
+                          key={idx}
+                          className="btn"
+                          onClick={() => onClick(row)}
+                          title={title}
+                          type="button"
+                        >
+                          {icon}
+                        </button>
+                      )
+                  )}
                 </td>
               </tr>
             ))
@@ -218,7 +229,10 @@ const DataTable = ({
       >
         {deleteTarget && (
           <>
-            <p className="delet-resource-text">
+            <p
+              className="delet-resource-text"
+              style={{ marginBottom: "0.8rem", textAlign: "center" }}
+            >
               Are you sure you want to delete{" "}
               <strong>{deleteTarget.name}</strong>?
             </p>

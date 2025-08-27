@@ -73,6 +73,7 @@ import Cases from "./components/Cases.jsx";
 import PsychoMessage from "./components/PsychoMessage.jsx";
 import PsychoChat from "./components/PsychoChat.jsx";
 import MasterSheetPage from "./components/marks-module/pages/MasterSheetPage/MasterSheet.page";
+import UnauthorizedPage from "./components/Unauthorized.page";
 
 function App() {
   const [showLoader, setShowLoader] = React.useState(true);
@@ -321,12 +322,13 @@ function App() {
         <Route path="/academics/report-card/:id" element={<ReportCardPage />} />
         <Route path="/academics/master-sheets" element={<MasterSheetPage />} />
         {/* ----------------------------------------- */}
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      <ToastContainer position="bottom-right" autoClose={6000} />
+      <ToastContainer position="bottom-right" autoClose={8000} />
     </>
   );
 }

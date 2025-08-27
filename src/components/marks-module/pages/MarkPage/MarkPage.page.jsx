@@ -1,5 +1,5 @@
 import "./MarksUpload.styles.css";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import SideTop from "../../../SideTop";
 import { toast } from "react-toastify";
 import api, { headers, subBaseURL } from "../../utils/api";
@@ -10,10 +10,23 @@ import { useParams, useNavigate } from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { FaArrowLeft } from "react-icons/fa";
+import { useRestrictTo } from "../../../../hooks/restrictTo";
 
 export const MarksUploadPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const user = useRestrictTo(
+    "Admin1",
+    "Admin2",
+    "Admin3",
+    "Admin4",
+    "Teacher",
+    "Discipline",
+    "Psychosocialist"
+  );
+
+  const hasFetchedRef = useRef(false);
 
   const [loadingPage, setLoadingPage] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
@@ -84,25 +97,46 @@ export const MarksUploadPage = () => {
     }
   };
 
-  const fetchDropdowns = async () => {
+  const fetchDropdowns = useCallback(async () => {
     try {
       setLoadingPage(true);
       const subRes = await api.get(`/subjects/${id}`);
 
-      const [yearsRes, classesRes, termsRes, sequencesRes] = await Promise.all([
-        api.get("/academic-years"),
-        api.get("/classes"),
-        api.get("/marks/terms"),
-        api.get("/marks/sequences"),
-      ]);
+      const [yearsRes, classesRes, termsRes, sequencesRes, classSubjectRes] =
+        await Promise.all([
+          api.get("/academic-years"),
+          api.get("/classes"),
+          api.get("/marks/terms"),
+          api.get("/marks/sequences"),
+          api.get(`/class-subjects?teacher_id=${user.id}`),
+        ]);
+
+      const classSubjects = classSubjectRes.data.data || [];
 
       setAcademicYears(yearsRes?.data?.data || []);
-      setClasses(classesRes?.data?.data || []);
+
+      setClasses(
+        user.role === "Admin3"
+          ? classesRes.data.data
+          : (classesRes?.data?.data || [])
+              .map((cls) => ({
+                ...cls,
+                // Only include classSubjects assigned to this teacher
+                classSubjects: (cls.classSubjects || []).filter((cs) =>
+                  classSubjects.some(
+                    (teacherCs) =>
+                      teacherCs.id === cs.id && teacherCs.teacher_id === user.id
+                  )
+                ),
+              }))
+              // Only keep classes that now have classSubjects
+              .filter((cls) => cls.classSubjects.length > 0)
+      );
       setTerms(termsRes?.data?.data || []);
       setSequences(sequencesRes?.data?.data || []);
       setSubject(subRes?.data?.data || {});
 
-      console.log(yearsRes?.data?.data);
+      // console.log(yearsRes?.data?.data);
       // Fetch separately to avoid await blocking the page render
       fetchDepartments();
       fetchSubjectClasses();
@@ -111,11 +145,13 @@ export const MarksUploadPage = () => {
     } finally {
       setLoadingPage(false);
     }
-  };
+  });
 
   useEffect(() => {
+    if (!user || hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
     fetchDropdowns();
-  }, [id]);
+  }, [id, user, fetchDropdowns]);
 
   const loadStudentsMarks = useCallback(async () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
@@ -414,7 +450,7 @@ export const MarksUploadPage = () => {
     (t) => Number(t.id) === Number(filters.term_id)
   );
 
-  console.log(sequences);
+  // console.log(sequences);
 
   // Key fix: filter sequences by selected term_id + academic_year_id
   const filteredSequences =
@@ -487,20 +523,21 @@ export const MarksUploadPage = () => {
                     label: d.name,
                   }))}
                   value={
-                    departments.find(
-                      (d) => Number(d.id) === Number(filters.department_id)
-                    ) && {
-                      value: filters.department_id,
-                      label: departments.find(
-                        (d) => Number(d.id) === Number(filters.department_id)
-                      )?.name,
-                    }
+                    filters.department_id
+                      ? {
+                          value: filters.department_id,
+                          label: departments.find(
+                            (d) =>
+                              Number(d.id) === Number(filters.department_id)
+                          )?.name,
+                        }
+                      : null
                   }
                   onChange={(opt) =>
                     setFilters((prev) => ({
                       ...prev,
                       department_id: opt?.value || null,
-                      class_id: null, // reset class when department changes
+                      class_id: null,
                     }))
                   }
                 />
@@ -508,20 +545,21 @@ export const MarksUploadPage = () => {
 
               <div className="form-react-select">
                 <Select
-                  placeholder="Class"
+                  placeholder="Select Class"
                   options={filteredClasses.map((c) => ({
                     value: c.id,
                     label: c.name,
                   }))}
                   value={
-                    filteredClasses.find(
-                      (c) => Number(c.id) === Number(filters.class_id)
-                    ) && {
-                      value: filters.class_id,
-                      label: filteredClasses.find(
-                        (c) => Number(c.id) === Number(filters.class_id)
-                      )?.name,
-                    }
+                    filters.class_id &&
+                    filteredClasses.some((c) => c.id === filters.class_id)
+                      ? {
+                          value: filters.class_id,
+                          label: filteredClasses.find(
+                            (c) => c.id === filters.class_id
+                          )?.name,
+                        }
+                      : null // placeholder shows if class is invalid or reset
                   }
                   onChange={(opt) =>
                     setFilters((prev) => ({
@@ -529,25 +567,27 @@ export const MarksUploadPage = () => {
                       class_id: opt?.value || null,
                     }))
                   }
+                  isClearable
                 />
               </div>
 
               <div className="form-react-select">
                 <Select
-                  placeholder="Term"
+                  placeholder="Select Term"
                   options={filteredTerms.map((t) => ({
                     value: t.id,
                     label: t.name,
                   }))}
                   value={
-                    filteredTerms.find(
-                      (t) => Number(t.id) === Number(filters.term_id)
-                    ) && {
-                      value: filters.term_id,
-                      label: filteredTerms.find(
-                        (t) => Number(t.id) === Number(filters.term_id)
-                      )?.name,
-                    }
+                    filters.term_id &&
+                    filteredTerms.some((t) => t.id === filters.term_id)
+                      ? {
+                          value: filters.term_id,
+                          label: filteredTerms.find(
+                            (t) => t.id === filters.term_id
+                          )?.name,
+                        }
+                      : null // ensures placeholder shows if term is invalid or reset
                   }
                   onChange={(opt) =>
                     setFilters((prev) => ({
@@ -556,26 +596,28 @@ export const MarksUploadPage = () => {
                       sequence_id: null, // reset sequence when term changes
                     }))
                   }
+                  isClearable
                 />
               </div>
 
               <div className="form-react-select">
                 <Select
-                  placeholder="Sequence"
+                  placeholder="Select Sequence"
                   options={filteredSequences.map((s) => ({
                     value: s.id,
                     label: s.name,
                   }))}
                   isDisabled={!filters.term_id}
                   value={
-                    filteredSequences.find(
-                      (s) => Number(s.id) === Number(filters.sequence_id)
-                    ) && {
-                      value: filters.sequence_id,
-                      label: filteredSequences.find(
-                        (s) => Number(s.id) === Number(filters.sequence_id)
-                      )?.name,
-                    }
+                    filters.sequence_id &&
+                    filteredSequences.some((s) => s.id === filters.sequence_id)
+                      ? {
+                          value: filters.sequence_id,
+                          label: filteredSequences.find(
+                            (s) => s.id === filters.sequence_id
+                          )?.name,
+                        }
+                      : null // placeholder when sequence is invalid/reset
                   }
                   onChange={(opt) =>
                     setFilters((prev) => ({
@@ -583,6 +625,7 @@ export const MarksUploadPage = () => {
                       sequence_id: opt?.value || null,
                     }))
                   }
+                  isClearable
                 />
               </div>
             </div>
@@ -638,28 +681,41 @@ export const MarksUploadPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {students.map((s, index) => (
-                      <tr key={s.id}>
-                        <td>{index + 1}</td>
-                        <td>{s.student_id}</td>
-                        <td>{s.full_name}</td>
-                        <td style={{ maxWidth: "1rem" }}>
-                          {s.id === "none" ? (
-                            "-"
-                          ) : (
-                            <CustomInput
-                              type="number"
-                              value={
-                                marks.find((m) => m.student_id === s.id)
-                                  ?.score ?? ""
-                              }
-                              onChange={(_, val) => handleMarkChange(s.id, val)}
-                              onClear={() => handleMarkChange(s.id, "")}
-                            />
-                          )}
+                    {students.length > 0 ? (
+                      students.map((s, index) => (
+                        <tr key={s.id}>
+                          <td>{index + 1}</td>
+                          <td>{s.student_id}</td>
+                          <td>{s.full_name}</td>
+                          <td style={{ maxWidth: "1rem" }}>
+                            {s.id === "none" ? (
+                              "-"
+                            ) : (
+                              <CustomInput
+                                type="number"
+                                value={
+                                  marks.find((m) => m.student_id === s.id)
+                                    ?.score ?? ""
+                                }
+                                onChange={(_, val) =>
+                                  handleMarkChange(s.id, val)
+                                }
+                                onClear={() => handleMarkChange(s.id, "")}
+                              />
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          style={{ fontStyle: "italic", textAlign: "center" }}
+                        >
+                          No students found
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               )}

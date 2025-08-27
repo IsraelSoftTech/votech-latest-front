@@ -120,6 +120,39 @@ export default function AssignCourseModal({
         )
       : classesOptions;
 
+  const handleUnassign = async () => {
+    if (!subject) {
+      toast.error("No subject selected to unassign.");
+      return;
+    }
+
+    const confirm = window.confirm(
+      `Are you sure you want to completely unassign the subject "${subject.name}" from all classes? This cannot be undone.`
+    );
+    if (!confirm) return;
+
+    try {
+      setIsSubmitting(true);
+      await api.post("/class-subjects/unassign", { subject_id: subject.id });
+      toast.success(
+        `Subject "${subject.name}" has been unassigned from all classes.`
+      );
+
+      // Clear selections in the modal
+      setSelectedDepartments([]);
+      setSelectedClasses([]);
+      setTeacherAssignments({});
+
+      onUpdate?.(); // Refresh parent data if needed
+      setStep(1); // Go back to first step
+    } catch (err) {
+      toast.error(err?.response?.data?.details || "Error unassigning subject.");
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="assign-course-modal">
       {/* Stepper */}
@@ -133,17 +166,19 @@ export default function AssignCourseModal({
 
       {/* Step 1 - Departments */}
       {step === 1 && (
-        <div className="step-content">
-          <label>Select Departments</label>
-          <Select
-            isMulti
-            options={departmentsOptions}
-            value={selectedDepartments}
-            onChange={setSelectedDepartments}
-            placeholder="Search and select departments..."
-            className="dropdown"
-          />
-        </div>
+        <>
+          <div className="step-content">
+            <label>Select Departments</label>
+            <Select
+              isMulti
+              options={departmentsOptions}
+              value={selectedDepartments}
+              onChange={setSelectedDepartments}
+              placeholder="Search and select departments..."
+              className="dropdown"
+            />
+          </div>
+        </>
       )}
 
       {/* Step 2 - Classes */}
@@ -243,6 +278,13 @@ export default function AssignCourseModal({
             {isSubmitting ? "Saving..." : "Save"}
           </button>
         )}
+        <button
+          className="btn btn-danger-assign"
+          onClick={handleUnassign}
+          title="Completely unassign this subject from all classes/teachers"
+        >
+          Unassign Completely
+        </button>
       </div>
     </div>
   );
