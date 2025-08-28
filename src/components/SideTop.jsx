@@ -265,6 +265,11 @@ export default function SideTop({ children }) {
         path: "/teacher-lesson-plans",
       },
       // { label: "Marks", icon: <FaChartBar />, path: "/teacher-marks" },
+      {
+        label: "Subjects",
+        path: "/academics/subjects",
+        icon: <FaBookOpen />,
+      },
       { label: "Events", icon: <FaCalendarAlt />, path: "/my-events" },
     ];
   } else if (authUser?.role === "Discipline") {
@@ -439,6 +444,11 @@ export default function SideTop({ children }) {
     { label: "Messages", icon: <FaEnvelope />, path: "/teacher-messages" },
     { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
     { label: "Students", icon: <FaUserGraduate />, path: "/teacher-students" },
+    {
+      label: "Subjects",
+      path: "/academics/subjects",
+      icon: <FaBookOpen />,
+    },
     // { label: "Marks", icon: <FaChartBar />, path: "/teacher-marks" },
     {
       label: "Attendance",
@@ -470,7 +480,13 @@ export default function SideTop({ children }) {
     { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
     { label: "My Events", icon: <FaCalendarAlt />, path: "/my-events" },
     { label: "Timetables", icon: <FaClipboardList />, path: "/timetables" },
+
     // { label: "Marks", icon: <FaChartBar />, path: "/dean-marks" },
+    {
+      label: "Subjects",
+      path: "/academics/subjects",
+      icon: <FaBookOpen />,
+    },
     { label: "Lesson Plans", icon: <FaPenFancy />, path: "/dean-lesson-plans" },
   ];
 

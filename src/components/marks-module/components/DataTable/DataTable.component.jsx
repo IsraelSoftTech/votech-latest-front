@@ -63,7 +63,6 @@ const DataTable = ({
     }
   };
 
-  // Reset page when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterCategory]);
@@ -74,7 +73,6 @@ const DataTable = ({
       <div className="table-controls">
         <div className="table-search">
           <CustomInput
-            // label="Search"
             placeholder="Search..."
             value={searchTerm}
             onChange={(name, val) => setSearchTerm(val)}
@@ -83,16 +81,16 @@ const DataTable = ({
           />
         </div>
 
-        <div className="table-search">
-          {filterCategories.length > 0 && (
+        {filterCategories.length > 0 && (
+          <div className="table-search">
             <CustomDropdown
               value={filterCategory}
               onChange={(name, val) => setFilterCategory(val)}
               options={["All", ...filterCategories]}
               name="filterCategory"
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <table className="data-table">
@@ -142,47 +140,48 @@ const DataTable = ({
                     {row[accessor]}
                   </td>
                 ))}
-                <td
-                  onClick={(e) => e.stopPropagation()}
-                  className="action-buttons"
-                >
-                  {(!editRoles || editRoles.includes(userRole)) && (
-                    <button
-                      className="btn btn-edit"
-                      onClick={() => onEdit(row)}
-                      title="Edit"
-                    >
-                      <FaEdit />
-                    </button>
-                  )}
+                <td onClick={(e) => e.stopPropagation()}>
+                  <div className="action-buttons">
+                    {(!editRoles || editRoles.includes(userRole)) && (
+                      <button
+                        className="btn btn-edit"
+                        onClick={() => onEdit(row)}
+                        title="Edit"
+                        type="button"
+                      >
+                        <FaEdit />
+                      </button>
+                    )}
 
-                  {(!deleteRoles || deleteRoles.includes(userRole)) && (
-                    <button
-                      className="btn btn-delete"
-                      onClick={() => {
-                        warnDelete();
-                        openDeleteModal(row);
-                      }}
-                      title="Delete"
-                    >
-                      <FaTrash />
-                    </button>
-                  )}
+                    {(!deleteRoles || deleteRoles.includes(userRole)) && (
+                      <button
+                        className="btn btn-delete"
+                        onClick={() => {
+                          warnDelete();
+                          openDeleteModal(row);
+                        }}
+                        title="Delete"
+                        type="button"
+                      >
+                        <FaTrash />
+                      </button>
+                    )}
 
-                  {extraActions.map(
-                    ({ icon, title, onClick, roles }, idx) =>
-                      (!roles || roles.includes(userRole)) && (
-                        <button
-                          key={idx}
-                          className="btn"
-                          onClick={() => onClick(row)}
-                          title={title}
-                          type="button"
-                        >
-                          {icon}
-                        </button>
-                      )
-                  )}
+                    {extraActions.map(
+                      ({ icon, title, onClick, roles }, idx) =>
+                        (!roles || roles.includes(userRole)) && (
+                          <button
+                            key={idx}
+                            className="btn"
+                            onClick={() => onClick(row)}
+                            title={title}
+                            type="button"
+                          >
+                            {icon}
+                          </button>
+                        )
+                    )}
+                  </div>
                 </td>
               </tr>
             ))

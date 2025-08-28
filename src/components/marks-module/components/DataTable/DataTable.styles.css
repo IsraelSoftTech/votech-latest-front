@@ -1,8 +1,9 @@
+/* Table base */
 .data-table {
   width: 100%;
   border-collapse: collapse;
   font-family: Arial, sans-serif;
-  min-width: 600px; /* keep table from collapsing */
+  min-width: 600px; /* prevents collapsing */
 }
 
 .data-table thead {
@@ -22,12 +23,13 @@
   text-overflow: ellipsis;
 }
 
+/* Table row hover */
 .table-row:hover {
   background-color: #f2f9ff;
   cursor: pointer;
 }
 
-/* Keep cells uniform in width, but reveal full text on hover */
+/* Truncate cells with hover expansion */
 .cell-truncate {
   max-width: 180px;
   position: relative;
@@ -41,12 +43,17 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Action buttons */
+/* Action buttons: always horizontal */
 .action-buttons {
   display: flex;
+  flex-direction: row; /* horizontal row */
+  flex-wrap: nowrap; /* no wrapping */
+  align-items: center;
+  justify-content: flex-start;
   gap: 10px;
 }
 
+/* Buttons */
 .btn {
   background: none;
   border: none;
@@ -75,6 +82,7 @@
 .btn-edit:active {
   opacity: 0.8;
 }
+
 /* Modal buttons inside delete confirmation */
 .modal-buttons {
   display: flex;
@@ -113,11 +121,10 @@
   background-color: #a81e1b;
 }
 
-/* Table wrapper */
+/* Table wrapper for horizontal scroll */
 .table-wrapper {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: auto;
+  overflow-x: auto; /* scroll horizontally if table too wide */
   border-radius: 8px;
   margin-bottom: 1.5rem;
 }
@@ -184,18 +191,13 @@
   border-color: #204080;
 }
 
+/* Table controls */
 .table-controls {
   display: flex;
   justify-content: space-between;
-  /* background-color: red; */
   gap: 1rem;
   align-items: center;
 }
-
-/* .table-controls select {
-  flex-grow: 0;
-  min-width: 150px;
-} */
 
 .table-search {
   flex-grow: 0.5;
@@ -203,14 +205,27 @@
   min-width: 200px;
 }
 
-@media (max-width: 509px) {
+/* Mobile responsiveness */
+@media (max-width: 600px) {
   .table-controls {
     flex-direction: column;
-    align-items: start;
-    gap: 0rem;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 
   .table-search {
     flex-grow: 0.2;
+  }
+
+  .data-table td,
+  .data-table th {
+    min-width: 80px;
+    height: unset;
+  }
+
+  /* keep action buttons horizontal even on small screens */
+  .action-buttons {
+    flex-wrap: nowrap;
+    gap: 6px; /* smaller gap on mobile */
   }
 }
