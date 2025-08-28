@@ -207,13 +207,31 @@ export const ReportCardHomePage = () => {
   };
 
   const handleGoToMasterSheet = () => {
+    const departmentObj = departments.find(
+      (d) => d.id === filters.department_id
+    );
+    const classObj = classes.find((c) => c.id === filters.class_id);
+    const academicYearObj = academicYears.find(
+      (y) => y.id === filters.academic_year_id
+    );
+
+    if (!departmentObj || !classObj || !academicYearObj) {
+      toast.error("Please select Academic Year, Department, and Class.");
+      return;
+    }
+
     navigate(`/academics/master-sheets`, {
       state: {
-        department: departments.find((d) => d.id === filters.department_id),
-        studentClass: classes.find((c) => c.id === filters.class_id),
+        academicYear: academicYearObj,
+        department: departmentObj,
+        class: classObj, // must be "class" key, not "studentClass"
         academic_year_id: filters.academic_year_id,
-        term: terms.find((t) => t.id === filters.term_id),
-        sequence: sequences.find((s) => s.id === filters.sequence_id),
+        ids: {
+          academic_year_id: filters.academic_year_id,
+          department_id: departmentObj.id,
+          class_id: classObj.id,
+        },
+        bulk_term: filters.bulk_term, // optional, for MasterSheetPage
       },
     });
   };
