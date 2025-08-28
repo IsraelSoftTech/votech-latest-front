@@ -25,7 +25,7 @@ const Stats = ({ data = [], className = "" }) => {
   );
 };
 
-StatsCards.propTypes = {
+Stats.propTypes = {
   data: PropTypes.arrayOf(
     PropTypes.shape({
       title: PropTypes.string.isRequired,
