@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import "./Stats.styles.css";
 
-const StatsCards = ({ data = [], className = "" }) => {
+const Stats = ({ data = [], className = "" }) => {
   return (
     <div className={`stats-grid ${className}`}>
       {data.map(({ title, value, icon: Icon }, idx) => (
@@ -37,4 +37,4 @@ StatsCards.propTypes = {
   className: PropTypes.string,
 };
 
-export default StatsCards;
+export default Stats;

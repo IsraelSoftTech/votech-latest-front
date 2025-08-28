@@ -127,7 +127,7 @@ export const ClassPage = () => {
       const subFilters = new Set();
       const res = await api.get("/classes");
       if (res.data?.data) {
-        console.log(res.data.data);
+        // console.log(res.data.data);
         const formatted = res.data.data.map((el, index) => {
           subFilters.add(el.department?.name);
           return {
