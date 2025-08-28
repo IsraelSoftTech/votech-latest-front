@@ -6,7 +6,7 @@ const config = {
       ? "http://localhost:5000/api"
       : "https://api.votechs7academygroup.com/api"),
 
-  // API_URL: "http://localhost:5000/api",
+  API_URL: "https://api.votechs7academygroup.com/api",
 
   // Frontend URL
   FRONTEND_URL:
