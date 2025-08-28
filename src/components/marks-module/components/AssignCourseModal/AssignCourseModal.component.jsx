@@ -120,6 +120,12 @@ export default function AssignCourseModal({
         )
       : classesOptions;
 
+  // format label as "Department - Class"
+  const formattedClasses = filteredClasses.map((cls) => ({
+    ...cls,
+    label: `${cls.department?.name || ""} - ${cls.name}`,
+  }));
+
   const handleUnassign = async () => {
     if (!subject) {
       toast.error("No subject selected to unassign.");
@@ -187,7 +193,7 @@ export default function AssignCourseModal({
           <label>Select Classes</label>
           <Select
             isMulti
-            options={filteredClasses}
+            options={formattedClasses}
             value={selectedClasses}
             onChange={setSelectedClasses}
             placeholder="Search and select classes..."
