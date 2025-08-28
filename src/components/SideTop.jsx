@@ -137,7 +137,7 @@ export default function SideTop({ children }) {
       },
       { label: "Inventory", icon: <FaBoxes />, path: "/admin-inventory" },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
-      { label: "Marks", icon: <FaChartBar />, path: "/admin-marks" },
+      // { label: "Marks", icon: <FaChartBar />, path: "/admin-marks" },
       {
         label: "Lesson Plans",
         icon: <FaPenFancy />,
@@ -325,26 +325,18 @@ export default function SideTop({ children }) {
   useEffect(() => {
     if (userToggledRef.current) return;
 
-    // If on /admin-fee, expand Finances
+    // If on /admin-fee, expand Finances (kept as-is from your logic; harmless if not present)
     if (location.pathname.startsWith("/admin-fee")) {
       setExpandedMenu("Finances");
       return;
     }
 
-    // Extra defensive search
-    const activeSubmenu = (Array.isArray(menuItems) ? menuItems : []).find(
+    const activeSubmenu = menuItems.find(
       (item) =>
-        item &&
-        Array.isArray(item.submenu) &&
-        item.submenu.some(
-          (sub) =>
-            sub &&
-            typeof sub.path === "string" &&
-            location.pathname.startsWith(sub.path)
-        )
+        item.submenu &&
+        item.submenu.some((sub) => location.pathname.startsWith(sub.path))
     );
-
-    if (activeSubmenu?.label) {
+    if (activeSubmenu) {
       setExpandedMenu(activeSubmenu.label);
     }
   }, [location.pathname, menuItems]);
@@ -447,7 +439,7 @@ export default function SideTop({ children }) {
     { label: "Messages", icon: <FaEnvelope />, path: "/teacher-messages" },
     { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
     { label: "Students", icon: <FaUserGraduate />, path: "/teacher-students" },
-    { label: "Marks", icon: <FaChartBar />, path: "/teacher-marks" },
+    // { label: "Marks", icon: <FaChartBar />, path: "/teacher-marks" },
     {
       label: "Attendance",
       icon: <FaClipboardList />,
@@ -478,7 +470,7 @@ export default function SideTop({ children }) {
     { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
     { label: "My Events", icon: <FaCalendarAlt />, path: "/my-events" },
     { label: "Timetables", icon: <FaClipboardList />, path: "/timetables" },
-    { label: "Marks", icon: <FaChartBar />, path: "/dean-marks" },
+    // { label: "Marks", icon: <FaChartBar />, path: "/dean-marks" },
     { label: "Lesson Plans", icon: <FaPenFancy />, path: "/dean-lesson-plans" },
   ];
 
