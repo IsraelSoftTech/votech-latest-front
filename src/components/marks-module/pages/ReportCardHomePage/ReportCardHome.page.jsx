@@ -210,7 +210,7 @@ export const ReportCardHomePage = () => {
     navigate(`/academics/master-sheets`, {
       state: {
         department: departments.find((d) => d.id === filters.department_id),
-        class: classes.find((c) => c.id === filters.class_id),
+        studentClass: classes.find((c) => c.id === filters.class_id),
         academic_year_id: filters.academic_year_id,
         term: terms.find((t) => t.id === filters.term_id),
         sequence: sequences.find((s) => s.id === filters.sequence_id),

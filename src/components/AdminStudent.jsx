@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./AdminStudent.css";
 import "./StudentListReport.css";
 import { useNavigate } from "react-router-dom";
@@ -236,6 +236,13 @@ export default function AdminStudent() {
   const [uploadManyError, setUploadManyError] = useState("");
   const [uploadManySuccess, setUploadManySuccess] = useState("");
 
+  // Camera-related state
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -255,6 +262,22 @@ export default function AdminStudent() {
     }
     fetchData();
   }, []);
+
+  // Stop camera when modal is closed
+  useEffect(() => {
+    if (!showModal && cameraStream) {
+      stopCamera();
+    }
+  }, [showModal, cameraStream]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
 
   // Helper to count today's students
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -279,6 +302,78 @@ export default function AdminStudent() {
     return `${year}-VOT-${firstPart}${lastPart}-${seq}`;
   };
 
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: 'user'
+        } 
+      });
+      setCameraStream(stream);
+      setShowCamera(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      alert('Unable to access camera. Please check permissions.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+    setPhotoPreview(null);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Draw video frame to canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert canvas to blob
+      canvas.toBlob((blob) => {
+        if (blob) {
+          // Create a File object from the blob
+          const file = new File([blob], 'camera_photo.jpg', { type: 'image/jpeg' });
+          setForm(prev => ({ ...prev, photo: file }));
+          setPhotoPreview(URL.createObjectURL(blob));
+          stopCamera();
+        }
+      }, 'image/jpeg', 0.8);
+    }
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setForm(prev => ({ ...prev, photo: file }));
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removePhoto = () => {
+    setForm(prev => ({ ...prev, photo: null }));
+    setPhotoPreview(null);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
   // 4. Update studentId when fullName or regDate changes
   useEffect(() => {
     setForm((f) => ({
@@ -294,7 +389,11 @@ export default function AdminStudent() {
   // 5. Update handleFormChange to handle regDate
   const handleFormChange = (e) => {
     const { name, value, files } = e.target;
-    setForm((f) => ({ ...f, [name]: files ? files[0] : value }));
+    if (name === 'photo') {
+      handlePhotoChange(e);
+    } else {
+      setForm((f) => ({ ...f, [name]: files ? files[0] : value }));
+    }
   };
 
   const handleEdit = (student) => {
@@ -319,6 +418,7 @@ export default function AdminStudent() {
       contact: student.guardian_contact || "",
       photo: null,
     });
+    setPhotoPreview(null);
     setShowModal(true);
   };
 
@@ -377,6 +477,7 @@ export default function AdminStudent() {
           academicYear: "",
           photo: null,
         });
+        setPhotoPreview(null);
         setEditId(null);
       }, 3000);
     } catch (err) {
@@ -1123,13 +1224,55 @@ export default function AdminStudent() {
                     required
                   />
                   <label className="input-label">Photo</label>
-                  <input
-                    className="input-field"
-                    type="file"
-                    name="photo"
-                    accept="image/*"
-                    onChange={handleFormChange}
-                  />
+                  <div className="photo-input-container">
+                    {/* Photo Preview */}
+                    <div className="photo-preview">
+                      {photoPreview ? (
+                        <img 
+                          src={photoPreview} 
+                          alt="Photo Preview" 
+                          className="photo-preview-img"
+                        />
+                      ) : (
+                        <div className="photo-placeholder">
+                          <FaUser size={40} />
+                          <span>No Photo</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Photo Actions */}
+                    <div className="photo-actions">
+                      <button
+                        type="button"
+                        className="camera-btn"
+                        onClick={startCamera}
+                        title="Take Photo with Camera"
+                      >
+                        📷
+                      </button>
+                      <label className="file-btn" title="Choose File">
+                        📁
+                        <input
+                          type="file"
+                          name="photo"
+                          accept="image/*"
+                          onChange={handlePhotoChange}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+                      {photoPreview && (
+                        <button
+                          type="button"
+                          className="remove-btn"
+                          onClick={removePhoto}
+                          title="Remove Photo"
+                        >
+                          ❌
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
               {error && <div className="error-message">{error}</div>}
@@ -1480,6 +1623,48 @@ export default function AdminStudent() {
           </div>
         </div>
       )}
+      
+      {/* Camera Modal */}
+      {showCamera && (
+        <div className="camera-modal-overlay" onClick={stopCamera}>
+          <div className="camera-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="camera-modal-header">
+              <h3>Take Photo</h3>
+              <button className="camera-modal-close" onClick={stopCamera}>
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div className="camera-modal-body">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{ width: '100%', maxWidth: '500px', borderRadius: '8px' }}
+              />
+              
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+              
+              <div className="camera-controls">
+                <button 
+                  className="capture-btn"
+                  onClick={capturePhoto}
+                >
+                  📸 Capture Photo
+                </button>
+                <button 
+                  className="cancel-btn"
+                  onClick={stopCamera}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <style>{`
         .student-register-modal-overlay {
           position: fixed;
@@ -1627,6 +1812,220 @@ export default function AdminStudent() {
             justify-content: center;
             padding: 10px 16px;
           }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+          .student-register-modal-content {
+            padding: 40px 20px 20px 20px;
+            margin-top: 40px;
+          }
+        }
+        
+        /* Camera Modal Styles */
+        .camera-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          z-index: 2000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+        }
+        
+        .camera-modal-content {
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+          max-width: 600px;
+          width: 100%;
+          overflow: hidden;
+        }
+        
+        .camera-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 24px;
+          border-bottom: 1px solid #e0e0e0;
+          background: #f8f9fa;
+        }
+        
+        .camera-modal-header h3 {
+          margin: 0;
+          color: #333;
+          font-size: 18px;
+          font-weight: 600;
+        }
+        
+        .camera-modal-close {
+          background: none;
+          border: none;
+          font-size: 20px;
+          color: #666;
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 4px;
+          transition: all 0.2s ease;
+        }
+        
+        .camera-modal-close:hover {
+          color: #d32f2f;
+          background: #ffebee;
+        }
+        
+        .camera-modal-body {
+          padding: 24px;
+          text-align: center;
+        }
+        
+        .camera-controls {
+          display: flex;
+          gap: 12px;
+          justify-content: center;
+          margin-top: 20px;
+          flex-wrap: wrap;
+        }
+        
+        .capture-btn, .cancel-btn {
+          padding: 12px 24px;
+          border: none;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          min-width: 120px;
+        }
+        
+        .capture-btn {
+          background: #1976d2;
+          color: white;
+        }
+        
+        .capture-btn:hover {
+          background: #1565c0;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+        }
+        
+        .cancel-btn {
+          background: #f5f5f5;
+          color: #666;
+          border: 1px solid #ddd;
+        }
+        
+        .cancel-btn:hover {
+          background: #e0e0e0;
+          color: #333;
+        }
+        
+        /* Enhanced Photo Input Styles */
+        .photo-input-container {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          align-items: center;
+        }
+        
+        .photo-preview {
+          width: 120px;
+          height: 120px;
+          border: 2px dashed #ddd;
+          border-radius: 12px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          background: #f8f9fa;
+          transition: all 0.2s ease;
+        }
+        
+        .photo-preview:hover {
+          border-color: #1976d2;
+          background: #f0f4ff;
+        }
+        
+        .photo-preview-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 10px;
+        }
+        
+        .photo-placeholder {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          color: #ccc;
+          gap: 8px;
+        }
+        
+        .photo-placeholder span {
+          font-size: 12px;
+          font-weight: 500;
+        }
+        
+        .photo-actions {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+        
+        .camera-btn, .file-btn, .remove-btn {
+          padding: 12px;
+          border: 2px solid #e0e0e0;
+          border-radius: 8px;
+          font-size: 18px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
+          min-height: 48px;
+          background: transparent;
+          color: #666;
+        }
+        
+        .camera-btn:hover {
+          border-color: #1976d2;
+          color: #1976d2;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(25, 118, 210, 0.1);
+        }
+        
+        .file-btn:hover {
+          border-color: #388e3c;
+          color: #388e3c;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(56, 142, 60, 0.1);
+        }
+        
+        .remove-btn:hover {
+          border-color: #d32f2f;
+          color: #d32f2f;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(211, 47, 47, 0.1);
+        }
+        
+        .file-btn {
+          cursor: pointer;
+        }
+        
+        .file-btn input {
+          cursor: pointer;
         }
       `}</style>
     </SideTop>
