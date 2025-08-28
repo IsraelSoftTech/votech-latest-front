@@ -1,0 +1,3 @@
+sudo chown -R www-data:www-data /var/www/votech
+sudo chmod -R 755 /var/www/votech
+sudo systemctl reload nginx
