@@ -1,11 +1,11 @@
 // API utility functions for marks module
 import axios from "axios";
 
-export const baseURL = "http://localhost:5000/api/v1/";
-export const subBaseURL = "http://localhost:5000/api";
+// export const baseURL = "http://localhost:5000/api/v1/";
+// export const subBaseURL = "http://localhost:5000/api";
 
-// export const baseURL = "https://api.votechs7academygroup.com/api/v1/";
-// export const subBaseURL = "https://api.votechs7academygroup.com/api";
+export const baseURL = "https://api.votechs7academygroup.com/api/v1/";
+export const subBaseURL = "https://api.votechs7academygroup.com/api";
 
 const api = axios.create({
   baseURL,
