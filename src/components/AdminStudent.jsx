@@ -191,7 +191,8 @@ export default function AdminStudent() {
     mother: "",
     class: "",
     dept: "",
-    contact: "",
+    fatherContact: "",
+    motherContact: "",
     photo: null,
     academicYear: "",
   });
@@ -236,12 +237,8 @@ export default function AdminStudent() {
   const [uploadManyError, setUploadManyError] = useState("");
   const [uploadManySuccess, setUploadManySuccess] = useState("");
 
-  // Camera-related state
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraStream, setCameraStream] = useState(null);
+  // Photo state
   const [photoPreview, setPhotoPreview] = useState(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -263,21 +260,7 @@ export default function AdminStudent() {
     fetchData();
   }, []);
 
-  // Stop camera when modal is closed
-  useEffect(() => {
-    if (!showModal && cameraStream) {
-      stopCamera();
-    }
-  }, [showModal, cameraStream]);
 
-  // Cleanup on component unmount
-  useEffect(() => {
-    return () => {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [cameraStream]);
 
   // Helper to count today's students
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -302,61 +285,7 @@ export default function AdminStudent() {
     return `${year}-VOT-${firstPart}${lastPart}-${seq}`;
   };
 
-  // Camera functions
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user'
-        } 
-      });
-      setCameraStream(stream);
-      setShowCamera(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      alert('Unable to access camera. Please check permissions.');
-    }
-  };
 
-  const stopCamera = () => {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-      setCameraStream(null);
-    }
-    setShowCamera(false);
-    setPhotoPreview(null);
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      
-      // Set canvas dimensions to match video
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      // Draw video frame to canvas
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      // Convert canvas to blob
-      canvas.toBlob((blob) => {
-        if (blob) {
-          // Create a File object from the blob
-          const file = new File([blob], 'camera_photo.jpg', { type: 'image/jpeg' });
-          setForm(prev => ({ ...prev, photo: file }));
-          setPhotoPreview(URL.createObjectURL(blob));
-          stopCamera();
-        }
-      }, 'image/jpeg', 0.8);
-    }
-  };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
@@ -369,9 +298,6 @@ export default function AdminStudent() {
   const removePhoto = () => {
     setForm(prev => ({ ...prev, photo: null }));
     setPhotoPreview(null);
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
   };
 
   // 4. Update studentId when fullName or regDate changes
@@ -400,22 +326,18 @@ export default function AdminStudent() {
     setEditId(student.id);
     setForm({
       studentId: student.student_id || "",
-      regDate: student.created_at ? student.created_at.slice(0, 10) : "",
+      regDate: student.registration_date || (student.created_at ? student.created_at.slice(0, 10) : ""),
       fullName: student.full_name || "",
       sex: student.sex || "",
       dob: student.date_of_birth || "",
       pob: student.place_of_birth || "",
       father: student.father_name || "",
       mother: student.mother_name || "",
-      class:
-        classes && Array.isArray(classes)
-          ? classes.find((c) => c.id === student.class_id)?.name || ""
-          : "",
-      dept:
-        specialties && Array.isArray(specialties)
-          ? specialties.find((s) => s.id === student.specialty_id)?.name || ""
-          : "",
-      contact: student.guardian_contact || "",
+      class: student.class_id || "",
+      dept: student.specialty_id || "",
+      fatherContact: student.guardian_contact || "",
+      motherContact: "",
+      academicYear: student.academic_year_id || "",
       photo: null,
     });
     setPhotoPreview(null);
@@ -438,7 +360,8 @@ export default function AdminStudent() {
       formData.append("mother", form.mother);
       formData.append("class", Number(form.class));
       formData.append("dept", Number(form.dept));
-      formData.append("contact", form.contact);
+      formData.append("fatherContact", form.fatherContact || "");
+      formData.append("motherContact", form.motherContact || "");
       formData.append("academicYear", Number(form.academicYear));
       if (form.photo) formData.append("photo", form.photo);
 
@@ -452,13 +375,10 @@ export default function AdminStudent() {
         setSuccess("Student registered successfully!");
       }
 
-      setSuccess("success");
-
-      // await api.createStudent(formData);
-      setSuccess("Student registered!");
+      // Refresh student list
       const students = await api.getStudents();
       setStudentList(students);
-      console.log(students);
+      
       setTimeout(() => {
         setShowModal(false);
         setSuccess("");
@@ -473,7 +393,8 @@ export default function AdminStudent() {
           mother: "",
           class: "",
           dept: "",
-          contact: "",
+          fatherContact: "",
+          motherContact: "",
           academicYear: "",
           photo: null,
         });
@@ -481,7 +402,8 @@ export default function AdminStudent() {
         setEditId(null);
       }, 3000);
     } catch (err) {
-      setError("Failed to register student.");
+      console.error("Registration error:", err);
+      setError(err.message || "Failed to register student.");
       setErrorType("error");
     }
     setRegistering(false);
@@ -856,48 +778,9 @@ export default function AdminStudent() {
           }}
         />
         {/* Upload Many Button */}
-        <button
-          className="upload-many-btn"
-          style={{
-            background: "#1976d2",
-            color: "#fff",
-            border: "none",
-            borderRadius: 6,
-            padding: "8px 18px",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-          title={isAdmin1 ? 'Not allowed for Admin1' : 'Upload Many'}
-          onClick={() => setUploadManyModalOpen(true)}
-          disabled={isAdmin1}
-        >
-          <FaUpload /> Upload Many
-        </button>
+        {/* Upload Many removed */}
         {/* Print List Button */}
-        <button
-          className="print-list-btn"
-          style={{
-            background: "#388e3c",
-            color: "#fff",
-            border: "none",
-            borderRadius: 6,
-            padding: "8px 18px",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-          title="Print Class List"
-          onClick={() => setPrintModalOpen(true)}
-        >
-          <FaPrint /> Print List
-        </button>
+        {/* Print removed */}
       </div>
       {/* Print Modal */}
       {printModalOpen && (
@@ -959,7 +842,7 @@ export default function AdminStudent() {
         </div>
       )}
       {/* Student Table */}
-      <div className="student-table-wrapper">
+      <div className="student-table-wrapper" style={{ overflowX: 'auto' }}>
         <table className="student-table">
           <thead>
             <tr>
@@ -973,7 +856,8 @@ export default function AdminStudent() {
               <th>Mother's Name</th>
               <th>Class</th>
               <th>Department/Specialty</th>
-              <th>Contact</th>
+              <th>Father's Contact</th>
+              <th>Mother's Contact</th>
               <th>Photo</th>
               <th>Actions</th>
             </tr>
@@ -989,25 +873,30 @@ export default function AdminStudent() {
               filteredStudents.map((s, idx) => (
                 <tr key={s.id || idx}>
                   <td>{s.student_id}</td>
-                  <td>{s.created_at ? s.created_at.slice(0, 10) : ""}</td>
+                  <td>{s.registration_date ? String(s.registration_date).slice(0,10) : (s.created_at ? String(s.created_at).slice(0,10) : "")}</td>
                   <td>{s.full_name}</td>
                   <td>{s.sex}</td>
-                  <td>{s.date_of_birth}</td>
+                  <td>{s.date_of_birth ? String(s.date_of_birth).slice(0,10) : ''}</td>
                   <td>{s.place_of_birth}</td>
                   <td>{s.father_name}</td>
                   <td>{s.mother_name}</td>
-                  <td>{s.class_name || s.class || ""}</td>
-                  <td>{s.specialty_name || s.dept || ""}</td>
-                  <td>{s.guardian_contact}</td>
                   <td>
-                    {s.photo_url ? (
+                    {classes.find(c => c.id === s.class_id)?.name || s.class_name || ""}
+                  </td>
+                  <td>
+                    {specialties.find(spec => spec.id === s.specialty_id)?.name || s.specialty_name || ""}
+                  </td>
+                  <td>{s.guardian_contact || ''}</td>
+                  <td>{s.mother_contact || ''}</td>
+                  <td>
+                    {s.photo || s.photo_url ? (
                       <img
                         src={
-                          s.photo_url.startsWith("http")
+                          s.photo 
+                            ? `${config.API_URL}/students/${s.id}/picture`
+                            : s.photo_url.startsWith("http")
                             ? s.photo_url
-                            : `${config.API_URL.replace("/api", "")}${
-                                s.photo_url
-                              }`
+                            : `${config.API_URL.replace("/api", "")}${s.photo_url}`
                         }
                         alt="student"
                         style={{
@@ -1016,25 +905,38 @@ export default function AdminStudent() {
                           borderRadius: "50%",
                           objectFit: "cover",
                         }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
                       />
                     ) : (
-                      ""
+                      <div style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        backgroundColor: "#f0f0f0",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "12px",
+                        color: "#999"
+                      }}>
+                        {s.full_name ? s.full_name.charAt(0).toUpperCase() : "?"}
+                      </div>
                     )}
                   </td>
                   <td className="actions">
                     <button
                       className="action-btn edit"
-                      title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}
+                      title={'Edit'}
                       onClick={() => handleEdit(s)}
-                      disabled={isAdmin1}
                     >
                       <FaEdit />
                     </button>
                     <button
                       className="action-btn delete"
-                      title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}
+                      title={'Delete'}
                       onClick={() => handleDelete(idx)}
-                      disabled={isAdmin1}
                     >
                       <FaTrash />
                     </button>
@@ -1189,8 +1091,7 @@ export default function AdminStudent() {
                       .filter((c) => c.department_id === Number(form.dept))
                       .map((c) => (
                         <option key={c.id} value={c.id}>
-                          {`${c.name} (${c.department.name})` ||
-                            "Unknown Class"}
+                          {c.name}
                         </option>
                       ))}
                   </select>
@@ -1213,26 +1114,30 @@ export default function AdminStudent() {
                     ))}
                   </select>
 
-                  <label className="input-label">Contact *</label>
+                  <label className="input-label">Father's Contact *</label>
                   <input
                     className="input-field"
                     type="text"
-                    name="contact"
-                    value={form.contact}
+                    name="fatherContact"
+                    value={form.fatherContact}
                     onChange={handleFormChange}
-                    placeholder="Enter Contact"
+                    placeholder="Enter Father's Contact"
                     required
+                  />
+                  <label className="input-label">Mother's Contact</label>
+                  <input
+                    className="input-field"
+                    type="text"
+                    name="motherContact"
+                    value={form.motherContact}
+                    onChange={handleFormChange}
+                    placeholder="Enter Mother's Contact"
                   />
                   <label className="input-label">Photo</label>
                   <div className="photo-input-container">
-                    {/* Photo Preview */}
                     <div className="photo-preview">
                       {photoPreview ? (
-                        <img 
-                          src={photoPreview} 
-                          alt="Photo Preview" 
-                          className="photo-preview-img"
-                        />
+                        <img src={photoPreview} alt="Photo Preview" className="photo-preview-img" />
                       ) : (
                         <div className="photo-placeholder">
                           <FaUser size={40} />
@@ -1240,36 +1145,16 @@ export default function AdminStudent() {
                         </div>
                       )}
                     </div>
-                    
-                    {/* Photo Actions */}
-                    <div className="photo-actions">
-                      <button
-                        type="button"
-                        className="camera-btn"
-                        onClick={startCamera}
-                        title="Take Photo with Camera"
-                      >
-                        📷
-                      </button>
-                      <label className="file-btn" title="Choose File">
-                        📁
-                        <input
-                          type="file"
-                          name="photo"
-                          accept="image/*"
-                          onChange={handlePhotoChange}
-                          style={{ display: 'none' }}
-                        />
+                    <div className="photo-actions" style={{ gap: 10, display: 'flex', alignItems: 'center' }}>
+                      <label className="signup-btn" style={{ padding: '8px 14px', cursor: 'pointer' }}>
+                        Choose Photo
+                        <input type="file" name="photo" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
                       </label>
+                      <span style={{ fontSize: 13, color: '#666', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {form.photo ? form.photo.name : 'No file selected'}
+                      </span>
                       {photoPreview && (
-                        <button
-                          type="button"
-                          className="remove-btn"
-                          onClick={removePhoto}
-                          title="Remove Photo"
-                        >
-                          ❌
-                        </button>
+                        <button type="button" className="remove-btn" onClick={removePhoto} title="Remove Photo">Remove</button>
                       )}
                     </div>
                   </div>
@@ -1624,46 +1509,7 @@ export default function AdminStudent() {
         </div>
       )}
       
-      {/* Camera Modal */}
-      {showCamera && (
-        <div className="camera-modal-overlay" onClick={stopCamera}>
-          <div className="camera-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="camera-modal-header">
-              <h3>Take Photo</h3>
-              <button className="camera-modal-close" onClick={stopCamera}>
-                <FaTimes />
-              </button>
-            </div>
-            
-            <div className="camera-modal-body">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{ width: '100%', maxWidth: '500px', borderRadius: '8px' }}
-              />
-              
-              <canvas ref={canvasRef} style={{ display: 'none' }} />
-              
-              <div className="camera-controls">
-                <button 
-                  className="capture-btn"
-                  onClick={capturePhoto}
-                >
-                  📸 Capture Photo
-                </button>
-                <button 
-                  className="cancel-btn"
-                  onClick={stopCamera}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
       
       <style>{`
         .student-register-modal-overlay {
@@ -1822,107 +1668,7 @@ export default function AdminStudent() {
           }
         }
         
-        /* Camera Modal Styles */
-        .camera-modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
-          z-index: 2000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-        }
-        
-        .camera-modal-content {
-          background: #fff;
-          border-radius: 16px;
-          box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
-          max-width: 600px;
-          width: 100%;
-          overflow: hidden;
-        }
-        
-        .camera-modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px 24px;
-          border-bottom: 1px solid #e0e0e0;
-          background: #f8f9fa;
-        }
-        
-        .camera-modal-header h3 {
-          margin: 0;
-          color: #333;
-          font-size: 18px;
-          font-weight: 600;
-        }
-        
-        .camera-modal-close {
-          background: none;
-          border: none;
-          font-size: 20px;
-          color: #666;
-          cursor: pointer;
-          padding: 4px;
-          border-radius: 4px;
-          transition: all 0.2s ease;
-        }
-        
-        .camera-modal-close:hover {
-          color: #d32f2f;
-          background: #ffebee;
-        }
-        
-        .camera-modal-body {
-          padding: 24px;
-          text-align: center;
-        }
-        
-        .camera-controls {
-          display: flex;
-          gap: 12px;
-          justify-content: center;
-          margin-top: 20px;
-          flex-wrap: wrap;
-        }
-        
-        .capture-btn, .cancel-btn {
-          padding: 12px 24px;
-          border: none;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          min-width: 120px;
-        }
-        
-        .capture-btn {
-          background: #1976d2;
-          color: white;
-        }
-        
-        .capture-btn:hover {
-          background: #1565c0;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
-        }
-        
-        .cancel-btn {
-          background: #f5f5f5;
-          color: #666;
-          border: 1px solid #ddd;
-        }
-        
-        .cancel-btn:hover {
-          background: #e0e0e0;
-          color: #333;
-        }
+
         
         /* Enhanced Photo Input Styles */
         .photo-input-container {
@@ -1981,7 +1727,7 @@ export default function AdminStudent() {
           justify-content: center;
         }
         
-        .camera-btn, .file-btn, .remove-btn {
+        .file-btn, .remove-btn {
           padding: 12px;
           border: 2px solid #e0e0e0;
           border-radius: 8px;
@@ -1997,13 +1743,6 @@ export default function AdminStudent() {
           min-height: 48px;
           background: transparent;
           color: #666;
-        }
-        
-        .camera-btn:hover {
-          border-color: #1976d2;
-          color: #1976d2;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(25, 118, 210, 0.1);
         }
         
         .file-btn:hover {

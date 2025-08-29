@@ -46,7 +46,7 @@ function Admin() {
 
   const [studentList, setStudentList] = useState([]);
   const [teacherList, setTeacherList] = useState([]);
-  const [approvedApplications, setApprovedApplications] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   // Get username from sessionStorage
@@ -61,15 +61,7 @@ function Admin() {
         const students = await api.getStudents();
         setStudentList(students);
         
-        // Fetch approved applications (staff approved by Admin4)
-        const applications = await api.getApplications();
-        console.log('Admin3: All applications:', applications);
-        
-        const approved = applications.filter(app => app.status === 'approved');
-        console.log('Admin3: Approved applications:', approved);
-        console.log('Admin3: Approved count:', approved.length);
-        
-        setApprovedApplications(approved);
+
         
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -126,11 +118,7 @@ function Admin() {
             </div>
           </div>
         </div>
-        <div className="card teachers">
-          <div className="icon"><FaChalkboardTeacher /></div>
-          <div className="count">{loading ? '...' : approvedApplications.length}</div>
-          <div className="desc">Registered Staff (Approved)</div>
-        </div>
+
       </div>
       <div className="dashboard-section" style={{ display: 'flex', flexWrap: 'wrap', gap: 32, marginTop: 0 }}>
         <div style={{ flex: '1 1 320px', minWidth: 0, maxWidth: '100%', width: '100%', boxSizing: 'border-box' }}>

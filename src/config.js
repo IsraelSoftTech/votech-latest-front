@@ -6,8 +6,6 @@ const config = {
       ? "http://localhost:5000/api"
       : "https://api.votechs7academygroup.com/api"),
 
-  API_URL: "https://api.votechs7academygroup.com/api",
-
   // Frontend URL
   FRONTEND_URL:
     process.env.NODE_ENV === "development"

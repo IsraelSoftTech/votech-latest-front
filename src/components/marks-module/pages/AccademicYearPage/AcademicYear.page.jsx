@@ -66,23 +66,26 @@ export const AcademicYear = () => {
       setIsLoading(true);
       const res = await api.get("/academic-years");
 
-      if (res.data?.data) {
-        const formatted = res.data.data.map((el, index) => ({
+      const list = res?.data?.data;
+      if (Array.isArray(list)) {
+        const formatted = list.map((el, index) => ({
           ...el,
           sn: index + 1,
-          start_date: el.start_date
+          start_date: el?.start_date
             ? new Date(el.start_date).toISOString().split("T")[0]
             : "",
-          end_date: el.end_date
+          end_date: el?.end_date
             ? new Date(el.end_date).toISOString().split("T")[0]
             : "",
         }));
         setData(formatted);
+      } else {
+        setData([]);
       }
     } catch (err) {
-      toast.error(
-        err.response.data.details || "Failed to load academic years."
-      );
+      const message = err?.response?.data?.details || err?.message || "Failed to load academic years.";
+      toast.error(message);
+      setData([]);
     } finally {
       setIsLoading(false);
     }
@@ -93,13 +96,14 @@ export const AcademicYear = () => {
       const res = await api.get("/content/academic-years");
       const icons = [FaCalendarCheck, FaCalendarAlt];
 
-      res.data.data.stats.forEach((data, index) => {
-        data.icon = icons[index];
-      });
-      setStats(res.data.data.stats);
+      const stats = res?.data?.data?.stats;
+      const safeStats = Array.isArray(stats)
+        ? stats.map((d, i) => ({ ...d, icon: icons[i] }))
+        : [];
+      setStats(safeStats);
     } catch (err) {
       toast.error(err?.response?.data?.details || "Error fetching statistics");
-      console.log(err);
+      setStats([]);
     }
   };
 

@@ -32,7 +32,7 @@ export default function TimeTable({ authUser }) {
   // Source data
   const [subjects, setSubjects] = useState([]); // [{id, name, code}]
   const [classes, setClasses] = useState([]); // [{id, name}]
-  const [approvedStaff, setApprovedStaff] = useState([]); // From approved applications
+
 
   // UI state
   const [activeTab, setActiveTab] = useState('setup'); // setup | generate | preview
@@ -91,10 +91,9 @@ export default function TimeTable({ authUser }) {
   useEffect(() => {
     const loadAll = async () => {
       try {
-        const [subjectsRes, classesRes, applicationsRes, settingsRes, assignmentsRes, classReqsRes, heavySubjectsRes] = await Promise.all([
+        const [subjectsRes, classesRes, settingsRes, assignmentsRes, classReqsRes, heavySubjectsRes] = await Promise.all([
           api.getSubjects(),
           api.getClasses(),
-          api.getApplications(),
           api.getTimetableSettings().catch(() => null),
           api.getTeacherAssignments().catch(() => []),
           api.getClassRequirements().catch(() => ({})),
@@ -127,9 +126,7 @@ export default function TimeTable({ authUser }) {
           setHeavySubjectIds(new Set(heavySubjectsRes));
         }
 
-        // Filter approved staff from applications
-        const approved = (applicationsRes || []).filter(app => app.status === 'approved');
-        setApprovedStaff(approved);
+
 
         // Load teacher assignments into classSubjectTeachers
         if (Array.isArray(assignmentsRes) && assignmentsRes.length > 0) {
@@ -1152,36 +1149,9 @@ export default function TimeTable({ authUser }) {
             <div className="tt-panel-header">Teachers & Availability</div>
             <div className="tt-panel-body">
               <div className="tt-teacher-list">
-                {approvedStaff.length === 0 && <div className="tt-empty">No approved staff found. Approve applications to populate teachers.</div>}
-                {approvedStaff.map(t => {
-                  const teacherId = String(t.applicant_id ?? t.id ?? t.applicant_username ?? t.applicant_name);
-                  const days = teacherAvailability[teacherId] || Array.from({ length: numDays }, () => true);
-                  const maxDaily = teacherDailyMaxLoad[teacherId] ?? 6;
-                  const subNames = Array.from(teacherSubjects[teacherId] || [])
-                    .map(id => getSubjectName(id))
-                    .join(', ');
-                  return (
-                    <div key={teacherId} className="tt-teacher-item">
-                      <div className="tt-teacher-title">
-                        <div className="tt-teacher-name">{t.applicant_name || t.applicant_full_name || t.applicant_username}</div>
-                        <div className="tt-teacher-subjects">{subNames || '—'}</div>
+                <div className="tt-empty">No teachers available for timetable generation.</div>
                       </div>
-                      <div className="tt-teacher-availability">
-                        {Array.from({ length: numDays }, (_, d) => (
-                          <label key={d} className={`tt-day-chip ${days[d] ? 'selected' : ''}`}>
-                            <input type="checkbox" checked={!!days[d]} onChange={e => setTeacherAvailabilityDay(teacherId, d, e.target.checked)} /> {dayLabels[d] || `Day ${d + 1}`}
-                          </label>
-                        ))}
                       </div>
-                      <div className="tt-row compact">
-                        <label>Max periods/day</label>
-                        <input type="number" min={1} max={12} value={maxDaily} onChange={e => setTeacherDailyMax(teacherId, e.target.value)} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </div>
       </div>

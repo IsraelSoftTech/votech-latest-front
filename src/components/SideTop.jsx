@@ -78,7 +78,6 @@ export default function SideTop({ children }) {
   if (authUser?.role === "Admin1") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
-      { label: "Application", icon: <FaClipboardList />, path: "/application" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
@@ -116,8 +115,7 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Admin2") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
-      { label: "Application", icon: <FaClipboardList />, path: "/application" },
-      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+ 
       {
         label: "Financial Summary",
         icon: <FaMoneyBill />,
@@ -148,8 +146,7 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Admin3") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
-      { label: "Application", icon: <FaClipboardList />, path: "/application" },
-      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+ 
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
@@ -220,8 +217,7 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Admin4") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/dean" },
-      { label: "Application", icon: <FaClipboardList />, path: "/application" },
-      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+ 
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
@@ -255,8 +251,7 @@ export default function SideTop({ children }) {
         icon: <MdDashboard />,
         path: "/teacher-dashboard",
       },
-      { label: "Application", icon: <FaClipboardList />, path: "/application" },
-      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+ 
       { label: "Messages", icon: <FaEnvelope />, path: "/teacher-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       {
@@ -275,8 +270,7 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Discipline") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
-      { label: "Application", icon: <FaClipboardList />, path: "/application" },
-      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+ 
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
@@ -308,8 +302,7 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Psychosocialist") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/psycho-dashboard" },
-      { label: "Application", icon: <FaClipboardList />, path: "/application" },
-      { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+ 
       { label: "Cases", icon: <FaClipboardList />, path: "/psycho-cases" },
       {
         label: "Subjects",
@@ -346,7 +339,7 @@ export default function SideTop({ children }) {
     }
   }, [location.pathname, menuItems]);
 
-  // Filter out My Classes for Admin1 users (but keep Application)
+  // Filter out My Classes for Admin1 users
   const filterMenuItems = (items) => {
     if (authUser?.role === "Admin1") {
       return items.filter((item) => item?.label !== "My Classes");
@@ -439,8 +432,7 @@ export default function SideTop({ children }) {
       icon: <MdDashboard />,
       path: "/teacher-dashboard",
     },
-    { label: "Application", icon: <FaClipboardList />, path: "/application" },
-    { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+    
     { label: "Messages", icon: <FaEnvelope />, path: "/teacher-messages" },
     { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
     { label: "Students", icon: <FaUserGraduate />, path: "/teacher-students" },
@@ -466,8 +458,7 @@ export default function SideTop({ children }) {
   // Dean/Admin4 menu items (from provided image)
   const deanMenuItems = [
     { label: "Dashboard", icon: <MdDashboard />, path: "/dean" },
-    { label: "Application", icon: <FaClipboardList />, path: "/application" },
-    { label: "My Classes", icon: <FaBook />, path: "/my-classes" },
+    
     { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
     { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
     { label: "Classes", icon: <FaBook />, path: "/admin-class" },

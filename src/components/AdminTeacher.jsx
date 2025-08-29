@@ -49,8 +49,7 @@ export default function AdminTeacher() {
   const [registering, setRegistering] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [applications, setApplications] = useState([]);
-  const [approvedStaff, setApprovedStaff] = useState([]);
+
   const [editingId, setEditingId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,53 +68,20 @@ export default function AdminTeacher() {
   const [disapproveLoading, setDisapproveLoading] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState(null);
+  const [approvedStaff, setApprovedStaff] = useState([]);
 
-  // Fetch applications from backend
+  // Fetch data from backend
   useEffect(() => {
-    fetchApplications();
     fetchClasses();
     fetchSubjects();
+    fetchApprovedStaff();
   }, []);
 
-  useEffect(() => {
-    // Filter approved applications
-    const approved = applications.filter((app) => app.status === "approved");
-    console.log("[DEBUG] Filtering approved applications:", {
-      totalApplications: applications.length,
-      approvedCount: approved.length,
-      allStatuses: applications.map((app) => ({
-        id: app.id,
-        status: app.status,
-        name: app.applicant_name,
-      })),
-    });
-    setApprovedStaff(approved);
-  }, [applications]);
 
-  useEffect(() => {
-    // Sync approveStates with applications list (local only)
-    setApproveStates(
-      Object.fromEntries(applications.map((a) => [a.id, a.status]))
-    );
-  }, [applications]);
 
-  const fetchApplications = async () => {
-    try {
-      console.log(
-        "[DEBUG] Fetching applications for user:",
-        authUser?.username,
-        "Role:",
-        authUser?.role
-      );
-      const res = await api.getApplications();
-      console.log("[DEBUG] Applications fetched:", res.length, "applications");
-      console.log("[DEBUG] Applications data:", res);
-      setApplications(res);
-    } catch (err) {
-      console.error("[DEBUG] Error fetching applications:", err);
-      setError(`Failed to fetch applications: ${err.message}`);
-    }
-  };
+
+
+
 
   const fetchClasses = async () => {
     try {
@@ -128,6 +94,23 @@ export default function AdminTeacher() {
       const res = await api.getSubjects();
       setSubjects(res);
     } catch (err) {}
+  };
+
+  const fetchApprovedStaff = async () => {
+    try {
+      // Prefer explicit approved applications endpoint if available
+      if (typeof api.getApprovedApplications === "function") {
+        const res = await api.getApprovedApplications();
+        setApprovedStaff(Array.isArray(res) ? res : (res?.data || []));
+      } else if (typeof api.getAllTeachers === "function") {
+        const res = await api.getAllTeachers();
+        setApprovedStaff(Array.isArray(res) ? res : (res?.data || []));
+      } else {
+        setApprovedStaff([]);
+      }
+    } catch (err) {
+      setApprovedStaff([]);
+    }
   };
 
   const handleFormChange = (e) => {
@@ -194,7 +177,6 @@ export default function AdminTeacher() {
         contact: "",
       });
       setEditingId(null);
-      fetchApplications();
     } catch (err) {
       setError("Failed to save teacher");
     }
@@ -216,7 +198,6 @@ export default function AdminTeacher() {
     try {
       await api.deleteTeacher(deleteId);
       setDeleteId(null);
-      fetchApplications();
     } catch (err) {
       setError("Failed to delete teacher");
     }
@@ -337,7 +318,7 @@ export default function AdminTeacher() {
             <h3>No Approved Staff</h3>
             <p>
               There are no approved staff members yet. Staff members will appear
-              here once their applications are approved by Admin4.
+              here once they are approved by Admin4.
             </p>
           </div>
         )}

@@ -493,23 +493,17 @@ class ApiService {
   async createStudent(formData) {
     const authHeaders = this.getAuthHeaders();
     const headers = {};
-    if (authHeaders["Authorization"])
-      headers["Authorization"] = authHeaders["Authorization"];
-    const response = await fetch(`${API_URL}/students`, {
-      method: "POST",
-      headers: headers,
-      body: formData,
-    });
-    if (!response.ok) {
-      let error;
-      try {
-        error = await response.json();
-      } catch (e) {
-        error = { error: "Failed to register student" };
-      }
-      throw new Error(error.error || "Failed to register student");
-    }
-    return await response.json();
+    if (authHeaders["Authorization"]) headers["Authorization"] = authHeaders["Authorization"];
+    const response = await fetch(`${API_URL}/students`, { method: "POST", headers, body: formData });
+    return this.handleResponse(response);
+  }
+
+  async updateStudent(id, formData) {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    if (authHeaders["Authorization"]) headers["Authorization"] = authHeaders["Authorization"];
+    const response = await fetch(`${API_URL}/students/${id}`, { method: "PUT", headers, body: formData });
+    return this.handleResponse(response);
   }
 
   async getStudents() {
@@ -519,36 +513,13 @@ class ApiService {
   }
 
   async deleteStudent(id) {
-    const response = await fetch(`${API_URL}/students/${id}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) {
-      let error;
-      try {
-        error = await response.json();
-      } catch (e) {
-        error = { error: "Failed to delete student" };
-      }
-      throw new Error(error.error || "Failed to delete student");
-    }
-    return await response.json();
+    const response = await fetch(`${API_URL}/students/${id}`, { method: "DELETE", headers: this.getAuthHeaders() });
+    return this.handleResponse(response);
   }
 
   async uploadManyStudents(formData) {
-    const response = await fetch(`${API_URL}/students/upload-many`, {
-      method: "POST",
-      body: formData,
-    });
-    if (!response.ok) {
-      let error;
-      try {
-        error = await response.json();
-      } catch (e) {
-        error = { error: "Failed to upload students" };
-      }
-      throw new Error(error.error || "Failed to upload students");
-    }
-    return await response.json();
+    const response = await fetch(`${API_URL}/students/upload-many`, { method: "POST", body: formData });
+    return this.handleResponse(response);
   }
 
   async getClassFeeStats(classId) {

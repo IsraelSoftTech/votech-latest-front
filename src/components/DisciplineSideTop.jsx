@@ -11,8 +11,8 @@ import MessageIcon from './MessageIcon';
 
 const menuItems = [
   { label: 'Dashboard', icon: <MdDashboard />, path: '/discipline' },
-  { label: 'Application', icon: <FaClipboardList />, path: '/application' },
-  { label: 'My Classes', icon: <FaClipboardList />, path: '/discipline-my-classes' },
+  
+  
   { label: 'Messages', icon: <FaEnvelope />, path: '/discipline-messages' },
   { label: 'Attendance', icon: <FaClipboardList />, path: '/attendance' },
   { label: 'Disciplinary Cases', icon: <FaGavel />, path: '/discipline-cases' },

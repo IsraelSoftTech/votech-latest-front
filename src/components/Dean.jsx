@@ -6,7 +6,7 @@ import api from '../services/api';
 export default function Dean() {
   const [events, setEvents] = useState([]);
   const [staffCount, setStaffCount] = useState(0);
-  const [applicationsCount, setApplicationsCount] = useState(0);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,18 +41,7 @@ export default function Dean() {
         
         setEvents(upcomingEvents);
 
-        // Fetch staff count (approved applications)
-        const applications = await api.getApplications();
-        console.log('Dean: All applications:', applications);
-        
-        const approvedApplications = applications.filter(app => app.status === 'approved');
-        console.log('Dean: Approved applications:', approvedApplications);
-        console.log('Dean: Approved count:', approvedApplications.length);
-        
-        setStaffCount(approvedApplications.length);
 
-        // Fetch submitted applications count
-        setApplicationsCount(applications.length);
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -77,11 +66,7 @@ export default function Dean() {
           <div className="count">{loading ? '...' : staffCount}</div>
           <div className="desc">Staff Members</div>
         </div>
-        <div className="card" style={{ background: '#388e3c', color: '#fff' }}>
-          <div className="icon" style={{ color: '#fff' }}><FaClipboardList /></div>
-          <div className="count">{loading ? '...' : applicationsCount}</div>
-          <div className="desc">Submitted Applications</div>
-        </div>
+
       </div>
       <div className="dashboard-section">
         <div style={{ flex: 1 }} className="enrolment-chart">
