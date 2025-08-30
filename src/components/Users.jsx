@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './Users.css';
 import SideTop from './SideTop';
 import api from '../services/api';
-import { FaEdit, FaTrash, FaBan, FaCheckCircle } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaBan, FaCheckCircle, FaPlus, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -12,10 +12,27 @@ export default function Users() {
   const [editForm, setEditForm] = useState({ name: '', username: '', contact: '', password: '', role: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [warning, setWarning] = useState({ show: false, type: '', user: null });
+  const [createUserModal, setCreateUserModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    username: '',
+    gender: '',
+    role: '',
+    password: '',
+    repeatPassword: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createSuccess, setCreateSuccess] = useState('');
+  const [createError, setCreateError] = useState('');
 
   // Get user role
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const isAdmin1 = authUser?.role === 'Admin1';
+  const isAdmin3 = authUser?.role === 'Admin3';
 
   useEffect(() => {
     fetchUsers();
@@ -91,6 +108,72 @@ export default function Users() {
     setWarning({ show: false, type: '', user: null });
   }
 
+  // Create User functionality
+  function handleCreateUserChange(e) {
+    const { name, value } = e.target;
+    setCreateForm(f => ({ ...f, [name]: value }));
+  }
+
+  async function handleCreateUserSubmit(e) {
+    e.preventDefault();
+    setCreateError('');
+    if (!createForm.username || !createForm.password || !createForm.role) {
+      setCreateError('Please fill all required fields.');
+      return;
+    }
+    if (createForm.password !== createForm.repeatPassword) {
+      setCreateError('Passwords do not match.');
+      return;
+    }
+    setCreateLoading(true);
+    try {
+      await api.createAccount({
+        username: createForm.username,
+        contact: createForm.phone,
+        password: createForm.password,
+        role: createForm.role,
+        name: createForm.name,
+        email: createForm.email,
+        gender: createForm.gender,
+      });
+      setCreateSuccess('User created successfully!');
+      setCreateForm({
+        name: '',
+        email: '',
+        phone: '',
+        username: '',
+        gender: '',
+        role: '',
+        password: '',
+        repeatPassword: ''
+      });
+      setTimeout(() => {
+        setCreateSuccess('');
+        setCreateUserModal(false);
+        fetchUsers(); // Refresh the users list
+      }, 2000);
+    } catch (err) {
+      setCreateError('Failed to create user. Try another username.');
+    }
+    setCreateLoading(false);
+  }
+
+  function openCreateUserModal() {
+    setCreateUserModal(true);
+    setCreateForm({
+      name: '',
+      email: '',
+      phone: '',
+      username: '',
+      gender: '',
+      role: '',
+      password: '',
+      repeatPassword: ''
+    });
+    setCreateError('');
+    setCreateSuccess('');
+  }
+
   const totalUsers = users.length;
   const suspendedUsers = users.filter(u => u.suspended).length;
 
@@ -108,7 +191,33 @@ export default function Users() {
           </div>
         </div>
         <div className="users-table-container">
-          <h2>All Users</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2>All Users</h2>
+            {isAdmin3 && (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  className="users-create-btn" 
+                  onClick={openCreateUserModal}
+                  style={{
+                    backgroundColor: '#204080',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  <FaPlus />
+                  Create Users
+                </button>
+              </div>
+            )}
+          </div>
           {loading ? <div>Loading...</div> : error ? <div className="error-message">{error}</div> : (
             <table className="users-table">
               <thead>
@@ -222,6 +331,192 @@ export default function Users() {
                 <button className="users-warning-btn" onClick={confirmWarning} disabled={isAdmin1} style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}>{warning.type === 'delete' ? 'Delete' : warning.user?.suspended ? 'Unsuspend' : 'Suspend'}</button>
                 <button className="users-warning-btn cancel" onClick={cancelWarning}>Cancel</button>
               </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Create User Modal */}
+        {createUserModal && (
+          <div className="users-modal-overlay" onClick={() => setCreateUserModal(false)}>
+            <div className="users-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3>Create New User</h3>
+                <button 
+                  type="button" 
+                  onClick={() => setCreateUserModal(false)}
+                  style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#666' }}
+                >
+                  ×
+                </button>
+              </div>
+              
+              {createSuccess && (
+                <div style={{ 
+                  backgroundColor: '#d4edda', 
+                  color: '#155724', 
+                  padding: '10px', 
+                  borderRadius: '5px', 
+                  marginBottom: '15px',
+                  border: '1px solid #c3e6cb'
+                }}>
+                  {createSuccess}
+                </div>
+              )}
+              
+              {createError && (
+                <div style={{ 
+                  backgroundColor: '#f8d7da', 
+                  color: '#721c24', 
+                  padding: '10px', 
+                  borderRadius: '5px', 
+                  marginBottom: '15px',
+                  border: '1px solid #f5c6cb'
+                }}>
+                  {createError}
+                </div>
+              )}
+              
+              <form onSubmit={handleCreateUserSubmit} className="users-edit-form">
+                <label>Full Name *</label>
+                <input 
+                  name="name" 
+                  value={createForm.name} 
+                  onChange={handleCreateUserChange} 
+                  placeholder="Enter Full Name"
+                  required
+                />
+                
+                <label>Email *</label>
+                <input 
+                  name="email" 
+                  type="email"
+                  value={createForm.email} 
+                  onChange={handleCreateUserChange} 
+                  placeholder="Enter Email"
+                  required
+                />
+                
+                <label>Phone Number *</label>
+                <input 
+                  name="phone" 
+                  type="tel"
+                  value={createForm.phone} 
+                  onChange={handleCreateUserChange} 
+                  placeholder="Enter Phone Number"
+                  required
+                />
+                
+                <label>Username *</label>
+                <input 
+                  name="username" 
+                  value={createForm.username} 
+                  onChange={handleCreateUserChange} 
+                  placeholder="Enter Username"
+                  required
+                />
+                
+                <label>Gender *</label>
+                <select
+                  name="gender"
+                  value={createForm.gender}
+                  onChange={handleCreateUserChange}
+                  required
+                >
+                  <option value="">Select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+                
+                <label>Role *</label>
+                <select
+                  name="role"
+                  value={createForm.role}
+                  onChange={handleCreateUserChange}
+                  required
+                >
+                  <option value="">Select</option>
+                  <option value="Admin1">Admin1</option>
+                  <option value="Admin2">Admin2</option>
+                  <option value="Admin3">Admin3</option>
+                  <option value="Admin4">Admin4</option>
+                  <option value="Teacher">Teacher</option>
+                  <option value="Discipline">Discipline</option>
+                  <option value="Psychosocialist">Psychosocialist</option>
+                </select>
+                
+                <label>Password *</label>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    name="password" 
+                    type={showPassword ? 'text' : 'password'}
+                    value={createForm.password} 
+                    onChange={handleCreateUserChange} 
+                    placeholder="Enter Password"
+                    required
+                  />
+                  <span 
+                    style={{ 
+                      position: 'absolute', 
+                      right: '10px', 
+                      top: '50%', 
+                      transform: 'translateY(-50%)', 
+                      cursor: 'pointer',
+                      color: '#666'
+                    }}
+                    onClick={() => setShowPassword(v => !v)}
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
+                
+                <label>Repeat Password *</label>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    name="repeatPassword" 
+                    type={showRepeatPassword ? 'text' : 'password'}
+                    value={createForm.repeatPassword} 
+                    onChange={handleCreateUserChange} 
+                    placeholder="Repeat password"
+                    required
+                  />
+                  <span 
+                    style={{ 
+                      position: 'absolute', 
+                      right: '10px', 
+                      top: '50%', 
+                      transform: 'translateY(-50%)', 
+                      cursor: 'pointer',
+                      color: '#666'
+                    }}
+                    onClick={() => setShowRepeatPassword(v => !v)}
+                  >
+                    {showRepeatPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
+                
+                <div className="users-edit-actions">
+                  <button 
+                    type="submit" 
+                    className="users-action-btn" 
+                    disabled={createLoading}
+                    style={{ 
+                      backgroundColor: createLoading ? '#ccc' : '#204080',
+                      color: 'white',
+                      cursor: createLoading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {createLoading ? 'Creating...' : 'Create User'}
+                  </button>
+                  <button 
+                    type="button" 
+                    className="users-action-btn" 
+                    onClick={() => setCreateUserModal(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

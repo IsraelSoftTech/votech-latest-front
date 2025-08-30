@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Signup.css";
 import logo from "../assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
@@ -27,6 +27,33 @@ const Signup = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const [admin3Exists, setAdmin3Exists] = useState(false);
+  const [admin3Count, setAdmin3Count] = useState(0);
+  const [checkingAdmin3, setCheckingAdmin3] = useState(true);
+
+  // Check if Admin3 exists and count on component mount
+  useEffect(() => {
+    const checkAdmin3Status = async () => {
+      try {
+        setCheckingAdmin3(true);
+        const admin3Exists = await api.checkIfAdmin3Exists();
+        setAdmin3Exists(admin3Exists);
+        
+        // Get the count of Admin3 accounts
+        const admin3Count = await api.getAdmin3Count();
+        setAdmin3Count(admin3Count);
+      } catch (error) {
+        console.error('Error checking Admin3 status:', error);
+        setAdmin3Exists(false);
+        setAdmin3Count(0);
+      } finally {
+        setCheckingAdmin3(false);
+      }
+    };
+
+    checkAdmin3Status();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
@@ -35,7 +62,41 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!form.username || !form.password || !form.role) {
+    
+    // Check if Admin3 exists and handle restrictions
+    if (admin3Exists) {
+      // If Admin3 exists, only allow Admin3 role creation
+      if (form.role !== "Admin3") {
+        setError("Meet Admin3 for your account creation. Only Admin3 accounts can be created at this time.");
+        setSuccess("Account creation restricted. Please contact Admin3.");
+        setSuccessType("error");
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 5000);
+        return;
+      }
+    } else {
+      // If Admin3 doesn't exist, only allow Admin3 role creation
+      if (form.role !== "Admin3") {
+        setError("Only Admin3 accounts can be created initially. Please select Admin3 role.");
+        setSuccess("Please select Admin3 role for initial account creation.");
+        setSuccessType("error");
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 5000);
+        return;
+      }
+    }
+
+    // Check Admin3 count limit (maximum 3)
+    if (form.role === "Admin3" && admin3Count >= 3) {
+      setError("Maximum limit of 3 Admin3 accounts reached. No more Admin3 accounts can be created.");
+      setSuccess("Admin3 account limit reached. Please contact existing Admin3 users.");
+      setSuccessType("error");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
+      return;
+    }
+
+    if (!form.username || !form.password || !form.role || !form.name) {
       setError("Please fill all required fields.");
       return;
     }
@@ -43,6 +104,7 @@ const Signup = () => {
       setError("Passwords do not match.");
       return;
     }
+    
     setLoading(true);
     try {
       await api.createAccount({
@@ -96,27 +158,47 @@ const Signup = () => {
           >
             VOTECH
           </span>
-          <Link
-            className={`signup-header-link${
-              window.location.pathname === "/signin" ? " active" : ""
-            }`}
-            to="/signin"
-          >
-            Sign In
-          </Link>
-          <Link
-            className={`signup-header-link${
-              window.location.pathname === "/signup" ? " active" : ""
-            }`}
-            to="/signup"
-          >
-            Sign Up
-          </Link>
+          <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+            <Link
+              className={`signup-header-link${
+                window.location.pathname === "/signin" ? " active" : ""
+              }`}
+              to="/signin"
+            >
+              Sign In
+            </Link>
+            <Link
+              className={`signup-header-link${
+                window.location.pathname === "/signup" ? " active" : ""
+              }`}
+              to="/signup"
+            >
+              Sign Up
+            </Link>
+          </div>
         </div>
       </header>
       <main className="signup-main">
-        <form className="signup-form" onSubmit={handleSubmit}>
+                 <form className="signup-form" onSubmit={handleSubmit}>
+                       {admin3Count >= 3 && (
+              <div className="signup-form-disabled-overlay">
+                <div className="signup-form-disabled-message">
+                  Sorry, you cannot create an account, contact Admin3
+                </div>
+              </div>
+            )}
           <h2 className="signup-form-title">Sign Up</h2>
+          
+                     {!checkingAdmin3 && admin3Count >= 3 && (
+             <div className="signup-info-message signup-error">
+               🚫 Maximum limit of 3 Admin3 accounts reached. No more Admin3 accounts can be created.
+             </div>
+           )}
+                       {!checkingAdmin3 && admin3Count > 0 && admin3Count < 3 && (
+              <div className="signup-info-message" style={{ fontSize: '0.8rem', padding: '8px 12px' }}>
+                Debug: Admin3 count: {admin3Count}/3
+              </div>
+            )}
           <button type="button" className="signup-google-btn">
             <FcGoogle className="signup-google-icon" />
             Continue with google authentication
@@ -225,16 +307,17 @@ const Signup = () => {
               {showRepeatPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </div>
+
+          {error && <div className="signup-error-message">{error}</div>}
+                     <button type="submit" className="signup-btn" disabled={loading || admin3Count >= 3}>
+             {loading ? "Signing Up..." : admin3Count >= 3 ? "Form Disabled" : "Sign Up"}
+           </button>
           <div className="signup-form-bottom-text">
             Already have an account?{" "}
             <Link to="/signin" className="signup-signin-link">
               Sign In
             </Link>
           </div>
-          {error && <div className="signup-error-message">{error}</div>}
-          <button type="submit" className="signup-btn" disabled={loading}>
-            {loading ? "Signing Up..." : "Sign Up"}
-          </button>
         </form>
       </main>
     </div>

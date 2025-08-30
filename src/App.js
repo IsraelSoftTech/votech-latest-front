@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import Loader from "./components/Loader";
 import Signin from "./components/Signin";
-import Signup from "./components/Signup.jsx";
+import Signup from "./components/Signup";
 
 // Admin / Core
 import Admin from "./components/Admin.jsx";
@@ -26,7 +26,7 @@ import StudentFeeDetails from "./components/StudentFeeDetails";
 import Salary from "./components/Salary.jsx";
 import PaySlip from "./components/PaySlip";
 import Admin2PaySlip from "./components/Admin2PaySlip";
-import Application from "./components/Application.jsx";
+
 import AdminDisciplineCases from "./components/AdminDisciplineCases.jsx";
 import AdminCounsellingCases from "./components/AdminCounsellingCases.jsx";
 
@@ -34,7 +34,7 @@ import AdminCounsellingCases from "./components/AdminCounsellingCases.jsx";
 import Subjects from "./components/Subjects.jsx";
 import LessonPlan from "./components/LessonPlan.jsx";
 import Marks from "./components/Marks.jsx";
-import MyClasses from "./components/MyClasses.jsx";
+ 
 import TimeTable from "./components/TimeTable.jsx";
 import { AcademicYear } from "./components/marks-module/pages/AccademicYearPage/AcademicYear.page";
 import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subject.page";
@@ -49,7 +49,7 @@ import DisciplineSideTop from "./components/DisciplineSideTop";
 import DisciplineDashboard from "./components/DisciplineDashboard";
 import DiscMessage from "./components/DiscMessage.jsx";
 import DiscUserChat from "./components/DiscUserChat.jsx";
-import DiscClass from "./components/DiscClass.jsx";
+ 
 import Attendance from "./components/Attendance.jsx";
 import StaffAttendance from "./components/StaffAttendance.jsx";
 import DisciplineCases from "./components/DisciplineCases";
@@ -146,6 +146,7 @@ function App() {
       <Routes>
         {/* Auth */}
         <Route path="/" element={<Signin />} />
+        <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
 
         {/* Admin / Core */}
@@ -192,7 +193,7 @@ function App() {
         <Route path="/admin-subjects" element={<Subjects />} />
         <Route path="/admin-lesson-plans" element={<LessonPlan />} />
         <Route path="/lesson-plans" element={<LessonPlan />} />
-        <Route path="/my-classes" element={<MyClasses authUser={authUser} />} />
+        
         <Route path="/admin-inventory" element={<Inventory />} />
         <Route
           path="/admin-timetable"
@@ -204,18 +205,11 @@ function App() {
         <Route path="/admin-group-messages/:groupId" element={<GroupChat />} />
         <Route path="/user-messages/:userId" element={<UserChat />} />
 
-        {/* Application */}
-        <Route
-          path="/application"
-          element={<Application authUser={authUser} />}
-        />
+
 
         {/* Discipline area */}
         <Route path="/discipline" element={<DisciplineDashboard />} />
-        <Route
-          path="/discipline-my-classes"
-          element={<DiscClass authUser={authUser} />}
-        />
+        
         <Route path="/discipline-messages" element={<DiscMessage />} />
         <Route path="/discipline-messages/:userId" element={<DiscUserChat />} />
         <Route

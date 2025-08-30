@@ -29,43 +29,7 @@ export default function TeacherDash({ initialTab }) {
     const fetchUserClasses = async (user) => {
       try {
         setLoading(true);
-        // First, get the user's application to see what classes they were assigned
-        let userApp = null;
-        try {
-          userApp = await api.getUserApplication(user.id);
-        } catch (err) {
-          userApp = null;
-        }
-
-        if (userApp && userApp.classes && userApp.status === 'approved') {
-          const assignedClassNames = userApp.classes
-            .split(',')
-            .map(c => c.trim())
-            .filter(c => c && c !== 'undefined' && c !== '');
-
-          if (assignedClassNames.length > 0) {
-            const allClasses = await api.getClasses();
-            const normalized = (s) => (s || '').toString().trim().toLowerCase();
-            const classRecords = assignedClassNames.map(name => ({
-              name,
-              record: allClasses.find(c => normalized(c.name) === normalized(name)) || null
-            }));
-            const fetches = classRecords.map(async ({ name, record }) => {
-              if (!record?.id) {
-                return { id: null, name, studentCount: 0, classRecord: record };
-              }
-              const students = await api.getStudentsByClass(record.id).catch(() => []);
-              return { id: record.id, name, studentCount: Array.isArray(students) ? students.length : 0, classRecord: record };
-            });
-            const classesWithStudentCounts = await Promise.all(fetches);
-            setAssignedClasses(classesWithStudentCounts);
-            setTotalStudents(classesWithStudentCounts.reduce((total, cls) => total + cls.studentCount, 0));
-            setLoading(false);
-            return;
-          }
-        }
-
-        // Fallback to teachers table if no approved application with classes
+        // Check teachers table for assigned classes
         const allTeachers = await api.getAllTeachers();
         let teacherRecord = null;
         if (user?.id) {

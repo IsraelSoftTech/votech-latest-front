@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Signin.css';
 import logo from '../assets/logo.png';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -9,6 +9,7 @@ import Loader from './Loader';
 import SuccessMessage from './SuccessMessage';
 
 const Signin = () => {
+  
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -16,6 +17,7 @@ const Signin = () => {
   const [success, setSuccess] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [successType, setSuccessType] = useState('success');
+
   const navigate = useNavigate();
   const location = useLocation();
   const [showLoader, setShowLoader] = useState(false);
@@ -35,6 +37,8 @@ const Signin = () => {
   const [resetError, setResetError] = useState('');
   const [resetSuccess, setResetSuccess] = useState('');
 
+
+
   const handleChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
@@ -44,6 +48,7 @@ const Signin = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
     try {
       const response = await api.login(form.username, form.password);
       // Support both response.data.user and response.user
@@ -88,13 +93,7 @@ const Signin = () => {
     setLoading(false);
   };
 
-  const handleAdminClick = () => {
-    setShowLoader(true);
-    setTimeout(() => {
-      setShowLoader(false);
-      navigate('/admin');
-    }, 1500);
-  };
+
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -124,7 +123,13 @@ const Signin = () => {
         setForgotError('No account found with that username and phone number.');
       }
     } catch (err) {
-      setForgotError('Error checking account. Please try again.');
+      if (err.message && err.message.includes('Phone number does not match')) {
+        setForgotError('Phone number does not match the username. Please check and try again.');
+      } else if (err.message && err.message.includes('User not found')) {
+        setForgotError('No account found with that username.');
+      } else {
+        setForgotError('Error checking account. Please try again.');
+      }
     }
     setForgotLoading(false);
   };
@@ -169,8 +174,10 @@ const Signin = () => {
         <div className="signin-header-group">
           <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
           <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
-          <Link className={`signin-header-link${location.pathname === '/signin' || location.pathname === '/' ? ' active' : ''}`} to="/signin">Sign In</Link>
-          <Link className={`signin-header-link${location.pathname === '/signup' ? ' active' : ''}`} to="/signup">Sign Up</Link>
+          <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+            <Link className={`signin-header-link${location.pathname === '/signin' || location.pathname === '/' ? ' active' : ''}`} to="/signin">Sign In</Link>
+            <Link className={`signin-header-link${location.pathname === '/signup' ? ' active' : ''}`} to="/signup">Sign Up</Link>
+          </div>
         </div>
       </header>
       <main className="signin-main">
@@ -202,11 +209,14 @@ const Signin = () => {
                 Forgot Password?
               </button>
             </div>
-            <div className="signin-form-bottom-text">
-              Don't have an account? <Link to="/signup" className="signin-signup-link">Sign Up</Link>
-            </div>
-            {error && <div className="signin-error-message">{error}</div>}
-            <button type="submit" className="signin-btn" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
+                         {error && <div className="signin-error-message">{error}</div>}
+             <button type="submit" className="signin-btn" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
+             <div className="signin-form-bottom-text">
+               Don't have an account?{" "}
+               <Link to="/signup" className="signin-signup-link">
+                 Sign Up
+               </Link>
+             </div>
           </form>
         )}
         {showForgot && (
