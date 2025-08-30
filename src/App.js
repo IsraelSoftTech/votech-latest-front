@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import Loader from "./components/Loader";
 import Signin from "./components/Signin";
-import Signup from "./components/Signup.jsx";
+import Signup from "./components/Signup";
 
 // Admin / Core
 import Admin from "./components/Admin.jsx";
@@ -146,6 +146,7 @@ function App() {
       <Routes>
         {/* Auth */}
         <Route path="/" element={<Signin />} />
+        <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
 
         {/* Admin / Core */}

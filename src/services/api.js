@@ -129,14 +129,14 @@ class ApiService {
     return data;
   }
 
-  async createAccount({ username, contact, password, role }) {
+  async createAccount({ username, contact, password, role, name, email, gender }) {
     try {
       const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, contact, password, role }),
+        body: JSON.stringify({ username, contact, password, role, name, email, gender }),
       });
 
       // First try to parse the response as text
@@ -176,6 +176,100 @@ class ApiService {
     } catch (error) {
       console.error("Get users error:", error);
       throw error;
+    }
+  }
+
+  async checkIfUsersExist() {
+    try {
+      const response = await fetch(`${API_URL}/users`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data && data.length > 0;
+      }
+      return false;
+    } catch (error) {
+      console.error("Check if users exist error:", error);
+      return false;
+    }
+  }
+
+  async checkIfAdmin3Exists() {
+    try {
+      console.log('API: Checking if Admin3 exists...');
+      
+      // Method 1: Try to check if Admin3 user exists by username
+      try {
+        const response = await fetch(`${API_URL}/check-user`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username: "Admin3" }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('API: Check user response:', data);
+          // If the user exists, check if it's Admin3 role
+          if (data.exists && data.user && data.user.role === "Admin3") {
+            console.log('API: Admin3 exists (method 1):', true);
+            return true;
+          }
+        }
+      } catch (error) {
+        console.log('API: Method 1 failed, trying method 2...');
+      }
+
+      // Method 2: Try to get all users (fallback)
+      try {
+        const response = await fetch(`${API_URL}/users`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('API: Users data:', data);
+          // Check if any user has role "Admin3"
+          const admin3Exists = data && data.some(user => user.role === "Admin3");
+          console.log('API: Admin3 exists (method 2):', admin3Exists);
+          return admin3Exists;
+        }
+      } catch (error) {
+        console.log('API: Method 2 failed');
+      }
+
+      console.log('API: All methods failed, assuming Admin3 does not exist');
+      return false;
+    } catch (error) {
+      console.error("Check if Admin3 exists error:", error);
+      return false;
+    }
+  }
+
+  async getAdmin3Count() {
+    try {
+      console.log('API: Getting Admin3 count...');
+      const response = await fetch(`${API_URL}/users/admin3-count`, {
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        console.log('API: Admin3 count response:', data);
+        const admin3Count = data.count || 0;
+        console.log('API: Admin3 count:', admin3Count);
+        return admin3Count;
+      }
+      return 0;
+    } catch (error) {
+      console.error("Get Admin3 count error:", error);
+      return 0;
     }
   }
 
@@ -410,7 +504,7 @@ class ApiService {
 
   async checkUserDetails(username, contact) {
     try {
-      const response = await fetch(`${API_URL}/check-user-details`, {
+      const response = await fetch(`${API_URL}/users/check-user-details`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, contact }),
@@ -2386,6 +2480,10 @@ class ApiService {
     });
     return this.handleResponse(response);
   }
+
+
 }
 
-export default new ApiService();
+const api = new ApiService();
+
+export default api;
