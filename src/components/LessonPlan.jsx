@@ -193,7 +193,10 @@ export default function LessonPlan() {
       window.open(fileUrl, '_blank');
     } else {
       // For local files, construct the proper URL
-      const apiUrl = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' 
+      const isDevelopment = process.env.NODE_ENV === 'development' || 
+                           window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1';
+      const apiUrl = process.env.REACT_APP_API_URL || (isDevelopment 
         ? 'http://localhost:5000' 
         : 'https://api.votechs7academygroup.com');
       window.open(`${apiUrl}${fileUrl}`, '_blank');

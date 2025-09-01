@@ -40,6 +40,19 @@
   color: #fbbf24;
 }
 
+.read-only-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-left: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 .header-subtitle {
   font-size: 1.1rem;
   opacity: 0.9;

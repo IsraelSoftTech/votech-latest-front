@@ -87,7 +87,9 @@ export default function SideTop({ children }) {
         path: "/admin-specialty",
       },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
-
+      { label: "Monitor Users", icon: <FaUsers />, path: "/monitor-users" },
+      { label: "Fee", icon: <FaMoneyBill />, path: "/admin-fee" },
+      { label: "Salary", icon: <FaFileInvoiceDollar />, path: "/admin-salary" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       // { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
       {

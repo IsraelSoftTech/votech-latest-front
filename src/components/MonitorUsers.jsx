@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaUsers, FaEye, FaClock, FaUserCheck, FaUserTimes, FaSearch, FaFilter, FaSync } from 'react-icons/fa';
+import { FaUsers, FaEye, FaClock, FaUserCheck, FaUserTimes, FaSearch, FaFilter, FaSync, FaLock } from 'react-icons/fa';
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
+import usePermissions from '../hooks/usePermissions';
 import './MonitorUsers.css';
 
 export default function MonitorUsers() {
@@ -17,6 +18,9 @@ export default function MonitorUsers() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserDetails, setShowUserDetails] = useState(false);
+  
+  // Get permissions
+  const { isReadOnly, isAdmin1 } = usePermissions();
 
   useEffect(() => {
     fetchData();
@@ -155,9 +159,13 @@ export default function MonitorUsers() {
             <h1 className="monitor-title">
               <FaUsers className="title-icon" />
               Monitor Users
+              {isReadOnly && <span className="read-only-badge"><FaLock /> Read Only</span>}
             </h1>
             <p className="header-subtitle">
-              Track user activities, sessions, and system usage across the application
+              {isReadOnly 
+                ? "View user activities, sessions, and system usage (Read-only access)"
+                : "Track user activities, sessions, and system usage across the application"
+              }
             </p>
           </div>
           <div className="header-actions">
@@ -169,13 +177,16 @@ export default function MonitorUsers() {
               <FaSync className={loading ? 'monitor-spinning' : ''} />
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
-            <button 
-              className="monitor-action-btn monitor-clear-btn" 
-              onClick={handleClearOff}
-              disabled={loading}
-            >
-              Clear Off
-            </button>
+            {!isReadOnly && (
+              <button 
+                className="monitor-action-btn monitor-clear-btn" 
+                onClick={handleClearOff}
+                disabled={loading}
+                title="Clear all monitoring data"
+              >
+                Clear Off
+              </button>
+            )}
           </div>
         </div>
 

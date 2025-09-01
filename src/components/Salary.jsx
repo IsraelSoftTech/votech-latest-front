@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SideTop from './SideTop';
-import { FaEdit, FaSave, FaTimes, FaDollarSign, FaUsers, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaDownload, FaPrint } from 'react-icons/fa';
+import { FaEdit, FaSave, FaTimes, FaDollarSign, FaUsers, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaDownload, FaPrint, FaLock } from 'react-icons/fa';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
 import MessageBox from './MessageBox';
 import SalaryReceipt from './SalaryReceipt';
+import usePermissions from '../hooks/usePermissions';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import './Salary.css';
@@ -20,6 +21,9 @@ export default function Salary({ authUser }) {
   const [editingSalary, setEditingSalary] = useState(null);
   const [salaryAmount, setSalaryAmount] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Get permissions
+  const { isReadOnly, isAdmin1 } = usePermissions();
   
   // Pay Salary Modal States
   const [showPayModal, setShowPayModal] = useState(false);
@@ -449,9 +453,15 @@ export default function Salary({ authUser }) {
 
         {/* Header */}
         <div className="salary-header">
-          <h1 className="salary-title">Salary Management</h1>
+          <h1 className="salary-title">
+            Salary Management
+            {isReadOnly && <span className="read-only-badge"><FaLock /> Read Only</span>}
+          </h1>
           <p className="salary-subtitle">
-            Manage salaries for approved applications - {getCurrentMonthName()} {new Date().getFullYear()}
+            {isReadOnly 
+              ? `View salary information for approved applications - ${getCurrentMonthName()} ${new Date().getFullYear()} (Read-only access)`
+              : `Manage salaries for approved applications - ${getCurrentMonthName()} ${new Date().getFullYear()}`
+            }
           </p>
         </div>
 
@@ -495,43 +505,47 @@ export default function Salary({ authUser }) {
         <div className="salary-table-container">
           <div className="salary-table-header">
             <h2 className="salary-table-title">Approved Applications & Salaries</h2>
-            <div className="salary-table-actions">
-              <button 
-                className="salary-pay-btn"
-                onClick={openPayModal}
-                disabled={!hasPendingSalaries()}
-              >
-                <FaMoneyBillWave /> Pay Salary
-              </button>
-              <button 
-                className="salary-delete-all-btn"
-                onClick={() => {
-                  showMessage(
-                    'Delete All Salaries',
-                    'Do you want to delete all paid salary records? This action will permanently remove all salary amounts and payment records from the database.',
-                    'error',
-                    async () => {
-                      try {
-                        await api.deleteAllSalaries();
-                        setSuccessMessage('success');
-                        await fetchData();
-                        setTimeout(() => {
-                          setSuccessMessage('');
-                        }, 3000);
-                      } catch (error) {
-                        console.error('Error deleting all salaries:', error);
-                        showMessage('Error', `Failed to delete salary records: ${error.message}`, 'error');
-                      }
-                    },
-                    'Delete All',
-                    'Cancel',
-                    true
-                  );
-                }}
-              >
-                <FaTimes /> Delete All
-              </button>
-            </div>
+            {!isReadOnly && (
+              <div className="salary-table-actions">
+                <button 
+                  className="salary-pay-btn"
+                  onClick={openPayModal}
+                  disabled={!hasPendingSalaries()}
+                  title="Pay pending salaries"
+                >
+                  <FaMoneyBillWave />
+                  Pay Salary
+                </button>
+                <button 
+                  className="salary-delete-all-btn"
+                  onClick={() => {
+                    showMessage(
+                      'Delete All Salaries',
+                      'Do you want to delete all paid salary records? This action will permanently remove all salary amounts and payment records from the database.',
+                      'error',
+                      async () => {
+                        try {
+                          await api.deleteAllSalaries();
+                          setSuccessMessage('success');
+                          await fetchData();
+                          setTimeout(() => {
+                            setSuccessMessage('');
+                          }, 3000);
+                        } catch (error) {
+                          console.error('Error deleting all salaries:', error);
+                          showMessage('Error', `Failed to delete salary records: ${error.message}`, 'error');
+                        }
+                      },
+                      'Delete All',
+                      'Cancel',
+                      true
+                    );
+                  }}
+                >
+                  <FaTimes /> Delete All
+                </button>
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -639,13 +653,15 @@ export default function Salary({ authUser }) {
                             </button>
                           </div>
                         ) : (
-                          <button
-                            className="salary-action-btn salary-edit-btn"
-                            onClick={() => handleEditSalary(app)}
-                            title="Edit Salary"
-                          >
-                            <FaEdit />
-                          </button>
+                          !isReadOnly && (
+                            <button
+                              className="salary-action-btn salary-edit-btn"
+                              onClick={() => handleEditSalary(app)}
+                              title="Edit Salary"
+                            >
+                              <FaEdit />
+                            </button>
+                          )
                         )}
                       </td>
                     </tr>
@@ -657,7 +673,7 @@ export default function Salary({ authUser }) {
         </div>
 
         {/* Pay Salary Modal */}
-        {showPayModal && (
+        {showPayModal && !isReadOnly && (
           <div className="salary-pay-modal-overlay">
             <div className="salary-pay-modal">
               <div className="salary-pay-modal-header">

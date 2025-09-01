@@ -5,6 +5,25 @@
 .fee-header {
   margin-bottom: 24px;
 }
+
+.fee-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.read-only-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+}
 .fee-cards-row {
   display: flex;
   gap: 32px;

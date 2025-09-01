@@ -7,11 +7,15 @@ import api from '../services/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import FeeReport from './FeeReport';
 import FeeReceipt from './FeeReceipt';
-import { FaEdit, FaTrash, FaMoneyBillWave, FaEye, FaDownload } from 'react-icons/fa';
+import usePermissions from '../hooks/usePermissions';
+import { FaEdit, FaTrash, FaMoneyBillWave, FaEye, FaDownload, FaLock } from 'react-icons/fa';
 
 export default function Fee() {
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Get permissions
+  const { isReadOnly, isAdmin1 } = usePermissions();
 
   const [totalPaid, setTotalPaid] = useState(0);
   const [totalOwed, setTotalOwed] = useState(0);
@@ -498,7 +502,10 @@ export default function Fee() {
     <SideTop>
       <div className="fee-main-content">
         <div className="fee-header">
-          <h2>Fee Payment</h2>
+          <h2>
+            Fee Payment
+            {isReadOnly && <span className="read-only-badge"><FaLock /> Read Only</span>}
+          </h2>
         </div>
         <div className="fee-cards-row">
           <div className="fee-card paid">
@@ -541,13 +548,15 @@ export default function Fee() {
               </option>
             ))}
           </select>
-          <span
-            className="fee-stats-btn-text"
-            style={{ color: '#1976d2', fontWeight: 600, fontSize: 17, cursor: 'pointer', userSelect: 'none', borderBottom: '1.5px dashed #1976d2' }}
-            onClick={() => { setFeeStatsModalOpen(true); setProceedClicked(false); setSelectedClassId(''); setClassStats(null); }}
-          >
-            Fee Statistics
-          </span>
+          {!isReadOnly && (
+            <span
+              className="fee-stats-btn-text"
+              style={{ color: '#1976d2', fontWeight: 600, fontSize: 17, cursor: 'pointer', userSelect: 'none', borderBottom: '1.5px dashed #1976d2' }}
+              onClick={() => { setFeeStatsModalOpen(true); setProceedClicked(false); setSelectedClassId(''); setClassStats(null); }}
+            >
+              Fee Statistics
+            </span>
+          )}
           <button
             onClick={fetchStudentsAndFees}
             disabled={studentsLoading}
@@ -670,25 +679,27 @@ export default function Fee() {
                               >
                                 <FaEye size={12} />
                               </button>
-                        <button
+                        {!isReadOnly && (
+                          <button
                             onClick={() => handlePayFee(student)}
-                                style={{
-                                  background: '#28a745',
-                                  color: '#fff',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  padding: '6px 8px',
-                                  fontSize: '12px',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                                title="Pay Fee"
-                              >
-                                <FaMoneyBillWave size={12} />
-                              </button>
-                              {status === 'Completed' && (
+                            style={{
+                              background: '#28a745',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '6px 8px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            title="Pay Fee"
+                          >
+                            <FaMoneyBillWave size={12} />
+                          </button>
+                        )}
+                              {status === 'Completed' && !isReadOnly && (
                                 <button
                                   onClick={() => handleGenerateReceipt(student)}
                                   style={{
@@ -708,42 +719,46 @@ export default function Fee() {
                                   <FaDownload size={12} />
                                 </button>
                               )}
-                              <button
-                                onClick={() => handleEditStudentFees(student)}
-                                style={{
-                                  background: '#ffc107',
-                                  color: '#000',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  padding: '6px 8px',
-                                  fontSize: '12px',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                                title="Edit Fees"
-                              >
-                                <FaEdit size={12} />
-                          </button>
-                          <button
-                                onClick={() => handleClearStudentFees(student)}
-                                style={{
-                                  background: '#ff9500',
-                                  color: '#fff',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  padding: '6px 8px',
-                                  fontSize: '12px',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                                title="Clear Student Fees"
-                              >
-                                <FaTrash size={12} />
-                          </button>
+                              {!isReadOnly && (
+                                <button
+                                  onClick={() => handleEditStudentFees(student)}
+                                  style={{
+                                    background: '#ffc107',
+                                    color: '#000',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}
+                                  title="Edit Fees"
+                                >
+                                  <FaEdit size={12} />
+                                </button>
+                              )}
+                          {!isReadOnly && (
+                            <button
+                              onClick={() => handleClearStudentFees(student)}
+                              style={{
+                                background: '#ff9500',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '6px 8px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                              title="Clear Student Fees"
+                            >
+                              <FaTrash size={12} />
+                            </button>
+                          )}
                             </div>
                         </td>
                     </tr>
@@ -771,7 +786,7 @@ export default function Fee() {
           </div>
         )}
         {/* Fee Statistics Modal */}
-        {feeStatsModalOpen && (
+        {feeStatsModalOpen && !isReadOnly && (
           <div className="fee-stats-modal-overlay" style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(32,64,128,0.13)',zIndex:2000,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto'}}>
             <div className="fee-stats-modal-content" style={{background:'#fff',borderRadius:16,boxShadow:'0 8px 40px rgba(32,64,128,0.18)',padding:'36px 28px 28px 28px',maxWidth:1200,width:'98vw',minWidth:0,position:'relative',marginTop:48,marginBottom:48}}>
               {/* Close button */}
@@ -871,14 +886,16 @@ export default function Fee() {
                             })}
                         </tbody>
                       </table>
-                      <div className="fee-stats-modal-actions">
-                        <button className="print-button fee-stats-print-btn" onClick={generateFeeReport}>Generate Report</button>
-                      </div>
+                      {!isReadOnly && (
+                        <div className="fee-stats-modal-actions">
+                          <button className="print-button fee-stats-print-btn" onClick={generateFeeReport}>Generate Report</button>
+                        </div>
+                      )}
                     </div>
                   )}
                   
                   {/* Fee Report Modal */}
-                  {showFeeReportModal && generatedFeeReport && (
+                  {showFeeReportModal && generatedFeeReport && !isReadOnly && (
                     <div className="fee-report-modal-overlay" onClick={closeFeeReportModal}>
                       <div className="fee-report-modal-content" onClick={e => e.stopPropagation()}>
                         <FeeReport ref={feeReportRef} report={generatedFeeReport} />
@@ -950,7 +967,7 @@ export default function Fee() {
        `}</style>
       
              {/* Payment Modal */}
-       {paymentModalOpen && selectedStudent && (
+       {paymentModalOpen && selectedStudent && !isReadOnly && (
          <div className="student-fee-modal-overlay" onClick={e => e.stopPropagation()}>
            <div className="student-fee-modal-content" onClick={e => e.stopPropagation()}>
              <button 
@@ -1045,7 +1062,7 @@ export default function Fee() {
        )}
 
        {/* Receipt Modal */}
-       {receiptModalOpen && receiptData && (
+       {receiptModalOpen && receiptData && !isReadOnly && (
          <div className="fee-receipt-modal-overlay">
            <div className="fee-receipt-modal-content">
              <button 
