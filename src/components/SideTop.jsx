@@ -35,6 +35,7 @@ import {
   FaLayerGroup,
   FaBookOpen,
   FaTable,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
@@ -87,13 +88,46 @@ export default function SideTop({ children }) {
         path: "/admin-specialty",
       },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
-
+      { label: "Monitor Users", icon: <FaUsers />, path: "/monitor-users" },
+      { label: "Fee", icon: <FaMoneyBill />, path: "/admin-fee" },
+      { label: "Salary", icon: <FaFileInvoiceDollar />, path: "/admin-salary" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       // { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
       {
-        label: "Subjects",
-        path: "/academics/subjects",
-        icon: <FaBookOpen />,
+        label: "Accademics",
+        icon: <FaGraduationCap />,
+        submenu: [
+          {
+            label: "Subjects",
+            path: "/academics/subjects",
+            icon: <FaChalkboardTeacher />,
+          },
+          {
+            label: "Academic Years",
+            path: "/academics/academic-years",
+            icon: <FaCalendar />,
+          },
+          {
+            label: "Classes",
+            path: "/academics/classes",
+            icon: <FaChalkboard />,
+          },
+          {
+            label: "Academic Bands",
+            path: "/academics/bands",
+            icon: <FaLayerGroup />,
+          },
+          {
+            label: "Report Cards",
+            path: "/academics/report-cards",
+            icon: <FaBookOpen />,
+          },
+          // {
+          //   label: "Master Sheets",
+          //   path: "/academics/master-sheets",
+          //   icon: <FaTable />,
+          // },
+        ],
       },
       {
         label: "Lesson Plans",
@@ -150,11 +184,11 @@ export default function SideTop({ children }) {
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
-      // {
-      //   label: "Departments",
-      //   icon: <FaClipboardList />,
-      //   path: "/admin-specialty",
-      // },
+      {
+        label: "Departments",
+        icon: <FaClipboardList />,
+        path: "/admin-specialty",
+      },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "ID Cards", icon: <FaIdCard />, path: "/admin-idcards" },
@@ -304,6 +338,7 @@ export default function SideTop({ children }) {
       { label: "Dashboard", icon: <MdDashboard />, path: "/psycho-dashboard" },
  
       { label: "Cases", icon: <FaClipboardList />, path: "/psycho-cases" },
+      { label: "Discipline Cases", icon: <FaExclamationTriangle />, path: "/psycho-discipline-cases" },
       {
         label: "Subjects",
         path: "/academics/subjects",
@@ -361,7 +396,8 @@ export default function SideTop({ children }) {
       }
     }
     fetchPayslipCount();
-    const interval = setInterval(fetchPayslipCount, 60000);
+    // Increased interval from 1 minute to 5 minutes to reduce server load
+    const interval = setInterval(fetchPayslipCount, 5 * 60 * 1000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -498,8 +534,8 @@ export default function SideTop({ children }) {
 
     fetchUnreadCount();
 
-    // Set up periodic refresh every 30 seconds for messages
-    const interval = setInterval(fetchUnreadCount, 30000);
+    // Set up periodic refresh every 2 minutes for messages (increased from 30 seconds)
+    const interval = setInterval(fetchUnreadCount, 2 * 60 * 1000);
 
     // Listen for custom events when messages are sent/received
     const handleMessageChange = () => {
@@ -537,7 +573,8 @@ export default function SideTop({ children }) {
 
   useEffect(() => {
     refreshEventsCount();
-    const interval = setInterval(refreshEventsCount, 60000);
+    // Increased interval from 1 minute to 5 minutes to reduce server load
+    const interval = setInterval(refreshEventsCount, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 

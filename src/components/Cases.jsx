@@ -67,11 +67,15 @@ export default function Cases() {
 
   const fetchDropdownData = async () => {
     try {
+      console.log('Fetching dropdown data...');
       const [studentsData, classesData, adminsData] = await Promise.all([
         api.getStudentsForCases(),
         api.getClassesForCases(),
         api.getAdminsForReports()
       ]);
+      console.log('Students data:', studentsData);
+      console.log('Classes data:', classesData);
+      console.log('Admins data:', adminsData);
       setStudents(studentsData);
       setClasses(classesData);
       setAdmins(adminsData);

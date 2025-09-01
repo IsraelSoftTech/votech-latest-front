@@ -269,6 +269,7 @@ function App() {
             </SideTop>
           }
         />
+
         <Route path="/discipline-events" element={<DiscEvents />} />
 
         {/* Teacher / Dean */}
@@ -296,6 +297,11 @@ function App() {
         {/* Psychosocialist Routes */}
         <Route path="/psycho-dashboard" element={<PsycoDash />} />
         <Route path="/psycho-cases" element={<Cases />} />
+        <Route path="/psycho-discipline-cases" element={
+          <SideTop>
+            <DisciplineCases />
+          </SideTop>
+        } />
         <Route path="/psycho-messages" element={<PsychoMessage />} />
         <Route path="/psycho-chat/:userId" element={<PsychoChat />} />
 

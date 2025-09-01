@@ -12,9 +12,12 @@ import {
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
 import Stats from "../../components/Stats/Stats.component";
-import { FaCalendarAlt, FaCalendarCheck } from "react-icons/fa";
+import { FaCalendarAlt, FaCalendarCheck, FaLock } from "react-icons/fa";
+
 
 export const AcademicYear = () => {
+  const isReadOnly = JSON.parse(sessionStorage.getItem('authUser') || '{}').role === 'Admin1';
+  
   const columns = [
     { label: "S/N", accessor: "sn" },
     { label: "Name", accessor: "name" },
@@ -268,14 +271,23 @@ export const AcademicYear = () => {
   return (
     <SideTop>
       <div style={{ padding: "20px" }}>
-        <h2 className="page-title">Academic Years</h2>
+        <h2 className="page-title">
+          Academic Years
+          {isReadOnly && (
+            <span className="read-only-badge">
+              <FaLock /> Read Only
+            </span>
+          )}
+        </h2>
 
         <Stats data={stats} />
 
-        {/* Create Button */}
-        <button className="btn btn-create" onClick={openCreateModal}>
-          Create Academic Year
-        </button>
+        {/* Create Button - Hidden for Admin1 */}
+        {!isReadOnly && (
+          <button className="btn btn-create" onClick={openCreateModal}>
+            Create Academic Year
+          </button>
+        )}
 
         <DataTable
           columns={columns}
@@ -291,6 +303,9 @@ export const AcademicYear = () => {
             );
           }}
           filterCategories={["active"]}
+          editRoles={["Admin3"]}
+          deleteRoles={["Admin3"]}
+          userRole={JSON.parse(sessionStorage.getItem('authUser') || '{}').role}
         />
 
         {/* Details Modal */}
