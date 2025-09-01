@@ -57,7 +57,7 @@ export const MarksUploadPage = () => {
   const fetchDepartments = async () => {
     try {
       const res = await fetch(`${subBaseURL}/specialties`, {
-        headers: headers,
+        headers: headers(),
       });
 
       const data = await res.json();
@@ -80,7 +80,11 @@ export const MarksUploadPage = () => {
       setStudents(list);
       return list;
     } catch (err) {
-      toast.error(err.response?.data?.details || "Failed to fetch students.");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to fetch students."
+      );
       setStudents([]);
       return [];
     }
@@ -92,7 +96,9 @@ export const MarksUploadPage = () => {
       setSubjectClasses(res?.data?.data || []);
     } catch (err) {
       toast.error(
-        err.response?.data?.details || "Failed to fetch subject classes."
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to fetch subject classes."
       );
     }
   };
@@ -203,7 +209,11 @@ export const MarksUploadPage = () => {
       );
       setMarks(resMarks?.data?.data || []);
     } catch (err) {
-      toast.error("Failed to fetch students or marks.");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to fetch students or marks."
+      );
     } finally {
       setLoadingTable(false);
     }
@@ -269,7 +279,11 @@ export const MarksUploadPage = () => {
       toast.success("Marks saved successfully.");
       await loadStudentsMarks();
     } catch (err) {
-      toast.error(err.response?.data?.details || "Failed to save marks.");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to save marks."
+      );
     } finally {
       setSaving(false);
     }

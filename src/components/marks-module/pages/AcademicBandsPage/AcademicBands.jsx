@@ -15,6 +15,7 @@ export const AcademicBandsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [form, setForm] = useState({
     academic_year_id: null,
@@ -33,7 +34,7 @@ export const AcademicBandsPage = () => {
   const fetchDepartments = async () => {
     try {
       const res = await fetch(`${subBaseURL}/specialties`, {
-        headers: headers,
+        headers: headers(),
       });
       const data = await res.json();
       setDepartments(data);
@@ -566,7 +567,10 @@ export const AcademicBandsPage = () => {
             <button type="button" className="btn btn-add" onClick={addBandRow}>
               Add Band Row
             </button>
-            <SubmitBtn title="Save Bands" loading={saving} />
+            <SubmitBtn
+              title={saving ? "Saving..." : "Save Bands"}
+              loading={saving}
+            />
           </form>
         </Modal>
       </div>

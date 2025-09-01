@@ -122,7 +122,9 @@ export const ReportCardHomePage = () => {
           api.get("/classes"),
           api.get("/marks/terms"),
           api.get("/marks/sequences"),
-          fetch(`${subBaseURL}/specialties`, { headers }).then((r) => r.json()),
+          fetch(`${subBaseURL}/specialties`, { headers: headers() }).then((r) =>
+            r.json()
+          ),
         ]);
 
       setAcademicYears(yearsRes.data.data || []);

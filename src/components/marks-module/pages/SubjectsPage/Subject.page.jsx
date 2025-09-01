@@ -97,8 +97,10 @@ export const SubjectPage = () => {
     const errors = {};
 
     if (!form.name?.trim()) errors.name = "Subject name is required.";
-    else if (!/^[a-zA-Z0-9\s]+$/.test(form.name))
-      errors.name = "Subject name may only include letters and numbers.";
+    else if (!/^[a-zA-Z0-9\s\-\+\&\.\,\(\)]+$/.test(form.name)) {
+      errors.name =
+        "Subject name may only include letters, numbers, spaces, and basic symbols (- + & . , ( )).";
+    }
 
     if (!form.code?.trim()) errors.code = "Subject code is required.";
     else if (!/^[a-zA-Z0-9]+$/.test(form.code))
@@ -148,13 +150,15 @@ export const SubjectPage = () => {
                 classSet.add(fullClassName);
                 classNames.push(fullClassName);
               }
-              if (
-                cs.teacher?.username &&
-                !teacherSet.has(cs.teacher.username)
-              ) {
-                teacherSet.add(cs.teacher.username);
-                teacherNames.push(cs.teacher.username);
+              if (cs.teacher) {
+                const teacherIdentifier =
+                  cs.teacher.name || cs.teacher.username;
+                if (teacherIdentifier && !teacherSet.has(teacherIdentifier)) {
+                  teacherSet.add(teacherIdentifier);
+                  teacherNames.push(teacherIdentifier);
+                }
               }
+
               if (cs.department?.name && !deptSet.has(cs.department.name)) {
                 deptSet.add(cs.department.name);
                 departmentNames.push(cs.department.name);
@@ -179,7 +183,11 @@ export const SubjectPage = () => {
       setFilters(Array.from(subFilters));
       setSubjects(subjectData);
     } catch (err) {
-      toast.error(err.response?.data?.details || "Error fetching subjects.");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Error fetching subjects."
+      );
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -188,7 +196,9 @@ export const SubjectPage = () => {
 
   const fetchDepartments = useCallback(async () => {
     try {
-      const res = await fetch(`${subBaseURL}/specialties`, { headers });
+      const res = await fetch(`${subBaseURL}/specialties`, {
+        headers: headers(),
+      });
       const data = (await res.json()).map((dep) => ({
         value: dep.id,
         label: dep.name,
@@ -309,8 +319,14 @@ export const SubjectPage = () => {
       toast.success("Subject Created successfully.");
       closeCreateModal();
       fetchSubjects();
+      if (user.role === "Admin3") fetchStats();
     } catch (err) {
-      toast.error(err.response?.data?.details || "Failed to create subject.");
+      console.log("error", err);
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to create subject."
+      );
     } finally {
       setCreateLoading(false);
     }
@@ -337,7 +353,9 @@ export const SubjectPage = () => {
       toast.success("Subject updated successfully.");
       closeEditModal();
       fetchSubjects();
+      if (user.role === "Admin3") fetchStats();
     } catch (err) {
+      console.log("error", err);
       toast.error(err.response?.data?.message || "Failed to update subject.");
     } finally {
       setEditLoading(false);
@@ -372,8 +390,13 @@ export const SubjectPage = () => {
       await api.delete(`/subjects/${row.id}`);
       toast.success("Subject deleted successfully");
       fetchSubjects();
+      if (user.role === "Admin3") fetchStats();
     } catch (err) {
-      toast.error(err.response?.data?.details || "Delete failed.");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Delete failed."
+      );
     }
   };
 

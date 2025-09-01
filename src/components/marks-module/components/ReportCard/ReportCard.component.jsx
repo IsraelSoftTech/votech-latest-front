@@ -339,25 +339,6 @@ export default function ReportCard({
     return "Weak";
   };
 
-  // const getRemarkClass = (remark) => {
-  //   switch (remark.toLowerCase()) {
-  //     case "excellent":
-  //       return "remark-excellent";
-  //     case "v.good":
-  //       return "remark-vgood";
-  //     case "good":
-  //       return "remark-good";
-  //     case "fairly good":
-  //       return "remark-fairly-good";
-  //     case "average":
-  //       return "remark-average";
-  //     case "weak":
-  //       return "remark-weak";
-  //     default:
-  //       return "";
-  //   }
-  // };
-
   // Calculate what to show based on current term
   const getCurrentTermData = () => {
     const term = data.student.term;
@@ -488,26 +469,40 @@ export default function ReportCard({
   };
 
   React.useLayoutEffect(() => {
+    if (disableAutoScale) return;
+
     const mmToPx = (mm) => (mm / 25.4) * 96; // 96 CSS px per inch
 
     const setScale = () => {
       const el = document.getElementById("reportCard");
       if (!el) return;
 
-      // Ensure we measure with print styles applied
+      // Reset scale first to get natural dimensions
       document.documentElement.style.setProperty("--print-scale", "1");
 
       const marginMm = 10; // MUST match --page-margin-mm and @page margin
       const printableHeightPx = mmToPx(297 - marginMm * 2); // A4 height minus margins
 
-      // Wait for fonts/layout to settle in print mode
+      // Multiple measurement attempts for accuracy
       const measure = () => {
+        // Force layout recalculation
+        el.offsetHeight;
+
         const rect = el.getBoundingClientRect();
-        const naturalHeight = rect.height || el.scrollHeight;
+        const naturalHeight = Math.max(
+          rect.height,
+          el.scrollHeight,
+          el.offsetHeight
+        );
 
         let scale = printableHeightPx / naturalHeight;
         if (!isFinite(scale) || scale <= 0) scale = 1;
-        scale = Math.min(1, scale); // never enlarge, only shrink
+
+        // Add small buffer to ensure content fits
+        scale = Math.min(0.98, scale); // Max 98% to ensure fit with small buffer
+
+        // Minimum scale to maintain readability
+        scale = Math.max(0.4, scale);
 
         document.documentElement.style.setProperty(
           "--print-scale",
@@ -515,31 +510,61 @@ export default function ReportCard({
         );
       };
 
+      // Multiple timing strategies for different browsers
       if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(measure);
+        document.fonts.ready.then(() => {
+          setTimeout(measure, 10);
+          setTimeout(measure, 50);
+          setTimeout(measure, 100);
+        });
       } else {
+        setTimeout(measure, 10);
         setTimeout(measure, 50);
+        setTimeout(measure, 100);
       }
     };
 
-    const before = () => setScale();
-    const after = () =>
+    const beforePrint = () => {
+      // Multiple scaling attempts for reliability
+      setScale();
+      setTimeout(setScale, 10);
+    };
+
+    const afterPrint = () => {
       document.documentElement.style.setProperty("--print-scale", "1");
+    };
 
-    window.addEventListener("beforeprint", before);
-    window.addEventListener("afterprint", after);
+    // Standard print event listeners
+    window.addEventListener("beforeprint", beforePrint);
+    window.addEventListener("afterprint", afterPrint);
 
-    // Chrome print preview
-    const mql = window.matchMedia("print");
-    const onChange = (e) => (e.matches ? setScale() : after());
-    if (mql.addEventListener) mql.addEventListener("change", onChange);
-    else if (mql.addListener) mql.addListener(onChange);
+    // Chrome print preview media query
+    const printMediaQuery = window.matchMedia("print");
+    const handlePrintChange = (e) => {
+      if (e.matches) {
+        beforePrint();
+      } else {
+        afterPrint();
+      }
+    };
+
+    if (printMediaQuery.addEventListener) {
+      printMediaQuery.addEventListener("change", handlePrintChange);
+    } else if (printMediaQuery.addListener) {
+      printMediaQuery.addListener(handlePrintChange);
+    }
+
+    // Initial scaling on component mount
+    setTimeout(setScale, 100);
 
     return () => {
-      window.removeEventListener("beforeprint", before);
-      window.removeEventListener("afterprint", after);
-      if (mql.removeEventListener) mql.removeEventListener("change", onChange);
-      else if (mql.removeListener) mql.removeListener(onChange);
+      window.removeEventListener("beforeprint", beforePrint);
+      window.removeEventListener("afterprint", afterPrint);
+      if (printMediaQuery.removeEventListener) {
+        printMediaQuery.removeEventListener("change", handlePrintChange);
+      } else if (printMediaQuery.removeListener) {
+        printMediaQuery.removeListener(handlePrintChange);
+      }
     };
   }, [disableAutoScale]);
 
@@ -550,31 +575,41 @@ export default function ReportCard({
         <div className="document-header">
           <div className="header-content">
             <div className="left-section">
-              <div className="republic-text">REPUBLIC OF CAMEROON</div>
-              <div className="motto">Peace • Work • Fatherland</div>
+              <div className="republic-text">RÉPUBLIQUE DU CAMEROUN</div>
+              <div className="motto">PAIX - TRAVAIL - PATRIE</div>
               <div className="ministry">
-                MINISTRY OF EMPLOYMENT AND VOCATIONAL TRAINING
+                MINISTÈRE DE L&apos;EMPLOI ET DE LA FORMATION PROFESSIONNELLE
               </div>
+              <div className="department">
+                DIRECTION DE L&apos;ENSEIGNEMENT PRIVÉ
+              </div>
+              <div className="school-name-header">VOTECH S7 ACADEMY</div>
+              <div className="location">AZIRE - MANKON</div>
             </div>
 
             <div className="center-emblem">
               <img src={logo} alt="" className="report-card-logo" />
+              <div className="center-text">
+                <div className="igniting-text">
+                  IGNITING &apos;&apos;Preneurs
+                </div>
+                <div className="center-motto">
+                  Motto: Welfare, Productivity, Self Actualization
+                </div>
+              </div>
             </div>
 
             <div className="right-section">
-              <div className="republic-text">RÉPUBLIQUE DU CAMEROUN</div>
-              <div className="motto">Paix • Travail • Patrie</div>
+              <div className="republic-text">REPUBLIC OF CAMEROON</div>
+              <div className="motto">PEACE - WORK - FATHERLAND</div>
               <div className="ministry">
-                MINISTÈRE DE L&apos;EMPLOI ET DE LA FORMATION PROFESSIONNELLE
+                MINISTRY OF EMPLOYMENT AND VOCATIONAL TRAINING
               </div>
-            </div>
-          </div>
-
-          <div className="school-info">
-            <div className="school-name">VOTECH (S7) ACADEMY</div>
-            <div className="school-location">Azire, Mankon - Bamenda</div>
-            <div className="school-motto">
-              Excellence • Productivity • Self Actualization
+              <div className="department">
+                DEPARTMENT OF PRIVATE VOCATIONAL INSTITUTE
+              </div>
+              <div className="school-name-header">VOTECH S7 ACADEMY</div>
+              <div className="location">AZIRE - MANKON</div>
             </div>
           </div>
 

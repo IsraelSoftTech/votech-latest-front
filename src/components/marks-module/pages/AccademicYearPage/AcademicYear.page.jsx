@@ -83,7 +83,11 @@ export const AcademicYear = () => {
         setData([]);
       }
     } catch (err) {
-      const message = err?.response?.data?.details || err?.message || "Failed to load academic years.";
+      console.log(err);
+      const message =
+        err.response?.data?.details ||
+        err?.message ||
+        "Failed to load academic years.";
       toast.error(message);
       setData([]);
     } finally {
@@ -102,7 +106,11 @@ export const AcademicYear = () => {
         : [];
       setStats(safeStats);
     } catch (err) {
-      toast.error(err?.response?.data?.details || "Error fetching statistics");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Error fetching statistics"
+      );
       setStats([]);
     }
   };
@@ -141,6 +149,7 @@ export const AcademicYear = () => {
       toast.success("Academic year created successfully.");
       closeCreateModal();
       fetchAcademicYears();
+      fetchStats();
     } catch (err) {
       // console.log(err.response.data.details);
       const serverError =
@@ -159,10 +168,13 @@ export const AcademicYear = () => {
       toast.success("Academic year updated successfully.");
       closeEditModal();
       fetchAcademicYears();
+      fetchStats();
     } catch (err) {
       console.log(err);
       const serverError =
-        err.response?.data?.message || "Failed to update academic year.";
+        err.response?.data?.details ||
+        err.response?.data?.message ||
+        "Failed to update academic year.";
       toast.error(serverError);
     } finally {
       setEditLoading(false);
@@ -229,6 +241,7 @@ export const AcademicYear = () => {
       await api.delete(`/academic-years/${row.id}`);
       toast.success("Academic year deleted successfully");
       fetchAcademicYears();
+      fetchStats();
     } catch (err) {
       toast.error(err.response.data.details || "Delete failed.");
     }
