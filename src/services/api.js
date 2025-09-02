@@ -2113,16 +2113,21 @@ class ApiService {
   }
 
   async getStudentsForCases() {
+    console.log('API: Getting students for cases from:', `${API_URL}/cases/students/list`);
+    console.log('API: Auth headers:', this.getAuthHeaders());
     const response = await fetch(`${API_URL}/cases/students/list`, {
       headers: this.getAuthHeaders(),
     });
+    console.log('API: Students response status:', response.status);
     return await this.handleResponse(response);
   }
 
   async getClassesForCases() {
+    console.log('API: Getting classes for cases from:', `${API_URL}/cases/classes/list`);
     const response = await fetch(`${API_URL}/cases/classes/list`, {
       headers: this.getAuthHeaders(),
     });
+    console.log('API: Classes response status:', response.status);
     return await this.handleResponse(response);
   }
 
@@ -2321,16 +2326,20 @@ class ApiService {
   }
 
   async getDisciplineStudents() {
+    console.log('API: Getting discipline students from:', `${API_URL}/discipline-cases/students`);
     const response = await fetch(`${API_URL}/discipline-cases/students`, {
       headers: this.getAuthHeaders(),
     });
+    console.log('API: Discipline students response status:', response.status);
     return await this.handleResponse(response);
   }
 
   async getDisciplineClasses() {
+    console.log('API: Getting discipline classes from:', `${API_URL}/discipline-cases/classes`);
     const response = await fetch(`${API_URL}/discipline-cases/classes`, {
       headers: this.getAuthHeaders(),
     });
+    console.log('API: Discipline classes response status:', response.status);
     return await this.handleResponse(response);
   }
 

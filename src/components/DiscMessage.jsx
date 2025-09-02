@@ -73,11 +73,12 @@ export default function DiscMessage() {
   }, []);
 
   useEffect(() => {
+    // Increased interval from 5 seconds to 30 seconds to reduce server load
     let interval = setInterval(() => {
       api.getChatList()
         .then(list => setHasUnread(list.some(u => u.unread > 0)))
         .catch(() => {});
-    }, 5000);
+    }, 30000); // Changed from 5000 to 30000 (30 seconds)
     return () => clearInterval(interval);
   }, []);
 

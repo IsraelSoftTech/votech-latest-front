@@ -57,7 +57,7 @@ export const MarksUploadPage = () => {
   const fetchDepartments = async () => {
     try {
       const res = await fetch(`${subBaseURL}/specialties`, {
-        headers: headers,
+        headers: headers(),
       });
 
       const data = await res.json();

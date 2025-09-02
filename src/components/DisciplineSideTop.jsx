@@ -136,8 +136,8 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
     // Fetch on mount
     fetchUpcomingEvents();
 
-    // Set up periodic refresh (every hour)
-    const interval = setInterval(fetchUpcomingEvents, 60 * 60 * 1000);
+    // Set up periodic refresh (every 2 hours instead of every hour to reduce load)
+    const interval = setInterval(fetchUpcomingEvents, 2 * 60 * 60 * 1000);
 
     // Listen for custom events
     const handleEventCreated = () => {
@@ -179,8 +179,8 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
 
     fetchUnreadCount();
 
-    // Set up periodic refresh every 30 seconds for messages
-    const interval = setInterval(fetchUnreadCount, 30000);
+    // Set up periodic refresh every 2 minutes for messages (increased from 30 seconds)
+    const interval = setInterval(fetchUnreadCount, 2 * 60 * 1000);
 
     // Listen for custom events when messages are sent/received
     const handleMessageChange = () => {

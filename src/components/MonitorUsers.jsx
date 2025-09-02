@@ -3,7 +3,7 @@ import { FaUsers, FaEye, FaClock, FaUserCheck, FaUserTimes, FaSearch, FaFilter, 
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
-import usePermissions from '../hooks/usePermissions';
+import { usePermissions } from '../hooks/usePermissions';
 import './MonitorUsers.css';
 
 export default function MonitorUsers() {

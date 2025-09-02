@@ -188,7 +188,7 @@ export const SubjectPage = () => {
 
   const fetchDepartments = useCallback(async () => {
     try {
-      const res = await fetch(`${subBaseURL}/specialties`, { headers });
+      const res = await fetch(`${subBaseURL}/specialties`, { headers: headers() });
       const data = (await res.json()).map((dep) => ({
         value: dep.id,
         label: dep.name,

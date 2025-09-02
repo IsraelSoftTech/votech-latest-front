@@ -34,11 +34,15 @@ export default function DisciplineCases() {
   const loadData = async () => {
     setLoading(true);
     try {
+      console.log('Loading discipline data...');
       const [casesData, studentsData, classesData] = await Promise.all([
         api.getDisciplineCases(),
         api.getDisciplineStudents(),
         api.getDisciplineClasses()
       ]);
+      console.log('Discipline cases data:', casesData);
+      console.log('Discipline students data:', studentsData);
+      console.log('Discipline classes data:', classesData);
       setCases(casesData);
       setStudents(studentsData);
       setClasses(classesData);

@@ -7,7 +7,7 @@ import api from '../services/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import FeeReport from './FeeReport';
 import FeeReceipt from './FeeReceipt';
-import usePermissions from '../hooks/usePermissions';
+import { usePermissions } from '../hooks/usePermissions';
 import { FaEdit, FaTrash, FaMoneyBillWave, FaEye, FaDownload, FaLock } from 'react-icons/fa';
 
 export default function Fee() {

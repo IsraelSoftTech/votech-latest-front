@@ -5,7 +5,7 @@ import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
 import MessageBox from './MessageBox';
 import SalaryReceipt from './SalaryReceipt';
-import usePermissions from '../hooks/usePermissions';
+import { usePermissions } from '../hooks/usePermissions';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import './Salary.css';
