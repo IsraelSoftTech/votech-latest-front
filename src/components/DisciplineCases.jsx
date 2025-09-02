@@ -8,13 +8,22 @@ export default function DisciplineCases() {
   const [cases, setCases] = useState([]);
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [caseStats, setCaseStats] = useState([]);
+  const [showStats, setShowStats] = useState(false);
+  
+  // Get current user info
+  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
+  const isAdmin = authUser?.role?.startsWith('Admin');
   
   // Form state
   const [showRecordModal, setShowRecordModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('students'); // 'students' or 'teachers'
   const [selectedStudent, setSelectedStudent] = useState('');
+  const [selectedTeacher, setSelectedTeacher] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [caseDescription, setCaseDescription] = useState('');
   
@@ -34,43 +43,97 @@ export default function DisciplineCases() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [casesData, studentsData, classesData] = await Promise.all([
-        api.getDisciplineCases(),
-        api.getDisciplineStudents(),
-        api.getDisciplineClasses()
-      ]);
-      setCases(casesData);
-      setStudents(studentsData);
-      setClasses(classesData);
+      console.log('Loading discipline data...');
+      
+      // Load data one by one to debug any issues
+      try {
+        const casesData = await api.getDisciplineCases();
+        console.log('✓ Discipline cases data loaded:', casesData);
+        setCases(casesData);
+      } catch (error) {
+        console.error('✗ Error loading cases:', error);
+      }
+      
+      try {
+        const studentsData = await api.getDisciplineStudents();
+        console.log('✓ Discipline students data loaded:', studentsData);
+        setStudents(studentsData);
+      } catch (error) {
+        console.error('✗ Error loading students:', error);
+      }
+      
+      try {
+        const classesData = await api.getDisciplineClasses();
+        console.log('✓ Discipline classes data loaded:', classesData);
+        setClasses(classesData);
+      } catch (error) {
+        console.error('✗ Error loading classes:', error);
+      }
+      
+      try {
+        const teachersData = await api.getDisciplineTeachers();
+        console.log('✓ Discipline teachers data loaded:', teachersData);
+        setTeachers(teachersData);
+      } catch (error) {
+        console.error('✗ Error loading teachers:', error);
+      }
+      
+      // Load case statistics for Admin users
+      if (isAdmin) {
+        try {
+          const statsData = await api.getDisciplineCaseStats();
+          setCaseStats(statsData);
+        } catch (error) {
+          console.error('Error loading case statistics:', error);
+        }
+      }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error in loadData:', error);
     }
     setLoading(false);
   };
 
   const handleRecordCase = async () => {
-    if (!selectedStudent || !selectedClass || !caseDescription.trim()) {
-      alert('Please fill in all fields');
-      return;
+    if (activeTab === 'students') {
+      if (!selectedStudent || !selectedClass || !caseDescription.trim()) {
+        alert('Please fill in all fields for student case');
+        return;
+      }
+    } else {
+      if (!selectedTeacher || !caseDescription.trim()) {
+        alert('Please fill in all fields for teacher case');
+        return;
+      }
     }
 
     setLoading(true);
     try {
-      await api.createDisciplineCase({
-        student_id: selectedStudent,
-        class_id: selectedClass,
-        case_description: caseDescription.trim()
-      });
+      const caseData = activeTab === 'students' 
+        ? {
+            student_id: selectedStudent,
+            class_id: selectedClass,
+            case_description: caseDescription.trim(),
+            case_type: 'student'
+          }
+        : {
+            teacher_id: selectedTeacher,
+            case_description: caseDescription.trim(),
+            case_type: 'teacher'
+          };
+
+      await api.createDisciplineCase(caseData);
       
-      setSuccessMessage('Discipline case recorded successfully');
+      setSuccessMessage(`Discipline case for ${activeTab === 'students' ? 'student' : 'teacher'} recorded successfully`);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
       
       // Reset form and close modal
       setSelectedStudent('');
+      setSelectedTeacher('');
       setSelectedClass('');
       setCaseDescription('');
       setShowRecordModal(false);
+      setActiveTab('students');
       
       // Reload data
       loadData();
@@ -152,6 +215,15 @@ export default function DisciplineCases() {
     setShowStatusModal(true);
   };
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    // Reset form fields when switching tabs
+    setSelectedStudent('');
+    setSelectedTeacher('');
+    setSelectedClass('');
+    setCaseDescription('');
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -178,15 +250,36 @@ export default function DisciplineCases() {
       <div className="dc-header">
         <div className="dc-title-section">
           <h1>Disciplinary Cases Management</h1>
-          <p>Record and manage student disciplinary cases</p>
+          <p>Record and manage student and teacher disciplinary cases</p>
         </div>
         <div className="dc-actions">
+          {isAdmin && (
+            <button 
+              className="dc-ghost-btn"
+              onClick={() => setShowStats(!showStats)}
+            >
+              {showStats ? 'Hide' : 'Show'} Statistics
+            </button>
+          )}
           <button 
             className="dc-primary-btn"
-            onClick={() => setShowRecordModal(true)}
+            onClick={() => {
+              setActiveTab('students');
+              setShowRecordModal(true);
+            }}
             disabled={loading}
           >
-            <FaPlus /> Record Case
+            <FaPlus /> Record Student Case
+          </button>
+          <button 
+            className="dc-primary-btn"
+            onClick={() => {
+              setActiveTab('teachers');
+              setShowRecordModal(true);
+            }}
+            disabled={loading}
+          >
+            <FaPlus /> Record Teacher Case
           </button>
           <button 
             className="dc-danger-btn"
@@ -212,6 +305,39 @@ export default function DisciplineCases() {
           <div className="stat-label">Pending</div>
         </div>
       </div>
+      
+      {/* Debug Information */}
+      <div className="dc-debug-info" style={{background: '#f0f0f0', padding: '10px', margin: '10px 0', borderRadius: '5px', fontSize: '12px'}}>
+        <strong>Debug Info:</strong> Students: {students.length} | Classes: {classes.length} | Teachers: {teachers.length} | Cases: {cases.length} | 
+        Current User Role: {authUser?.role} | Is Admin: {isAdmin ? 'Yes' : 'No'}
+      </div>
+
+      {/* Admin Statistics Overview */}
+      {isAdmin && showStats && caseStats.length > 0 && (
+        <div className="dc-admin-stats">
+          <h3>Cases by User (Admin Overview)</h3>
+          <div className="dc-stats-grid">
+            {caseStats.map((stat, index) => (
+              <div key={index} className="dc-stat-item">
+                <div className="stat-user">
+                  <strong>{stat.recorded_by_name || stat.recorded_by_username}</strong>
+                  <span className="stat-role">({stat.recorded_by_role})</span>
+                </div>
+                <div className="stat-numbers">
+                  <span className="stat-total">{stat.total_cases}</span>
+                  <span className="stat-resolved">{stat.resolved_cases}</span>
+                  <span className="stat-pending">{stat.pending_cases}</span>
+                </div>
+                <div className="stat-labels">
+                  <span>Total</span>
+                  <span>Resolved</span>
+                  <span>Pending</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="dc-content">
         {loading ? (
@@ -228,11 +354,13 @@ export default function DisciplineCases() {
               <thead>
                 <tr>
                   <th>S/N</th>
-                  <th>Student</th>
+                  <th>Type</th>
+                  <th>Person</th>
                   <th>Class</th>
                   <th>Case Description</th>
                   <th>Status</th>
                   <th>Recorded</th>
+                  <th>Recorded By</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -241,12 +369,24 @@ export default function DisciplineCases() {
                   <tr key={caseItem.id}>
                     <td>{index + 1}</td>
                     <td>
-                      <div className="student-info">
-                        <div className="student-name">{caseItem.student_name}</div>
-                        <div className="student-sex">{caseItem.student_sex}</div>
-                      </div>
+                      <span className={`case-type-badge ${caseItem.case_type || 'student'}`}>
+                        {caseItem.case_type === 'teacher' ? 'Teacher' : 'Student'}
+                      </span>
                     </td>
-                    <td>{caseItem.class_name}</td>
+                    <td>
+                      {caseItem.case_type === 'teacher' ? (
+                        <div className="teacher-info">
+                          <div className="teacher-name">{caseItem.teacher_name}</div>
+                          <div className="teacher-role">{caseItem.teacher_role}</div>
+                        </div>
+                      ) : (
+                        <div className="student-info">
+                          <div className="student-name">{caseItem.student_name}</div>
+                          <div className="student-sex">{caseItem.student_sex}</div>
+                        </div>
+                      )}
+                    </td>
+                    <td>{caseItem.class_name || 'N/A'}</td>
                     <td className="case-description">
                       <div className="description-text">{caseItem.case_description}</div>
                       {caseItem.resolution_notes && (
@@ -262,6 +402,12 @@ export default function DisciplineCases() {
                         {caseItem.resolved_at && (
                           <div>Resolved: {formatDate(caseItem.resolved_at)}</div>
                         )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="recorded-by-info">
+                        <div className="recorded-by-name">{caseItem.recorded_by_name || caseItem.recorded_by_username}</div>
+                        <div className="recorded-by-role">{caseItem.recorded_by_role}</div>
                       </div>
                     </td>
                     <td>
@@ -303,38 +449,75 @@ export default function DisciplineCases() {
                 ×
               </button>
             </div>
+            
+            {/* Tab Navigation */}
+            <div className="dc-modal-tabs">
+              <button 
+                className={`dc-tab ${activeTab === 'students' ? 'active' : ''}`}
+                onClick={() => handleTabChange('students')}
+              >
+                Student Cases
+              </button>
+              <button 
+                className={`dc-tab ${activeTab === 'teachers' ? 'active' : ''}`}
+                onClick={() => handleTabChange('teachers')}
+              >
+                Teacher Cases
+              </button>
+            </div>
+            
             <div className="dc-modal-body">
-              <div className="dc-form-group">
-                <label>Student Name</label>
-                <select
-                  value={selectedStudent}
-                  onChange={(e) => setSelectedStudent(e.target.value)}
-                  className="dc-select"
-                >
-                  <option value="">-- Select Student --</option>
-                  {students.map(student => (
-                    <option key={student.id} value={student.id}>
-                      {student.full_name} - {student.class_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="dc-form-group">
-                <label>Class</label>
-                <select
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
-                  className="dc-select"
-                >
-                  <option value="">-- Select Class --</option>
-                  {classes.map(cls => (
-                    <option key={cls.id} value={cls.id}>
-                      {cls.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {activeTab === 'students' ? (
+                <>
+                  <div className="dc-form-group">
+                    <label>Student Name</label>
+                    <select
+                      value={selectedStudent}
+                      onChange={(e) => setSelectedStudent(e.target.value)}
+                      className="dc-select"
+                    >
+                      <option value="">-- Select Student --</option>
+                      {students.map(student => (
+                        <option key={student.id} value={student.id}>
+                          {student.full_name} - {student.class_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="dc-form-group">
+                    <label>Class</label>
+                    <select
+                      value={selectedClass}
+                      onChange={(e) => setSelectedClass(e.target.value)}
+                      className="dc-select"
+                    >
+                      <option value="">-- Select Class --</option>
+                      {classes.map(cls => (
+                        <option key={cls.id} value={cls.id}>
+                          {cls.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <div className="dc-form-group">
+                  <label>Teacher Name</label>
+                  <select
+                    value={selectedTeacher}
+                    onChange={(e) => setSelectedTeacher(e.target.value)}
+                    className="dc-select"
+                  >
+                    <option value="">-- Select Teacher --</option>
+                    {teachers.map(teacher => (
+                      <option key={teacher.id} value={teacher.id}>
+                        {teacher.name || teacher.username} - {teacher.role}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               
               <div className="dc-form-group">
                 <label>Case Description</label>
@@ -342,7 +525,7 @@ export default function DisciplineCases() {
                   value={caseDescription}
                   onChange={(e) => setCaseDescription(e.target.value)}
                   className="dc-textarea"
-                  placeholder="Describe the disciplinary case in detail..."
+                  placeholder={`Describe the disciplinary case for ${activeTab === 'students' ? 'student' : 'teacher'} in detail...`}
                   rows={4}
                 />
               </div>
@@ -357,7 +540,9 @@ export default function DisciplineCases() {
               <button 
                 className="dc-primary-btn"
                 onClick={handleRecordCase}
-                disabled={loading || !selectedStudent || !selectedClass || !caseDescription.trim()}
+                disabled={loading || 
+                  (activeTab === 'students' ? (!selectedStudent || !selectedClass) : !selectedTeacher) || 
+                  !caseDescription.trim()}
               >
                 {loading ? 'Recording...' : 'Record Case'}
               </button>

@@ -75,7 +75,9 @@ export const ReportCardPage = () => {
         console.log(academicBands);
       } catch (err) {
         toast.error(
-          err.response?.data?.details || "Failed to load student Report Card"
+          err.response?.data?.details ||
+            err.response?.data?.message ||
+            "Failed to load student Report Card"
         );
         console.log("Failed to fetch report card", err);
       } finally {

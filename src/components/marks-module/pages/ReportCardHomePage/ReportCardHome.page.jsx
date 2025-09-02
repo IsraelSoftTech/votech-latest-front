@@ -6,11 +6,13 @@ import api, { headers, subBaseURL } from "../../utils/api";
 import Select from "react-select";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { FaArrowLeft, FaDownload } from "react-icons/fa";
+import { FaArrowLeft, FaDownload, FaLock } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 export const ReportCardHomePage = () => {
   const navigate = useNavigate();
+  const isReadOnly =
+    JSON.parse(sessionStorage.getItem("authUser") || "{}").role === "Admin1";
 
   const [loadingPage, setLoadingPage] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
@@ -122,14 +124,16 @@ export const ReportCardHomePage = () => {
           api.get("/classes"),
           api.get("/marks/terms"),
           api.get("/marks/sequences"),
-          fetch(`${subBaseURL}/specialties`, { headers }).then((r) => r.json()),
+          fetch(`${subBaseURL}/specialties`, { headers: headers() }).then((r) =>
+            r.json()
+          ),
         ]);
 
       setAcademicYears(yearsRes.data.data || []);
       setClasses(classesRes.data.data || []);
       setTerms(termsRes.data.data || []);
       setSequences(sequencesRes.data.data || []);
-      setDepartments(deptRes || []);
+      setDepartments(Array.isArray(deptRes) ? deptRes : []);
     } catch (err) {
       toast.error("Failed to load dropdowns.");
     } finally {
@@ -175,7 +179,7 @@ export const ReportCardHomePage = () => {
     const academicYear =
       academicYears.find((y) => y.id === filters.academic_year_id) || null;
     const department =
-      departments.find((d) => d.id === filters.department_id) || null;
+      (departments || []).find((d) => d.id === filters.department_id) || null;
     const klass = classes.find((c) => c.id === filters.class_id) || null;
 
     if (!academicYear || !department || !klass) {
@@ -207,7 +211,7 @@ export const ReportCardHomePage = () => {
   };
 
   const handleGoToMasterSheet = () => {
-    const departmentObj = departments.find(
+    const departmentObj = (departments || []).find(
       (d) => d.id === filters.department_id
     );
     const classObj = classes.find((c) => c.id === filters.class_id);
@@ -258,8 +262,8 @@ export const ReportCardHomePage = () => {
           academicYears.find((y) => y.id === filters.academic_year_id)?.name ||
           "AcademicYear";
         const department =
-          departments.find((d) => d.id === filters.department_id)?.name ||
-          "Department";
+          (departments || []).find((d) => d.id === filters.department_id)
+            ?.name || "Department";
         const klass =
           classes.find((c) => c.id === filters.class_id)?.name || "Class";
 
@@ -383,7 +387,14 @@ export const ReportCardHomePage = () => {
       )}
 
       <div className="report-card-home-page">
-        <h2>Generate Report Cards</h2>
+        <h2>
+          Generate Report Cards
+          {isReadOnly && (
+            <span className="read-only-badge">
+              <FaLock /> Read Only
+            </span>
+          )}
+        </h2>
 
         {loadingPage ? (
           <Skeleton height={35} count={6} style={{ marginBottom: "10px" }} />
@@ -424,14 +435,16 @@ export const ReportCardHomePage = () => {
               <div className="form-react-select">
                 <Select
                   placeholder="Select Department"
-                  options={departments.map((d) => ({
+                  options={(departments || []).map((d) => ({
                     value: d.id,
                     label: d.name,
                   }))}
                   value={
-                    departments.find((d) => d.id === filters.department_id) && {
+                    (departments || []).find(
+                      (d) => d.id === filters.department_id
+                    ) && {
                       value: filters.department_id,
-                      label: departments.find(
+                      label: (departments || []).find(
                         (d) => d.id === filters.department_id
                       )?.name,
                     }
@@ -508,14 +521,16 @@ export const ReportCardHomePage = () => {
                 View Master Sheet
               </button>
 
-              <button
-                className="btn btn-create"
-                disabled={!isMasterSheetReady || loadingReportCardPdfs}
-                aria-disabled={!isMasterSheetReady || loadingReportCardPdfs}
-                onClick={handleDownloadBulkPdfs}
-              >
-                Download all Report Cards <FaDownload />
-              </button>
+              {!isReadOnly && (
+                <button
+                  className="btn btn-create"
+                  disabled={!isMasterSheetReady || loadingReportCardPdfs}
+                  aria-disabled={!isMasterSheetReady || loadingReportCardPdfs}
+                  onClick={handleDownloadBulkPdfs}
+                >
+                  Download all Report Cards <FaDownload />
+                </button>
+              )}
             </div>
             {/* --- STUDENTS TABLE --- */}
 
@@ -539,24 +554,28 @@ export const ReportCardHomePage = () => {
                         <td>{s.student_id}</td>
                         <td>{s.full_name ?? s.name}</td>
                         <td>
-                          <Select
-                            placeholder="Select Term"
-                            options={filteredTerms.map((t) => ({
-                              label: `${t.name} (Term)`,
-                              value: { term: t, sequence: null },
-                            }))}
-                            onChange={(opt) =>
-                              handleGoToReportCard(s, opt.value.term, null)
-                            }
-                            menuPortalTarget={document.body}
-                            styles={{
-                              menuPortal: (base) => ({
-                                ...base,
-                                zIndex: 9999,
-                              }),
-                            }}
-                            isDisabled={loadingReportCardPdfs}
-                          />
+                          {!isReadOnly ? (
+                            <Select
+                              placeholder="Select Term"
+                              options={filteredTerms.map((t) => ({
+                                label: `${t.name} (Term)`,
+                                value: { term: t, sequence: null },
+                              }))}
+                              onChange={(opt) =>
+                                handleGoToReportCard(s, opt.value.term, null)
+                              }
+                              menuPortalTarget={document.body}
+                              styles={{
+                                menuPortal: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                }),
+                              }}
+                              isDisabled={loadingReportCardPdfs}
+                            />
+                          ) : (
+                            <span className="read-only-text">View Only</span>
+                          )}
                         </td>
                       </tr>
                     ))}

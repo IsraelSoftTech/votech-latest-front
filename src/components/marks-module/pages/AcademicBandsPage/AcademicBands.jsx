@@ -6,8 +6,11 @@ import { toast } from "react-toastify";
 import api, { headers, subBaseURL } from "../../utils/api";
 import Select from "react-select";
 import { CustomInput, SubmitBtn } from "../../components/Inputs/CustumInputs";
+import { FaLock } from "react-icons/fa";
 
 export const AcademicBandsPage = () => {
+  const isReadOnly = JSON.parse(sessionStorage.getItem('authUser') || '{}').role === 'Admin1';
+  
   const [data, setData] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -15,6 +18,7 @@ export const AcademicBandsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [form, setForm] = useState({
     academic_year_id: null,
@@ -33,7 +37,7 @@ export const AcademicBandsPage = () => {
   const fetchDepartments = async () => {
     try {
       const res = await fetch(`${subBaseURL}/specialties`, {
-        headers: headers,
+        headers: headers(),
       });
       const data = await res.json();
       setDepartments(data);
@@ -232,13 +236,22 @@ export const AcademicBandsPage = () => {
     <SideTop>
       <div className="academic-bands-page">
         <div className="page-header">
-          <h2>Academic Bands</h2>
-          <button
-            className="btn btn-primary"
-            onClick={() => setCreateModalOpen(true)}
-          >
-            Add / Edit Academic Bands
-          </button>
+          <h2>
+            Academic Bands
+            {isReadOnly && (
+              <span className="read-only-badge">
+                <FaLock /> Read Only
+              </span>
+            )}
+          </h2>
+          {!isReadOnly && (
+            <button
+              className="btn btn-primary"
+              onClick={() => setCreateModalOpen(true)}
+            >
+              Add / Edit Academic Bands
+            </button>
+          )}
         </div>
 
         {isLoading ? (
@@ -566,7 +579,10 @@ export const AcademicBandsPage = () => {
             <button type="button" className="btn btn-add" onClick={addBandRow}>
               Add Band Row
             </button>
-            <SubmitBtn title="Save Bands" loading={saving} />
+            <SubmitBtn
+              title={saving ? "Saving..." : "Save Bands"}
+              loading={saving}
+            />
           </form>
         </Modal>
       </div>

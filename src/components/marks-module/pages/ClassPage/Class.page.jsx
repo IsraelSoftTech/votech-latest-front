@@ -171,7 +171,9 @@ export const ClassPage = () => {
       }
     } catch (err) {
       toast.error(
-        err.response?.data?.details || "Failed to load academic years."
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to load academic years."
       );
       console.log(err);
     } finally {
@@ -202,7 +204,7 @@ export const ClassPage = () => {
   const fetchDepartments = async () => {
     try {
       const res = await fetch(`${subBaseURL}/specialties`, {
-        headers: headers,
+        headers: headers(),
       });
 
       const data = (await res.json()).map((dep) => ({
@@ -260,8 +262,13 @@ export const ClassPage = () => {
       toast.success("Class created successfully.");
       closeCreateModal();
       fetchClasses();
+      fetchStats();
     } catch (err) {
-      toast.error(err.response?.data?.details || "Failed to create class.");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to create class."
+      );
     } finally {
       setCreateLoading(false);
     }
@@ -274,8 +281,13 @@ export const ClassPage = () => {
       toast.success("Class updated successfully.");
       closeEditModal();
       fetchClasses();
+      fetchStats();
     } catch (err) {
-      toast.error(err.response?.data?.details || "Failed to update class.");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to update class."
+      );
     } finally {
       setEditLoading(false);
     }
@@ -286,8 +298,13 @@ export const ClassPage = () => {
       await api.delete(`/classes/${row.id}`);
       toast.success("Class deleted successfully.");
       fetchClasses();
+      fetchStats();
     } catch (err) {
-      toast.error(err.response?.data?.details || "Delete failed.");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Delete failed."
+      );
     }
   };
 

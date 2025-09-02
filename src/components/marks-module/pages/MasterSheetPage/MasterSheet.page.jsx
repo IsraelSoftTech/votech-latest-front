@@ -169,7 +169,9 @@ const MasterSheetPage = () => {
         console.log(err);
         if (reqId !== requestIdRef.current) return;
         setError(
-          err?.response?.data?.details || "Error fetching master sheet data"
+          err.response?.data?.details ||
+            err.response?.data?.message ||
+            "Error fetching master sheet data"
         );
         toast.error("Error fetching master sheet data");
         setLoading(false);

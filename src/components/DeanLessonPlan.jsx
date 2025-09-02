@@ -221,7 +221,10 @@ export default function DeanLessonPlan() {
       window.open(fileUrl, '_blank');
     } else {
       // For local files, construct the proper URL
-      const apiUrl = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' 
+      const isDevelopment = process.env.NODE_ENV === 'development' || 
+                           window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1';
+      const apiUrl = process.env.REACT_APP_API_URL || (isDevelopment 
         ? 'http://localhost:5000' 
         : 'https://api.votechs7academygroup.com');
       window.open(`${apiUrl}${fileUrl}`, '_blank');
@@ -310,7 +313,7 @@ export default function DeanLessonPlan() {
   const isDean = userRole === 'Dean';
   const isAdmin1 = userRole === 'Admin1';
   const isAdmin4 = userRole === 'Admin4';
-  const canUpload = !isAdmin1 && !isAdmin4 && !isDean; // Dean and Admin4 cannot upload, only manage
+  const canUpload = !isAdmin4 && !isDean; // Only Admin4 and Dean cannot upload, Admin1 can upload
   const canReview = isDean || isAdmin4; // Dean and Admin4 can review
   const showDashboard = isDean || isAdmin4; // Show enhanced dashboard for both Dean and Admin4
 
@@ -381,7 +384,7 @@ export default function DeanLessonPlan() {
               <div className="count">{getStatusCount('pending')}</div>
               <div className="desc">Pending Review</div>
             </div>
-            {!isAdmin1 && (
+            {(
               <>
                 <div className="lesson-plan-card">
                   <div className="count">{getStatusCount('approved')}</div>
@@ -480,6 +483,7 @@ export default function DeanLessonPlan() {
                     {showDashboard && <th>Teacher</th>}
                     {showDashboard && <th>Role</th>}
                     {showDashboard && <th>Review</th>}
+                    <th>Admin Comment</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -544,6 +548,22 @@ export default function DeanLessonPlan() {
                           )}
                         </td>
                       )}
+                      <td>
+                        {plan.admin_comment ? (
+                          <span 
+                            title={plan.admin_comment} 
+                            style={{ 
+                              cursor: 'help', 
+                              color: plan.status === 'rejected' ? '#dc3545' : plan.status === 'approved' ? '#28a745' : '#6c757d',
+                              fontWeight: '500'
+                            }}
+                          >
+                            {plan.admin_comment.length > 30 ? `${plan.admin_comment.substring(0, 30)}...` : plan.admin_comment}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#6c757d' }}>-</span>
+                        )}
+                      </td>
                       <td className="actions-cell">
                         <div className="action-buttons">
                           <button 

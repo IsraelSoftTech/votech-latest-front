@@ -12,9 +12,12 @@ import {
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
 import Stats from "../../components/Stats/Stats.component";
-import { FaCalendarAlt, FaCalendarCheck } from "react-icons/fa";
+import { FaCalendarAlt, FaCalendarCheck, FaLock } from "react-icons/fa";
+
 
 export const AcademicYear = () => {
+  const isReadOnly = JSON.parse(sessionStorage.getItem('authUser') || '{}').role === 'Admin1';
+  
   const columns = [
     { label: "S/N", accessor: "sn" },
     { label: "Name", accessor: "name" },
@@ -83,7 +86,11 @@ export const AcademicYear = () => {
         setData([]);
       }
     } catch (err) {
-      const message = err?.response?.data?.details || err?.message || "Failed to load academic years.";
+      console.log(err);
+      const message =
+        err.response?.data?.details ||
+        err?.message ||
+        "Failed to load academic years.";
       toast.error(message);
       setData([]);
     } finally {
@@ -102,7 +109,11 @@ export const AcademicYear = () => {
         : [];
       setStats(safeStats);
     } catch (err) {
-      toast.error(err?.response?.data?.details || "Error fetching statistics");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Error fetching statistics"
+      );
       setStats([]);
     }
   };
@@ -141,6 +152,7 @@ export const AcademicYear = () => {
       toast.success("Academic year created successfully.");
       closeCreateModal();
       fetchAcademicYears();
+      fetchStats();
     } catch (err) {
       // console.log(err.response.data.details);
       const serverError =
@@ -159,10 +171,13 @@ export const AcademicYear = () => {
       toast.success("Academic year updated successfully.");
       closeEditModal();
       fetchAcademicYears();
+      fetchStats();
     } catch (err) {
       console.log(err);
       const serverError =
-        err.response?.data?.message || "Failed to update academic year.";
+        err.response?.data?.details ||
+        err.response?.data?.message ||
+        "Failed to update academic year.";
       toast.error(serverError);
     } finally {
       setEditLoading(false);
@@ -229,6 +244,7 @@ export const AcademicYear = () => {
       await api.delete(`/academic-years/${row.id}`);
       toast.success("Academic year deleted successfully");
       fetchAcademicYears();
+      fetchStats();
     } catch (err) {
       toast.error(err.response.data.details || "Delete failed.");
     }
@@ -255,14 +271,23 @@ export const AcademicYear = () => {
   return (
     <SideTop>
       <div style={{ padding: "20px" }}>
-        <h2 className="page-title">Academic Years</h2>
+        <h2 className="page-title">
+          Academic Years
+          {isReadOnly && (
+            <span className="read-only-badge">
+              <FaLock /> Read Only
+            </span>
+          )}
+        </h2>
 
         <Stats data={stats} />
 
-        {/* Create Button */}
-        <button className="btn btn-create" onClick={openCreateModal}>
-          Create Academic Year
-        </button>
+        {/* Create Button - Hidden for Admin1 */}
+        {!isReadOnly && (
+          <button className="btn btn-create" onClick={openCreateModal}>
+            Create Academic Year
+          </button>
+        )}
 
         <DataTable
           columns={columns}
@@ -278,6 +303,9 @@ export const AcademicYear = () => {
             );
           }}
           filterCategories={["active"]}
+          editRoles={["Admin3"]}
+          deleteRoles={["Admin3"]}
+          userRole={JSON.parse(sessionStorage.getItem('authUser') || '{}').role}
         />
 
         {/* Details Modal */}

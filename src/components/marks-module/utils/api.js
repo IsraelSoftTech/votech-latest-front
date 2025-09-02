@@ -4,8 +4,14 @@ import axios from "axios";
 // export const baseURL = "http://localhost:5000/api/v1/";
 // export const subBaseURL = "http://localhost:5000/api";
 
-export const baseURL = "https://api.votechs7academygroup.com/api/v1/";
-export const subBaseURL = "https://api.votechs7academygroup.com/api";
+// Environment-based API URLs
+const isDevelopment = process.env.NODE_ENV === 'development' || 
+                     window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1';
+const apiBase = isDevelopment ? 'http://localhost:5000' : 'https://api.votechs7academygroup.com';
+
+export const baseURL = `${apiBase}/api/v1/`;
+export const subBaseURL = `${apiBase}/api`;
 
 const api = axios.create({
   baseURL,

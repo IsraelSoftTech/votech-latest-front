@@ -41,8 +41,9 @@
 .header-content {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 15px;
+  gap: 20px;
 }
 
 .left-section,
@@ -54,16 +55,39 @@
 }
 
 .center-emblem {
-  flex: 0 0 100px;
+  flex: 0 0 180px;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  text-align: center;
 }
 
 .report-card-logo {
-  height: 5rem;
-  width: 5rem;
+  height: 4rem;
+  width: 4rem;
   object-fit: cover;
+  margin-bottom: 8px;
+}
+
+.center-text {
+  text-align: center;
+}
+
+.igniting-text {
+  font-size: 12px;
+  font-weight: bold;
+  color: #204080;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.center-motto {
+  font-size: 9px;
+  font-style: italic;
+  color: #c9a96e;
+  font-weight: 600;
 }
 
 /* Header Text */
@@ -91,36 +115,27 @@
   color: #204080;
 }
 
-/* School Info */
-.school-info {
-  text-align: center;
-  margin: 15px 0;
-  padding: 10px;
-  border-top: 1px solid #204080;
-  border-bottom: 1px solid #204080;
-  background: linear-gradient(90deg, #f8f9ff 0%, #ffffff 50%, #f8f9ff 100%);
-}
-
-.school-name {
-  font-size: 16px;
+.department {
   font-weight: bold;
+  font-size: 8px;
+  margin-bottom: 3px;
   text-transform: uppercase;
   color: #204080;
-  letter-spacing: 2px;
-  margin-bottom: 3px;
 }
 
-.school-location {
+.school-name-header {
+  font-weight: bold;
   font-size: 10px;
-  color: #666;
   margin-bottom: 3px;
+  text-transform: uppercase;
+  color: #204080;
+  letter-spacing: 1px;
 }
 
-.school-motto {
+.location {
   font-size: 9px;
-  font-style: italic;
+  color: #666;
   font-weight: 600;
-  color: #c9a96e;
 }
 
 /* Document Title */
@@ -191,6 +206,8 @@
   padding: 8px;
   margin-bottom: 0;
   border-radius: 4px 4px 0 0;
+  display: flex !important;
+  justify-content: center !important;
 }
 
 .section-header h3 {
@@ -207,8 +224,6 @@
   border-radius: 0 0 4px 4px;
   overflow: hidden;
 }
-
-/* Any mark or average below 10 in red */
 
 .subjects-table th,
 .subjects-table td {
@@ -480,12 +495,6 @@
   z-index: 10;
   pointer-events: none;
   opacity: 0.04;
-  /* filter: grayscale(100%); */
-}
-
-.section-header {
-  display: flex !important;
-  justify-content: center !important;
 }
 
 .footer-text {
@@ -502,7 +511,6 @@
 
 .low-score {
   color: #cc0000;
-  /* font-weight: 700; */
 }
 
 .conduct-section h4,
@@ -512,59 +520,64 @@
 }
 
 /* ===============================
-     PROFESSIONAL PRINT STYLES
+     ENHANCED PRINT STYLES FOR GUARANTEED SINGLE PAGE
   =============================== */
 
 @media print {
-  /* Critical: Force single page */
+  /* Critical: CSS Custom Properties for Dynamic Scaling */
+  :root {
+    --page-width-mm: 210;
+    --page-height-mm: 297;
+    --page-margin-mm: 10;
+    --print-scale: 1; /* JavaScript dynamically sets this value */
+  }
+
+  /* A4 Page Setup */
   @page {
-    size: A4;
-    margin: 0.4in;
-    background: white;
-    margin: 10mm;
+    size: A4 portrait;
+    margin: calc(var(--page-margin-mm) * 1mm);
   }
 
-  .footer-text {
-    display: flex;
-  }
-
-  .report-card::before {
-    content: "";
-    position: absolute;
-    top: 60%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-15deg);
-    width: 700px;
-    height: 700px;
-    background: url("../../../../assets/logo.png") no-repeat center;
-    background-size: contain;
-    z-index: 10;
-    pointer-events: none;
-    opacity: 0.08;
-    /* filter: grayscale(100%); */
-  }
-
+  /* Force exact color reproduction */
   * {
     -webkit-print-color-adjust: exact !important;
     color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  /* Reset body and html for clean print */
   html,
   body {
     overflow: visible !important;
     background: #fff !important;
-    display: flex;
-    align-items: start;
-  }
-
-  body {
     margin: 0 !important;
     padding: 0 !important;
-    background: white !important;
-    overflow: hidden !important;
+    width: 100vw !important;
   }
 
+  .footer-text {
+    /* background-color: red; */
+    display: flex !important;
+    bottom: 2rem;
+  }
+
+  /* Enhanced watermark for print */
+  .report-card::before {
+    content: "";
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    width: 600px;
+    height: 600px;
+    background: url("../../../../assets/logo.png") no-repeat center;
+    background-size: contain;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0.08;
+  }
+
+  /* Container for printable area */
   .report-card-container {
     background: white !important;
     padding: 0 !important;
@@ -572,101 +585,156 @@
     height: auto !important;
     visibility: visible !important;
     box-shadow: none !important;
-    width: 100% !important;
-    font-size: 11px !important;
+    /* width: calc(
+      (var(--page-width-mm) - 2 * var(--page-margin-mm)) * 1mm
+    ) !important; */
+    /* max-width: calc(
+      (var(--page-width-mm) - 2 * var(--page-margin-mm)) * 1mm
+    ) !important; */
+    margin: 0 !important;
+    font-size: 15px !important;
     line-height: 1.12 !important;
+    width: 100% !important;
   }
 
   .report-card-container * {
     visibility: visible !important;
   }
 
+  /* Main report card with dynamic scaling */
   .report-card {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-shadow: none !important;
-    border: 1px solid #204080 !important;
     border: none !important;
-    padding: 8px !important;
+    padding: 6px !important;
     margin: 0 !important;
     overflow: visible !important;
-    font-size: 15px !important;
-    line-height: 1.1 !important;
+    box-shadow: none !important;
+    background: white !important;
 
-    /* Critical: Force everything to fit on one page */
-    height: auto !important;
-    max-height: none !important;
+    /* Dynamic scaling applied here */
+    /* width: calc(
+      ((var(--page-width-mm) - 2 * var(--page-margin-mm)) * 1mm) /
+        var(--print-scale)
+    ) !important; */
+    transform: scale(var(--print-scale)) !important;
+    transform-origin: top center !important;
+
+    /* Ensure single page */
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+
+    font-size: 12px !important;
+    line-height: 1.1 !important;
+    width: 100% !important;
   }
 
-  .remark-cell span {
-    font-size: 9px;
-  }
-
-  /* Compact header */
+  /* Compact header for print */
   .document-header {
-    padding: 6px !important;
-    margin-bottom: 8px !important;
+    padding: 4px !important;
+    margin-bottom: 6px !important;
     background: white !important;
+    border-bottom: 1px solid #204080 !important;
   }
 
   .header-content {
-    margin-bottom: 8px !important;
+    margin-bottom: 6px !important;
+    gap: 10px !important;
+    display: flex !important;
+  }
+
+  .left-section,
+  .right-section {
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+  }
+
+  .center-emblem {
+    flex: 0 0 120px !important;
   }
 
   .report-card-logo {
-    width: 90px !important;
-    height: 90px !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    margin-bottom: 4px !important;
   }
 
-  .school-info {
-    margin: 8px 0 !important;
-    padding: 6px !important;
-    background: white !important;
+  .igniting-text {
+    font-size: 10px !important;
+    margin-bottom: 2px !important;
+    width: 100% !important;
   }
 
-  .school-name {
-    font-size: 21px !important;
+  .center-motto {
+    font-size: 8px !important;
+  }
+
+  .republic-text {
+    font-size: 11px !important;
     margin-bottom: 2px !important;
   }
 
+  .motto {
+    font-size: 9px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .ministry {
+    font-size: 9px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .department {
+    font-size: 8px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .school-name-header {
+    font-size: 10px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .location {
+    font-size: 9px !important;
+  }
+
   .document-title h1 {
-    font-size: 21px !important;
+    font-size: 14px !important;
     margin-bottom: 3px !important;
   }
 
   .term-info {
-    font-size: 16px !important;
+    font-size: 12px !important;
   }
 
-  /* Compact student info */
+  /* Ultra-compact student info */
   .student-info {
-    margin-bottom: 10px !important;
-    padding: 6px !important;
+    margin-bottom: 6px !important;
+    padding: 4px !important;
     background: white !important;
   }
 
   .info-table {
-    border-spacing: 8px 2px !important;
+    border-spacing: 6px 2px !important;
   }
 
   .info-table td {
-    font-size: 15px !important;
-    padding: 2px 4px !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    padding: 1px 3px !important;
   }
 
   /* Ultra-compact subjects tables */
   .subjects-section {
-    margin-bottom: 8px !important;
+    margin-bottom: 6px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .section-header {
-    padding: 4px !important;
+    padding: 3px !important;
     background: #204080 !important;
     color: white !important;
-    display: flex !important;
-    justify-content: center !important;
   }
 
   .section-header h3 {
@@ -677,23 +745,28 @@
   .subjects-table td {
     font-size: 13px !important;
     padding: 1px 2px !important;
-    line-height: 1.1 !important;
+    line-height: 1 !important;
   }
 
   .subjects-table th {
-    height: 20px !important;
+    height: 18px !important;
     background: #e8eeff !important;
     color: #204080 !important;
+    font-size: 11px !important;
   }
 
   .subject-cell {
-    font-size: 73px !important;
-    padding-left: 3px !important;
+    font-size: 10px !important;
+    padding-left: 2px !important;
   }
 
   .teacher-cell {
-    font-size: 12px !important;
+    font-size: 9px !important;
     padding-left: 2px !important;
+  }
+
+  .remark-cell span {
+    font-size: 11px !important;
   }
 
   .subtotal-row {
@@ -702,87 +775,93 @@
 
   /* Compact performance summary */
   .performance-summary {
-    margin-bottom: 8px !important;
-    padding: 6px !important;
+    margin-bottom: 6px !important;
+    padding: 4px !important;
     background: white !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .summary-table {
-    border-spacing: 8px 3px !important;
+    border-spacing: 4px 2px !important;
   }
 
   .summary-table td {
-    font-size: 15px !important;
-    padding: 2px 6px !important;
+    font-size: 13px !important;
+    padding: 2px 4px !important;
   }
 
   /* Ultra-compact bottom section */
   .bottom-section {
-    gap: 8px !important;
-    margin-bottom: 8px !important;
+    gap: 6px !important;
+    margin-bottom: 6px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .conduct-section,
   .grading-scale,
   .admin-section {
-    padding: 6px !important;
+    padding: 4px !important;
     background: white !important;
   }
 
   .conduct-section h4,
   .grading-scale h4,
   .admin-section h4 {
-    font-size: 14px !important;
-    margin-bottom: 6px !important;
-    padding-bottom: 3px !important;
+    font-size: 13px !important;
+    margin-bottom: 4px !important;
+    padding-bottom: 2px !important;
   }
 
   .conduct-table td,
   .scale-table td,
   .admin-table td {
-    font-size: 13px !important;
-    padding: 1px 3px !important;
+    font-size: 12px !important;
+    padding: 1px 2px !important;
   }
 
   .conduct-table,
   .scale-table,
   .admin-table {
-    border-spacing: 0 2px !important;
+    border-spacing: 0 1px !important;
   }
 
   /* Compact signatures */
   .signature-section {
-    gap: 8px !important;
+    gap: 6px !important;
     margin-bottom: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .signature-box {
-    padding: 8px 6px !important;
-    min-height: 50px !important;
+    padding: 6px 4px !important;
+    min-height: 40px !important;
     background: white !important;
   }
 
   .signature-title {
-    font-size: 14px !important;
-    margin-bottom: 6px !important;
+    font-size: 12px !important;
+    margin-bottom: 12px !important;
   }
 
   .signature-line {
-    margin: 8px 0 !important;
+    margin: 4px 0 !important;
     height: 1px !important;
     width: 100% !important;
   }
 
   .signature-name {
     font-size: 11px !important;
-    margin-bottom: 2px !important;
+    margin-bottom: 1px !important;
   }
 
   .signature-date {
-    font-size: 12px !important;
+    font-size: 10px !important;
   }
 
-  /* Force no page breaks */
+  /* Prevent page breaks within critical sections */
   .document-header,
   .student-info,
   .subjects-section,
@@ -793,7 +872,7 @@
     break-inside: avoid !important;
   }
 
-  /* Remove all gradients and backgrounds for clean print */
+  /* Remove backgrounds and shadows for clean print */
   .document-header,
   .student-info,
   .performance-summary,
@@ -805,53 +884,22 @@
     box-shadow: none !important;
   }
 
-  .school-info {
-    background: white !important;
+  /* Ensure proper color contrast */
+  .low-score {
+    color: #cc0000 !important;
   }
 
-  /* Ensure borders print correctly */
-  .document-header,
-  .student-info,
-  .subjects-section,
-  .performance-summary,
-  .conduct-section,
-  .grading-scale,
-  .admin-section,
-  .signature-box {
-    border-color: #204080 !important;
-  }
-
-  /* Hide non-essential elements */
+  /* Hide non-essential print elements */
   .no-print {
     display: none !important;
   }
 
-  .low-score {
-    color: #cc0000 !important;
-    /* font-weight: 700; */
-  }
-
-  .summary-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 4px 4px;
-  }
-
-  .summary-table td {
-    padding: 4px 4px;
-    font-size: 8px;
-    font-weight: bold;
-  }
-
-  .summary-label {
-    color: #204080;
-    text-transform: uppercase;
-  }
-
-  .summary-value {
-    color: #333;
-    border-bottom: 1px solid #204080;
-    min-width: 80px;
+  /* Force single page constraint */
+  .report-card {
+    max-height: calc(
+      (var(--page-height-mm) - 2 * var(--page-margin-mm)) * 1mm
+    ) !important;
+    overflow: hidden !important;
   }
 }
 
@@ -898,72 +946,29 @@
   }
 }
 
-/* ========== AUTO-FIT TO ONE PAGE (A4) ========== */
-@media print {
-  :root {
-    --page-width-mm: 210;
-    --page-height-mm: 297;
-    --page-margin-mm: 10; /* must match your @page margin */
-    --print-scale: 1; /* JS sets this before printing */
-  }
-
-  @page {
-    size: A4 portrait;
-    margin: calc(var(--page-margin-mm) * 1mm);
-  }
-
-  /* Keep the outer container sized to the printable width */
-  .report-card-container {
-    width: calc(
-      (var(--page-width-mm) - 2 * var(--page-margin-mm)) * 1mm
-    ) !important;
-    margin: 0 auto !important;
-  }
-
-  /* Scale the report to fit in height while keeping printable width */
-  #reportCard {
-    /* Pre-scale width so after transform it visually equals printable width */
-    width: calc(
-      ((var(--page-width-mm) - 2 * var(--page-margin-mm)) * 1mm) /
-        var(--print-scale)
-    ) !important;
-    transform: scale(var(--print-scale)) !important;
-    transform-origin: top center !important;
-  }
-
-  /* Tighter, consistent print type (also fixes the 73px typo) */
+/* Enhanced mobile responsiveness */
+@media (max-width: 480px) {
   .report-card {
-    font-size: 11px !important;
-    line-height: 1.12 !important;
+    padding: 10px;
+    font-size: 10px;
   }
+
   .subjects-table th,
   .subjects-table td {
-    font-size: 10px !important;
-    line-height: 1.1 !important;
-    padding: 1px 2px !important;
-  }
-  .subject-cell {
-    font-size: 10px !important;
-    padding-left: 3px !important;
-  } /* FIXED from 73px */
-  .teacher-cell {
-    font-size: 9px !important;
-    padding-left: 2px !important;
-  }
-  .summary-table td {
-    font-size: 11px !important;
+    font-size: 7px;
+    padding: 2px 1px;
   }
 
-  /* Avoid extra borders and backgrounds to maximize space */
-  .document-header,
-  .student-info,
-  .subjects-section,
-  .performance-summary,
-  .conduct-section,
-  .grading-scale,
-  .admin-section,
-  .signature-box {
-    background: white !important;
-    box-shadow: none !important;
+  .header-content {
+    gap: 10px;
+  }
+
+  .center-emblem {
+    flex: 0 0 100px;
+  }
+
+  .report-card-logo {
+    height: 2.5rem;
+    width: 2.5rem;
   }
 }
