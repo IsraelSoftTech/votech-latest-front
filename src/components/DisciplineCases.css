@@ -143,6 +143,86 @@
   letter-spacing: 0.5px;
 }
 
+/* Admin Statistics Section */
+.dc-admin-stats {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.dc-admin-stats h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+}
+
+.dc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.dc-stat-item {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-user {
+  margin-bottom: 16px;
+}
+
+.stat-user strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.stat-role {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.stat-numbers {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 12px;
+}
+
+.stat-numbers span {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-total {
+  color: #1f2937;
+}
+
+.stat-resolved {
+  color: #059669;
+}
+
+.stat-pending {
+  color: #d97706;
+}
+
+.stat-labels {
+  display: flex;
+  justify-content: space-around;
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
 /* Content Section */
 .dc-content {
   background: white;
@@ -209,8 +289,47 @@
   vertical-align: top;
 }
 
+/* Recorded By Column Styles */
+.recorded-by-info {
+  text-align: center;
+}
+
+.recorded-by-name {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.recorded-by-role {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-style: italic;
+  text-transform: capitalize;
+}
+
 .dc-table tbody tr:hover {
   background: #f8fafc;
+}
+
+/* Case Type Badge */
+.case-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.case-type-badge.student {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.case-type-badge.teacher {
+  background: #fef3c7;
+  color: #d97706;
 }
 
 /* Student Info */
@@ -226,6 +345,24 @@
 }
 
 .student-sex {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+/* Teacher Info */
+.teacher-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.teacher-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.teacher-sex {
   font-size: 0.8rem;
   color: #6b7280;
   text-transform: uppercase;
@@ -336,6 +473,37 @@
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+}
+
+/* Modal Tabs */
+.dc-modal-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  margin: 0 24px;
+}
+
+.dc-tab {
+  flex: 1;
+  padding: 16px 24px;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.dc-tab:hover {
+  color: #374151;
+  background: #f9fafb;
+}
+
+.dc-tab.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+  background: #eff6ff;
 }
 
 .dc-modal {

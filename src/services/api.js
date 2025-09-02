@@ -2343,6 +2343,20 @@ class ApiService {
     return await this.handleResponse(response);
   }
 
+  async getDisciplineTeachers() {
+    const response = await fetch(`${API_URL}/discipline-cases/teachers`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getDisciplineCaseStats() {
+    const response = await fetch(`${API_URL}/discipline-cases/stats`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
   async createDisciplineCase(data) {
     const response = await fetch(`${API_URL}/discipline-cases`, {
       method: "POST",

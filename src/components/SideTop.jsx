@@ -387,7 +387,9 @@ export default function SideTop({ children }) {
   // Fetch my payslip count for roles that have Pay Slip
   useEffect(() => {
     let isMounted = true;
+    const isPageVisible = () => typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
     async function fetchPayslipCount() {
+      if (!isPageVisible()) return; // pause when tab hidden
       try {
         const list = await api.getMyPaidSalaries();
         if (isMounted) setMyPayslipCount(Array.isArray(list) ? list.length : 0);
@@ -396,11 +398,16 @@ export default function SideTop({ children }) {
       }
     }
     fetchPayslipCount();
-    // Increased interval from 1 minute to 5 minutes to reduce server load
-    const interval = setInterval(fetchPayslipCount, 5 * 60 * 1000);
+    // Increased interval from 5 minutes to 7 minutes to further reduce load
+    const interval = setInterval(fetchPayslipCount, 7 * 60 * 1000);
+    const onVisibility = () => {
+      if (isPageVisible()) fetchPayslipCount();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       isMounted = false;
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [authUser?.id]);
 
@@ -410,7 +417,9 @@ export default function SideTop({ children }) {
 
   useEffect(() => {
     let isMounted = true;
+    const isPageVisible = () => typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
     async function fetchStatus() {
+      if (!isPageVisible()) return;
       if (isTeacher) {
         try {
           const all = await api.getAllTeachers();
@@ -454,10 +463,14 @@ export default function SideTop({ children }) {
     }
     fetchStatus();
     // Listen for status update events
-    window.addEventListener("teacher-status-updated", fetchStatus);
+    const handler = () => fetchStatus();
+    const visHandler = () => { if (isPageVisible()) fetchStatus(); };
+    window.addEventListener("teacher-status-updated", handler);
+    document.addEventListener('visibilitychange', visHandler);
     return () => {
       isMounted = false;
-      window.removeEventListener("teacher-status-updated", fetchStatus);
+      window.removeEventListener("teacher-status-updated", handler);
+      document.removeEventListener('visibilitychange', visHandler);
     };
   }, [isTeacher, authUser]);
 
@@ -523,7 +536,9 @@ export default function SideTop({ children }) {
   if (authUser?.role === "Admin3") menuToShow = filterMenuItems(menuItems);
 
   useEffect(() => {
+    const isPageVisible = () => typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
     const fetchUnreadCount = async () => {
+      if (!isPageVisible()) return;
       try {
         const count = await api.getTotalUnreadCount();
         setUnreadMessageCount(count);
@@ -534,8 +549,8 @@ export default function SideTop({ children }) {
 
     fetchUnreadCount();
 
-    // Set up periodic refresh every 2 minutes for messages (increased from 30 seconds)
-    const interval = setInterval(fetchUnreadCount, 2 * 60 * 1000);
+    // Set up periodic refresh every 3 minutes for messages to reduce load
+    const interval = setInterval(fetchUnreadCount, 3 * 60 * 1000);
 
     // Listen for custom events when messages are sent/received
     const handleMessageChange = () => {
@@ -544,11 +559,14 @@ export default function SideTop({ children }) {
 
     window.addEventListener("messageSent", handleMessageChange);
     window.addEventListener("messageReceived", handleMessageChange);
+    const onVisibility = () => { if (isPageVisible()) fetchUnreadCount(); };
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener("messageSent", handleMessageChange);
       window.removeEventListener("messageReceived", handleMessageChange);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
 
@@ -572,10 +590,17 @@ export default function SideTop({ children }) {
   };
 
   useEffect(() => {
-    refreshEventsCount();
-    // Increased interval from 1 minute to 5 minutes to reduce server load
-    const interval = setInterval(refreshEventsCount, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    const isPageVisible = () => typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
+    const wrapped = () => { if (isPageVisible()) refreshEventsCount(); };
+    wrapped();
+    // Increase interval from 5 minutes to 7 minutes and pause when hidden
+    const interval = setInterval(wrapped, 7 * 60 * 1000);
+    const onVisibility = () => { if (isPageVisible()) wrapped(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
   // Handle bell click to navigate to events
