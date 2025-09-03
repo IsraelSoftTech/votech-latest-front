@@ -9,8 +9,9 @@ import { CustomInput, SubmitBtn } from "../../components/Inputs/CustumInputs";
 import { FaLock } from "react-icons/fa";
 
 export const AcademicBandsPage = () => {
-  const isReadOnly = JSON.parse(sessionStorage.getItem('authUser') || '{}').role === 'Admin1';
-  
+  const isReadOnly =
+    JSON.parse(sessionStorage.getItem("authUser") || "{}").role === "Admin1";
+
   const [data, setData] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [departments, setDepartments] = useState([]);
