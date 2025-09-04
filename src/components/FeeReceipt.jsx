@@ -3,6 +3,7 @@ import './FeeReceipt.css';
 import { FaDownload } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import logoImage from '../assets/logo.png';
 
 const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
   if (!receipt) return null;
@@ -34,7 +35,7 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
          width: 210mm;
          height: 297mm;
          margin: 0 auto;
-         padding: 6mm;
+         padding: 4mm;
          box-sizing: border-box;
          font-family: 'Times New Roman', serif;
          color: black;
@@ -44,7 +45,7 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
          overflow: visible;
          display: flex;
          flex-direction: column;
-         gap: 8mm;
+         gap: 6mm;
        `;
       
       // Clone the receipt content twice
@@ -52,8 +53,54 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
       if (receiptContent) {
         const firstReceipt = receiptContent.cloneNode(true);
         const secondReceipt = receiptContent.cloneNode(true);
+        
+        // Slightly increase height and allow overflow to ensure last rows show
+        firstReceipt.style.cssText = `
+          width: 100%;
+          height: 134mm; /* further increased to show all rows */
+          min-height: 134mm;
+          max-height: 134mm;
+          padding: 3.5mm;
+          border: 1px dotted #000;
+          background: linear-gradient(to bottom, #fefefe, #f5f5f0);
+          box-sizing: border-box;
+          overflow: visible;
+          page-break-inside: avoid;
+          break-inside: avoid;
+        `;
+        
+        secondReceipt.style.cssText = `
+          width: 100%;
+          height: 134mm; /* further increased to show all rows */
+          min-height: 134mm;
+          max-height: 134mm;
+          padding: 3.5mm;
+          border: 1px dotted #000;
+          background: linear-gradient(to bottom, #fefefe, #f5f5f0);
+          box-sizing: border-box;
+          overflow: visible;
+          page-break-inside: avoid;
+          break-inside: avoid;
+        `;
+        
         tempContainer.appendChild(firstReceipt);
         tempContainer.appendChild(secondReceipt);
+
+        // Tweak spacing to keep within page
+        tempContainer.style.gap = '6mm';
+        tempContainer.style.padding = '5mm';
+
+        // Inject minor style overrides in the temp container to save space
+        const style = document.createElement('style');
+        style.textContent = `
+          .fee-types-table th, .fee-types-table td { padding: 0.6mm !important; font-size: 7pt !important; }
+          .summary-table td { padding: 0.6mm !important; font-size: 7pt !important; }
+          .receipt-header { margin-bottom: 2mm !important; }
+          .amount-summary-section { margin-bottom: 1mm !important; }
+          .receipt-main { margin-bottom: 2mm !important; }
+          .fee-types-section { margin-bottom: 2mm !important; }
+        `;
+        tempContainer.appendChild(style);
       }
       
       // Add to DOM temporarily
@@ -76,14 +123,14 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
         windowHeight: tempContainer.scrollHeight,
         logging: false,
         removeContainer: false,
-                 onclone: (clonedDoc) => {
-           // Ensure proper spacing in cloned document
-           const clonedContainer = clonedDoc.querySelector('.temp-pdf-container');
-           if (clonedContainer) {
-             clonedContainer.style.padding = '6mm';
-             clonedContainer.style.gap = '8mm';
-           }
-         }
+        onclone: (clonedDoc) => {
+          // Ensure proper spacing in cloned document
+          const clonedContainer = clonedDoc.querySelector('.temp-pdf-container');
+          if (clonedContainer) {
+            clonedContainer.style.padding = '5mm';
+            clonedContainer.style.gap = '6mm';
+          }
+        }
       });
       
       // Remove temporary container
@@ -129,8 +176,13 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
     <div className="receipt-template">
       {/* Header Section */}
       <div className="receipt-header">
-        <div className="school-name">VOTECH(S7) ACADEMY</div>
-        <h1 className="receipt-title">Fee Receipt</h1>
+        <div className="header-with-logo">
+          <img src={logoImage} alt="School Logo" className="school-logo" />
+          <div className="school-info">
+            <div className="school-name">VOTECH(S7) ACADEMY</div>
+            <h1 className="receipt-title">Fee Receipt</h1>
+          </div>
+        </div>
         <div className="receipt-meta">
           <div className="meta-row">
             <span className="meta-label">Date:</span>
@@ -175,7 +227,7 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
               <th>Expected (XAF)</th>
               <th>Paid (XAF)</th>
               <th>Balance (XAF)</th>
-              <th>Status</th>
+              <th>Percentage</th>
             </tr>
           </thead>
           <tbody>
@@ -184,11 +236,11 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
               const balanceOwed = balance[type] || 0;
               const amountPaid = expectedFee - balanceOwed;
               
-              // If expected fee is 0, show "-" for status
-              let feeStatus = '-';
+              // Calculate percentage paid
+              let percentage = '-';
               if (expectedFee > 0) {
-                feeStatus = balanceOwed === 0 && amountPaid > 0 ? 'Completed' : 
-                           amountPaid > 0 ? 'Partial' : 'Pending';
+                const percent = Math.round((amountPaid / expectedFee) * 100);
+                percentage = `${percent}%`;
               }
               
               return (
@@ -197,8 +249,8 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
                   <td className="fee-expected">{expectedFee.toLocaleString()}</td>
                   <td className="fee-paid">{amountPaid.toLocaleString()}</td>
                   <td className="fee-balance">{balanceOwed.toLocaleString()}</td>
-                  <td className={`fee-status ${expectedFee > 0 ? feeStatus.toLowerCase() : 'no-fee'}`}>
-                    {feeStatus}
+                  <td className={`fee-percentage ${expectedFee > 0 ? (amountPaid === expectedFee ? 'completed' : amountPaid > 0 ? 'partial' : 'pending') : 'no-fee'}`}>
+                    {percentage}
                   </td>
                 </tr>
               );
@@ -236,7 +288,7 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
 
   return (
     <div className="receipt-container" ref={ref}>
-      {/* Single Receipt - will be duplicated when printing/PDF */}
+      {/* Single Receipt for display */}
       <ReceiptContent />
       
       <button className="download-pdf-btn" onClick={downloadPDF}>

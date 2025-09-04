@@ -1,10 +1,10 @@
 /* FeeReport.css */
 .fee-report-container {
   background: white;
-  padding: 20mm;
+  padding: 12mm;
   margin: 0 auto;
-  width: 210mm; /* A4 width */
-  min-height: 297mm; /* A4 height */
+  width: 297mm; /* A4 landscape width */
+  min-height: 210mm; /* A4 landscape height */
   box-sizing: border-box;
   font-family: "Arial", sans-serif;
   color: black;

@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import FeeReport from './FeeReport';
 import FeeReceipt from './FeeReceipt';
 import { usePermissions } from '../hooks/usePermissions';
-import { FaEdit, FaTrash, FaMoneyBillWave, FaEye, FaDownload, FaLock } from 'react-icons/fa';
+import { FaEdit, FaPrint, FaMoneyBillWave, FaEye, FaDownload, FaLock } from 'react-icons/fa';
 
 export default function Fee() {
   const location = useLocation();
@@ -30,6 +30,7 @@ export default function Fee() {
   const [studentFeeStats, setStudentFeeStats] = React.useState(null);
   const [feeStatsLoading, setFeeStatsLoading] = React.useState(false);
   const [feeStatsError, setFeeStatsError] = React.useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [paymentModalOpen, setPaymentModalOpen] = React.useState(false);
   const [receiptModalOpen, setReceiptModalOpen] = React.useState(false);
   const [payType, setPayType] = React.useState('');
@@ -141,42 +142,15 @@ export default function Fee() {
   };
 
   // Fetch students and their fee details on mount
+  // Auto-load data once when page opens
   useEffect(() => {
     fetchStudentsAndFees();
   }, []);
 
-  // Refresh data when component comes into focus (user returns from payment page)
-  useEffect(() => {
-    const handleFocus = () => {
-      // Refresh data when window gains focus (user returns to tab)
-      fetchStudentsAndFees();
-    };
-
-    const handleVisibilityChange = () => {
-      // Refresh data when page becomes visible (user switches back to tab)
-      if (!document.hidden) {
-        fetchStudentsAndFees();
-      }
-    };
-
-    // Add event listeners
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+  // Keep static; no auto-refresh on focus/visibility
 
   // Refresh data when location changes (user navigates back to this component)
-  useEffect(() => {
-    // If we're on the main fee page (not a specific student), refresh data
-    if (location.pathname === '/admin-fee') {
-      fetchStudentsAndFees();
-    }
-  }, [location.pathname]);
+  // Removed auto refresh on navigation change
 
   // Filter students based on search query and class filter
   useEffect(() => {
@@ -212,11 +186,15 @@ export default function Fee() {
     let totalBalance = 0;
     
     feeTypes.forEach(type => {
-      const expected = feeStats.balance?.[type] || 0;
-      const paid = feeStats.paid?.[type] || 0;
+      // Get expected amount from student's class fees
+      const expected = parseFloat(feeStats.student?.[type.toLowerCase() + '_fee']) || 0;
+      // Calculate paid amount: expected - balance
+      const balance = feeStats.balance?.[type] || 0;
+      const paid = Math.max(0, expected - balance);
+      
       totalExpected += expected;
       totalPaid += paid;
-      totalBalance += (expected - paid);
+      totalBalance += balance;
     });
     
     return {
@@ -259,6 +237,33 @@ export default function Fee() {
     setPaymentModalOpen(true);
   };
 
+  // Helper to compute already paid for a fee type using cached stats
+  const getAlreadyPaidForType = (studentId, typeLabel) => {
+    try {
+      const stats = studentFeeDetails[studentId];
+      if (!stats) return 0;
+      const typeKey = String(typeLabel || '').trim();
+      const expected = parseFloat(stats.student?.[typeKey.toLowerCase() + '_fee']) || 0;
+      const balanceOwed = stats.balance?.[typeKey] || 0;
+      const paid = Math.max(0, expected - balanceOwed);
+      return paid;
+    } catch {
+      return 0;
+    }
+  };
+
+  // Helper to get expected amount for fee type from student's class fees
+  const getExpectedForType = (studentId, typeLabel) => {
+    try {
+      const stats = studentFeeDetails[studentId];
+      if (!stats) return 0;
+      const expected = parseFloat(stats.student?.[String(typeLabel).toLowerCase() + '_fee']) || 0;
+      return expected;
+    } catch {
+      return 0;
+    }
+  };
+
   // Handle clear student fees
   const handleClearStudentFees = async (student) => {
     if (window.confirm(`Are you sure you want to clear all fee records for ${student.full_name}? This action will permanently delete all payment records and cannot be undone.`)) {
@@ -291,6 +296,16 @@ export default function Fee() {
     }
   };
 
+  // Handle print/download receipt from Actions
+  const handlePrintReceipt = async (student) => {
+    await handleGenerateReceipt(student);
+    // Allow modal to render then trigger download button programmatically
+    setTimeout(() => {
+      const btn = document.querySelector('.download-pdf-btn');
+      if (btn) btn.click();
+    }, 300);
+  };
+
   // Fetch and aggregate total paid/owed on mount
   useEffect(() => {
     const fetchInitialTotals = async () => {
@@ -315,33 +330,70 @@ export default function Fee() {
     }
   }, [feeStatsModalOpen, classes.length]);
 
-  // Fetch class stats when proceed is clicked
+  // Build class stats using current frontend fee table details to ensure consistency
   useEffect(() => {
-    if (proceedClicked && selectedClassName) {
-      setClassStatsLoading(true);
-      setClassStatsError('');
-      // Find class_id by class name
-      const foundClass = classes.find(c => c.name === selectedClassName);
-      setDebugInfo(d => ({ ...d, className: selectedClassName, classId: foundClass ? foundClass.id : '' }));
-      if (!foundClass) {
-        setClassStatsError('Class not found.');
-        setClassStatsLoading(false);
-        setDebugInfo(d => ({ ...d, backendResponse: null }));
-        return;
+    const buildStats = async () => {
+      if (proceedClicked && selectedClassName) {
+        setClassStatsLoading(true);
+        setClassStatsError('');
+        try {
+          const feeTypes = ['Registration','Bus','Tuition','Internship','Remedial','PTA'];
+          const inClass = students.filter(s => (s.class_name || s.class || '') === selectedClassName);
+          // fetch missing details for students in class
+          const missing = inClass.filter(s => !studentFeeDetails[s.id]);
+          if (missing.length) {
+            try {
+              const results = await Promise.all(missing.map(async m => {
+                try { return { id: m.id, details: await api.getStudentFeeStats(m.id) }; } catch { return { id: m.id, details: null }; }
+              }));
+              const updates = {};
+              results.forEach(r => { if (r.details) updates[r.id] = r.details; });
+              if (Object.keys(updates).length) {
+                setStudentFeeDetails(prev => ({ ...prev, ...updates }));
+              }
+            } catch {}
+          }
+          // map rows using latest details
+          const currentDetails = (sid) => (studentFeeDetails[sid] || {});
+          const mapped = inClass.map(s => {
+            const details = currentDetails(s.id);
+            const row = {
+              id: s.id,
+              student_id: s.student_id,
+              name: s.full_name,
+              full_name: s.full_name,
+            };
+            let totalPaid = 0;
+            let totalBalance = 0;
+            let totalExpected = 0;
+            feeTypes.forEach(t => {
+              const expected = details && details.student ? (parseFloat(details.student?.[t.toLowerCase() + '_fee']) || 0) : 0;
+              const balance = details && details.balance ? (details.balance?.[t] || 0) : expected;
+              const paid = Math.max(0, expected - balance);
+              row[t] = paid;
+              row[`${t}_expected`] = expected;
+              row[`${t}_balance`] = balance;
+              totalPaid += paid;
+              totalBalance += balance;
+              totalExpected += expected;
+            });
+            row.Expected = totalExpected;
+            row.Total = totalPaid;
+            row.Balance = totalBalance;
+            row.Status = totalBalance === 0 && totalPaid > 0 ? 'Paid' : totalPaid > 0 ? 'Partial' : 'Unpaid';
+            return row;
+          });
+          setClassStats(mapped);
+          setClassStatsLoading(false);
+          setDebugInfo(d => ({ ...d, className: selectedClassName, classId: '', backendResponse: mapped }));
+        } catch (err) {
+          setClassStatsError('Failed to build class fee statistics.');
+          setClassStatsLoading(false);
+        }
       }
-      api.getClassFeeStats(foundClass.id)
-        .then(data => {
-          setClassStats(data);
-          setClassStatsLoading(false);
-          setDebugInfo(d => ({ ...d, backendResponse: data }));
-        })
-        .catch((err) => {
-          setClassStatsError('Failed to fetch class fee statistics.');
-          setClassStatsLoading(false);
-          setDebugInfo(d => ({ ...d, backendResponse: err && err.message ? err.message : String(err) }));
-        });
-    }
-  }, [proceedClicked, selectedClassName, classes]);
+    };
+    buildStats();
+  }, [proceedClicked, selectedClassName, students, studentFeeDetails]);
 
   // Generate fee report
   const generateFeeReport = () => {
@@ -350,33 +402,29 @@ export default function Fee() {
       return;
     }
 
-    // Calculate totals
+    const feeTypes = ['Registration','Bus','Tuition','Internship','Remedial','PTA'];
+
+    // Calculate totals using the same mapped classStats rows shown in the modal
     const totalStudents = classStats.length;
-    const totalExpected = classStats.reduce((sum, student) => {
-      const expected = (student.Registration || 0) + (student.Bus || 0) + (student.Tuition || 0) + 
-                      (student.Internship || 0) + (student.Remedial || 0) + (student.PTA || 0);
-      return sum + expected;
-    }, 0);
-    
-    const totalPaid = classStats.reduce((sum, student) => sum + (student.Total || 0), 0);
-    const totalOwed = classStats.reduce((sum, student) => sum + (student.Balance || 0), 0);
+    const totalExpected = classStats.reduce((sum, s) => sum + (s.Expected || 0), 0);
+    const totalPaid = classStats.reduce((sum, s) => sum + (s.Total || 0), 0);
+    const totalOwed = classStats.reduce((sum, s) => sum + (s.Balance || 0), 0);
     const paymentRate = totalExpected > 0 ? totalPaid / totalExpected : 0;
 
     // Process students data
-    const students = classStats.map(student => {
-      const expectedFees = (student.Registration || 0) + (student.Bus || 0) + (student.Tuition || 0) + 
-                          (student.Internship || 0) + (student.Remedial || 0) + (student.PTA || 0);
-      const paidFees = student.Total || 0;
-      const owedFees = student.Balance || 0;
+    const students = classStats.map(s => {
+      const expectedFees = s.Expected || 0;
+      const paidFees = s.Total || 0;
+      const owedFees = s.Balance || 0;
       
       let paymentStatus = 'uncompleted';
       if (owedFees === 0) paymentStatus = 'completed';
       else if (paidFees > 0) paymentStatus = 'partial';
       
       return {
-        id: student.student_id || Math.random().toString(),
-        student_id: student.student_id || 'N/A',
-        full_name: student.name,
+        id: s.id || Math.random().toString(),
+        student_id: s.student_id || 'N/A',
+        full_name: s.name || s.full_name,
         expectedFees,
         paidFees,
         owedFees,
@@ -384,28 +432,8 @@ export default function Fee() {
       };
     });
 
-    // Calculate fee breakdown by type
-    const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
-    const feeBreakdown = feeTypes.map(type => {
-      const expected = classStats.reduce((sum, student) => sum + (student[type] || 0), 0);
-      const paid = classStats.reduce((sum, student) => {
-        const studentPaid = student.Total || 0;
-        const studentExpected = (student.Registration || 0) + (student.Bus || 0) + (student.Tuition || 0) + 
-                               (student.Internship || 0) + (student.Remedial || 0) + (student.PTA || 0);
-        const ratio = studentExpected > 0 ? studentPaid / studentExpected : 0;
-        return sum + ((student[type] || 0) * ratio);
-      }, 0);
-      const owed = expected - paid;
-      const paymentRate = expected > 0 ? paid / expected : 0;
-      
-      return {
-        type,
-        expected,
-        paid,
-        owed,
-        paymentRate
-      };
-    });
+    // We removed the type breakdown from the report per your request
+    const feeBreakdown = [];
 
     const report = {
       className: selectedClassName,
@@ -468,24 +496,54 @@ export default function Fee() {
     if (!selectedStudent || !payType || !payAmount) return;
     
     try {
-      await api.payStudentFee({
-        student_id: selectedStudent.id,
-        class_id: selectedStudent.class_id,
-        fee_type: payType,
-        amount: parseFloat(payAmount)
-      });
+      // Interpret the entered amount as the desired total paid for this fee type.
+      // Only increases are supported via creating a new payment record.
+      const desiredTotal = parseFloat(payAmount) || 0;
+      const alreadyPaid = getAlreadyPaidForType(selectedStudent.id, payType);
+      const expected = getExpectedForType(selectedStudent.id, payType);
+
+      if (desiredTotal > expected) {
+        alert(`Amount exceeds expected for ${payType}. Max allowed is ${expected.toLocaleString()} XAF.`);
+        return;
+      }
+
+      let message = 'No changes made.';
+      if (desiredTotal < alreadyPaid) {
+        // Decrease by reconciling to the new total
+        await api.reconcileStudentFee({
+          student_id: selectedStudent.id,
+          fee_type: payType,
+          total_amount: desiredTotal
+        });
+        message = 'Fee reduced successfully!';
+      } else if (desiredTotal > alreadyPaid) {
+        // Increase by topping up the delta
+        const delta = desiredTotal - alreadyPaid;
+        await api.payStudentFee({
+          student_id: selectedStudent.id,
+          class_id: selectedStudent.class_id,
+          fee_type: payType,
+          amount: delta
+        });
+        message = 'Fee updated successfully!';
+      }
       
-      // Refresh the data
-      await fetchStudentsAndFees();
+      // Update only this student's cached stats so the table reflects immediately
+      try {
+        const refreshed = await api.getStudentFeeStats(selectedStudent.id);
+        setStudentFeeDetails(prev => ({ ...prev, [selectedStudent.id]: refreshed }));
+      } catch {}
       
       // Close modal and show success message
       setPaymentModalOpen(false);
       setPayType('');
       setPayAmount('');
       setSelectedStudent(null);
-      alert('Fee updated successfully!');
+      setSuccessMessage(message);
+      setTimeout(() => setSuccessMessage(''), 4000);
     } catch (error) {
       console.error('Error updating fee:', error);
+      setSuccessMessage('');
       alert('Failed to update fee. Please try again.');
     }
   };
@@ -501,6 +559,19 @@ export default function Fee() {
   return (
     <SideTop>
       <div className="fee-main-content">
+        {successMessage && (
+          <div style={{
+            background: '#e6ffed',
+            color: '#065f46',
+            border: '1px solid #34d399',
+            borderRadius: 8,
+            padding: '10px 14px',
+            marginBottom: 12,
+            fontWeight: 600
+          }}>
+            {successMessage}
+          </div>
+        )}
         <div className="fee-header">
           <h2>
             Fee Payment
@@ -741,9 +812,9 @@ export default function Fee() {
                               )}
                           {!isReadOnly && (
                             <button
-                              onClick={() => handleClearStudentFees(student)}
+                              onClick={() => handlePrintReceipt(student)}
                               style={{
-                                background: '#ff9500',
+                                background: '#6c63ff',
                                 color: '#fff',
                                 border: 'none',
                                 borderRadius: '4px',
@@ -754,9 +825,9 @@ export default function Fee() {
                                 alignItems: 'center',
                                 gap: '4px'
                               }}
-                              title="Clear Student Fees"
+                              title="Print Receipt"
                             >
-                              <FaTrash size={12} />
+                              <FaPrint size={12} />
                             </button>
                           )}
                             </div>
@@ -863,9 +934,9 @@ export default function Fee() {
                           </tr>
                         </thead>
                         <tbody>
-                          {classStats
+                          {(classStats || [])
                             .slice()
-                            .sort((a,b)=>a.name.localeCompare(b.name))
+                            .sort((a,b)=> (a?.name || '').localeCompare(b?.name || ''))
                             .map((s,idx)=>{
                               return (
                                 <tr key={s.name+idx}>
@@ -996,7 +1067,19 @@ export default function Fee() {
                <label>Fee Type</label>
                <select 
                  value={payType} 
-                 onChange={e => setPayType(e.target.value)} 
+                 onChange={async e => {
+                   const selected = e.target.value;
+                   setPayType(selected);
+                   // Refresh stats for accurate prefill if the user edited before
+                   if (selected && selectedStudent) {
+                     try {
+                       const refreshed = await api.getStudentFeeStats(selectedStudent.id);
+                       setStudentFeeDetails(prev => ({ ...prev, [selectedStudent.id]: refreshed }));
+                     } catch {}
+                     const alreadyPaid = getAlreadyPaidForType(selectedStudent.id, selected);
+                     setPayAmount(alreadyPaid ? String(alreadyPaid) : '');
+                   }
+                 }} 
                  required 
                  className="text-select"
                  style={{

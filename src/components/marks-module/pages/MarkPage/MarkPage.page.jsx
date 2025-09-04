@@ -61,7 +61,13 @@ export const MarksUploadPage = () => {
       });
 
       const data = await res.json();
-      setDepartments(data);
+
+      if (Array.isArray(data) && data.length > 0) {
+        setDepartments(data);
+      } else {
+        setDepartments([]);
+      }
+
       // console.log(data);
     } catch (err) {
       toast.error("Error fetching departments.");
