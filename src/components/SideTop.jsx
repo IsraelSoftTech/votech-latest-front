@@ -67,6 +67,10 @@ export default function SideTop({ children }) {
 
   const authUser = JSON.parse(sessionStorage.getItem("authUser"));
   const username = authUser?.username || "User";
+  
+  // Debug logging for Admin4 role detection
+  console.log('Current user role:', authUser?.role);
+  console.log('Is Admin4?', authUser?.role === "Admin4");
 
   // Added: derive unread flag to avoid undefined reference
   const hasUnread = unreadMessageCount > 0;
@@ -81,6 +85,7 @@ export default function SideTop({ children }) {
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
+      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
       {
         label: "Departments",
@@ -140,6 +145,7 @@ export default function SideTop({ children }) {
         icon: <FaClipboardList />,
         path: "/admin-discipline-cases",
       },
+      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
       {
         label: "Counselling Cases",
         icon: <FaClipboardList />,
@@ -249,35 +255,20 @@ export default function SideTop({ children }) {
       { label: "Events", icon: <FaCalendarAlt />, path: "/my-events" },
     ];
   } else if (authUser?.role === "Admin4") {
+    console.log('Setting Admin4 menu items');
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/dean" },
- 
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
-      { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
-      // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
-      {
-        label: "Departments",
-        icon: <FaClipboardList />,
-        path: "/admin-specialty",
-      },
+      { label: "Departments", icon: <FaClipboardList />, path: "/admin-specialty" },
       { label: "Messages", icon: <FaEnvelope />, path: "/dean-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
-      { label: "ID Cards", icon: <FaIdCard />, path: "/admin-idcards" },
-      {
-        label: "Subjects",
-        path: "/academics/subjects",
-        icon: <FaBookOpen />,
-      },
-      // { label: "Marks", icon: <FaChartBar />, path: "/dean-marks" },
-      {
-        label: "Lesson Plans",
-        icon: <FaPenFancy />,
-        path: "/dean-lesson-plans",
-      },
       { label: "Events", icon: <FaCalendarAlt />, path: "/dean-events" },
-      { label: "My Events", icon: <FaCalendarAlt />, path: "/my-events" },
-      { label: "Staff Management", icon: <FaUserTie />, path: "/dean-staff" },
+      { label: "Timetables", icon: <FaCalendarAlt />, path: "/timetables" },
+      { label: "Subjects", path: "/academics/subjects", icon: <FaBookOpen /> },
+      { label: "Lesson Plans", icon: <FaPenFancy />, path: "/dean-lesson-plans" },
+      { label: "HODs", icon: <FaUserTie />, path: "/admin-hods" },
     ];
+    console.log('Admin4 menu items set:', menuItems);
   } else if (authUser?.role === "Teacher") {
     menuItems = [
       {
@@ -339,6 +330,7 @@ export default function SideTop({ children }) {
  
       { label: "Cases", icon: <FaClipboardList />, path: "/psycho-cases" },
       { label: "Discipline Cases", icon: <FaExclamationTriangle />, path: "/psycho-discipline-cases" },
+      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
       {
         label: "Subjects",
         path: "/academics/subjects",
@@ -351,6 +343,22 @@ export default function SideTop({ children }) {
       },
       { label: "Messages", icon: <FaEnvelope />, path: "/psycho-messages" },
     ];
+  } else if (authUser?.role === "Discipline") {
+    menuItems = [
+      { label: "Dashboard", icon: <MdDashboard />, path: "/dsc-dashboard" },
+      { label: "Cases", icon: <FaClipboardList />, path: "/dsc-cases" },
+      { label: "Discipline Cases", icon: <FaExclamationTriangle />, path: "/dsc-discipline-cases" },
+      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
+      { label: "Messages", icon: <FaEnvelope />, path: "/dsc-messages" },
+    ];
+  } else if (authUser?.role === "Admin1") {
+    // Inject Teachers' Cases into Admin1 menu (view-only page handles RBAC)
+    const base = [
+      { label: "Dashboard", icon: <MdDashboard />, path: "/admin-dashboard" },
+      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
+    ];
+    // Keep existing Admin1 items if present earlier in file; here we minimal-add to ensure visibility
+    menuItems = [...base, ...menuItems];
   }
 
   // Automatically expand parent menu on first load if a submenu route is active,
@@ -376,13 +384,19 @@ export default function SideTop({ children }) {
 
   // Filter out My Classes for Admin1 users
   const filterMenuItems = (items) => {
+    console.log('Filtering menu items for role:', authUser?.role);
+    console.log('Input items:', items);
     if (authUser?.role === "Admin1") {
-      return items.filter((item) => item?.label !== "My Classes");
+      const filtered = items.filter((item) => item?.label !== "My Classes");
+      console.log('Filtered Admin1 items:', filtered);
+      return filtered;
     }
+    console.log('No filtering applied, returning all items:', items);
     return items;
   };
 
   let menuToShow = filterMenuItems(menuItems);
+  console.log('Final menuToShow:', menuToShow);
 
   // Fetch my payslip count for roles that have Pay Slip
   useEffect(() => {
@@ -509,8 +523,8 @@ export default function SideTop({ children }) {
     { label: "Dashboard", icon: <MdDashboard />, path: "/dean" },
     
     { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
-    { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
-    { label: "Classes", icon: <FaBook />, path: "/admin-class" },
+
+    { label: "HODs", icon: <FaUserTie />, path: "/admin-hods" },
     {
       label: "Departments",
       icon: <FaClipboardList />,
@@ -518,7 +532,7 @@ export default function SideTop({ children }) {
     },
     { label: "Messages", icon: <FaEnvelope />, path: "/dean-messages" },
     { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
-    { label: "My Events", icon: <FaCalendarAlt />, path: "/my-events" },
+    { label: "Events", icon: <FaCalendarAlt />, path: "/my-events" },
     { label: "Timetables", icon: <FaClipboardList />, path: "/timetables" },
 
     // { label: "Marks", icon: <FaChartBar />, path: "/dean-marks" },
@@ -532,7 +546,7 @@ export default function SideTop({ children }) {
 
   // Use correct menu for each role
   if (isTeacher) menuToShow = filterMenuItems(teacherMenuItems);
-  if (authUser?.role === "Admin4") menuToShow = filterMenuItems(deanMenuItems);
+  // Admin4 uses its own menu items defined above, not deanMenuItems
   if (authUser?.role === "Admin3") menuToShow = filterMenuItems(menuItems);
 
   useEffect(() => {
@@ -696,7 +710,9 @@ export default function SideTop({ children }) {
         </div>
 
         <nav className="menu">
+          {console.log('Rendering menu items:', menuToShow)}
           {menuToShow.filter(Boolean).map((item) => {
+            console.log('Rendering menu item:', item);
             const hasSubmenu =
               Array.isArray(item.submenu) && item.submenu.length > 0;
             const isExpanded = hasSubmenu && expandedMenu === item.label;

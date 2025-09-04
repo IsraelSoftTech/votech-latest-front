@@ -17,11 +17,43 @@ export default function CreateGroupModal({ isOpen, onClose, onGroupCreated }) {
 
   const fetchUsers = async () => {
     try {
-      const usersData = await api.getAllUsersForChat();
-      setUsers(usersData);
+      const authUser = JSON.parse(sessionStorage.getItem('authUser') || 'null');
+      const [usersData, hods] = await Promise.all([
+        api.getAllUsersForChat(),
+        api.getHODs().catch(() => [])
+      ]);
+
+      // If current user is a HOD, fetch their department detail to get teachers list
+      const myHodLite = Array.isArray(hods)
+        ? hods.find(h => String(h.hod_user_id) === String(authUser?.id))
+        : null;
+
+      if (myHodLite && myHodLite.id) {
+        let myHodFull = null;
+        try {
+          myHodFull = await api.getHOD(myHodLite.id);
+        } catch (_) {
+          myHodFull = null;
+        }
+
+        const teacherIds = Array.isArray(myHodFull?.teachers)
+          ? myHodFull.teachers.map(t => t.id)
+          : [];
+        const allowedIds = new Set([String(myHodLite.hod_user_id), ...teacherIds.map(String)]);
+
+        const filtered = Array.isArray(usersData)
+          ? usersData.filter(u => allowedIds.has(String(u.id)))
+          : [];
+        setUsers(filtered);
+        return;
+      }
+
+      // Otherwise (admins or non-HOD users), leave users as-is
+      setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (error) {
       console.error('Error fetching users:', error);
       setError('Failed to load users');
+      setUsers([]);
     }
   };
 

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { FaEnvelope, FaPaperclip, FaTimes, FaFilePdf, FaImage } from 'react-icons/fa';
+import { FaEnvelope, FaPaperclip, FaTimes, FaFilePdf, FaImage, FaUsers } from 'react-icons/fa';
 import './DeanMessage.css';
 import api from '../services/api';
 import SideTop from './SideTop';
+import CreateGroupModal from './CreateGroupModal';
+import SuccessMessage from './SuccessMessage';
 
 export default function DeanMessage() {
   const { userId } = useParams();
@@ -18,6 +20,9 @@ export default function DeanMessage() {
   const [usersLoading, setUsersLoading] = useState(true);
   const [usersError, setUsersError] = useState('');
   const [hasUnread, setHasUnread] = useState(false);
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const canCreateGroup = authUser?.role === 'Admin4';
 
   // Chat view state
   const [chatUser, setChatUser] = useState(null);
@@ -36,41 +41,36 @@ export default function DeanMessage() {
     if (userId) return; // Don't fetch chat list if in chat view
     setUsersLoading(true);
     setUsersError('');
-    // Fetch all users for chat and chat list (for last message/unread)
+    // Fetch all users for chat and groups the current user belongs to
     Promise.all([
       api.getAllUsersForChat(),
-      api.getChatList()
+      api.getGroups()
     ])
-      .then(([allUsers, chatListRaw]) => {
-        console.log('DeanMessage - Raw chat list data:', chatListRaw);
-        console.log('DeanMessage - Group chats from raw data:', chatListRaw.filter(c => c.type === 'group'));
-        // Build a map of userId to chatList entry
-        const chatMap = {};
-        chatListRaw.forEach(c => {
-          if (c.type === 'user') chatMap[c.id] = c;
-        });
-        // For each user, create a chat entry (with lastMessage/unread if exists)
-        const allUserChats = allUsers.map(u => {
-          const chat = chatMap[u.id] || {};
-          return {
-            id: u.id,
-            username: u.username,
-            name: u.name,
-            lastMessage: chat.lastMessage || null,
-            unread: chat.unread || 0,
-            type: 'user'
-          };
-        });
-        // Add group chats from chatListRaw
-        const groupChats = chatListRaw.filter(c => c.type === 'group');
-        // Merge and sort
+      .then(([allUsers, groups]) => {
+        const allUserChats = Array.isArray(allUsers) ? allUsers.map(u => ({
+          id: u.id,
+          username: u.username,
+          name: u.name,
+          lastMessage: null,
+          unread: 0,
+          type: 'user'
+        })) : [];
+        const groupChats = Array.isArray(groups) ? groups.map(g => ({
+          id: g.id,
+          groupName: g.name,
+          name: g.name,
+          lastMessage: null,
+          unread: 0,
+          created_at: g.created_at,
+          type: 'group'
+        })) : [];
         const allChats = [...allUserChats, ...groupChats].sort((a, b) => {
-          const aTime = a.lastMessage?.time ? new Date(a.lastMessage.time) : new Date(0);
-          const bTime = b.lastMessage?.time ? new Date(b.lastMessage.time) : new Date(0);
+          const aTime = a.lastMessage?.time ? new Date(a.lastMessage.time) : (a.created_at ? new Date(a.created_at) : new Date(0));
+          const bTime = b.lastMessage?.time ? new Date(b.lastMessage.time) : (b.created_at ? new Date(b.created_at) : new Date(0));
           return bTime - aTime;
         });
         setChatList(allChats);
-        setHasUnread(allChats.some(u => u.unread > 0));
+        setHasUnread(allChats.some(u => parseInt(u.unread) > 0));
       })
       .catch(() => setUsersError('Failed to fetch users.'))
       .finally(() => setUsersLoading(false));
@@ -250,6 +250,33 @@ export default function DeanMessage() {
     );
   };
 
+  const handleCreateGroup = () => {
+    setShowCreateGroupModal(true);
+  };
+
+  const handleGroupCreated = () => {
+    setSuccessMsg('Group created successfully!');
+    // Refresh groups list
+    Promise.all([
+      api.getAllUsersForChat(),
+      api.getGroups()
+    ]).then(([allUsers, groups]) => {
+      const allUserChats = Array.isArray(allUsers) ? allUsers.map(u => ({
+        id: u.id, username: u.username, name: u.name, lastMessage: null, unread: 0, type: 'user'
+      })) : [];
+      const groupChats = Array.isArray(groups) ? groups.map(g => ({
+        id: g.id, groupName: g.name, name: g.name, lastMessage: null, unread: 0, created_at: g.created_at, type: 'group'
+      })) : [];
+      const allChats = [...allUserChats, ...groupChats].sort((a, b) => {
+        const aTime = a.lastMessage?.time ? new Date(a.lastMessage.time) : (a.created_at ? new Date(a.created_at) : new Date(0));
+        const bTime = b.lastMessage?.time ? new Date(b.lastMessage.time) : (b.created_at ? new Date(b.created_at) : new Date(0));
+        return bTime - aTime;
+      });
+      setChatList(allChats);
+      setHasUnread(allChats.some(u => parseInt(u.unread) > 0));
+    }).catch(() => setUsersError('Failed to fetch users.'));
+  };
+
   // Render chat view if userId is present
   if (userId) {
     if (chatLoading) return <SideTop activeTab="Messages"><div style={{ padding: 48, textAlign: 'center' }}>Loading chat...</div></SideTop>;
@@ -336,6 +363,34 @@ export default function DeanMessage() {
 
   return (
     <SideTop hasUnread={hasUnread} activeTab="Messages">
+      {successMsg && (
+        <SuccessMessage message={successMsg} onClose={() => setSuccessMsg('')} />
+      )}
+      {canCreateGroup && (
+        <div style={{ marginTop: 16, textAlign: 'center' }}>
+          <button
+            onClick={handleCreateGroup}
+            style={{
+              background: '#204080',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '10px 20px',
+              fontSize: 16,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 2px 8px rgba(32,64,128,0.2)'
+            }}
+            onMouseEnter={(e) => e.target.style.background = '#1a3668'}
+            onMouseLeave={(e) => e.target.style.background = '#204080'}
+          >
+            <FaUsers /> Create Group
+          </button>
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 32, marginTop: 32, flexWrap: 'wrap' }}>
         <div className="card" style={{ flex: 1, minWidth: 180, background: '#fff', boxShadow: '0 2px 8px rgba(32,64,128,0.06)', borderRadius: 12, padding: 24 }}>
           <div style={{ fontSize: 18, fontWeight: 600, color: '#204080' }}>Unread Messages</div>
@@ -416,6 +471,11 @@ export default function DeanMessage() {
           </div>
         )}
       </div>
+      <CreateGroupModal
+        isOpen={showCreateGroupModal}
+        onClose={() => setShowCreateGroupModal(false)}
+        onGroupCreated={handleGroupCreated}
+      />
     </SideTop>
   );
 } 

@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useMemo, useRef } from 'react';
 import { FaDownload } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -44,32 +44,32 @@ const TimeTableReport = forwardRef(({ data }, ref) => {
     reportScopeAll,
   } = data;
 
+  const containerRef = useRef(null);
+  const classRefs = useRef({});
+
   const downloadPDF = async () => {
-    if (!ref.current) return;
     try {
-      const canvas = await html2canvas(ref.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
+      const pdf = new jsPDF('l', 'mm', 'a4');
+      const margin = 8; // mm
+      const pageWidth = 297 - margin * 2;
+      const pageHeight = 210 - margin * 2;
+      let isFirst = true;
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      for (const cls of classList) {
+        const el = classRefs.current[cls.id];
+        if (!el) continue;
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+        const imgData = canvas.toDataURL('image/png');
+        const imgW = pageWidth;
+        const imgH = (canvas.height * imgW) / canvas.width;
+        if (!isFirst) pdf.addPage('a4', 'l');
+        pdf.addImage(imgData, 'PNG', margin, margin, imgW, Math.min(imgH, pageHeight));
+        isFirst = false;
       }
 
       const fileName = `timetable_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -85,55 +85,49 @@ const TimeTableReport = forwardRef(({ data }, ref) => {
     return t?.grid || [];
   };
 
-  const classList = reportScopeAll ? classes : classes.filter(c => hasGridFor(c.id));
+  const classList = useMemo(() => (reportScopeAll ? classes : classes.filter(c => hasGridFor(c.id))), [classes, reportScopeAll, timetable]);
+
+  React.useImperativeHandle(ref, () => ({ downloadPDF }));
 
   return (
-    <div ref={ref} style={{ background: '#fff', padding: 16, color: '#111827' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>VOTECH (S7)</h2>
-          <div style={{ fontWeight: 600 }}>Class Timetables</div>
-          <div style={{ color: '#555' }}>Start: {startTime} • Period: {periodDurationMin}min • Break: {breakDurationMin}min</div>
-        </div>
-        <button className="tt-btn" onClick={downloadPDF}>
-          <FaDownload /> Download PDF
-        </button>
-      </div>
-
-      {classList.map((cls) => {
+    <div ref={containerRef} style={{ background: '#fff', padding: 16, color: '#111827' }}>
+      {classList.map((cls, idx) => {
         const classId = cls.id;
         const grid = getGridFor(classId);
         if (!grid || grid.length === 0) return null;
-        const daysCount = grid.length || (dayLabels?.length || 0);
+        const isLast = idx === classList.length - 1;
         return (
-          <div key={classId} style={{ marginTop: 18, pageBreakInside: 'avoid' }}>
-            <div style={{ fontWeight: 700, marginBottom: 8 }}>{getClassName(classId)}</div>
-            <div style={{ overflowX: 'auto', border: '1px solid #e5e7eb', borderRadius: 8 }}>
-              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+          <div key={classId} ref={el => (classRefs.current[classId] = el)} style={{ marginBottom: 12, pageBreakAfter: isLast ? 'auto' : 'always', width: 1120 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ fontWeight: 800, fontSize: 18 }}>{getClassName(classId)} - Timetable</div>
+              <div style={{ color: '#6b7280' }}>Periods/day: {periodsPerDay} • Period: {periodDurationMin} min • Break: {breakDurationMin} min</div>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <thead>
                   <tr>
-                    <th style={{ position: 'sticky', left: 0, background: '#f8fafc', borderRight: '1px solid #e5e7eb', padding: 8 }}>Day / Period</th>
-                    {Array.from({ length: periodsPerDay }, (_, i) => (
-                      <th key={i} style={{ background: '#f8fafc', borderRight: '1px solid #e5e7eb', padding: 8 }}>
-                        P{i + 1}
-                        <div style={{ fontSize: 11, color: '#6b7280' }}>
-                          {formatHHMM(computePeriodStartMinutes(i, startTime, periodsPerDay, periodDurationMin, breakPeriodIndexes, breakDurationMin))}
-                        </div>
-                      </th>
+                    <th style={{ width: 140, border: '1px solid #e5e7eb', padding: 6 }}>Time</th>
+                    {dayLabels.map((d) => (
+                      <th key={d} style={{ border: '1px solid #e5e7eb', padding: 6 }}>{d}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.from({ length: daysCount }, (_, d) => (
-                    <tr key={d}>
-                      <th style={{ position: 'sticky', left: 0, background: '#f8fafc', borderRight: '1px solid #e5e7eb', padding: 8 }}>{dayLabels?.[d] || `Day ${d + 1}`}</th>
-                      {Array.from({ length: periodsPerDay }, (_, p) => {
-                        const slot = grid[d]?.[p];
+                  {Array.from({ length: periodsPerDay }, (_, p) => (
+                    <tr key={p}>
+                      <td style={{ border: '1px solid #e5e7eb', padding: 6, fontWeight: 600 }}>
+                        P{p + 1}
+                        <div style={{ color: '#6b7280', fontWeight: 400 }}>
+                          {formatHHMM(computePeriodStartMinutes(p, startTime, periodsPerDay, periodDurationMin, breakPeriodIndexes, breakDurationMin))}
+                        </div>
+                      </td>
+                      {dayLabels.map((_, dIndex) => {
+                        const slot = grid[dIndex]?.[p];
                         const startMin = computePeriodStartMinutes(p, startTime, periodsPerDay, periodDurationMin, breakPeriodIndexes, breakDurationMin);
                         if (slot?.isBreak) {
                           const endMin = startMin + breakDurationMin;
                           return (
-                            <td key={p} style={{ background: '#111827', color: '#fff', padding: 8, textAlign: 'center' }}>
+                            <td key={dIndex} style={{ border: '1px solid #e5e7eb', background: '#f3f4f6', textAlign: 'center', padding: 6 }}>
                               Break
                               <div style={{ fontSize: 11 }}>{formatHHMM(startMin)}–{formatHHMM(endMin)}</div>
                             </td>
@@ -141,14 +135,10 @@ const TimeTableReport = forwardRef(({ data }, ref) => {
                         }
                         const subj = slot?.subjectName || (slot?.subjectId != null ? getSubjectName(Number(slot.subjectId)) : '');
                         const teach = slot?.teacherName || (slot?.teacherId != null ? formatTeacherName(String(slot.teacherId)) : '');
-                        const showTime = !!subj;
                         return (
-                          <td key={p} style={{ padding: 8, borderTop: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb' }}>
-                            <div style={{ fontWeight: 600 }}>{subj}</div>
-                            <div style={{ fontSize: 12, color: '#374151' }}>{teach}</div>
-                            {showTime ? (
-                              <div style={{ fontSize: 11, color: '#6b7280' }}>{formatHHMM(startMin)}–{formatHHMM(startMin + periodDurationMin)}</div>
-                            ) : null}
+                          <td key={dIndex} style={{ border: '1px solid #e5e7eb', padding: 6 }}>
+                            <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{subj}</div>
+                            <div style={{ color: '#6b7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{teach}</div>
                           </td>
                         );
                       })}

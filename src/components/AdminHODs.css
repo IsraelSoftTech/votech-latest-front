@@ -1,0 +1,562 @@
+/* AdminHODs Component Styles */
+.admin-hods-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header */
+.admin-hods-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.admin-hods-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.admin-hods-create-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.admin-hods-create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.admin-hods-create-btn:active {
+  transform: translateY(0);
+}
+
+/* Stats Cards */
+.admin-hods-stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.admin-hods-stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e1e5e9;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+.admin-hods-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.admin-hods-stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+
+.admin-hods-stat-card.admin-hods-total .admin-hods-stat-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.admin-hods-stat-card.admin-hods-suspended .admin-hods-stat-icon {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.admin-hods-stat-card.admin-hods-active .admin-hods-stat-icon {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.admin-hods-stat-content h3 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #1a1a1a;
+}
+
+.admin-hods-stat-content p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Table Container */
+.admin-hods-table-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e1e5e9;
+}
+
+.admin-hods-table-container h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 24px 0;
+}
+
+/* Table Styles */
+.admin-hods-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-hods-table-header {
+  display: grid;
+  grid-template-columns: 2fr 2fr 2fr 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.admin-hods-table-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 2fr 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid #e9ecef;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.admin-hods-table-row:hover {
+  background-color: #f8f9fa;
+}
+
+.admin-hods-table-row.admin-hods-suspended {
+  opacity: 0.7;
+  background-color: #fff5f5;
+}
+
+.admin-hods-table-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.admin-hods-cell-icon {
+  color: #6c757d;
+  font-size: 16px;
+  min-width: 20px;
+}
+
+.admin-hods-user-name, .admin-hods-subject-name {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.admin-hods-user-username, .admin-hods-subject-code {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.admin-hods-status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-hods-status-badge.admin-hods-active {
+  background-color: #d4edda;
+  color: #f8faf8;
+}
+
+.admin-hods-status-badge.admin-hods-suspended {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Actions */
+.admin-hods-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.admin-hods-action-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.admin-hods-action-btn.admin-hods-edit {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.admin-hods-action-btn.admin-hods-edit:hover {
+  background-color: #ffeaa7;
+}
+
+.admin-hods-action-btn.admin-hods-suspend {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.admin-hods-action-btn.admin-hods-suspend:hover {
+  background-color: #f5c6cb;
+}
+
+.admin-hods-action-btn.admin-hods-activate {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.admin-hods-action-btn.admin-hods-activate:hover {
+  background-color: #c3e6cb;
+}
+
+.admin-hods-action-btn.admin-hods-delete {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.admin-hods-action-btn.admin-hods-delete:hover {
+  background-color: #f5c6cb;
+}
+
+/* Loading and No Data */
+.admin-hods-loading, .admin-hods-no-data {
+  text-align: center;
+  padding: 48px;
+  color: #6c757d;
+  font-size: 16px;
+}
+
+/* Modal Styles */
+.admin-hods-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.admin-hods-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.admin-hods-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid #e9ecef;
+  margin-bottom: 24px;
+}
+
+.admin-hods-modal-header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.admin-hods-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.admin-hods-close-btn:hover {
+  background-color: #f8f9fa;
+}
+
+/* Form Styles */
+.admin-hods-modal form {
+  padding: 0 24px 24px 24px;
+}
+
+.admin-hods-form-group {
+  margin-bottom: 24px;
+}
+
+.admin-hods-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 14px;
+}
+
+.admin-hods-form-group input,
+.admin-hods-form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.admin-hods-form-group input:focus,
+.admin-hods-form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Teachers Selection */
+.admin-hods-teachers-selection {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f8f9fa;
+}
+
+.admin-hods-teacher-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.admin-hods-teacher-checkbox:hover {
+  background-color: #e9ecef;
+}
+
+.admin-hods-teacher-checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.admin-hods-teacher-info {
+  flex: 1;
+}
+
+.admin-hods-teacher-name {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 14px;
+}
+
+.admin-hods-teacher-username {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* Modal Actions */
+.admin-hods-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e9ecef;
+}
+
+.admin-hods-modal-actions button {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.admin-hods-modal-actions button:first-child {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border-color: #e9ecef;
+}
+
+.admin-hods-modal-actions button:first-child:hover {
+  background-color: #e9ecef;
+}
+
+.admin-hods-submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.admin-hods-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .admin-hods-container {
+    padding: 16px;
+  }
+  
+  .admin-hods-stats-cards {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  
+  .admin-hods-table-header,
+  .admin-hods-table-row {
+    grid-template-columns: 1.5fr 1.5fr 1.5fr 1fr 1fr 1fr 1.5fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-hods-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .admin-hods-create-btn {
+    align-self: stretch;
+    justify-content: center;
+  }
+  
+  .admin-hods-stats-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .admin-hods-table-header,
+  .admin-hods-table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .admin-hods-table-header {
+    display: none;
+  }
+  
+  .admin-hods-table-row {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    padding: 16px;
+  }
+  
+  .admin-hods-table-cell {
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f3f4;
+  }
+  
+  .admin-hods-table-cell:last-child {
+    border-bottom: none;
+  }
+  
+  .admin-hods-table-cell::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #495057;
+    margin-right: 16px;
+  }
+  
+  .admin-hods-modal {
+    margin: 20px;
+    max-height: calc(100vh - 40px);
+  }
+  
+  .admin-hods-modal-actions {
+    flex-direction: column;
+  }
+  
+  .admin-hods-modal-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-hods-container {
+    padding: 12px;
+  }
+  
+  .admin-hods-header h1 {
+    font-size: 24px;
+  }
+  
+  .admin-hods-stat-card {
+    padding: 16px;
+  }
+  
+  .admin-hods-stat-content h3 {
+    font-size: 24px;
+  }
+  
+  .admin-hods-modal {
+    margin: 10px;
+  }
+  
+  .admin-hods-modal form {
+    padding: 0 16px 16px 16px;
+  }
+  
+  .admin-hods-modal-header {
+    padding: 16px 16px 0 16px;
+  }
+}
