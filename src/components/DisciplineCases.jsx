@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
 import './DisciplineCases.css';
-import { FaPlus, FaTrash, FaEdit, FaCheck, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaEdit, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 
 export default function DisciplineCases() {
   const [cases, setCases] = useState([]);
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [teachers, setTeachers] = useState([]);
+  
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -21,9 +21,9 @@ export default function DisciplineCases() {
   
   // Form state
   const [showRecordModal, setShowRecordModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('students'); // 'students' or 'teachers'
+  
+  // Student-only flow
   const [selectedStudent, setSelectedStudent] = useState('');
-  const [selectedTeacher, setSelectedTeacher] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [caseDescription, setCaseDescription] = useState('');
   
@@ -32,13 +32,22 @@ export default function DisciplineCases() {
   const [editingCase, setEditingCase] = useState(null);
   const [newStatus, setNewStatus] = useState('');
   const [resolutionNotes, setResolutionNotes] = useState('');
-  
-  // Delete confirmation
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+
+  // Ensure user is authenticated; if not, redirect to signin
+  useEffect(() => {
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    if (!token) {
+      alert('Your session has expired. Please sign in again.');
+      window.location.href = '/signin';
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  
 
   const loadData = async () => {
     setLoading(true);
@@ -70,13 +79,7 @@ export default function DisciplineCases() {
         console.error('✗ Error loading classes:', error);
       }
       
-      try {
-        const teachersData = await api.getDisciplineTeachers();
-        console.log('✓ Discipline teachers data loaded:', teachersData);
-        setTeachers(teachersData);
-      } catch (error) {
-        console.error('✗ Error loading teachers:', error);
-      }
+      
       
       // Load case statistics for Admin users
       if (isAdmin) {
@@ -94,51 +97,43 @@ export default function DisciplineCases() {
   };
 
   const handleRecordCase = async () => {
-    if (activeTab === 'students') {
-      if (!selectedStudent || !selectedClass || !caseDescription.trim()) {
-        alert('Please fill in all fields for student case');
-        return;
-      }
-    } else {
-      if (!selectedTeacher || !caseDescription.trim()) {
-        alert('Please fill in all fields for teacher case');
-        return;
-      }
+    if (!selectedStudent || !selectedClass || !caseDescription.trim()) {
+      alert('Please fill in all fields for student case');
+      return;
     }
 
     setLoading(true);
     try {
-      const caseData = activeTab === 'students' 
-        ? {
-            student_id: selectedStudent,
-            class_id: selectedClass,
-            case_description: caseDescription.trim(),
-            case_type: 'student'
-          }
-        : {
-            teacher_id: selectedTeacher,
-            case_description: caseDescription.trim(),
-            case_type: 'teacher'
-          };
-
+      const caseData = {
+        student_id: selectedStudent,
+        class_id: selectedClass,
+        case_description: caseDescription.trim(),
+        case_type: 'student'
+      };
       await api.createDisciplineCase(caseData);
       
-      setSuccessMessage(`Discipline case for ${activeTab === 'students' ? 'student' : 'teacher'} recorded successfully`);
+      setSuccessMessage('Discipline case for student recorded successfully');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
       
       // Reset form and close modal
       setSelectedStudent('');
-      setSelectedTeacher('');
+      
       setSelectedClass('');
       setCaseDescription('');
       setShowRecordModal(false);
-      setActiveTab('students');
       
       // Reload data
       loadData();
     } catch (error) {
       console.error('Error recording case:', error);
+      if (String(error?.message || '').toLowerCase().includes('session expired')) {
+        alert('Your session has expired. Please sign in again.');
+        sessionStorage.removeItem('token');
+        localStorage.removeItem('token');
+        window.location.href = '/signin';
+        return;
+      }
       alert('Failed to record case. Please try again.');
     }
     setLoading(false);
@@ -149,6 +144,10 @@ export default function DisciplineCases() {
 
     setLoading(true);
     try {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Missing auth token');
+      }
       await api.updateDisciplineCaseStatus(editingCase.id, {
         status: newStatus,
         resolution_notes: resolutionNotes.trim() || null
@@ -168,6 +167,13 @@ export default function DisciplineCases() {
       loadData();
     } catch (error) {
       console.error('Error updating status:', error);
+      if (String(error?.message || '').toLowerCase().includes('session expired')) {
+        alert('Your session has expired. Please sign in again.');
+        sessionStorage.removeItem('token');
+        localStorage.removeItem('token');
+        window.location.href = '/signin';
+        return;
+      }
       alert('Failed to update status. Please try again.');
     }
     setLoading(false);
@@ -185,27 +191,22 @@ export default function DisciplineCases() {
       loadData();
     } catch (error) {
       console.error('Error deleting case:', error);
+      if (String(error?.message || '').toLowerCase().includes('session expired')) {
+        alert('Your session has expired. Please sign in again.');
+        sessionStorage.removeItem('token');
+        localStorage.removeItem('token');
+        window.location.href = '/signin';
+        return;
+      }
       alert('Failed to delete case. Please try again.');
     }
     setLoading(false);
   };
 
-  const handleDeleteAll = async () => {
-    if (!confirm('Are you sure you want to delete ALL discipline cases? This action cannot be undone.')) return;
-
-    setLoading(true);
-    try {
-      await api.deleteAllDisciplineCases();
-      setSuccessMessage('All cases deleted successfully');
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-      setShowDeleteConfirm(false);
-      loadData();
-    } catch (error) {
-      console.error('Error deleting all cases:', error);
-      alert('Failed to delete all cases. Please try again.');
-    }
-    setLoading(false);
+  const resetForm = () => {
+    setSelectedStudent('');
+    setSelectedClass('');
+    setCaseDescription('');
   };
 
   const openStatusModal = (caseItem) => {
@@ -215,14 +216,7 @@ export default function DisciplineCases() {
     setShowStatusModal(true);
   };
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    // Reset form fields when switching tabs
-    setSelectedStudent('');
-    setSelectedTeacher('');
-    setSelectedClass('');
-    setCaseDescription('');
-  };
+  
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -250,7 +244,7 @@ export default function DisciplineCases() {
       <div className="dc-header">
         <div className="dc-title-section">
           <h1>Disciplinary Cases Management</h1>
-          <p>Record and manage student and teacher disciplinary cases</p>
+          <p>Record and manage student disciplinary cases</p>
         </div>
         <div className="dc-actions">
           {isAdmin && (
@@ -264,30 +258,14 @@ export default function DisciplineCases() {
           <button 
             className="dc-primary-btn"
             onClick={() => {
-              setActiveTab('students');
+              resetForm();
               setShowRecordModal(true);
             }}
             disabled={loading}
           >
-            <FaPlus /> Record Student Case
+            <FaPlus /> Register Case
           </button>
-          <button 
-            className="dc-primary-btn"
-            onClick={() => {
-              setActiveTab('teachers');
-              setShowRecordModal(true);
-            }}
-            disabled={loading}
-          >
-            <FaPlus /> Record Teacher Case
-          </button>
-          <button 
-            className="dc-danger-btn"
-            onClick={() => setShowDeleteConfirm(true)}
-            disabled={loading || cases.length === 0}
-          >
-            <FaTrash /> Delete All
-          </button>
+          
         </div>
       </div>
 
@@ -308,7 +286,7 @@ export default function DisciplineCases() {
       
       {/* Debug Information */}
       <div className="dc-debug-info" style={{background: '#f0f0f0', padding: '10px', margin: '10px 0', borderRadius: '5px', fontSize: '12px'}}>
-        <strong>Debug Info:</strong> Students: {students.length} | Classes: {classes.length} | Teachers: {teachers.length} | Cases: {cases.length} | 
+        <strong>Debug Info:</strong> Students: {students.length} | Classes: {classes.length} | Cases: {cases.length} | 
         Current User Role: {authUser?.role} | Is Admin: {isAdmin ? 'Yes' : 'No'}
       </div>
 
@@ -436,12 +414,13 @@ export default function DisciplineCases() {
         )}
       </div>
 
-      {/* Record Case Modal */}
+      {/* Modals */}
+      <>
       {showRecordModal && (
         <div className="dc-modal-overlay" onClick={() => setShowRecordModal(false)}>
           <div className="dc-modal" onClick={e => e.stopPropagation()}>
             <div className="dc-modal-header">
-              <h2>Record New Disciplinary Case</h2>
+              <h2>Register New Disciplinary Case</h2>
               <button 
                 className="dc-modal-close"
                 onClick={() => setShowRecordModal(false)}
@@ -450,24 +429,10 @@ export default function DisciplineCases() {
               </button>
             </div>
             
-            {/* Tab Navigation */}
-            <div className="dc-modal-tabs">
-              <button 
-                className={`dc-tab ${activeTab === 'students' ? 'active' : ''}`}
-                onClick={() => handleTabChange('students')}
-              >
-                Student Cases
-              </button>
-              <button 
-                className={`dc-tab ${activeTab === 'teachers' ? 'active' : ''}`}
-                onClick={() => handleTabChange('teachers')}
-              >
-                Teacher Cases
-              </button>
-            </div>
-            
             <div className="dc-modal-body">
-              {activeTab === 'students' ? (
+              
+
+              {/* Student Fields */}
                 <>
                   <div className="dc-form-group">
                     <label>Student Name</label>
@@ -501,23 +466,7 @@ export default function DisciplineCases() {
                     </select>
                   </div>
                 </>
-              ) : (
-                <div className="dc-form-group">
-                  <label>Teacher Name</label>
-                  <select
-                    value={selectedTeacher}
-                    onChange={(e) => setSelectedTeacher(e.target.value)}
-                    className="dc-select"
-                  >
-                    <option value="">-- Select Teacher --</option>
-                    {teachers.map(teacher => (
-                      <option key={teacher.id} value={teacher.id}>
-                        {teacher.name || teacher.username} - {teacher.role}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              
               
               <div className="dc-form-group">
                 <label>Case Description</label>
@@ -525,7 +474,7 @@ export default function DisciplineCases() {
                   value={caseDescription}
                   onChange={(e) => setCaseDescription(e.target.value)}
                   className="dc-textarea"
-                  placeholder={`Describe the disciplinary case for ${activeTab === 'students' ? 'student' : 'teacher'} in detail...`}
+                  placeholder={`Describe the disciplinary case for student in detail...`}
                   rows={4}
                 />
               </div>
@@ -540,9 +489,7 @@ export default function DisciplineCases() {
               <button 
                 className="dc-primary-btn"
                 onClick={handleRecordCase}
-                disabled={loading || 
-                  (activeTab === 'students' ? (!selectedStudent || !selectedClass) : !selectedTeacher) || 
-                  !caseDescription.trim()}
+                disabled={loading || !caseDescription.trim() || !selectedStudent || !selectedClass}
               >
                 {loading ? 'Recording...' : 'Record Case'}
               </button>
@@ -615,46 +562,8 @@ export default function DisciplineCases() {
           </div>
         </div>
       )}
+      </>
 
-      {/* Delete All Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="dc-modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="dc-modal" onClick={e => e.stopPropagation()}>
-            <div className="dc-modal-header">
-              <h2>Confirm Delete All</h2>
-              <button 
-                className="dc-modal-close"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="dc-modal-body">
-              <div className="dc-warning">
-                <FaExclamationTriangle />
-                <p>Are you sure you want to delete ALL discipline cases?</p>
-                <p><strong>This action cannot be undone.</strong></p>
-                <p>Total cases to delete: <strong>{cases.length}</strong></p>
-              </div>
-            </div>
-            <div className="dc-modal-footer">
-              <button 
-                className="dc-ghost-btn"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="dc-danger-btn"
-                onClick={handleDeleteAll}
-                disabled={loading}
-              >
-                {loading ? 'Deleting...' : 'Delete All Cases'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 } 

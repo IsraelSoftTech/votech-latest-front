@@ -5,10 +5,10 @@ const isDevelopment = process.env.NODE_ENV === 'development' ||
 
 const config = {
   // API URL configuration - use local for development, production for live
-  API_URL: "https://api.votechs7academygroup.com/api",
+  API_URL: isDevelopment ? "http://localhost:5000/api" : "https://api.votechs7academygroup.com/api",
 
   // Frontend URL
-  FRONTEND_URL: "https://api.votechs7academygroup.com/api",
+  FRONTEND_URL: isDevelopment ? "http://localhost:3000" : "https://api.votechs7academygroup.com/api",
    
 
   // FTP URL (for reference)

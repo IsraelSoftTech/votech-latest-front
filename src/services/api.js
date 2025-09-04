@@ -8,24 +8,25 @@ const API_URL = config.API_URL;
 
 class ApiService {
   constructor() {
-    // Initialize token and user from sessionStorage
-    this.token = sessionStorage.getItem("token");
-    this.user = JSON.parse(sessionStorage.getItem("authUser"));
+    // Initialize token and user from storage (session first, then local)
+    this.token = sessionStorage.getItem("token") || localStorage.getItem("token");
+    this.user = JSON.parse(sessionStorage.getItem("authUser") || localStorage.getItem("authUser") || "null");
   }
 
   setToken(token) {
     this.token = token;
     if (token) {
       sessionStorage.setItem("token", token);
+      localStorage.setItem("token", token);
     } else {
       this.clearToken();
     }
   }
 
   getToken() {
-    if (!this.token) {
-      this.token = sessionStorage.getItem("token");
-    }
+    // Always read fresh from storage to avoid stale/missing tokens
+    const latest = sessionStorage.getItem("token") || localStorage.getItem("token");
+    this.token = latest || null;
     return this.token;
   }
 
@@ -34,6 +35,8 @@ class ApiService {
     this.user = null;
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("authUser");
+    localStorage.removeItem("token");
+    localStorage.removeItem("authUser");
   }
 
   getAuthHeaders() {
@@ -59,9 +62,13 @@ class ApiService {
         error = { error: text };
       }
 
-      if (response.status === 401 || response.status === 403) {
+      if (response.status === 401) {
         this.clearToken();
         throw new Error("Session expired. Please login again.");
+      }
+      if (response.status === 403) {
+        // Do not clear token; user is authenticated but not authorized
+        throw new Error(error.details || error.error || "Unauthorized Request");
       }
       throw new Error(error.details || error.error || "Request failed");
     }
@@ -893,15 +900,26 @@ class ApiService {
   // Get total unread message count across all chats
   async getTotalUnreadCount() {
     try {
-      const chatList = await this.getChatList();
-      if (Array.isArray(chatList)) {
-        const totalUnread = chatList.reduce(
-          (sum, chat) => sum + (parseInt(chat.unread) || 0),
-          0
-        );
-        return totalUnread;
-      }
-      return 0;
+      const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+      const groups = await this.getGroups();
+      if (!Array.isArray(groups) || groups.length === 0) return 0;
+      // Compute unread for groups by fetching messages and counting unread ones per group
+      const limited = groups.slice(0, 20); // safety limit
+      const counts = await Promise.all(
+        limited.map(async (g) => {
+          try {
+            const msgs = await this.getGroupMessages(g.id);
+            if (!Array.isArray(msgs)) return 0;
+            const unread = msgs.filter(
+              (m) => !m.read_at && String(m.sender_id) !== String(authUser?.id)
+            ).length;
+            return unread;
+          } catch (e) {
+            return 0;
+          }
+        })
+      );
+      return counts.reduce((a, b) => a + (parseInt(b) || 0), 0);
     } catch (error) {
       console.error("Error getting total unread count:", error);
       return 0;
@@ -966,14 +984,14 @@ class ApiService {
 
   // Subject endpoints
   async getSubjects() {
-    const response = await fetch(`${API_URL}/subjects`, {
+    const response = await fetch(`${API_URL}/v1/subjects`, {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch subjects");
     return await response.json();
   }
   async createSubject(data) {
-    const response = await fetch(`${API_URL}/subjects`, {
+    const response = await fetch(`${API_URL}/v1/subjects`, {
       method: "POST",
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
@@ -982,7 +1000,7 @@ class ApiService {
     return await response.json();
   }
   async updateSubject(id, data) {
-    const response = await fetch(`${API_URL}/subjects/${id}`, {
+    const response = await fetch(`${API_URL}/v1/subjects/${id}`, {
       method: "PUT",
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
@@ -991,7 +1009,7 @@ class ApiService {
     return await response.json();
   }
   async deleteSubject(id) {
-    const response = await fetch(`${API_URL}/subjects/${id}`, {
+    const response = await fetch(`${API_URL}/v1/subjects/${id}`, {
       method: "DELETE",
       headers: this.getAuthHeaders(),
     });
@@ -2056,7 +2074,7 @@ class ApiService {
       const response = await fetch(`${API_URL}/timetables/heavy-subjects`, {
         method: "POST",
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ heavySubjectIds: Array.from(heavySubjectIds) }),
+        body: JSON.stringify({ heavySubjectIds }),
       });
       return await this.handleResponse(response);
     } catch (error) {
@@ -2219,16 +2237,9 @@ class ApiService {
     }
   }
 
-  // Attendance endpoints (new server compatible)
+  // Student Attendance endpoints (restored)
   async getAttendanceClasses() {
     const response = await fetch(`${API_URL}/attendance/classes`, {
-      headers: this.getAuthHeaders(),
-    });
-    return await this.handleResponse(response);
-  }
-
-  async getAttendanceTeachers() {
-    const response = await fetch(`${API_URL}/attendance/teachers`, {
       headers: this.getAuthHeaders(),
     });
     return await this.handleResponse(response);
@@ -2279,16 +2290,6 @@ class ApiService {
     return data;
   }
 
-  async getAllSessions() {
-    console.log("API: Fetching all sessions for debugging...");
-    const response = await fetch(`${API_URL}/attendance/all-sessions`, {
-      headers: this.getAuthHeaders(),
-    });
-    const data = await this.handleResponse(response);
-    console.log("API: All sessions response:", data);
-    return data;
-  }
-
   async exportAttendance({ type, classId, date }) {
     const params = new URLSearchParams();
     if (type) params.set("type", type);
@@ -2309,13 +2310,97 @@ class ApiService {
     return await this.handleResponse(response);
   }
 
-  // Debug endpoint to check stored dates
-  async debugDates() {
-    const response = await fetch(`${API_URL}/attendance/debug-dates`, {
+  // Staff Attendance API endpoints
+  async getStaffAttendanceStats() {
+    const response = await fetch(`${API_URL}/staff-attendance/stats`, {
       headers: this.getAuthHeaders(),
     });
     return await this.handleResponse(response);
   }
+
+  async uploadStaffAttendanceFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    if (authHeaders["Authorization"]) {
+      headers["Authorization"] = authHeaders["Authorization"];
+    }
+
+    const response = await fetch(`${API_URL}/staff-attendance/upload`, {
+      method: "POST",
+      headers: headers,
+      body: formData,
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getStaffAttendanceRecords(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.set('page', params.page);
+    if (params.limit) queryParams.set('limit', params.limit);
+    if (params.month) queryParams.set('month', params.month);
+    if (params.year) queryParams.set('year', params.year);
+
+    const response = await fetch(`${API_URL}/staff-attendance/records?${queryParams.toString()}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async createStaffAttendanceRecord(data) {
+    const response = await fetch(`${API_URL}/staff-attendance/records`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async updateStaffAttendanceRecord(id, data) {
+    const response = await fetch(`${API_URL}/staff-attendance/records/${id}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async deleteStaffAttendanceRecord(id) {
+    const response = await fetch(`${API_URL}/staff-attendance/records/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async generateStaffMonthlyReport(month, year) {
+    const params = new URLSearchParams();
+    params.set('month', month);
+    params.set('year', year);
+
+    const response = await fetch(`${API_URL}/staff-attendance/monthly-report?${params.toString()}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getStaffUsers() {
+    const response = await fetch(`${API_URL}/staff-attendance/users`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getStaffClasses() {
+    const response = await fetch(`${API_URL}/staff-attendance/classes`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+
 
   // Discipline Cases API endpoints
   async getDisciplineCases() {
@@ -2504,6 +2589,88 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  async getTeacherDisciplineCases() {
+    const response = await fetch(`${API_URL}/teacher-discipline-cases`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async createTeacherDisciplineCase(data) {
+    const response = await fetch(`${API_URL}/teacher-discipline-cases`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async updateTeacherDisciplineCaseStatus(id, data) {
+    // repurpose to general update
+    const response = await fetch(`${API_URL}/teacher-discipline-cases/${id}`, { method: "PUT", headers: this.getAuthHeaders(), body: JSON.stringify(data) });
+    return await this.handleResponse(response);
+  }
+
+  async deleteTeacherDisciplineCase(id) {
+    const response = await fetch(`${API_URL}/teacher-discipline-cases/${id}`, { method: "DELETE", headers: this.getAuthHeaders() });
+    return await this.handleResponse(response);
+  }
+
+  // HODs API methods
+  async getHODs() {
+    const response = await fetch(`${API_URL}/hods`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getHOD(id) {
+    const response = await fetch(`${API_URL}/hods/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async createHOD(hodData) {
+    const response = await fetch(`${API_URL}/hods`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(hodData),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async updateHOD(id, hodData) {
+    const response = await fetch(`${API_URL}/hods/${id}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(hodData),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async deleteHOD(id) {
+    const response = await fetch(`${API_URL}/hods/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async toggleHODSuspension(id) {
+    const response = await fetch(`${API_URL}/hods/${id}/toggle-suspension`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getHODStats() {
+    const response = await fetch(`${API_URL}/hods/stats/overview`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
 
 }
 

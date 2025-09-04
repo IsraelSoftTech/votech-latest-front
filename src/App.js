@@ -29,6 +29,7 @@ import Admin2PaySlip from "./components/Admin2PaySlip";
 
 import AdminDisciplineCases from "./components/AdminDisciplineCases.jsx";
 import AdminCounsellingCases from "./components/AdminCounsellingCases.jsx";
+import AdminHODs from "./components/AdminHODs.jsx";
 
 // Academics / Marks module
 import Subjects from "./components/Subjects.jsx";
@@ -72,6 +73,7 @@ import PsycoDash from "./components/PsycoDash.jsx";
 import Cases from "./components/Cases.jsx";
 import PsychoMessage from "./components/PsychoMessage.jsx";
 import PsychoChat from "./components/PsychoChat.jsx";
+import TeacherCases from "./components/TeacherCases.jsx";
 import MasterSheetPage from "./components/marks-module/pages/MasterSheetPage/MasterSheet.page";
 import UnauthorizedPage from "./components/Unauthorized.page";
 
@@ -287,6 +289,8 @@ function App() {
         <Route path="/dean-scheduling" element={<Dean />} />
         <Route path="/dean-academic" element={<Dean />} />
         <Route path="/dean-lesson-plans" element={<DeanLessonPlan />} />
+        <Route path="/admin-hods" element={<AdminHODs />} />
+
 
         {/* Marks / Reports */}
         <Route path="/admin-marks" element={<Marks />} />
@@ -304,6 +308,7 @@ function App() {
         } />
         <Route path="/psycho-messages" element={<PsychoMessage />} />
         <Route path="/psycho-chat/:userId" element={<PsychoChat />} />
+        <Route path="/teacher-cases" element={<TeacherCases />} />
 
         {/* ----------------------------------------- */}
         {/* Academics - marks-module pages */}

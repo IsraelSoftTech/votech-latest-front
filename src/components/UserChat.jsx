@@ -245,16 +245,28 @@ export default function UserChat() {
           )}
           <div ref={chatEndRef} />
         </div>
-        <div className="chat-input-row" style={{ padding: 18, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, background: '#f7f8fa' }}>
+        <div className="chat-input-row" style={{ 
+          padding: window.innerWidth <= 700 ? '12px 16px' : 18,
+          borderBottomLeftRadius: window.innerWidth <= 700 ? 0 : 12,
+          borderBottomRightRadius: window.innerWidth <= 700 ? 0 : 12,
+          background: '#f7f8fa',
+          position: window.innerWidth <= 700 ? 'fixed' : 'static',
+          bottom: window.innerWidth <= 700 ? 0 : undefined,
+          left: window.innerWidth <= 700 ? 0 : undefined,
+          width: window.innerWidth <= 700 ? '100vw' : undefined,
+          zIndex: window.innerWidth <= 700 ? 1002 : undefined,
+          boxShadow: window.innerWidth <= 700 ? '0 -2px 8px rgba(32,64,128,0.07)' : undefined,
+          borderTop: window.innerWidth <= 700 ? '1px solid #eee' : undefined
+        }}>
           {renderFilePreview()}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <input
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
               placeholder="Type a message..."
-              style={{ flex: 1, fontSize: 16, border: '1px solid #eee', borderRadius: 8, padding: '10px 14px', outline: 'none' }}
+              style={{ flex: 1, minWidth: 0, fontSize: 16, border: '1px solid #eee', borderRadius: 999, padding: '12px 16px', outline: 'none' }}
               disabled={sending}
             />
             <input
@@ -281,7 +293,7 @@ export default function UserChat() {
             >
               <FaPaperclip />
             </button>
-            <button onClick={handleSend} style={{ background: '#204080', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }} disabled={sending}>Send</button>
+            <button onClick={handleSend} style={{ background: '#204080', color: '#fff', border: 'none', borderRadius: 999, padding: '12px 18px', fontWeight: 700, fontSize: 16, cursor: 'pointer', flexShrink: 0 }} disabled={sending}>Send</button>
           </div>
         </div>
       </div>

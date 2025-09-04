@@ -16,6 +16,7 @@ const menuItems = [
   { label: 'Messages', icon: <FaEnvelope />, path: '/discipline-messages' },
   { label: 'Attendance', icon: <FaClipboardList />, path: '/attendance' },
   { label: 'Disciplinary Cases', icon: <FaGavel />, path: '/discipline-cases' },
+  { label: "Teachers' Cases", icon: <FaGavel />, path: '/teacher-cases' },
   { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
   { label: 'Events', icon: <FaClipboardList />, path: '/discipline-events' }
 ];

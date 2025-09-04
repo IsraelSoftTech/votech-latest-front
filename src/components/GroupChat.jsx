@@ -79,10 +79,12 @@ export default function GroupChat() {
       'image/gif', 
       'application/pdf',
       'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ];
     if (!allowedTypes.includes(file.type)) {
-      setError('Only images (JPEG, PNG, GIF), PDF files, and Word documents are allowed');
+      setError('Only images, PDF, Word (.doc, .docx), and PowerPoint (.ppt, .pptx) are allowed');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -266,6 +268,7 @@ export default function GroupChat() {
           top: 0,
           zIndex: 1000
         }}>
+          <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: '#204080', fontWeight: 600, fontSize: window.innerWidth <= 700 ? 18 : 20, marginRight: 4, cursor: 'pointer' }}>{'\u2190'}</button>
           <FaUsers style={{ color: '#204080', fontSize: window.innerWidth <= 700 ? 18 : 22 }} />
           <div style={{ fontWeight: 700, fontSize: window.innerWidth <= 700 ? 16 : 18 }}>{group?.name || 'Group Chat'}</div>
           <div style={{ marginLeft: 16, color: '#888', fontSize: window.innerWidth <= 700 ? 12 : 14, flex: 1, display: window.innerWidth <= 700 ? 'none' : 'block' }}>
@@ -321,7 +324,7 @@ export default function GroupChat() {
           padding: window.innerWidth <= 700 ? '12px 16px' : 18, 
           borderBottomLeftRadius: window.innerWidth <= 700 ? 0 : 12, 
           borderBottomRightRadius: window.innerWidth <= 700 ? 0 : 12, 
-          background: '#f7f8fa', 
+          background: '#f7f9fb', 
           position: window.innerWidth <= 700 ? 'fixed' : 'static', 
           bottom: window.innerWidth <= 700 ? 0 : undefined, 
           left: window.innerWidth <= 700 ? 0 : undefined, 
@@ -331,7 +334,7 @@ export default function GroupChat() {
           borderTop: window.innerWidth <= 700 ? '1px solid #eee' : undefined
         }}>
           {renderFilePreview()}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginTop: selectedFile ? 10 : 0 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: selectedFile ? 10 : 0 }}>
             <input
               type="text"
               value={input}
@@ -339,12 +342,13 @@ export default function GroupChat() {
               onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
               placeholder="Type a message..."
               style={{ 
-                flex: 1, 
-                fontSize: window.innerWidth <= 700 ? 14 : 16, 
-                border: '1px solid #eee', 
-                borderRadius: 8, 
-                padding: window.innerWidth <= 700 ? '8px 12px' : '10px 14px', 
-                outline: 'none' 
+                flex: 1,
+                minWidth: 0,
+                fontSize: window.innerWidth <= 700 ? 14 : 16,
+                border: '1px solid #eee',
+                borderRadius: 999,
+                padding: window.innerWidth <= 700 ? '10px 14px' : '12px 16px',
+                outline: 'none'
               }}
               disabled={sending}
             />
@@ -352,7 +356,7 @@ export default function GroupChat() {
               type="file"
               ref={fileInputRef}
               onChange={handleFileSelect}
-              accept="image/*,.pdf,.doc,.docx"
+              accept="image/*,.pdf,.doc,.docx,.ppt,.pptx"
               style={{ display: 'none' }}
             />
             <button
@@ -372,18 +376,19 @@ export default function GroupChat() {
             >
               <FaPaperclip style={{ fontSize: window.innerWidth <= 700 ? 14 : 16 }} />
             </button>
-            <button 
-              onClick={handleSend} 
-              style={{ 
-                background: '#204080', 
-                color: '#fff', 
-                border: 'none', 
-                borderRadius: 8, 
-                padding: window.innerWidth <= 700 ? '8px 14px' : '10px 18px', 
-                fontWeight: 600, 
-                fontSize: window.innerWidth <= 700 ? 14 : 16, 
-                cursor: 'pointer' 
-              }} 
+            <button
+              onClick={handleSend}
+              style={{
+                background: '#204080',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 999,
+                padding: window.innerWidth <= 700 ? '10px 16px' : '12px 18px',
+                fontWeight: 700,
+                fontSize: window.innerWidth <= 700 ? 14 : 16,
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
               disabled={sending}
             >
               Send

@@ -40,6 +40,7 @@ export default function PsychoMessage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 700);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [canCreateGroup, setCanCreateGroup] = useState(false);
 
   useEffect(() => {
     function handleResize() {
@@ -47,6 +48,26 @@ export default function PsychoMessage() {
     }
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Determine permission to create group using backend (Admins 1-4 or any HOD)
+  useEffect(() => {
+    const determinePermission = async () => {
+      try {
+        const role = authUser?.role;
+        const allowedAdminRoles = ['Admin1', 'Admin2', 'Admin3', 'Admin4'];
+        if (allowedAdminRoles.includes(role)) {
+          setCanCreateGroup(true);
+          return;
+        }
+        const hods = await api.getHODs();
+        const isHOD = Array.isArray(hods) && hods.some(h => String(h.hod_user_id) === String(authUser?.id));
+        setCanCreateGroup(!!isHOD);
+      } catch (e) {
+        setCanCreateGroup(false);
+      }
+    };
+    determinePermission();
   }, []);
 
   const chats = [];
@@ -79,37 +100,33 @@ export default function PsychoMessage() {
     setUsersError('');
     Promise.all([
       api.getAllUsersForChat(),
-      api.getChatList()
+      api.getGroups()
     ])
-      .then(([allUsers, chatListRaw]) => {
-        console.log('Raw chat list data:', chatListRaw);
-        console.log('Group chats from raw data:', chatListRaw.filter(c => c.type === 'group'));
-        console.log('Sample group chat raw data:', chatListRaw.filter(c => c.type === 'group')[0]);
-        const chatMap = {};
-        chatListRaw.forEach(c => {
-          if (c.type === 'user') chatMap[c.id] = c;
-        });
-        const allUserChats = allUsers.map(u => {
-          const chat = chatMap[u.id] || {};
-          return {
-            id: u.id,
-            username: u.username,
-            name: u.name,
-            lastMessage: chat.lastMessage || null,
-            unread: chat.unread || 0,
-            type: 'user'
-          };
-        });
-        const groupChats = chatListRaw.filter(c => c.type === 'group');
-        console.log('Processed group chats:', groupChats);
+      .then(([allUsers, groups]) => {
+        const allUserChats = Array.isArray(allUsers) ? allUsers.map(u => ({
+          id: u.id,
+          username: u.username,
+          name: u.name,
+          lastMessage: null,
+          unread: 0,
+          type: 'user'
+        })) : [];
+        const groupChats = Array.isArray(groups) ? groups.map(g => ({
+          id: g.id,
+          groupName: g.name,
+          name: g.name,
+          lastMessage: null,
+          unread: 0,
+          created_at: g.created_at,
+          type: 'group'
+        })) : [];
         const allChats = [...allUserChats, ...groupChats].sort((a, b) => {
-          const aTime = a.lastMessage?.time ? new Date(a.lastMessage.time) : new Date(0);
-          const bTime = b.lastMessage?.time ? new Date(b.lastMessage.time) : new Date(0);
+          const aTime = a.lastMessage?.time ? new Date(a.lastMessage.time) : (a.created_at ? new Date(a.created_at) : new Date(0));
+          const bTime = b.lastMessage?.time ? new Date(b.lastMessage.time) : (b.created_at ? new Date(b.created_at) : new Date(0));
           return bTime - aTime;
         });
-        console.log('Final allChats with groups:', allChats.filter(c => c.type === 'group'));
         setChatList(allChats);
-        setHasUnread(allChats.some(u => u.unread > 0));
+        setHasUnread(allChats.some(u => parseInt(u.unread) > 0));
       })
       .catch(() => setUsersError('Failed to fetch users.'))
       .finally(() => setUsersLoading(false));
@@ -192,34 +209,22 @@ export default function PsychoMessage() {
     setSuccessMsg('Group created successfully!');
     Promise.all([
       api.getAllUsersForChat(),
-      api.getChatList()
+      api.getGroups()
     ])
-      .then(([allUsers, chatListRaw]) => {
-        console.log('Raw chat list data after group creation:', chatListRaw);
-        console.log('Group chats from raw data after group creation:', chatListRaw.filter(c => c.type === 'group'));
-        const chatMap = {};
-        chatListRaw.forEach(c => {
-          if (c.type === 'user') chatMap[c.id] = c;
-        });
-        const allUserChats = allUsers.map(u => {
-          const chat = chatMap[u.id] || {};
-          return {
-            id: u.id,
-            username: u.username,
-            name: u.name,
-            lastMessage: chat.lastMessage || null,
-            unread: chat.unread || 0,
-            type: 'user'
-          };
-        });
-        const groupChats = chatListRaw.filter(c => c.type === 'group');
+      .then(([allUsers, groups]) => {
+        const allUserChats = Array.isArray(allUsers) ? allUsers.map(u => ({
+          id: u.id, username: u.username, name: u.name, lastMessage: null, unread: 0, type: 'user'
+        })) : [];
+        const groupChats = Array.isArray(groups) ? groups.map(g => ({
+          id: g.id, groupName: g.name, name: g.name, lastMessage: null, unread: 0, created_at: g.created_at, type: 'group'
+        })) : [];
         const allChats = [...allUserChats, ...groupChats].sort((a, b) => {
-          const aTime = a.lastMessage?.time ? new Date(a.lastMessage.time) : new Date(0);
-          const bTime = b.lastMessage?.time ? new Date(b.lastMessage.time) : new Date(0);
+          const aTime = a.lastMessage?.time ? new Date(a.lastMessage.time) : (a.created_at ? new Date(a.created_at) : new Date(0));
+          const bTime = b.lastMessage?.time ? new Date(b.lastMessage.time) : (b.created_at ? new Date(b.created_at) : new Date(0));
           return bTime - aTime;
         });
         setChatList(allChats);
-        setHasUnread(allChats.some(u => u.unread > 0));
+        setHasUnread(allChats.some(u => parseInt(u.unread) > 0));
       })
       .catch(() => setUsersError('Failed to fetch users.'));
   };
@@ -249,31 +254,33 @@ export default function PsychoMessage() {
         </div>
       </div>
       
-      <div style={{ marginTop: window.innerWidth <= 700 ? 16 : 24, textAlign: 'center' }}>
-        <button
-          onClick={handleCreateGroup}
-          style={{
-            background: '#204080',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            padding: window.innerWidth <= 700 ? '10px 20px' : '12px 24px',
-            fontSize: window.innerWidth <= 700 ? 14 : 16,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            boxShadow: '0 2px 8px rgba(32,64,128,0.2)',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => e.target.style.background = '#1a3668'}
-          onMouseLeave={(e) => e.target.style.background = '#204080'}
-        >
-          <FaUsers style={{ fontSize: window.innerWidth <= 700 ? 14 : 16 }} />
-          Create Group
-        </button>
-      </div>
+      {canCreateGroup && (
+        <div style={{ marginTop: window.innerWidth <= 700 ? 16 : 24, textAlign: 'center' }}>
+          <button
+            onClick={handleCreateGroup}
+            style={{
+              background: '#204080',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              padding: window.innerWidth <= 700 ? '10px 20px' : '12px 24px',
+              fontSize: window.innerWidth <= 700 ? 14 : 16,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 2px 8px rgba(32,64,128,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = '#1a3668'}
+            onMouseLeave={(e) => e.target.style.background = '#204080'}
+          >
+            <FaUsers style={{ fontSize: window.innerWidth <= 700 ? 14 : 16 }} />
+            Create Group
+          </button>
+        </div>
+      )}
       <div
         style={{
           marginTop: window.innerWidth <= 700 ? 16 : 32,
