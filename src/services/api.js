@@ -643,7 +643,7 @@ class ApiService {
   }
 
   async getStudentFeeStats(studentId) {
-    const response = await fetch(`${API_URL}/student/${studentId}/fees`, {
+    const response = await fetch(`${API_URL}/fees/student/${studentId}`, {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch student fee stats");
@@ -657,6 +657,16 @@ class ApiService {
       body: JSON.stringify({ student_id, class_id, fee_type, amount }),
     });
     if (!response.ok) throw new Error("Failed to pay student fee");
+    return await response.json();
+  }
+
+  async reconcileStudentFee({ student_id, fee_type, total_amount }) {
+    const response = await fetch(`${API_URL}/fees/reconcile`, {
+      method: "PUT",
+      headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ student_id, fee_type, total_amount }),
+    });
+    if (!response.ok) throw new Error("Failed to reconcile student fee");
     return await response.json();
   }
 
@@ -696,15 +706,6 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to delete payment record");
-    return await response.json();
-  }
-
-  async clearStudentFees(studentId) {
-    const response = await fetch(`${API_URL}/fees/student/${studentId}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error("Failed to clear student fees");
     return await response.json();
   }
 
@@ -928,11 +929,15 @@ class ApiService {
 
   // Teacher endpoints
   async getAllTeachers() {
-    const response = await fetch(`${API_URL}/teachers`, {
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error("Failed to fetch teachers");
-    return await response.json();
+    try {
+      const response = await fetch(`${API_URL}/teachers`, {
+        headers: this.getAuthHeaders(),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Get all teachers error:", error);
+      throw error;
+    }
   }
 
   // Fee endpoints
