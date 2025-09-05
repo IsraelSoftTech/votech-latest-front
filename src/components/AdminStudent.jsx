@@ -35,6 +35,8 @@ import { useLocation } from "react-router-dom";
 import SideTop from "./SideTop";
 import marksApi from "./marks-module/utils/api";
 import { toast } from "react-toastify";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 const menuItems = [
   { label: "Dashboard", icon: <FaTachometerAlt /> },
   { label: "Students", icon: <FaUserGraduate /> },
@@ -522,8 +524,8 @@ export default function AdminStudent() {
   // Responsive search bar handler
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
-  // Print handler - replaced with PDF generation
-  const generateStudentListReport = () => {
+  // Print handler - generates PDF directly
+  const generateStudentListReport = async () => {
     if (!printClass) {
       setError("Please select a class first.");
       setErrorType("error");
@@ -539,17 +541,175 @@ export default function AdminStudent() {
       return;
     }
 
-    const report = {
-      className: printClass,
-      totalStudents: classStudents.length,
-      students: classStudents,
-      academicYear: selectedYear,
-      generatedAt: new Date().toLocaleString(),
-    };
+    // Sort students alphabetically by full name
+    const sortedStudents = classStudents.sort((a, b) => 
+      (a.full_name || '').localeCompare(b.full_name || '')
+    );
 
-    setGeneratedStudentListReport(report);
-    setShowStudentListReportModal(true);
+    try {
+      // Create a temporary container for PDF generation
+      const tempContainer = document.createElement('div');
+      tempContainer.className = 'class-list-pdf-container';
+      tempContainer.style.cssText = `
+        background: white;
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 15mm;
+        box-sizing: border-box;
+        font-family: 'Times New Roman', serif;
+        color: black;
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        overflow: visible;
+        line-height: 1.4;
+      `;
+
+      // Create the class list content
+      const classListHTML = `
+        <div class="class-list-header">
+          <div class="header-with-logo">
+            <img src="${logo}" alt="School Logo" style="width: 60px; height: 60px; object-fit: contain;" />
+            <div class="school-info">
+              <div style="font-size: 24px; font-weight: bold; color: #1976d2; margin-bottom: 5px;">VOTECH(S7) ACADEMY</div>
+              <div style="font-size: 18px; font-weight: 600; color: #333;">Class List</div>
+            </div>
+          </div>
+          <div style="margin-top: 20px; text-align: center;">
+            <div style="font-size: 16px; font-weight: 600; color: #1976d2; margin-bottom: 5px;">${printClass}</div>
+            <div style="font-size: 14px; color: #666;">Academic Year: ${selectedYear}</div>
+            <div style="font-size: 14px; color: #666;">Generated on: ${new Date().toLocaleDateString()}</div>
+            <div style="font-size: 14px; color: #666; margin-top: 5px;">Total Students: ${sortedStudents.length}</div>
+          </div>
+        </div>
+        
+        <div class="class-list-table" style="margin-top: 25px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr style="background-color: #f5f5f5;">
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold;">S/N</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Student ID</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Full Name</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold;">Sex</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold;">Date of Birth</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Father's Contact</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sortedStudents.map((student, index) => `
+                <tr style="page-break-inside: avoid;">
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${index + 1}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">${student.student_id || ''}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: 500;">${student.full_name || ''}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${student.sex || ''}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString() : ''}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">${student.guardian_contact || ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      tempContainer.innerHTML = classListHTML;
+
+      // Add styles for the header
+      const style = document.createElement('style');
+      style.textContent = `
+        .header-with-logo {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+        .school-info {
+          flex: 1;
+        }
+        .class-list-table table {
+          page-break-inside: auto;
+        }
+        .class-list-table tr {
+          page-break-inside: avoid;
+          page-break-after: auto;
+        }
+        .class-list-table thead {
+          display: table-header-group;
+        }
+        .class-list-table tfoot {
+          display: table-footer-group;
+        }
+      `;
+      tempContainer.appendChild(style);
+
+      // Add to DOM temporarily
+      document.body.appendChild(tempContainer);
+
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Capture the temporary container
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: tempContainer.scrollWidth,
+        height: tempContainer.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: tempContainer.scrollWidth,
+        windowHeight: tempContainer.scrollHeight,
+        logging: false,
+        removeContainer: false,
+      });
+
+      // Remove temporary container
+      document.body.removeChild(tempContainer);
+
+      const imgData = canvas.toDataURL('image/png');
+
+      // Create PDF with A4 portrait dimensions
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // Add the image to PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+      // Handle page breaks if content is taller than A4
+      if (imgHeight > 297) {
+        const pageHeight = 297;
+        let yPosition = 0;
+        let pageNumber = 1;
+
+        while (yPosition < imgHeight) {
+          if (pageNumber > 1) {
+            pdf.addPage();
+          }
+          
+          const remainingHeight = imgHeight - yPosition;
+          const currentPageHeight = Math.min(pageHeight, remainingHeight);
+          
+          pdf.addImage(imgData, 'PNG', 0, -yPosition, imgWidth, imgHeight);
+          yPosition += pageHeight;
+          pageNumber++;
+        }
+      }
+
+      const fileName = `class_list_${printClass.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+
+      // Close the modal
     setPrintModalOpen(false);
+      setSuccess(`Class list for ${printClass} downloaded successfully!`);
+      setTimeout(() => setSuccess(""), 3000);
+
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setError("Failed to generate class list PDF.");
+      setErrorType("error");
+    }
   };
 
   const closeStudentListReportModal = () => {
@@ -779,8 +939,27 @@ export default function AdminStudent() {
         />
         {/* Upload Many Button */}
         {/* Upload Many removed */}
-        {/* Print List Button */}
-        {/* Print removed */}
+        {/* Print Class List Button */}
+        <button
+          className="signup-btn"
+          onClick={() => setPrintModalOpen(true)}
+          style={{
+            background: "#1976d2",
+            color: "#fff",
+            padding: "8px 16px",
+            borderRadius: 6,
+            border: "none",
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <FaPrint />
+          Print Class List
+        </button>
       </div>
       {/* Print Modal */}
       {printModalOpen && (
@@ -836,11 +1015,16 @@ export default function AdminStudent() {
               onClick={generateStudentListReport}
               disabled={!printClass}
             >
-              Generate Report
+              Download
             </button>
           </div>
         </div>
       )}
+      
+      {/* Success/Error Messages */}
+      {success && <SuccessMessage message={success} type="success" onClose={() => setSuccess("")} />}
+      {error && <SuccessMessage message={error} type="error" onClose={() => setError("")} />}
+      
       {/* Student Table */}
       <div className="student-table-wrapper" style={{ overflowX: 'auto' }}>
         <table className="student-table">

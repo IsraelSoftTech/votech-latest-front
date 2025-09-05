@@ -23,12 +23,13 @@ export default function PaySlip() {
     const init = async () => {
       try {
         setLoading(true);
-        const [myPaid, descriptions, settings] = await Promise.all([
+        const [myPaidRes, descriptions, settings] = await Promise.all([
           api.getMyPaidSalaries(),
           api.getSalaryDescriptions(),
           api.getPayslipSettings()
         ]);
-        setPaidSalaries(Array.isArray(myPaid) ? myPaid : []);
+        const paidArray = Array.isArray(myPaidRes?.data) ? myPaidRes.data : (Array.isArray(myPaidRes) ? myPaidRes : []);
+        setPaidSalaries(paidArray);
         setSalaryDescriptions(Array.isArray(descriptions) ? descriptions : []);
         const structure = settings?.settings?.structure;
         setPayslipStructure(Array.isArray(structure) ? structure : []);
@@ -95,7 +96,7 @@ export default function PaySlip() {
         heightLeft -= pageHeight;
       }
 
-      const fileName = `payslip_${selectedPayslip.applicant_name?.replace(/\s+/g, '_')}_${selectedPayslip.month}_${selectedPayslip.year}.pdf`;
+      const fileName = `payslip_${(selectedPayslip.user_name||selectedPayslip.applicant_name||'user').replace(/\s+/g, '_')}_${selectedPayslip.month}_${selectedPayslip.year}.pdf`;
       pdf.save(fileName);
       closePayslipModal();
     } catch (error) {
@@ -193,14 +194,14 @@ export default function PaySlip() {
             <div className="admin2-payslip-modal">
               <div className="admin2-payslip-modal-header">
                 <h3 className="admin2-payslip-modal-title">
-                  <FaPrint /> Pay Slip - {selectedPayslip.applicant_name}
+                  <FaPrint /> Pay Slip - {selectedPayslip.user_name || selectedPayslip.applicant_name}
                 </h3>
                 <button className="admin2-payslip-modal-close-btn" onClick={closePayslipModal}>×</button>
               </div>
               <div className="admin2-payslip-modal-body">
                 <div ref={payslipRef}>
                   <PayslipTemplate
-                    name={selectedPayslip.applicant_name}
+                    name={selectedPayslip.user_name || selectedPayslip.applicant_name}
                     employmentNumber={makeEmploymentNumber(selectedPayslip)}
                     month={selectedPayslip.month}
                     year={selectedPayslip.year}

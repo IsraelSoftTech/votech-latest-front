@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import SideTop from './SideTop';
 import api from '../services/api';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 export default function TeacherCases() {
   const [users, setUsers] = useState([]);
   const [cases, setCases] = useState([]);
   const [form, setForm] = useState({ teacher_id: '', case_name: '', description: '' });
+  const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [listLoading, setListLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,7 +42,8 @@ export default function TeacherCases() {
     if (!form.teacher_id || !form.case_name) return alert('Teacher and Case name are required');
     try {
       setLoading(true);
-      const created = await api.createTeacherDisciplineCase(form);
+      const payload = { user_id: form.teacher_id, case_description: form.description || form.case_name };
+      const created = await api.createTeacherDisciplineCase(payload);
       setCases(prev => [created, ...prev]);
       setForm({ teacher_id: '', case_name: '', description: '' });
       setSuccess('Recorded successfully');
@@ -62,6 +65,33 @@ export default function TeacherCases() {
       setCases(prev => prev.filter(c => c.id !== id));
     } catch (e) {
       console.error('Delete case failed', e);
+    }
+  };
+
+  const startEdit = (c) => {
+    setEditId(c.id);
+    setForm({ teacher_id: String(c.teacher_id || ''), case_name: c.case_name || c.case_description || '', description: c.description || c.case_description || '' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const saveEdit = async (e) => {
+    e.preventDefault();
+    if (!canWrite || !editId) return;
+    try {
+      setLoading(true);
+      const payload = { user_id: form.teacher_id, case_description: form.description || form.case_name };
+      const updated = await api.updateTeacherDisciplineCaseStatus(editId, payload);
+      setCases(prev => prev.map(c => (c.id === editId ? { ...c, ...updated } : c)));
+      setEditId(null);
+      setForm({ teacher_id: '', case_name: '', description: '' });
+      setSuccess('Updated successfully');
+      setTimeout(() => setSuccess(''), 1500);
+    } catch (e) {
+      console.error('Update teacher case failed', e);
+      setError(e?.message || 'Failed to update case');
+      setTimeout(() => setError(''), 2500);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -136,8 +166,15 @@ export default function TeacherCases() {
                     <textarea className="tc-textarea" rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Details" />
                   </div>
                 </div>
-                <div style={{ marginTop: 12 }}>
-                  <button className="tc-btn primary" disabled={loading}>{loading ? 'Saving...' : 'Record Case'}</button>
+                <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                  {editId ? (
+                    <>
+                      <button className="tc-btn primary" onClick={saveEdit} disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</button>
+                      <button className="tc-btn" type="button" onClick={() => { setEditId(null); setForm({ teacher_id: '', case_name: '', description: '' }); }}>Cancel</button>
+                    </>
+                  ) : (
+                    <button className="tc-btn primary" disabled={loading}>{loading ? 'Saving...' : 'Record Case'}</button>
+                  )}
                 </div>
               </form>
             </div>
@@ -166,13 +203,18 @@ export default function TeacherCases() {
                     <tr key={c.id}>
                       <td>{idx + 1}</td>
                       <td>{c.teacher_name || c.teacher_username || c.teacher_id}</td>
-                      <td>{c.case_name}</td>
-                      <td style={{ whiteSpace: 'pre-wrap' }}>{c.description}</td>
-                      <td>{new Date(c.created_at).toLocaleString()}</td>
+                      <td>{c.case_name || c.case_description}</td>
+                      <td style={{ whiteSpace: 'pre-wrap' }}>{c.description || c.case_description}</td>
+                      <td>{c.created_at ? new Date(c.created_at).toLocaleString() : (c.recorded_at ? new Date(c.recorded_at).toLocaleString() : '')}</td>
                       {canWrite ? (
                         <td>
                           <div className="tc-actions">
-                            <button className="tc-btn" onClick={() => removeCase(c.id)}>Delete</button>
+                            <button className="tc-btn" title="Edit" onClick={() => startEdit(c)}>
+                              <FaEdit />
+                            </button>
+                            <button className="tc-btn" title="Delete" onClick={() => removeCase(c.id)}>
+                              <FaTrash />
+                            </button>
                           </div>
                         </td>
                       ) : null}

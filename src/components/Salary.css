@@ -128,11 +128,11 @@
 }
 
 .salary-paid-card::before {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: #0056b3;
 }
 
 .salary-pending-card::before {
-  background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+  background: #007bff;
 }
 
 .salary-approved-card::before {
@@ -152,15 +152,15 @@
 }
 
 .salary-paid-card .salary-stat-icon {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: #0056b3;
 }
 
 .salary-pending-card .salary-stat-icon {
-  background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+  background: #0056b3;
 }
 
 .salary-approved-card .salary-stat-icon {
-  background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+  background:#0056b3;
 }
 
 .salary-stat-content {
@@ -279,7 +279,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+  background: #0056b3;
   border: none;
   border-radius: 8px;
   color: white;
@@ -372,7 +372,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0056b3;
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
@@ -615,7 +615,7 @@
   align-items: center;
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #e9ecef;
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: #0056b3;
   color: white;
   border-radius: 12px 12px 0 0;
   box-sizing: border-box;
@@ -903,7 +903,7 @@
 }
 
 .salary-pay-modal-pay-btn {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: #0056b3;
   color: white;
 }
 
@@ -953,7 +953,7 @@
   align-items: center;
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #e9ecef;
-  background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+  background: #0056b3;
   color: white;
   border-radius: 12px 12px 0 0;
   box-sizing: border-box;
@@ -1038,7 +1038,7 @@
 }
 
 .salary-receipt-modal-download-btn {
-  background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+  background: #0056b3;
   color: white;
 }
 

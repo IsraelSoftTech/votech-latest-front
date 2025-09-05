@@ -141,6 +141,14 @@ const Signup = () => {
           onClose={() => setShowSuccess(false)}
         />
       )}
+      {!checkingAdmin3 && admin3Count >= 3 && (
+        <div className="signup-top-banner">
+          <div className="signup-banner-content">
+            <span className="signup-banner-icon">🚫</span>
+            <span className="signup-banner-text">Sorry, you cannot create an account, contact Admin3</span>
+          </div>
+        </div>
+      )}
       <header className="signup-header">
         <div className="signup-header-group">
           <img
@@ -178,15 +186,8 @@ const Signup = () => {
           </div>
         </div>
       </header>
-      <main className="signup-main">
+      <main className={`signup-main ${!checkingAdmin3 && admin3Count >= 3 ? 'disabled' : ''}`}>
                  <form className="signup-form" onSubmit={handleSubmit}>
-                       {admin3Count >= 3 && (
-              <div className="signup-form-disabled-overlay">
-                <div className="signup-form-disabled-message">
-                  Sorry, you cannot create an account, contact Admin3
-                </div>
-              </div>
-            )}
           <h2 className="signup-form-title">Sign Up</h2>
           
                      {!checkingAdmin3 && admin3Count >= 3 && (
