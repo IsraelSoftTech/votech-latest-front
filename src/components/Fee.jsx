@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import FeeReport from './FeeReport';
 import FeeReceipt from './FeeReceipt';
 import { usePermissions } from '../hooks/usePermissions';
-import { FaEdit, FaPrint, FaMoneyBillWave, FaEye, FaDownload, FaLock } from 'react-icons/fa';
+import { FaEdit, FaPrint, FaMoneyBillWave, FaEye, FaDownload, FaLock, FaHistory } from 'react-icons/fa';
 
 export default function Fee() {
   const location = useLocation();
@@ -52,6 +52,11 @@ export default function Fee() {
   // Receipt modal state
   const [receiptData, setReceiptData] = useState(null);
   const receiptRef = React.useRef();
+  
+  // Transaction history state
+  const [transactionHistory, setTransactionHistory] = useState([]);
+  const [showTransactionHistory, setShowTransactionHistory] = useState(false);
+  const [selectedStudentForHistory, setSelectedStudentForHistory] = useState(null);
 
   // New state for fee management table
   const [students, setStudents] = useState([]);
@@ -283,16 +288,51 @@ export default function Fee() {
   const handleGenerateReceipt = async (student) => {
     try {
       const stats = await api.getStudentFeeStats(student.id);
+      const transactions = await api.getStudentPaymentDetails(student.id);
       if (stats && stats.student && stats.balance) {
         setReceiptData({
           student: stats.student,
-          balance: stats.balance
+          balance: stats.balance,
+          transactions: transactions
         });
         setReceiptModalOpen(true);
       }
     } catch (error) {
       console.error('Error generating receipt:', error);
       alert('Failed to generate receipt.');
+    }
+  };
+
+  // Handle generate receipt for specific payment
+  const handleGenerateReceiptForPayment = async (student, payment) => {
+    try {
+      const stats = await api.getStudentFeeStats(student.id);
+      const transactions = await api.getStudentPaymentDetails(student.id);
+      if (stats && stats.student && stats.balance) {
+        setReceiptData({
+          student: stats.student,
+          balance: stats.balance,
+          currentPayment: payment,
+          transactions: transactions
+        });
+        setReceiptModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Error generating receipt:', error);
+      alert('Failed to generate receipt.');
+    }
+  };
+
+  // Handle show transaction history
+  const handleShowTransactionHistory = async (student) => {
+    try {
+      setSelectedStudentForHistory(student);
+      const transactions = await api.getStudentPaymentDetails(student.id);
+      setTransactionHistory(transactions);
+      setShowTransactionHistory(true);
+    } catch (error) {
+      console.error('Error fetching transaction history:', error);
+      alert('Failed to fetch transaction history.');
     }
   };
 
@@ -770,6 +810,24 @@ export default function Fee() {
                             <FaMoneyBillWave size={12} />
                           </button>
                         )}
+                              <button
+                                onClick={() => handleShowTransactionHistory(student)}
+                                style={{
+                                  background: '#6f42c1',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  padding: '6px 8px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                                title="View Transaction History"
+                              >
+                                <FaHistory size={12} />
+                              </button>
                               {status === 'Completed' && !isReadOnly && (
                                 <button
                                   onClick={() => handleGenerateReceipt(student)}
@@ -810,26 +868,6 @@ export default function Fee() {
                                   <FaEdit size={12} />
                                 </button>
                               )}
-                          {!isReadOnly && (
-                            <button
-                              onClick={() => handlePrintReceipt(student)}
-                              style={{
-                                background: '#6c63ff',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '4px',
-                                padding: '6px 8px',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}
-                              title="Print Receipt"
-                            >
-                              <FaPrint size={12} />
-                            </button>
-                          )}
                             </div>
                         </td>
                     </tr>
@@ -1035,6 +1073,29 @@ export default function Fee() {
            outline: none;
            border-color: rgb(46, 44, 153);
          }
+         
+         /* Transaction History Modal Styles */
+         .transaction-history-modal-overlay {
+           position: fixed;
+           top: 0; left: 0; right: 0; bottom: 0;
+           background: rgba(32,64,128,0.13);
+           z-index: 1000;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+         }
+         .transaction-history-modal-content {
+           background: #fff;
+           border-radius: 16px;
+           box-shadow: 0 8px 40px rgba(32,64,128,0.18);
+           padding: 36px 28px 28px 28px;
+           max-width: 800px;
+           width: 98vw;
+           min-width: 0;
+           position: relative;
+           max-height: 80vh;
+           overflow-y: auto;
+         }
        `}</style>
       
              {/* Payment Modal */}
@@ -1167,8 +1228,107 @@ export default function Fee() {
                &#10005;
              </button>
              <div className="print-area">
-               <FeeReceipt ref={receiptRef} receipt={receiptData} />
+               <FeeReceipt ref={receiptRef} receipt={receiptData} currentPayment={receiptData.currentPayment} />
              </div>
+           </div>
+         </div>
+       )}
+
+       {/* Transaction History Modal */}
+       {showTransactionHistory && selectedStudentForHistory && (
+         <div className="transaction-history-modal-overlay" onClick={() => setShowTransactionHistory(false)}>
+           <div className="transaction-history-modal-content" onClick={e => e.stopPropagation()}>
+             <button 
+               className="text-button close-btn black-x always-visible" 
+               onClick={() => setShowTransactionHistory(false)} 
+               style={{
+                 position: 'absolute',
+                 top: 10,
+                 right: 20,
+                 zIndex: 10000,
+                 color: '#111',
+                 background: 'none',
+                 border: 'none',
+                 fontSize: '24px',
+                 cursor: 'pointer'
+               }} 
+               aria-label="Close"
+             >
+               &#10005;
+             </button>
+             <h2>Transaction History</h2>
+             <p style={{ marginBottom: '20px', color: '#666' }}>
+               Student: <strong>{selectedStudentForHistory.full_name}</strong> ({selectedStudentForHistory.student_id})
+             </p>
+             
+             {transactionHistory.length === 0 ? (
+               <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                 <p>No transactions found for this student.</p>
+               </div>
+             ) : (
+               <div style={{ 
+                 background: '#fff', 
+                 borderRadius: 12, 
+                 boxShadow: '0 2px 12px rgba(0,0,0,0.1)', 
+                 overflow: 'hidden',
+                 marginBottom: 24
+               }}>
+                 <div style={{ overflowX: 'auto' }}>
+                   <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                     <thead>
+                       <tr style={{ background: '#204080', color: '#fff' }}>
+                         <th style={{ padding: '16px 12px', textAlign: 'left', fontSize: '14px', fontWeight: 600 }}>Date</th>
+                         <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Fee Type</th>
+                         <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Amount (XAF)</th>
+                         <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Actions</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {transactionHistory.map((transaction, index) => (
+                         <tr key={transaction.id} style={{ 
+                           borderBottom: '1px solid #e5e7eb',
+                           background: index % 2 === 0 ? '#fff' : '#f9fafb'
+                         }}>
+                           <td style={{ padding: '16px 12px', fontSize: '14px' }}>
+                             {new Date(transaction.paid_at).toLocaleDateString()}
+                           </td>
+                           <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
+                             {transaction.fee_type}
+                           </td>
+                           <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#2ecc71' }}>
+                             {parseFloat(transaction.amount).toLocaleString()}
+                           </td>
+                           <td style={{ padding: '16px 12px', textAlign: 'center' }}>
+                             <button
+                               onClick={() => {
+                                 handleGenerateReceiptForPayment(selectedStudentForHistory, transaction);
+                                 setShowTransactionHistory(false);
+                               }}
+                               style={{
+                                 background: '#17a2b8',
+                                 color: '#fff',
+                                 border: 'none',
+                                 borderRadius: '4px',
+                                 padding: '6px 12px',
+                                 fontSize: '12px',
+                                 cursor: 'pointer',
+                                 display: 'flex',
+                                 alignItems: 'center',
+                                 gap: '4px'
+                               }}
+                               title="Generate Receipt for this Payment"
+                             >
+                               <FaDownload size={12} />
+                               Receipt
+                             </button>
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
+             )}
            </div>
          </div>
        )}

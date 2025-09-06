@@ -888,8 +888,8 @@ export default function Inventory() {
 
   return (
     <SideTop>
-      <div className="inventory-container">
-        <div className="inventory-header">
+      <div className="inv-inventory-container inv-root">
+        <div className="inv-inventory-header">
           <h1>Financial Management System</h1>
           <p>Comprehensive budgeting, financial tracking, equipment management, and reporting for VOTECH(S7) Academy</p>
         </div>
@@ -899,42 +899,42 @@ export default function Inventory() {
 
         {/* Error Message */}
         {error && (
-          <div className="error-message">
+          <div className="inv-error-message">
             {error}
-            <button onClick={() => setError('')} className="error-close">×</button>
+            <button onClick={() => setError('')} className="inv-error-close">×</button>
               </div>
             )}
 
         {/* Navigation Tabs */}
-          <div className="inventory-tabs">
+          <div className="inv-inventory-tabs">
             {tabs.map(tab => (
               <button
                 key={tab.id}
-                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                className={`inv-tab-button ${activeTab === tab.id ? 'active' : ''}`}
                 onClick={() => setActiveTab(tab.id)}
                 title={tab.description}
               >
-                <span className="tab-icon">{tab.icon}</span>
-                <span className="tab-label">{tab.label}</span>
+                <span className="inv-tab-icon">{tab.icon}</span>
+                <span className="inv-tab-label">{tab.label}</span>
               </button>
             ))}
           </div>
 
         {/* Tab Content */}
-        <div className="tab-content">
+        <div className="inv-tab-content">
           {/* Income Management */}
           {activeTab === 'Income Management' && (
-            <div className="tab-panel">
-              <div className="panel-header">
+            <div className="inv-tab-panel">
+              <div className="inv-panel-header">
                 <h3>Income Management</h3>
-                <p className="panel-description">Register school income and track revenue sources with proper categorization</p>
-                <button className="primary-btn" onClick={() => setShowInventoryModal(true)}>
+                <p className="inv-panel-description">Register school income and track revenue sources with proper categorization</p>
+                <button className="inv-primary-btn" onClick={() => setShowInventoryModal(true)}>
                   <FaPlus /> Register Income Item
                 </button>
               </div>
               
-              <div className="inventory-table-container">
-                  <table className="inventory-table">
+              <div className="inv-inventory-table-container">
+                  <table className="inv-inventory-table">
                     <thead>
                       <tr>
                         <th>Date</th>
@@ -959,11 +959,11 @@ export default function Inventory() {
                           <td>{item.quantity}</td>
                         <td>{formatCurrency(item.estimated_cost)}</td>
                         <td>{item.depreciation_rate ? `${item.depreciation_rate}%` : '-'}</td>
-                        <td className="actions">
-                          <button onClick={() => openEditInventory(item)} className="action-btn edit">
+                        <td className="inv-actions">
+                          <button onClick={() => openEditInventory(item)} className="inv-action-btn edit">
                             <FaEdit />
                           </button>
-                          <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="action-btn delete">
+                          <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="inv-action-btn delete">
                             <FaTrash />
                           </button>
                           </td>
@@ -977,11 +977,11 @@ export default function Inventory() {
           
           {/* Expenditure Management */}
           {activeTab === 'Expenditure Management' && (
-            <div className="tab-panel">
-              <div className="panel-header">
+            <div className="inv-tab-panel">
+              <div className="inv-panel-header">
                 <h3>Expenditure Management</h3>
-                <p className="panel-description">Register school expenditures and track spending with proper categorization</p>
-                <button className="primary-btn" onClick={() => {
+                <p className="inv-panel-description">Register school expenditures and track spending with proper categorization</p>
+                <button className="inv-primary-btn" onClick={() => {
                   setInventoryForm(prev => ({ ...prev, type: 'expenditure' }));
                   setShowInventoryModal(true);
                 }}>
@@ -989,8 +989,8 @@ export default function Inventory() {
                 </button>
               </div>
               
-              <div className="inventory-table-container">
-                  <table className="inventory-table">
+              <div className="inv-inventory-table-container">
+                  <table className="inv-inventory-table">
                     <thead>
                       <tr>
                         <th>Date</th>
@@ -1011,11 +1011,11 @@ export default function Inventory() {
                         <td>{item.budget_head_name || '-'}</td>
                           <td>{item.quantity}</td>
                         <td>{formatCurrency(item.estimated_cost)}</td>
-                        <td className="actions">
-                          <button onClick={() => openEditInventory(item)} className="action-btn edit">
+                        <td className="inv-actions">
+                          <button onClick={() => openEditInventory(item)} className="inv-action-btn edit">
                             <FaEdit />
                           </button>
-                          <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="action-btn delete">
+                          <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="inv-action-btn delete">
                             <FaTrash />
                           </button>
                           </td>
@@ -1029,39 +1029,39 @@ export default function Inventory() {
 
           {/* Budget Heads Management */}
           {activeTab === 'Budget Heads' && (
-            <div className="tab-panel">
-              <div className="panel-header">
+            <div className="inv-tab-panel">
+              <div className="inv-panel-header">
                 <h3>Budget Heads Management</h3>
-                <p className="panel-description">Create budget heads to categorize financial allocations for income and expenditure tracking</p>
-                <button className="primary-btn" onClick={() => setShowBudgetModal(true)}>
+                <p className="inv-panel-description">Create budget heads to categorize financial allocations for income and expenditure tracking</p>
+                <button className="inv-primary-btn" onClick={() => setShowBudgetModal(true)}>
                   <FaPlus /> Create Budget Head
                 </button>
               </div>
               
-              <div className="budget-heads-grid">
+              <div className="inv-budget-heads-grid">
                 {budgetHeads.length === 0 ? (
-                  <div className="no-data-message">
+                  <div className="inv-no-data-message">
                     <p>No budget heads created yet. Click "Create Budget Head" to get started.</p>
                   </div>
                 ) : (
                   budgetHeads.map(budget => (
-                    <div key={budget.id} className="budget-head-card">
-                      <div className="budget-header">
+                    <div key={budget.id} className="inv-budget-head-card">
+                      <div className="inv-budget-header">
                         <h4>{budget.name}</h4>
-                        <span className={`budget-category ${budget.category}`}>{budget.category}</span>
+                        <span className={`inv-budget-category ${budget.category}`}>{budget.category}</span>
                       </div>
-                      <div className="budget-details">
+                      <div className="inv-budget-details">
                         <p><strong>Code:</strong> {budget.code || 'N/A'}</p>
                         <p><strong>Allocated Amount:</strong> {formatCurrency(budget.allocated_amount)}</p>
                         <p><strong>Description:</strong> {budget.description || 'No description'}</p>
                       </div>
-                      <div className="budget-actions">
-                        <button onClick={() => openEditBudget(budget)} className="action-btn edit">
+                      <div className="inv-budget-actions">
+                        <button onClick={() => openEditBudget(budget)} className="inv-action-btn edit">
                           <FaEdit />
                         </button>
                         <button 
                           onClick={() => handleDeleteBudgetHead(budget.id)} 
-                          className="action-btn delete"
+                          className="inv-action-btn delete"
                           style={{ display: 'inline-flex', marginLeft: '8px' }}
                         >
                           <FaTrash />
@@ -1076,40 +1076,40 @@ export default function Inventory() {
           
           {/* Asset Categories Management */}
           {activeTab === 'Asset Categories' && (
-            <div className="tab-panel">
-              <div className="panel-header">
+            <div className="inv-tab-panel">
+              <div className="inv-panel-header">
                 <h3>Department Heads & Asset Categories</h3>
-                <p className="panel-description">Create department heads for organized equipment allocation and asset categories with depreciation settings</p>
-                <button className="primary-btn" onClick={() => setShowAssetCategoryModal(true)}>
+                <p className="inv-panel-description">Create department heads for organized equipment allocation and asset categories with depreciation settings</p>
+                <button className="inv-primary-btn" onClick={() => setShowAssetCategoryModal(true)}>
                   <FaPlus /> Create Asset Category
                 </button>
               </div>
               
-              <div className="asset-categories-grid">
+              <div className="inv-asset-categories-grid">
                 {assetCategories.length === 0 ? (
-                  <div className="no-data-message">
+                  <div className="inv-no-data-message">
                     <p>No asset categories created yet. Click "Create Asset Category" to get started.</p>
                     <p><strong>Tip:</strong> Asset categories help organize equipment by type and set default depreciation rates.</p>
                   </div>
                 ) : (
                   assetCategories.map(category => (
-                    <div key={category.id} className="asset-category-card">
-                      <div className="category-header">
+                    <div key={category.id} className="inv-asset-category-card">
+                      <div className="inv-category-header">
                         <h4>{category.name}</h4>
-                        <span className="category-type">Asset Category</span>
+                        <span className="inv-category-type">Asset Category</span>
                       </div>
-                      <div className="category-details">
+                      <div className="inv-category-details">
                         <p><strong>Default Depreciation Rate:</strong> {category.default_depreciation_rate || 'Not set'}%</p>
                         <p><strong>Useful Life:</strong> {category.useful_life_years || 'Not set'} years</p>
                         <p><strong>Description:</strong> {category.description || 'No description'}</p>
                       </div>
-                      <div className="category-actions">
+                      <div className="inv-category-actions">
                         <button onClick={() => openEditAssetCategory(category)} className="action-btn edit">
                           <FaEdit />
                         </button>
                         <button 
                           onClick={() => handleDeleteAssetCategory(category.id)} 
-                          className="action-btn delete"
+                          className="inv-action-btn delete"
                           style={{ display: 'inline-flex', marginLeft: '8px' }}
                         >
                           <FaTrash />
@@ -1124,11 +1124,11 @@ export default function Inventory() {
 
           {/* Equipment Management */}
           {activeTab === 'Equipment Management' && (
-            <div className="tab-panel">
-              <div className="panel-header">
+            <div className="inv-tab-panel">
+              <div className="inv-panel-header">
                 <h3>Equipment Purchase Registration</h3>
-                <p className="panel-description">Register equipment purchases with associated costs, suppliers, and depreciation settings</p>
-                <button className="primary-btn" onClick={() => {
+                <p className="inv-panel-description">Register equipment purchases with associated costs, suppliers, and depreciation settings</p>
+                <button className="inv-primary-btn" onClick={() => {
                   setInventoryForm(prev => ({ ...prev, type: 'income' }));
                   setShowInventoryModal(true);
                 }}>
@@ -1136,7 +1136,7 @@ export default function Inventory() {
                 </button>
               </div>
               
-              <div className="inventory-table-container">
+              <div className="inv-inventory-table-container">
                 <table className="inventory-table">
                   <thead>
                     <tr>
@@ -1164,11 +1164,11 @@ export default function Inventory() {
                         <td>{item.supplier || '-'}</td>
                         <td>{item.depreciation_rate ? `${item.depreciation_rate}%` : '-'}</td>
                         <td>{formatCurrency(item.current_value || item.estimated_cost)}</td>
-                        <td className="actions">
-                          <button onClick={() => openEditInventory(item)} className="action-btn edit">
+                        <td className="inv-actions">
+                          <button onClick={() => openEditInventory(item)} className="inv-action-btn edit">
                             <FaEdit />
                           </button>
-                          <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="action-btn delete">
+                          <button onClick={() => { setItemToDelete(item); setShowDeleteModal(true); }} className="inv-action-btn delete">
                             <FaTrash />
                           </button>
                         </td>
@@ -1182,11 +1182,11 @@ export default function Inventory() {
 
           {/* Depreciation Management */}
           {activeTab === 'Depreciation Management' && (
-            <div className="tab-panel">
-              <div className="panel-header">
+            <div className="inv-tab-panel">
+              <div className="inv-panel-header">
                 <h3>Monthly Equipment Valuation & Depreciation</h3>
-                <p className="panel-description">Calculate monthly depreciation and get current value of total school equipment at month end</p>
-                <button className="primary-btn" onClick={() => setShowDepreciationModal(true)}>
+                <p className="inv-panel-description">Calculate monthly depreciation and get current value of total school equipment at month end</p>
+                <button className="inv-primary-btn" onClick={() => setShowDepreciationModal(true)}>
                   <FaCalculator /> Calculate Monthly Depreciation
                 </button>
               </div>
@@ -1251,15 +1251,15 @@ export default function Inventory() {
 
           {/* Financial Reports */}
           {activeTab === 'Financial Reports' && (
-            <div className="tab-panel">
-              <div className="panel-header">
+            <div className="inv-tab-panel">
+              <div className="inv-panel-header">
                 <h3>Financial Statements & Balance Sheet</h3>
-                <p className="panel-description">Generate comprehensive Financial Statements (Income, Expenses) and detailed Balance Sheet reports</p>
+                <p className="inv-panel-description">Generate comprehensive Financial Statements (Income, Expenses) and detailed Balance Sheet reports</p>
                 <div className="report-actions">
-                  <button className="primary-btn" onClick={() => fetchFinancialSummary()}>
+                  <button className="inv-primary-btn" onClick={() => fetchFinancialSummary()}>
                     <FaChartBar /> Refresh Financial Summary
                   </button>
-                  <button className="primary-btn" onClick={() => fetchBalanceSheet()}>
+                  <button className="inv-primary-btn" onClick={() => fetchBalanceSheet()}>
                     <FaFileInvoiceDollar /> Refresh Balance Sheet
                   </button>
                 </div>
@@ -1280,22 +1280,22 @@ export default function Inventory() {
                       {/* Core Financial Overview */}
                       <div className="financial-overview-section">
                         <h5>📊 Core Financial Overview</h5>
-                      <div className="summary-grid">
-                        <div className="summary-item">
+                      <div className="inv-summary-grid">
+                        <div className="inv-summary-item">
                           <span>Total Income:</span>
-                            <span className="amount positive">{formatCurrency(financialSummary.total_income)}</span>
+                            <span className="inv-amount positive">{formatCurrency(financialSummary.total_income)}</span>
                         </div>
-                        <div className="summary-item">
+                        <div className="inv-summary-item">
                           <span>Total Expenditure:</span>
-                            <span className="amount negative">{formatCurrency(financialSummary.total_expenditure)}</span>
+                            <span className="inv-amount negative">{formatCurrency(financialSummary.total_expenditure)}</span>
                         </div>
-                        <div className="summary-item">
+                        <div className="inv-summary-item">
                           <span>Asset Purchases:</span>
-                            <span className="amount neutral">{formatCurrency(financialSummary.total_assets)}</span>
+                            <span className="inv-amount neutral">{formatCurrency(financialSummary.total_assets)}</span>
                         </div>
-                        <div className="summary-item total">
+                        <div className="inv-summary-item total">
                           <span>Net Balance:</span>
-                            <span className={`amount ${financialSummary.net_income >= 0 ? 'positive' : 'negative'}`}>
+                            <span className={`inv-amount ${financialSummary.net_income >= 0 ? 'positive' : 'negative'}`}>
                               {formatCurrency(financialSummary.net_income)}
                           </span>
                         </div>
@@ -1317,7 +1317,7 @@ export default function Inventory() {
                                 <h6>Fee Breakdown by Type:</h6>
                                 <div className="fee-breakdown-list">
                                   {financialSummary.fee_reports.fee_breakdown.map((fee, index) => (
-                                    <div key={index} className="fee-breakdown-item">
+                                    <div key={index} className="inv-fee-breakdown-item">
                                       <span className="fee-type">{fee.fee_type}</span>
                                       <span className="fee-amount">{formatCurrency(fee.amount)}</span>
                                       <span className="fee-count">({fee.payment_count} payments)</span>
@@ -1328,18 +1328,18 @@ export default function Inventory() {
                             )}
                             
                             {financialSummary.fee_reports.class_wise_totals && financialSummary.fee_reports.class_wise_totals.length > 0 && (
-                              <div className="class-fees-section">
+                              <div className="inv-class-fees-section">
                                 <h6>Class-wise Collection:</h6>
-                                <div className="class-fees-list">
+                                <div className="inv-class-fees-list">
                                   {financialSummary.fee_reports.class_wise_totals.map((classFee, index) => (
-                                    <div key={index} className="class-fee-item">
-                                      <div className="class-info">
-                                        <span className="class-name">{classFee.class_name}</span>
-                                        <span className="class-students">{classFee.students_paid} students paid</span>
+                                    <div key={index} className="inv-class-fee-item">
+                                      <div className="inv-class-info">
+                                        <span className="inv-class-name">{classFee.class_name}</span>
+                                        <span className="inv-class-students">{classFee.students_paid} students paid</span>
                                       </div>
-                                      <div className="class-amounts">
-                                        <span className="collected">{formatCurrency(classFee.fees_collected)}</span>
-                                        <span className="expected">/ {formatCurrency(classFee.class_total_fee)}</span>
+                                      <div className="inv-class-amounts">
+                                        <span className="inv-collected">{formatCurrency(classFee.fees_collected)}</span>
+                                        <span className="inv-expected">/ {formatCurrency(classFee.class_total_fee)}</span>
                                       </div>
                                     </div>
                                   ))}
@@ -1407,7 +1407,7 @@ export default function Inventory() {
                       </button>
                     </div>
                   ) : (
-                    <div className="no-data-message">
+                    <div className="inv-no-data-message">
                       <p>No financial summary available. Click "Refresh Summary" to generate.</p>
                     </div>
                   )}
@@ -1482,7 +1482,7 @@ export default function Inventory() {
                       </button>
                     </div>
                   ) : (
-                    <div className="no-data-message">
+                    <div className="inv-no-data-message">
                       <p>No balance sheet available. Click "Refresh Balance Sheet" to generate.</p>
                     </div>
                   )}
@@ -1512,12 +1512,12 @@ export default function Inventory() {
 
         {/* Inventory Modal */}
         {showInventoryModal && (
-          <div className="modal-overlay" onClick={() => setShowInventoryModal(false)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="inv-modal-overlay" onClick={() => setShowInventoryModal(false)}>
+            <div className="inv-modal-content" onClick={e => e.stopPropagation()}>
               <h3>{editingItem ? 'Edit Inventory Item' : 'Register Inventory Item'}</h3>
               <form onSubmit={handleInventorySubmit} className="inventory-form">
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="inv-form-row">
+                  <div className="inv-form-group">
                     <label>Date *</label>
                     <input
                       type="date"
@@ -1527,7 +1527,7 @@ export default function Inventory() {
                       required
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="inv-form-group">
                     <label>Type *</label>
                     <select
                       name="type"
@@ -1541,8 +1541,8 @@ export default function Inventory() {
                   </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="inv-form-row">
+                  <div className="inv-form-group">
                     <label>Item Name *</label>
                     <input
                       type="text"
@@ -1552,7 +1552,7 @@ export default function Inventory() {
                       required
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="inv-form-group">
                     <label>Department *</label>
                     <select
                       name="department"
@@ -1568,8 +1568,8 @@ export default function Inventory() {
                   </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="inv-form-row">
+                  <div className="inv-form-group">
                     <label>Quantity *</label>
                           <input
                             type="number"
@@ -1580,7 +1580,7 @@ export default function Inventory() {
                       required
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="inv-form-group">
                     <label>Estimated Cost *</label>
                     <input
                       type="number"
@@ -1596,8 +1596,8 @@ export default function Inventory() {
 
                 {inventoryForm.type === 'income' && (
                   <>
-                    <div className="form-row">
-                      <div className="form-group">
+                    <div className="inv-form-row">
+                      <div className="inv-form-group">
                         <label>Budget Head</label>
                         <select
                           name="budget_head_id"
@@ -1610,7 +1610,7 @@ export default function Inventory() {
                           ))}
                         </select>
               </div>
-                      <div className="form-group">
+                      <div className="inv-form-group">
                         <label>Asset Category</label>
                         <select
                           name="asset_category"
@@ -1625,8 +1625,8 @@ export default function Inventory() {
             </div>
                     </div>
 
-                    <div className="form-row">
-                      <div className="form-group">
+                    <div className="inv-form-row">
+                      <div className="inv-form-group">
                         <label>Purchase Date</label>
                         <input
                           type="date"
@@ -1635,7 +1635,7 @@ export default function Inventory() {
                           onChange={handleInventoryFormChange}
                         />
                       </div>
-                      <div className="form-group">
+                      <div className="inv-form-group">
                         <label>Depreciation Rate (%)</label>
                         <input
                           type="number"
@@ -1649,8 +1649,8 @@ export default function Inventory() {
                       </div>
                     </div>
 
-                    <div className="form-row">
-                      <div className="form-group">
+                    <div className="inv-form-row">
+                      <div className="inv-form-group">
                         <label>Supplier</label>
                         <input
                           type="text"
@@ -1659,7 +1659,7 @@ export default function Inventory() {
                           onChange={handleInventoryFormChange}
                         />
                       </div>
-                      <div className="form-group">
+                      <div className="inv-form-group">
                         <label>Location</label>
                         <input
                           type="text"
@@ -1670,8 +1670,8 @@ export default function Inventory() {
                       </div>
                     </div>
 
-                    <div className="form-row">
-                      <div className="form-group">
+                    <div className="inv-form-row">
+                      <div className="inv-form-group">
                         <label>Warranty Expiry</label>
                         <input
                           type="date"
@@ -1680,7 +1680,7 @@ export default function Inventory() {
                           onChange={handleInventoryFormChange}
                         />
                       </div>
-                      <div className="form-group">
+                      <div className="inv-form-group">
                         <label>Condition</label>
                         <select
                           name="condition"
@@ -1698,7 +1698,7 @@ export default function Inventory() {
                 )}
 
                 {inventoryForm.type === 'expenditure' && (
-                  <div className="form-group">
+                  <div className="inv-form-group">
                     <label>Budget Head</label>
                     <select
                       name="budget_head_id"
@@ -1713,7 +1713,7 @@ export default function Inventory() {
                   </div>
                 )}
 
-                <div className="form-actions">
+                <div className="inv-form-actions">
                   <button type="submit" className="primary-btn">
                     {editingItem ? 'Update Item' : 'Register Item'}
                   </button>
@@ -1728,12 +1728,12 @@ export default function Inventory() {
 
         {/* Budget Head Modal */}
         {showBudgetModal && (
-          <div className="modal-overlay" onClick={() => setShowBudgetModal(false)}>
-                  <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="inv-modal-overlay" onClick={() => setShowBudgetModal(false)}>
+                  <div className="inv-modal-content" onClick={e => e.stopPropagation()}>
               <h3>{editingBudget ? 'Edit Budget Head' : 'Create Budget Head'}</h3>
               <form onSubmit={handleBudgetSubmit} className="budget-form">
-                <div className="form-row">
-                      <div className="form-group">
+                <div className="inv-form-row">
+                      <div className="inv-form-group">
                     <label>Name *</label>
                     <input
                       type="text"
@@ -1743,7 +1743,7 @@ export default function Inventory() {
                       required
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="inv-form-group">
                     <label>Code</label>
                     <input
                       type="text"
@@ -1754,8 +1754,8 @@ export default function Inventory() {
                   </div>
                       </div>
                       
-                <div className="form-row">
-                      <div className="form-group">
+                <div className="inv-form-row">
+                      <div className="inv-form-group">
                     <label>Category *</label>
                     <select
                       name="category"
@@ -1768,7 +1768,7 @@ export default function Inventory() {
                       <option value="asset">Asset</option>
                         </select>
                   </div>
-                  <div className="form-group">
+                  <div className="inv-form-group">
                     <label>Allocated Amount</label>
                     <input
                       type="number"
@@ -1781,7 +1781,7 @@ export default function Inventory() {
                   </div>
                       </div>
                       
-                        <div className="form-group">
+                        <div className="inv-form-group">
                   <label>Description</label>
                   <textarea
                     name="description"
@@ -1791,7 +1791,7 @@ export default function Inventory() {
                   />
                 </div>
 
-                <div className="form-actions">
+                <div className="inv-form-actions">
                   <button type="submit" className="primary-btn">
                     {editingBudget ? 'Update Budget Head' : 'Create Budget Head'}
                   </button>
@@ -1806,11 +1806,11 @@ export default function Inventory() {
 
         {/* Asset Category Modal */}
         {showAssetCategoryModal && (
-          <div className="modal-overlay" onClick={() => setShowAssetCategoryModal(false)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="inv-modal-overlay" onClick={() => setShowAssetCategoryModal(false)}>
+            <div className="inv-modal-content" onClick={e => e.stopPropagation()}>
               <h3>{editingAssetCategory ? 'Edit Asset Category' : 'Create Asset Category'}</h3>
               <form onSubmit={handleAssetCategorySubmit} className="asset-category-form">
-                <div className="form-group">
+                <div className="inv-form-group">
                   <label>Name *</label>
                           <input 
                     type="text"
@@ -1821,8 +1821,8 @@ export default function Inventory() {
                   />
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="inv-form-row">
+                  <div className="inv-form-group">
                     <label>Default Depreciation Rate (%)</label>
                     <input
                       type="number"
@@ -1834,7 +1834,7 @@ export default function Inventory() {
                       step="0.01"
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="inv-form-group">
                     <label>Useful Life (Years)</label>
                     <input
                       type="number"
@@ -1847,7 +1847,7 @@ export default function Inventory() {
                   </div>
                 </div>
 
-                <div className="form-group">
+                <div className="inv-form-group">
                   <label>Description</label>
                   <textarea
                     name="description"
@@ -1857,7 +1857,7 @@ export default function Inventory() {
                   />
                 </div>
 
-                <div className="form-actions">
+                <div className="inv-form-actions">
                   <button type="submit" className="primary-btn">
                     {editingAssetCategory ? 'Update Asset Category' : 'Create Asset Category'}
                   </button>
@@ -1872,12 +1872,12 @@ export default function Inventory() {
                       
         {/* Depreciation Calculation Modal */}
         {showDepreciationModal && (
-          <div className="modal-overlay" onClick={() => setShowDepreciationModal(false)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="inv-modal-overlay" onClick={() => setShowDepreciationModal(false)}>
+            <div className="inv-modal-content" onClick={e => e.stopPropagation()}>
               <h3>Calculate Monthly Depreciation</h3>
               <form onSubmit={handleDepreciationCalculation} className="depreciation-form">
-                        <div className="form-row">
-                          <div className="form-group">
+                        <div className="inv-form-row">
+                          <div className="inv-form-group">
                     <label>Month *</label>
                     <select
                       name="month"
@@ -1893,7 +1893,7 @@ export default function Inventory() {
                               ))}
                             </select>
                           </div>
-                          <div className="form-group">
+                          <div className="inv-form-group">
                     <label>Year *</label>
                     <select
                       name="year"
@@ -1909,7 +1909,7 @@ export default function Inventory() {
                           </div>
                         </div>
 
-                <div className="form-actions">
+                <div className="inv-form-actions">
                   <button type="submit" className="primary-btn">
                     Calculate Depreciation
                   </button>
@@ -1924,11 +1924,11 @@ export default function Inventory() {
                       
         {/* Delete Confirmation Modal */}
         {showDeleteModal && (
-          <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="inv-modal-overlay" onClick={() => setShowDeleteModal(false)}>
             <div className="modal-content delete-confirmation" onClick={e => e.stopPropagation()}>
               <h3>Confirm Delete</h3>
               <p>Are you sure you want to delete "{itemToDelete?.item_name}"? This action cannot be undone.</p>
-                      <div className="form-actions">
+                      <div className="inv-form-actions">
                 <button type="button" className="danger-btn" onClick={handleDelete}>
                   Delete
                 </button>
@@ -1964,8 +1964,8 @@ export default function Inventory() {
                         </button>
               <div className="print-area">
                 {receiptType === 'financial_summary' && (
-                  <div className="receipt-wrapper">
-                    <div className="receipt-template">
+                  <div className="inv-receipt-wrapper">
+                    <div className="inv-receipt-template">
                       {/* Header Section */}
                       <div className="report-header">
                         <div className="report-title-group">
@@ -2171,26 +2171,26 @@ export default function Inventory() {
                 )}
 
                 {receiptType === 'balance_sheet' && (
-                  <div className="receipt-wrapper">
-                    <div className="receipt-template">
+                  <div className="inv-receipt-wrapper">
+                    <div className="inv-receipt-template">
                       {/* Header Section */}
-                      <div className="receipt-header">
-                        <div className="school-name">VOTECH(S7) ACADEMY</div>
-                        <h1 className="receipt-title">Balance Sheet Report</h1>
-                        <div className="receipt-meta">
-                          <div className="meta-row">
-                            <span className="meta-label">As of:</span>
-                            <span className="meta-underline">{formatDate(receiptData.as_of_date)}</span>
-                            <span className="meta-label">Generated:</span>
-                            <span className="meta-underline">{new Date().toLocaleDateString()}</span>
+                      <div className="inv-receipt-header">
+                        <div className="inv-school-name">VOTECH(S7) ACADEMY</div>
+                        <h1 className="inv-receipt-title">Balance Sheet Report</h1>
+                        <div className="inv-receipt-meta">
+                          <div className="inv-meta-row">
+                            <span className="inv-meta-label">As of:</span>
+                            <span className="inv-meta-underline">{formatDate(receiptData.as_of_date)}</span>
+                            <span className="inv-meta-label">Generated:</span>
+                            <span className="inv-meta-underline">{new Date().toLocaleDateString()}</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Balance Sheet Sections */}
-                      <div className="fee-types-section">
-                        <h3 className="fee-types-title">🏢 Assets</h3>
-                        <table className="fee-types-table">
+                      <div className="inv-fee-types-section">
+                        <h3 className="inv-fee-types-title">🏢 Assets</h3>
+                        <table className="inv-fee-types-table">
                           <thead>
                             <tr>
                               <th>Asset Category</th>
@@ -2200,27 +2200,27 @@ export default function Inventory() {
                           </thead>
                           <tbody>
                             <tr>
-                              <td className="fee-type-name">Total Assets</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.assets?.total_assets || 0)}</td>
+                              <td className="inv-fee-type-name">Total Assets</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.assets?.total_assets || 0)}</td>
                               <td className="fee-status completed">Active</td>
                             </tr>
                             <tr>
-                              <td className="fee-type-name">Current Assets</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.assets?.current_assets || 0)}</td>
+                              <td className="inv-fee-type-name">Current Assets</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.assets?.current_assets || 0)}</td>
                               <td className="fee-status completed">Current</td>
                             </tr>
                             <tr>
-                              <td className="fee-type-name">Depreciation</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.assets?.depreciation || 0)}</td>
+                              <td className="inv-fee-type-name">Depreciation</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.assets?.depreciation || 0)}</td>
                               <td className="fee-status partial">Accumulated</td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
 
-                      <div className="fee-types-section">
-                        <h3 className="fee-types-title">💳 Liabilities</h3>
-                        <table className="fee-types-table">
+                      <div className="inv-fee-types-section">
+                        <h3 className="inv-fee-types-title">💳 Liabilities</h3>
+                        <table className="inv-fee-types-table">
                           <thead>
                             <tr>
                               <th>Liability Category</th>
@@ -2230,17 +2230,17 @@ export default function Inventory() {
                           </thead>
                           <tbody>
                             <tr>
-                              <td className="fee-type-name">Total Liabilities</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.liabilities?.total_liabilities || 0)}</td>
+                              <td className="inv-fee-type-name">Total Liabilities</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.liabilities?.total_liabilities || 0)}</td>
                               <td className="fee-status pending">Outstanding</td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
 
-                      <div className="fee-types-section">
-                        <h3 className="fee-types-title">💰 Equity</h3>
-                        <table className="fee-types-table">
+                      <div className="inv-fee-types-section">
+                        <h3 className="inv-fee-types-title">💰 Equity</h3>
+                        <table className="inv-fee-types-table">
                           <thead>
                             <tr>
                               <th>Equity Category</th>
@@ -2250,18 +2250,18 @@ export default function Inventory() {
                           </thead>
                           <tbody>
                             <tr>
-                              <td className="fee-type-name">Total Income</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.equity?.total_income || 0)}</td>
+                              <td className="inv-fee-type-name">Total Income</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.equity?.total_income || 0)}</td>
                               <td className="fee-status completed">Generated</td>
                             </tr>
                             <tr>
-                              <td className="fee-type-name">Total Expenditure</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.equity?.total_expenditure || 0)}</td>
+                              <td className="inv-fee-type-name">Total Expenditure</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.equity?.total_expenditure || 0)}</td>
                               <td className="fee-status pending">Incurred</td>
                             </tr>
                             <tr>
-                              <td className="fee-type-name">Net Worth</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.equity?.net_worth || 0)}</td>
+                              <td className="inv-fee-type-name">Net Worth</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.equity?.net_worth || 0)}</td>
                               <td className={`fee-status ${(receiptData.equity?.net_worth || 0) >= 0 ? 'completed' : 'pending'}`}>
                                 {(receiptData.equity?.net_worth || 0) >= 0 ? 'Positive' : 'Negative'}
                               </td>
@@ -2271,9 +2271,9 @@ export default function Inventory() {
                       </div>
 
                       {/* Financial Summary */}
-                      <div className="fee-types-section">
-                        <h3 className="fee-types-title">📊 Financial Summary</h3>
-                        <table className="fee-types-table">
+                      <div className="inv-fee-types-section">
+                        <h3 className="inv-fee-types-title">📊 Financial Summary</h3>
+                        <table className="inv-fee-types-table">
                           <thead>
                             <tr>
                               <th>Financial Metric</th>
@@ -2283,25 +2283,25 @@ export default function Inventory() {
                           </thead>
                           <tbody>
                             <tr>
-                              <td className="fee-type-name">Total Assets</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.totals?.total_assets || 0)}</td>
+                              <td className="inv-fee-type-name">Total Assets</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.totals?.total_assets || 0)}</td>
                               <td className="fee-status completed">Owned</td>
                             </tr>
                             <tr>
-                              <td className="fee-type-name">Total Liabilities</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.totals?.total_liabilities || 0)}</td>
+                              <td className="inv-fee-type-name">Total Liabilities</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.totals?.total_liabilities || 0)}</td>
                               <td className="fee-status pending">Owed</td>
                             </tr>
                             <tr>
-                              <td className="fee-type-name">Total Equity</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.totals?.total_equity || 0)}</td>
+                              <td className="inv-fee-type-name">Total Equity</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.totals?.total_equity || 0)}</td>
                               <td className={`fee-status ${(receiptData.totals?.total_equity || 0) >= 0 ? 'completed' : 'pending'}`}>
                                 {(receiptData.totals?.total_equity || 0) >= 0 ? 'Positive' : 'Negative'}
                               </td>
                             </tr>
                             <tr>
-                              <td className="fee-type-name">Liabilities + Equity</td>
-                              <td className="fee-expected">{formatCurrency(receiptData.totals?.liabilities_plus_equity || 0)}</td>
+                              <td className="inv-fee-type-name">Liabilities + Equity</td>
+                              <td className="inv-fee-expected">{formatCurrency(receiptData.totals?.liabilities_plus_equity || 0)}</td>
                               <td className="fee-status completed">Balanced</td>
                             </tr>
                           </tbody>
@@ -2309,7 +2309,7 @@ export default function Inventory() {
                       </div>
 
                       {/* Footer */}
-                      <div className="receipt-footer">
+                      <div className="inv-receipt-footer">
                         <p>This balance sheet provides a comprehensive view of the institution's financial position as of the specified date.</p>
                         <p>Generated on {new Date().toLocaleString()} | VOTECH(S7) ACADEMY Management System</p>
                       </div>
