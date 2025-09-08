@@ -80,6 +80,7 @@ export default function Salary({ authUser }) {
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Use backend aggregator that now returns all users with salary info
       const [applicationsData, statsData] = await Promise.all([
         api.getApprovedApplications(),
         api.getSalaryStatistics()
@@ -504,7 +505,7 @@ export default function Salary({ authUser }) {
         {/* Applications Table */}
         <div className="salary-table-container">
           <div className="salary-table-header">
-            <h2 className="salary-table-title">Approved Applications & Salaries</h2>
+            <h2 className="salary-table-title">All Staff</h2>
             {!isReadOnly && (
               <div className="salary-table-actions">
                 <button 

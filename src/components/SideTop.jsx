@@ -84,7 +84,6 @@ export default function SideTop({ children }) {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
-      { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
       {
@@ -188,7 +187,6 @@ export default function SideTop({ children }) {
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
  
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
-      { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
       {
         label: "Departments",
@@ -498,18 +496,12 @@ export default function SideTop({ children }) {
     
     { label: "Messages", icon: <FaEnvelope />, path: "/teacher-messages" },
     { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
-    { label: "Students", icon: <FaUserGraduate />, path: "/teacher-students" },
     {
       label: "Subjects",
       path: "/academics/subjects",
       icon: <FaBookOpen />,
     },
     // { label: "Marks", icon: <FaChartBar />, path: "/teacher-marks" },
-    {
-      label: "Attendance",
-      icon: <FaClipboardList />,
-      path: "/teacher-attendance",
-    },
     {
       label: "Lesson Plans",
       icon: <FaPenFancy />,

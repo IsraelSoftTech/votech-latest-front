@@ -5,16 +5,63 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logoImage from '../assets/logo.png';
 
-const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
+const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) => {
   if (!receipt) return null;
 
-  const { student, balance } = receipt;
+  const { student, balance, transactions = [] } = receipt;
   const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
   
-  const paid = feeTypes.reduce((sum, type) => sum + ((parseFloat(student[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)), 0);
-  const total = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
-  const left = total - paid;
-  const status = left <= 0 ? 'Completed' : 'Uncompleted';
+  // Function to convert number to words
+  const numberToWords = (num) => {
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    
+    if (num === 0) return 'Zero';
+    if (num < 10) return ones[num];
+    if (num < 20) return teens[num - 10];
+    if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + ones[num % 10] : '');
+    if (num < 1000) return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 ? ' ' + numberToWords(num % 100) : '');
+    if (num < 1000000) return numberToWords(Math.floor(num / 1000)) + ' Thousand' + (num % 1000 ? ' ' + numberToWords(num % 1000) : '');
+    return 'Number too large';
+  };
+  
+  // Calculate amounts
+  let paid, total, left, status;
+  
+  if (currentPayment) {
+    // Show only the current payment amount
+    paid = currentPayment.amount || 0;
+    total = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
+    left = feeTypes.reduce((sum, type) => sum + (balance[type] || 0), 0);
+    status = 'Payment Received';
+  } else {
+    // Original behavior - show total paid
+    paid = feeTypes.reduce((sum, type) => sum + ((parseFloat(student[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)), 0);
+    total = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
+    left = total - paid;
+    status = left <= 0 ? 'Completed' : 'Uncompleted';
+  }
+
+  // Get last payment for each fee type (excluding current payment)
+  const getLastPaymentForType = (feeType) => {
+    if (!transactions || transactions.length === 0) return 0;
+    
+    // Filter transactions for this fee type and exclude current payment
+    const filteredTransactions = transactions.filter(t => {
+      if (t.fee_type !== feeType) return false;
+      if (currentPayment && t.id === currentPayment.id) return false;
+      return true;
+    });
+    
+    if (filteredTransactions.length === 0) return 0;
+    
+    // Sort by date and get the most recent
+    const lastPayment = filteredTransactions
+      .sort((a, b) => new Date(b.paid_at) - new Date(a.paid_at))[0];
+    
+    return lastPayment ? parseFloat(lastPayment.amount) : 0;
+  };
 
   const downloadPDF = async () => {
     if (!ref.current) return;
@@ -33,9 +80,9 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
        tempContainer.style.cssText = `
          background: white;
          width: 210mm;
-         height: 297mm;
+         height: 290mm;
          margin: 0 auto;
-         padding: 4mm;
+         padding: 3mm;
          box-sizing: border-box;
          font-family: 'Times New Roman', serif;
          color: black;
@@ -45,7 +92,7 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
          overflow: visible;
          display: flex;
          flex-direction: column;
-         gap: 6mm;
+         gap: 4mm;
        `;
       
       // Clone the receipt content twice
@@ -54,13 +101,13 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
         const firstReceipt = receiptContent.cloneNode(true);
         const secondReceipt = receiptContent.cloneNode(true);
         
-        // Slightly increase height and allow overflow to ensure last rows show
+        // Set appropriate height for each receipt to fit two on one A4 page
         firstReceipt.style.cssText = `
           width: 100%;
-          height: 134mm; /* further increased to show all rows */
-          min-height: 134mm;
-          max-height: 134mm;
-          padding: 3.5mm;
+          height: 140mm;
+          min-height: 140mm;
+          max-height: 140mm;
+          padding: 3mm;
           border: 1px dotted #000;
           background: linear-gradient(to bottom, #fefefe, #f5f5f0);
           box-sizing: border-box;
@@ -71,10 +118,10 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
         
         secondReceipt.style.cssText = `
           width: 100%;
-          height: 134mm; /* further increased to show all rows */
-          min-height: 134mm;
-          max-height: 134mm;
-          padding: 3.5mm;
+          height: 140mm;
+          min-height: 140mm;
+          max-height: 140mm;
+          padding: 3mm;
           border: 1px dotted #000;
           background: linear-gradient(to bottom, #fefefe, #f5f5f0);
           box-sizing: border-box;
@@ -86,19 +133,38 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
         tempContainer.appendChild(firstReceipt);
         tempContainer.appendChild(secondReceipt);
 
-        // Tweak spacing to keep within page
-        tempContainer.style.gap = '6mm';
-        tempContainer.style.padding = '5mm';
+        // Spacing is already set in the container CSS above
 
-        // Inject minor style overrides in the temp container to save space
+        // Inject optimized style overrides to ensure all content fits
         const style = document.createElement('style');
         style.textContent = `
-          .fee-types-table th, .fee-types-table td { padding: 0.6mm !important; font-size: 7pt !important; }
-          .summary-table td { padding: 0.6mm !important; font-size: 7pt !important; }
+          .fee-types-table th, .fee-types-table td { 
+            padding: 0.8mm !important; 
+            font-size: 8pt !important; 
+            line-height: 1.1 !important;
+          }
+          .summary-table th, .summary-table td { 
+            padding: 0.8mm !important; 
+            font-size: 8pt !important; 
+            line-height: 1.1 !important;
+          }
           .receipt-header { margin-bottom: 2mm !important; }
-          .amount-summary-section { margin-bottom: 1mm !important; }
-          .receipt-main { margin-bottom: 2mm !important; }
-          .fee-types-section { margin-bottom: 2mm !important; }
+          .student-info-section { margin-bottom: 1.5mm !important; }
+          .payment-statement { margin-bottom: 1.5mm !important; }
+          .fee-types-section { margin-bottom: 1.5mm !important; }
+          .amount-summary-section { margin-bottom: 1.5mm !important; }
+          .section-title, .fee-types-title, .summary-title { 
+            font-size: 9pt !important; 
+            margin-bottom: 1mm !important; 
+          }
+          .school-name { font-size: 11pt !important; }
+          .receipt-title { font-size: 15pt !important; }
+          .student-row { margin-bottom: 0.5mm !important; }
+          .payment-statement p { margin-bottom: 0.5mm !important; font-size: 8pt !important; }
+          .current-payment-details p { margin-bottom: 0.5mm !important; font-size: 8pt !important; }
+          .statement-text { font-size: 9pt !important; }
+          .amount-in-words, .amount-in-figures { font-size: 8pt !important; }
+          .fee-type-paid, .payment-amount, .payment-date { font-size: 8pt !important; }
         `;
         tempContainer.appendChild(style);
       }
@@ -148,17 +214,21 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
       const imgWidth = 210; // A4 width in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      // Add the image to PDF with proper positioning
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      // Scale the image to fit exactly on one A4 page with some margin
+      const margin = 5; // 5mm margin on all sides
+      const availableWidth = 210 - (2 * margin);
+      const availableHeight = 297 - (2 * margin);
       
-      // If the content is taller than A4, add a second page
-      if (imgHeight > 297) {
-        const remainingHeight = imgHeight - 297;
-        if (remainingHeight > 0) {
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, -297, imgWidth, imgHeight);
-        }
-      }
+      const scale = Math.min(availableWidth / imgWidth, availableHeight / imgHeight);
+      const scaledWidth = imgWidth * scale;
+      const scaledHeight = imgHeight * scale;
+      
+      // Center the image on the page with margin
+      const x = margin + (availableWidth - scaledWidth) / 2;
+      const y = margin + (availableHeight - scaledHeight) / 2;
+      
+      // Add the image to PDF - only one page, no second page
+      pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
 
       const fileName = `fee_receipt_${student.student_id}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
@@ -180,104 +250,159 @@ const FeeReceipt = React.forwardRef(({ receipt }, ref) => {
           <img src={logoImage} alt="School Logo" className="school-logo" />
           <div className="school-info">
             <div className="school-name">VOTECH(S7) ACADEMY</div>
-            <h1 className="receipt-title">Fee Receipt</h1>
           </div>
         </div>
-        <div className="receipt-meta">
-          <div className="meta-row">
-            <span className="meta-label">Date:</span>
-            <span className="meta-underline">{new Date().toLocaleDateString()}</span>
-            <span className="meta-label">Receipt No:</span>
-            <span className="meta-underline">{student.student_id}-{Date.now()}</span>
+        <div className="receipt-title-section">
+          <h1 className="receipt-title">FEE PAYMENT</h1>
+        </div>
+      </div>
+
+      {/* Student Information */}
+      <div className="student-info-section">
+        <div className="student-details">
+          <div className="student-row">
+            <span className="label">Name:</span>
+            <span className="value">{student.full_name || student.name}</span>
+          </div>
+          <div className="student-row">
+            <span className="label">Student ID:</span>
+            <span className="value">{student.student_id}</span>
           </div>
         </div>
       </div>
 
-      {/* Recipient and Amount Section */}
-      <div className="receipt-main">
-        <div className="main-row">
-          <span className="main-label">Received From:</span>
-          <span className="main-underline">{student.full_name}</span>
-          <span className="main-label">the amount of XAF</span>
-          <span className="main-underline">{paid.toLocaleString()}</span>
-        </div>
-        <div className="main-row">
-          <span className="main-label">For Payment of</span>
-          <span className="main-underline-long">School Fees - {student.class_name}</span>
-        </div>
+      {/* Payment Statement */}
+      <div className="payment-statement">
+        <p className="statement-text">
+          Fee of <strong>{paid.toLocaleString()}</strong> paid on <strong>{new Date(currentPayment ? currentPayment.paid_at : new Date()).toLocaleDateString()}</strong>
+        </p>
+        <p className="amount-in-words">
+          <strong>Amount in words:</strong> {numberToWords(paid)} XAF
+        </p>
+        <p className="amount-in-figures">
+          <strong>Amount in figures:</strong> {paid.toLocaleString()} XAF
+        </p>
+        {currentPayment && (
+          <div className="current-payment-details">
+            <p className="fee-type-paid">
+              <strong>Fee Type:</strong> {currentPayment.fee_type}
+            </p>
+            <p className="payment-amount">
+              <strong>Amount Paid:</strong> {currentPayment.amount.toLocaleString()} XAF
+            </p>
+            <p className="payment-date">
+              <strong>Payment Date:</strong> {new Date(currentPayment.paid_at).toLocaleDateString()}
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Period Section */}
-      <div className="receipt-period">
-        <div className="period-row">
-          <span className="period-label">From</span>
-          <span className="period-underline">September 2025</span>
-          <span className="period-label">to</span>
-          <span className="period-underline">June 2026</span>
+      {/* Fee Breakdown Table - Show all fee types for general receipt, specific fee type for transaction receipt */}
+      {currentPayment ? (
+        <div className="fee-types-section">
+          <h3 className="fee-types-title">Payment Details</h3>
+          <table className="fee-types-table">
+            <thead>
+              <tr>
+                <th>Fee Type</th>
+                <th>Amount Paid (XAF)</th>
+                <th>Payment Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="fee-type-name">{currentPayment.fee_type}</td>
+                <td className="fee-paid">{currentPayment.amount.toLocaleString()}</td>
+                <td className="fee-date">{new Date(currentPayment.paid_at).toLocaleDateString()}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
+      ) : (
+        <div className="fee-types-section">
+          <h3 className="fee-types-title">Fee Breakdown</h3>
+          <table className="fee-types-table">
+            <thead>
+              <tr>
+                <th>Fee Type</th>
+                <th>Expected (XAF)</th>
+                <th>Paid (XAF)</th>
+                <th>Balance (XAF)</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {feeTypes.map(type => {
+                const expectedFee = parseFloat(student[type.toLowerCase() + '_fee']) || 0;
+                const balanceOwed = balance[type] || 0;
+                const amountPaid = expectedFee - balanceOwed;
+                const percentage = expectedFee > 0 ? `${Math.round((amountPaid / expectedFee) * 100)}%` : '-';
+                
+                return (
+                  <tr key={type}>
+                    <td className="fee-type-name">{type}</td>
+                    <td className="fee-expected">{expectedFee.toLocaleString()}</td>
+                    <td className="fee-paid">{amountPaid.toLocaleString()}</td>
+                    <td className="fee-balance">{balanceOwed.toLocaleString()}</td>
+                    <td className={`fee-percentage ${expectedFee > 0 ? (amountPaid === expectedFee ? 'completed' : amountPaid > 0 ? 'partial' : 'pending') : 'no-fee'}`}>
+                      {percentage}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      {/* Fee Types Table */}
-      <div className="fee-types-section">
-        <h3 className="fee-types-title">Fee Breakdown</h3>
-        <table className="fee-types-table">
-          <thead>
-            <tr>
-              <th>Fee Type</th>
-              <th>Expected (XAF)</th>
-              <th>Paid (XAF)</th>
-              <th>Balance (XAF)</th>
-              <th>Percentage</th>
-            </tr>
-          </thead>
-          <tbody>
-            {feeTypes.map(type => {
-              const expectedFee = parseFloat(student[type.toLowerCase() + '_fee']) || 0;
-              const balanceOwed = balance[type] || 0;
-              const amountPaid = expectedFee - balanceOwed;
-              
-              // Calculate percentage paid
-              let percentage = '-';
-              if (expectedFee > 0) {
-                const percent = Math.round((amountPaid / expectedFee) * 100);
-                percentage = `${percent}%`;
-              }
-              
-              return (
-                <tr key={type}>
-                  <td className="fee-type-name">{type}</td>
-                  <td className="fee-expected">{expectedFee.toLocaleString()}</td>
-                  <td className="fee-paid">{amountPaid.toLocaleString()}</td>
-                  <td className="fee-balance">{balanceOwed.toLocaleString()}</td>
-                  <td className={`fee-percentage ${expectedFee > 0 ? (amountPaid === expectedFee ? 'completed' : amountPaid > 0 ? 'partial' : 'pending') : 'no-fee'}`}>
-                    {percentage}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Amount Summary */}
+      {/* Overall Summary */}
       <div className="amount-summary-section">
+        <h3 className="summary-title">Overall Summary</h3>
         <table className="summary-table">
           <tbody>
             <tr>
-              <td className="summary-label">Total Amount to be Received</td>
-              <td className="summary-value">{total.toLocaleString()}</td>
+              <td className="summary-label">Overall Expected</td>
+              <td className="summary-value">{total.toLocaleString()} XAF</td>
             </tr>
             <tr>
-              <td className="summary-label">Amount Received</td>
-              <td className="summary-value">{paid.toLocaleString()}</td>
+              <td className="summary-label">Overall Paid</td>
+              <td className="summary-value">{paid.toLocaleString()} XAF</td>
             </tr>
             <tr>
-              <td className="summary-label">Balance Due</td>
-              <td className="summary-value">{left.toLocaleString()}</td>
+              <td className="summary-label">Overall Balance</td>
+              <td className="summary-value">{left.toLocaleString()} XAF</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      {/* Last Transactions - Only show for general receipt, not for specific transaction receipt */}
+      {!currentPayment && transactions && transactions.length > 0 && (
+        <div className="fee-types-section">
+          <h3 className="fee-types-title">Last Transactions</h3>
+          <table className="fee-types-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Fee Type</th>
+                <th>Amount (XAF)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions
+                .sort((a, b) => new Date(b.paid_at) - new Date(a.paid_at))
+                .slice(0, 5)
+                .map((transaction, index) => (
+                <tr key={transaction.id || index}>
+                  <td className="fee-date">{new Date(transaction.paid_at).toLocaleDateString()}</td>
+                  <td className="fee-type-name">{transaction.fee_type}</td>
+                  <td className="fee-paid">{parseFloat(transaction.amount).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="receipt-footer">

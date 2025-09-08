@@ -1075,7 +1075,10 @@ class ApiService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Failed to create budget head");
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to create budget head");
+    }
     return await response.json();
   }
 
@@ -1085,32 +1088,13 @@ class ApiService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Failed to update budget head");
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to update budget head");
+    }
     return await response.json();
   }
 
-  // Update budget head
-  async updateBudgetHead(id, budgetHeadData) {
-    try {
-      const response = await fetch(`${API_URL}/budget-heads/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.getToken()}`,
-        },
-        body: JSON.stringify(budgetHeadData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update budget head");
-      }
-
-      return await response.json();
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  }
 
   // Delete budget head
   async deleteBudgetHead(id) {
@@ -1207,10 +1191,10 @@ class ApiService {
   }
 
   // Financial Reports API
-  async getFinancialSummary(params) {
+  async getFinancialSummary(params = {}) {
     const queryString = new URLSearchParams(params).toString();
     const response = await fetch(
-      `${API_URL}/financial-summary?${queryString}`,
+      `${API_URL}/financial/summary?${queryString}`,
       {
         headers: this.getAuthHeaders(),
       }
@@ -1221,7 +1205,7 @@ class ApiService {
 
   async getBalanceSheet(asOfDate = null) {
     const params = asOfDate ? `?as_of_date=${asOfDate}` : "";
-    const response = await fetch(`${API_URL}/balance-sheet${params}`, {
+    const response = await fetch(`${API_URL}/inventory/balance-sheet${params}`, {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch balance sheet");
@@ -1229,7 +1213,7 @@ class ApiService {
   }
 
   async calculateDepreciation(month, year) {
-    const response = await fetch(`${API_URL}/calculate-depreciation`, {
+    const response = await fetch(`${API_URL}/inventory/calculate-depreciation`, {
       method: "POST",
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ month, year }),
@@ -1693,7 +1677,7 @@ class ApiService {
     try {
       const response = await fetch(`${API_URL}/salary/update`, {
         method: "POST",
-        headers: this.getAuthHeaders(),
+        headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ userId, amount }),
       });
       return this.handleResponse(response);

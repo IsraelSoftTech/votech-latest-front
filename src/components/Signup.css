@@ -7,6 +7,53 @@
   animation: fadeIn 0.7s cubic-bezier(0.4,0,0.2,1);
 }
 
+.signup-top-banner {
+  width: 100%;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-bottom: 2px solid #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from { 
+    opacity: 0; 
+    transform: translateY(-100%); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.signup-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 8px;
+}
+
+.signup-banner-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.signup-banner-text {
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: center;
+  line-height: 1.4;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -26,6 +73,9 @@
   box-sizing: border-box;
   flex-wrap: wrap;
   box-shadow: none;
+  position: relative;
+  z-index: 1002;
+  margin-top: 60px; /* Space for fixed banner */
 }
 
 .signup-header-left {
@@ -83,6 +133,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.signup-main.disabled {
+  pointer-events: none;
+  opacity: 0.3;
 }
 
 .signup-form {
@@ -297,6 +353,25 @@
 }
 
 @media (max-width: 600px) {
+  .signup-top-banner {
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  }
+
+  .signup-banner-content {
+    padding: 10px 16px;
+    gap: 6px;
+  }
+
+  .signup-banner-icon {
+    font-size: 1.1rem;
+  }
+
+  .signup-banner-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
   .signup-header {
     padding: 10px 0 10px 0;
     background: #F3F4F6;
@@ -304,6 +379,7 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    margin-top: 50px; /* Add space for fixed banner */
   }
   .signup-header .signup-header-group {
     margin: 0 8px;
@@ -378,5 +454,22 @@
     height: 18px;
     margin-right: 8px;
     color: var(--accent-blue);
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 400px) {
+  .signup-banner-content {
+    padding: 8px 12px;
+    gap: 4px;
+  }
+
+  .signup-banner-text {
+    font-size: 0.8rem;
+    line-height: 1.2;
+  }
+
+  .signup-header {
+    margin-top: 45px; /* Adjust for smaller banner */
   }
 } 

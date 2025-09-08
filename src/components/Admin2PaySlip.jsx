@@ -90,7 +90,8 @@ export default function Admin2PaySlip({ authUser }) {
     try {
       setLoading(true);
       const response = await api.getPaidSalaries();
-      setPaidSalaries(response);
+      const list = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
+      setPaidSalaries(list);
     } catch (error) {
       console.error('Error fetching paid salaries:', error);
       if (error.message.includes('Session expired')) {
@@ -188,7 +189,8 @@ export default function Admin2PaySlip({ authUser }) {
 
   const getFilteredAndSortedData = () => {
     let filtered = paidSalaries.filter(salary => {
-      const matchesSearch = salary.applicant_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const displayName = (salary.user_name || salary.applicant_name || '').toLowerCase();
+      const matchesSearch = displayName.includes(searchQuery.toLowerCase()) ||
                            salary.contact.includes(searchQuery);
       const matchesMonth = !filterMonth || salary.month === filterMonth;
       const matchesYear = !filterYear || salary.year.toString() === filterYear;
@@ -199,8 +201,8 @@ export default function Admin2PaySlip({ authUser }) {
       let aValue, bValue;
       switch (sortBy) {
         case 'applicant_name':
-          aValue = a.applicant_name.toLowerCase();
-          bValue = b.applicant_name.toLowerCase();
+          aValue = (a.user_name || a.applicant_name || '').toLowerCase();
+          bValue = (b.user_name || b.applicant_name || '').toLowerCase();
           break;
         case 'amount':
           aValue = parseFloat(a.amount);
@@ -280,7 +282,7 @@ export default function Admin2PaySlip({ authUser }) {
             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
           }
-          const fileName = `payslip_${salary.applicant_name.replace(/\s+/g, '_')}_${salary.month}_${salary.year}.pdf`;
+          const fileName = `payslip_${(salary.user_name||salary.applicant_name||'user').replace(/\s+/g, '_')}_${salary.month}_${salary.year}.pdf`;
           pdf.save(fileName);
           closePayslipModal();
         }
@@ -492,7 +494,7 @@ export default function Admin2PaySlip({ authUser }) {
                     <tr key={salary.id} className="admin2-payslip-table-row">
                       <td className="admin2-payslip-table-cell admin2-payslip-name-cell">
                         <div className="admin2-payslip-employee-info">
-                          <span className="admin2-payslip-employee-name">{salary.applicant_name}</span>
+                          <span className="admin2-payslip-employee-name">{salary.user_name || salary.applicant_name}</span>
                         </div>
                       </td>
                       <td className="admin2-payslip-table-cell">{salary.contact}</td>
@@ -632,7 +634,7 @@ export default function Admin2PaySlip({ authUser }) {
             <div className="admin2-payslip-modal">
               <div className="admin2-payslip-modal-header">
                 <h3 className="admin2-payslip-modal-title">
-                  <FaPrint /> Pay Slip - {selectedPayslip.applicant_name}
+                  <FaPrint /> Pay Slip - {selectedPayslip.user_name || selectedPayslip.applicant_name}
                 </h3>
                 <button 
                   className="admin2-payslip-modal-close-btn"
@@ -645,7 +647,7 @@ export default function Admin2PaySlip({ authUser }) {
               <div className="admin2-payslip-modal-body">
                 <div ref={payslipRef}>
                   <PayslipTemplate
-                    name={selectedPayslip.applicant_name}
+                    name={selectedPayslip.user_name || selectedPayslip.applicant_name}
                     employmentNumber={generateEmploymentNumber(selectedPayslip)}
                     month={selectedPayslip.month}
                     year={selectedPayslip.year}
