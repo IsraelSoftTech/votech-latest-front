@@ -56,21 +56,20 @@ export const MarksUploadPage = () => {
   // --- FETCH FUNCTIONS ---
   const fetchDepartments = async () => {
     try {
-      const res = await fetch(`${subBaseURL}/specialties`, {
-        headers: headers(),
-      });
+      const res = await api.get("/departments");
+      const departments = res.data?.data;
 
-      const data = await res.json();
-
-      if (Array.isArray(data) && data.length > 0) {
-        setDepartments(data);
+      if (Array.isArray(departments) && departments.length > 0) {
+        setDepartments(departments);
       } else {
         setDepartments([]);
       }
-
-      // console.log(data);
     } catch (err) {
-      toast.error("Error fetching departments.");
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to fetch departments."
+      );
       console.log(err);
     }
   };
