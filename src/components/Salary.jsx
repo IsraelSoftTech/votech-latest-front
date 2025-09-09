@@ -40,6 +40,16 @@ export default function Salary({ authUser }) {
   const [paymentReceipt, setPaymentReceipt] = useState(null);
   const receiptRef = useRef();
 
+  // CNPS exclusion preferences per user (persisted locally). Checked = EXCLUDE CNPS.
+  const [cnpsPreferences, setCnpsPreferences] = useState(() => {
+    try {
+      const raw = localStorage.getItem('cnpsPreferences');
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
   // MessageBox States
   const [messageBox, setMessageBox] = useState({
     isOpen: false,
@@ -59,6 +69,43 @@ export default function Salary({ authUser }) {
     }
     fetchData();
   }, [authUser]);
+
+  // Persist CNPS preferences whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('cnpsPreferences', JSON.stringify(cnpsPreferences));
+    } catch (e) {}
+  }, [cnpsPreferences]);
+
+  const isCnpsExcluded = (userOrApp) => {
+    const userIdKey = userOrApp && (userOrApp.user_id || userOrApp.applicant_id || userOrApp.id);
+    const nameKey = userOrApp && (userOrApp.user_name || userOrApp.applicant_name);
+    const byId = cnpsPreferences?.[String(userIdKey)];
+    const byName = cnpsPreferences?.[`name:${String(nameKey || '')}`];
+    if (typeof byId === 'boolean') return byId;
+    if (typeof byName === 'boolean') return byName;
+    return false; // default NOT excluded
+  };
+
+  const toggleCnpsExcluded = (userOrApp) => {
+    setCnpsPreferences((prev) => {
+      const idKey = String(userOrApp && (userOrApp.user_id || userOrApp.applicant_id || userOrApp.id));
+      const nameKey = `name:${String(userOrApp && (userOrApp.user_name || userOrApp.applicant_name) || '')}`;
+      const currentById = typeof prev[idKey] === 'boolean' ? prev[idKey] : undefined;
+      const currentByName = typeof prev[nameKey] === 'boolean' ? prev[nameKey] : undefined;
+      const current = typeof currentById === 'boolean' ? currentById : (typeof currentByName === 'boolean' ? currentByName : false);
+      const next = { ...prev, [idKey]: !current, [nameKey]: !current };
+      return next;
+    });
+    // Persist to backend as well
+    try {
+      const userId = userOrApp && (userOrApp.user_id || userOrApp.applicant_id || userOrApp.id);
+      if (userId) {
+        const willExclude = !isCnpsExcluded(userOrApp);
+        api.setCnpsPreference(userId, willExclude).catch(() => {});
+      }
+    } catch (e) {}
+  };
 
   const showMessage = (title, message, type = 'info', onConfirm = null, confirmText = 'OK', cancelText = 'Cancel', showCancel = false) => {
     setMessageBox({
@@ -87,6 +134,17 @@ export default function Salary({ authUser }) {
       ]);
       setApprovedApplications(applicationsData);
       setStatistics(statsData);
+      // Merge CNPS prefs from backend response
+      try {
+        const mergedPrefs = { ...cnpsPreferences };
+        for (const app of applicationsData) {
+          if (typeof app.cnps_excluded === 'boolean') {
+            mergedPrefs[String(app.applicant_id)] = !!app.cnps_excluded;
+            mergedPrefs[`name:${app.applicant_name}`] = !!app.cnps_excluded;
+          }
+        }
+        setCnpsPreferences(mergedPrefs);
+      } catch (e) {}
     } catch (error) {
       console.error('Error fetching salary data:', error);
       if (error.message.includes('Session expired')) {
@@ -567,8 +625,7 @@ export default function Salary({ authUser }) {
                   <tr className="salary-table-row">
                     <th className="salary-table-header-cell">Name</th>
                     <th className="salary-table-header-cell">Contact</th>
-                    <th className="salary-table-header-cell">Classes</th>
-                    <th className="salary-table-header-cell">Subjects</th>
+                    <th className="salary-table-header-cell">CNPS</th>
                     <th className="salary-table-header-cell">Salary</th>
                     <th className="salary-table-header-cell">Status</th>
                     <th className="salary-table-header-cell">Actions</th>
@@ -583,8 +640,17 @@ export default function Salary({ authUser }) {
                         </div>
                       </td>
                       <td className="salary-table-cell">{app.contact}</td>
-                      <td className="salary-table-cell">{app.classes}</td>
-                      <td className="salary-table-cell">{app.subjects}</td>
+                      <td className="salary-table-cell">
+                        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} title="Checked = Exclude C.N.P.S deduction on payslip">
+                          <input
+                            type="checkbox"
+                            checked={isCnpsExcluded(app)}
+                            onChange={() => toggleCnpsExcluded(app)}
+                            disabled={isReadOnly}
+                          />
+                          Exclude
+                        </label>
+                      </td>
                       <td className="salary-table-cell salary-amount-cell">
                         {editingSalary === app.application_id ? (
                           <div className="salary-edit-container">

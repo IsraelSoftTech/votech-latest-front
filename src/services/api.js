@@ -1737,6 +1737,22 @@ class ApiService {
     }
   }
 
+  async getCnpsPreference(userId) {
+    const response = await fetch(`${API_URL}/salary/cnps/${userId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async setCnpsPreference(userId, excluded) {
+    const response = await fetch(`${API_URL}/salary/cnps/${userId}`, {
+      method: 'PUT',
+      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ excluded }),
+    });
+    return this.handleResponse(response);
+  }
+
   async getSalaryDescriptions() {
     try {
       const response = await fetch(`${API_URL}/salary/descriptions`, {

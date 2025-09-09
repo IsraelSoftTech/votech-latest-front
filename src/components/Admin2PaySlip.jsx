@@ -44,6 +44,28 @@ export default function Admin2PaySlip({ authUser }) {
   const [showPayslipModal, setShowPayslipModal] = useState(false);
   const payslipRef = useRef();
 
+  // Read CNPS preferences saved from Salary page
+  const getCnpsIncludedFor = (rec) => {
+    try {
+      // Prefer backend-provided flag if present on the record
+      const backendExcluded = typeof rec?.cnps_excluded === 'boolean' ? rec.cnps_excluded : null;
+      if (backendExcluded !== null) {
+        return !backendExcluded; // included if not excluded
+      }
+      // Fallback to local storage
+      const raw = localStorage.getItem('cnpsPreferences');
+      const prefs = raw ? JSON.parse(raw) : {};
+      const idKey = String(rec && (rec.user_id || rec.applicant_id || rec.id));
+      const nameKey = `name:${String(rec && (rec.user_name || rec.applicant_name) || '')}`;
+      const excludedById = prefs?.[idKey];
+      const excludedByName = prefs?.[nameKey];
+      const isExcluded = typeof excludedById === 'boolean' ? excludedById : (typeof excludedByName === 'boolean' ? excludedByName : false);
+      return !isExcluded; // include CNPS unless excluded
+    } catch (e) {
+      return true;
+    }
+  };
+
   // Settings
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [payslipStructure, setPayslipStructure] = useState([]);
@@ -652,6 +674,7 @@ export default function Admin2PaySlip({ authUser }) {
                     month={selectedPayslip.month}
                     year={selectedPayslip.year}
                     grossAmount={selectedPayslip.amount}
+                    debitPercentCNPS={getCnpsIncludedFor(selectedPayslip) ? 4 : 0}
                     structure={payslipStructure && payslipStructure.length ? payslipStructure : undefined}
                   />
                 </div>

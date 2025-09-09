@@ -33,6 +33,7 @@ import AdminHODs from "./components/AdminHODs.jsx";
 
 // Academics / Marks module
 import Subjects from "./components/Subjects.jsx";
+import Admin4Sub from "./components/Admin4Sub.jsx";
 import LessonPlan from "./components/LessonPlan.jsx";
 import Marks from "./components/Marks.jsx";
  
@@ -193,6 +194,7 @@ function App() {
 
         {/* Academics */}
         <Route path="/admin-subjects" element={<Subjects />} />
+        <Route path="/admin4-subjects" element={<Admin4Sub />} />
         <Route path="/admin-lesson-plans" element={<LessonPlan />} />
         <Route path="/lesson-plans" element={<LessonPlan />} />
         

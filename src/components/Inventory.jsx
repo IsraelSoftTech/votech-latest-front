@@ -181,16 +181,23 @@ export default function Inventory() {
     
     try {
       if (editingItem) {
-        await api.editInventoryItem(editingItem.id, inventoryForm);
+        const updated = await api.editInventoryItem(editingItem.id, inventoryForm);
         setSuccess('Inventory item updated successfully!');
+        if (updated) {
+          setInventoryItems(prev => prev.map(it => it.id === editingItem.id ? updated : it));
+        }
       } else {
-        await api.registerInventoryItem(inventoryForm);
+        const created = await api.registerInventoryItem(inventoryForm);
         setSuccess('Inventory item registered successfully!');
+        if (created && created.item) {
+          setInventoryItems(prev => [created.item, ...prev]);
+        }
       }
       
         setShowSuccess(true);
       setShowInventoryModal(false);
       resetInventoryForm();
+      // Still refresh in background to keep aggregates up to date
       fetchInitialData();
     } catch (error) {
       setError(error.message);
@@ -882,7 +889,6 @@ export default function Inventory() {
     { id: 'Expenditure Management', label: 'Expenditure Management', icon: <FaChartLine />, description: 'Register school expenditures and track spending' },
     { id: 'Asset Categories', label: 'Asset Categories', icon: <FaBoxes />, description: 'Create department heads for organized equipment allocation' },
     { id: 'Equipment Management', label: 'Equipment Management', icon: <FaCog />, description: 'Register equipment purchases and set depreciation rates' },
-    { id: 'Depreciation Management', label: 'Depreciation Management', icon: <FaCalculator />, description: 'Calculate monthly depreciation and current equipment values' },
     { id: 'Financial Reports', label: 'Financial Reports', icon: <FaFileInvoiceDollar />, description: 'Generate comprehensive financial statements and balance sheets' }
   ];
 
@@ -1153,7 +1159,7 @@ export default function Inventory() {
                     </tr>
                   </thead>
                   <tbody>
-                    {getFilteredInventory('income').filter(item => item.asset_category).map(item => (
+                    {inventoryItems.filter(item => item.asset_category).map(item => (
                       <tr key={item.id}>
                         <td>{formatDate(item.date)}</td>
                         <td>{item.item_name}</td>
@@ -1180,74 +1186,7 @@ export default function Inventory() {
             </div>
           )}
 
-          {/* Depreciation Management */}
-          {activeTab === 'Depreciation Management' && (
-            <div className="inv-tab-panel">
-              <div className="inv-panel-header">
-                <h3>Monthly Equipment Valuation & Depreciation</h3>
-                <p className="inv-panel-description">Calculate monthly depreciation and get current value of total school equipment at month end</p>
-                <button className="inv-primary-btn" onClick={() => setShowDepreciationModal(true)}>
-                  <FaCalculator /> Calculate Monthly Depreciation
-                </button>
-              </div>
-              
-              <div className="depreciation-info">
-                <div className="depreciation-overview">
-                  <h4>Equipment Depreciation Overview</h4>
-                  <p>Accountants can set depreciation rates for various types of purchased equipment. The system provides the current value of the total equipment of the school at the end of each month.</p>
-                </div>
-                
-                <div className="depreciation-stats">
-                  <div className="stat-card">
-                    <div className="stat-header">
-                      <FaCog />
-                      <span>Assets with Depreciation</span>
-                  </div>
-                    <div className="stat-value">
-                      {inventoryItems.filter(item => item.type === 'income' && item.asset_category && item.depreciation_rate > 0).length}
-                  </div>
-                    <div className="stat-description">Equipment items with depreciation rates set</div>
-                </div>
-                  
-                  <div className="stat-card">
-                    <div className="stat-header">
-                      <FaDollarSign />
-                      <span>Total Asset Value</span>
-              </div>
-                    <div className="stat-value">
-                      {formatCurrency(calculateTotalValue('income'))}
-            </div>
-                    <div className="stat-description">Original purchase value of all equipment</div>
-                  </div>
-                  
-                  <div className="stat-card">
-                    <div className="stat-header">
-                      <FaChartLine />
-                      <span>Current Equipment Value</span>
-                    </div>
-                    <div className="stat-value">
-                      {formatCurrency(
-                        inventoryItems
-                          .filter(item => item.type === 'income' && item.asset_category)
-                          .reduce((sum, item) => sum + (parseFloat(item.current_value) || parseFloat(item.estimated_cost) || 0), 0)
-                      )}
-                    </div>
-                    <div className="stat-description">Current value after depreciation</div>
-                  </div>
-                </div>
-                
-                <div className="depreciation-instructions">
-                  <h5>How to Calculate Monthly Depreciation:</h5>
-                  <ol>
-                    <li>Click "Calculate Monthly Depreciation" button</li>
-                    <li>Select the month and year for calculation</li>
-                    <li>The system will automatically calculate depreciation for all assets with depreciation rates</li>
-                    <li>Current values will be updated based on the depreciation calculation</li>
-                  </ol>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Depreciation Management removed */}
 
           {/* Financial Reports */}
           {activeTab === 'Financial Reports' && (
@@ -1699,15 +1638,15 @@ export default function Inventory() {
 
                 {inventoryForm.type === 'expenditure' && (
                   <div className="inv-form-group">
-                    <label>Budget Head</label>
+                    <label>Asset Category</label>
                     <select
-                      name="budget_head_id"
-                      value={inventoryForm.budget_head_id}
+                      name="asset_category"
+                      value={inventoryForm.asset_category}
                       onChange={handleInventoryFormChange}
                     >
-                      <option value="">Select Budget Head</option>
-                      {budgetHeads.filter(bh => bh.category === 'expenditure').map(bh => (
-                        <option key={bh.id} value={bh.id}>{bh.name}</option>
+                      <option value="">Select Asset Category</option>
+                      {assetCategories.map(ac => (
+                        <option key={ac.id} value={ac.name}>{ac.name}</option>
                       ))}
                     </select>
                   </div>

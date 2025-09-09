@@ -182,6 +182,10 @@ export default function AdminStudent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
   const [showModal, setShowModal] = useState(false);
+  const authUser = JSON.parse(sessionStorage.getItem('authUser') || localStorage.getItem('authUser') || 'null');
+  const roleLower = (authUser?.role || '').toString().toLowerCase();
+  const isAdmin1 = roleLower === 'admin1';
+  const isAdmin4 = roleLower === 'admin4';
   const [form, setForm] = useState({
     studentId: "",
     regDate: new Date().toISOString().slice(0, 10),
@@ -744,9 +748,9 @@ export default function AdminStudent() {
     return pic;
   };
 
-  // Add isAdmin1 logic
-  const authUser = JSON.parse(sessionStorage.getItem("authUser"));
-  const isAdmin1 = authUser?.role === "Admin1";
+  // Add isAdmin1 logic (reuse existing authUser if present)
+  const authUserAdmin1 = JSON.parse(sessionStorage.getItem("authUser") || localStorage.getItem("authUser") || "null");
+  const isAdmin1Legacy = (authUserAdmin1?.role || '').toString().toLowerCase() === 'admin1';
 
   // Upload Many file change handler with preview
   const handleUploadManyFileChange = (e) => {
@@ -908,18 +912,19 @@ export default function AdminStudent() {
           gap: 12,
         }}
       >
-        <button
-          className="add-student-fab"
-          onClick={() => {
-            setShowModal(true);
-            setEditId(null);
-          }}
-          title={isAdmin1 ? 'Not allowed for Admin1' : 'Register Student'}
-          style={{ position: "static", marginLeft: 0 }}
-          disabled={isAdmin1}
-        >
-          <FaPlus style={{ fontSize: 28, color: "#fff" }} />
-        </button>
+        {!(isAdmin1 || isAdmin4) && (
+          <button
+            className="add-student-fab"
+            onClick={() => {
+              setShowModal(true);
+              setEditId(null);
+            }}
+            title={'Register Student'}
+            style={{ position: "static", marginLeft: 0 }}
+          >
+            <FaPlus style={{ fontSize: 28, color: "#fff" }} />
+          </button>
+        )}
         {/* Responsive Search Bar */}
         <input
           type="text"
@@ -1110,20 +1115,24 @@ export default function AdminStudent() {
                     )}
                   </td>
                   <td className="actions">
-                    <button
-                      className="action-btn edit"
-                      title={'Edit'}
-                      onClick={() => handleEdit(s)}
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      className="action-btn delete"
-                      title={'Delete'}
-                      onClick={() => handleDelete(idx)}
-                    >
-                      <FaTrash />
-                    </button>
+                    {!(isAdmin1 || isAdmin4) && (
+                      <>
+                        <button
+                          className="action-btn edit"
+                          title={'Edit'}
+                          onClick={() => handleEdit(s)}
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          className="action-btn delete"
+                          title={'Delete'}
+                          onClick={() => handleDelete(idx)}
+                        >
+                          <FaTrash />
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))
@@ -1349,9 +1358,9 @@ export default function AdminStudent() {
               <button
                 type="submit"
                 className="signup-btn"
-                disabled={registering || isAdmin1}
+                disabled={registering || isAdmin1 || isAdmin4}
                 title={
-                  isAdmin1
+                  (isAdmin1 || isAdmin4)
                     ? "Not allowed for Admin1"
                     : editId
                     ? "Update"

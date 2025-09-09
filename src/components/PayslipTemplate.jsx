@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import logo from '../assets/logo.png';
 
 const formatCurrency = (amount) => {
 	if (amount === null || amount === undefined) return '';
@@ -27,7 +28,7 @@ const PayslipTemplate = forwardRef(function PayslipTemplate(
 		]},
 		{ title: '2) BASIC ESSENTIAL ALLOWANCE', items: [
 			{ code: 'a)', label: 'Housing, Feeding, Health Care, Family Support, Social Security', percent: 30 },
-			{ code: 'b)', label: 'C.N.P.S Personal Contribution', debitPercent: debitPercentCNPS, remark: '4% of Gross Salary' },
+			...(debitPercentCNPS ? [{ code: 'b)', label: 'C.N.P.S Personal Contribution', debitPercent: debitPercentCNPS, remark: '4% of Gross Salary' }] : []),
 		]},
 		{ title: '3) PROFESSIONAL & RESEARCH ALLOWANCE', items: [
 			{ code: 'a)', label: 'Professional Development and Dressing support', percent: 20 },
@@ -41,7 +42,28 @@ const PayslipTemplate = forwardRef(function PayslipTemplate(
 		]},
 	];
 
-	const effective = Array.isArray(structure) ? structure : defaultStructure;
+	// If a custom structure is provided, clone it and override or remove CNPS row
+	const effective = Array.isArray(structure) ? (
+		(structure || []).map((section) => ({
+			...section,
+			items: (section.items || [])
+				.map((item) => {
+					const isCnpsRow = (item.label || '').toLowerCase().includes('c.n.p.s personal contribution');
+					if (isCnpsRow) {
+						if (!debitPercentCNPS) {
+							return null; // remove row entirely when excluded
+						}
+						return {
+							...item,
+							debitPercent: debitPercentCNPS,
+							remark: item.remark || '4% of Gross Salary',
+						};
+					}
+					return item;
+				})
+				.filter(Boolean)
+		}))
+	) : defaultStructure;
 
 	const computeAmount = (percent) => (grossAmount * (percent || 0)) / 100;
 
@@ -70,6 +92,15 @@ const PayslipTemplate = forwardRef(function PayslipTemplate(
 	return (
 		<div className="template-wrapper" ref={ref}>
 			<div className="template-header">
+				<div className="template-brand">
+					<div className="template-brand-left">
+						<img src={logo} alt="VOTECH S7 ACADEMY" className="template-logo" />
+						<div>
+							<div className="template-brand-title">VOTECH S7 ACADEMY</div>
+							<div className="template-brand-sub">Pay Slip</div>
+						</div>
+					</div>
+				</div>
 				<div className="template-row"><span className="template-label">NAME:</span> <span className="template-value template-bold">{name}</span></div>
 				<div className="template-row"><span className="template-label">EMPLOYMENT NUMBER:</span> <span className="template-value">{employmentNumber}</span></div>
 				<div className="template-row"><span className="template-label">Month, Year:</span> <span className="template-value">{month} {year}</span></div>

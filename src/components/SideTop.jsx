@@ -262,6 +262,7 @@ export default function SideTop({ children }) {
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "Events", icon: <FaCalendarAlt />, path: "/dean-events" },
       { label: "Timetables", icon: <FaCalendarAlt />, path: "/timetables" },
+      { label: "All Subjects", path: "/admin4-subjects", icon: <FaBookOpen /> },
       { label: "Subjects", path: "/academics/subjects", icon: <FaBookOpen /> },
       { label: "Lesson Plans", icon: <FaPenFancy />, path: "/dean-lesson-plans" },
       { label: "HODs", icon: <FaUserTie />, path: "/admin-hods" },

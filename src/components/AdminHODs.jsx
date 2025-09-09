@@ -14,6 +14,8 @@ function AdminHODs() {
   const [stats, setStats] = useState({ total_hods: 0, suspended_hods: 0, active_hods: 0 });
   const [users, setUsers] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
   const [successMsg, setSuccessMsg] = useState('');
   
   // Form state
@@ -45,8 +47,9 @@ function AdminHODs() {
       setStats({ total_hods: 0, suspended_hods: 0, active_hods: 0 });
       setUsers([]);
       setSubjects([]);
+      setDepartments([]);
       
-      const [hodsData, statsData, usersData, subjectsData] = await Promise.all([
+      const [hodsData, statsData, usersData, subjectsData, departmentsData, specialtiesData] = await Promise.all([
         api.getHODs().catch(err => {
           console.error('Error fetching HODs:', err);
           return [];
@@ -61,6 +64,14 @@ function AdminHODs() {
         }),
         api.getSubjects().catch(err => {
           console.error('Error fetching subjects:', err);
+          return [];
+        }),
+        api.getDepartments().catch(err => {
+          console.error('Error fetching departments:', err);
+          return [];
+        }),
+        api.getSpecialties().catch(err => {
+          console.error('Error fetching specialties:', err);
           return [];
         })
       ]);
@@ -80,6 +91,8 @@ function AdminHODs() {
           ? subjectsData.data
           : (Array.isArray(subjectsData) ? subjectsData : [])
       );
+      setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
+      setSpecialties(Array.isArray(specialtiesData) ? specialtiesData : []);
     } catch (error) {
       console.error('Error fetching data:', error);
       // Don't show alert, just log the error
@@ -185,12 +198,19 @@ function AdminHODs() {
         {/* Header */}
         <div className="admin-hods-header">
           <h1>HODs Management</h1>
-          <button 
-            className="admin-hods-create-btn"
-            onClick={() => setShowCreateModal(true)}
-          >
-            <FaPlus /> Create HOD
-          </button>
+          {(() => {
+            const au = JSON.parse(sessionStorage.getItem('authUser') || localStorage.getItem('authUser') || 'null') || {};
+            const roleLower = (au.role || '').toString().toLowerCase();
+            const blocked = roleLower === 'admin1' || roleLower === 'admin4';
+            return !blocked ? (
+              <button 
+                className="admin-hods-create-btn"
+                onClick={() => setShowCreateModal(true)}
+              >
+                <FaPlus /> Create HOD
+              </button>
+            ) : null;
+          })()}
         </div>
         
         
@@ -238,8 +258,7 @@ function AdminHODs() {
               <div className="admin-hods-table-header">
                 <div className="admin-hods-header-cell">Department</div>
                 <div className="admin-hods-header-cell">HOD</div>
-                <div className="admin-hods-header-cell">Subject</div>
-                <div className="admin-hods-header-cell">Teachers</div>
+                <div className="admin-hods-header-cell">Members</div>
                 <div className="admin-hods-header-cell">Status</div>
                 <div className="admin-hods-header-cell">Created</div>
                 <div className="admin-hods-header-cell">Actions</div>
@@ -264,16 +283,8 @@ function AdminHODs() {
                     </div>
                     
                     <div className="admin-hods-table-cell">
-                      <FaBook className="admin-hods-cell-icon" />
-                      <div>
-                        <div className="admin-hods-subject-name">{hod.subject_name}</div>
-                        <div className="admin-hods-subject-code">{hod.subject_code}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="admin-hods-table-cell">
                       <FaUsers className="admin-hods-cell-icon" />
-                      <span>{hod.teacher_count || 0} teachers</span>
+                      <span>{hod.teacher_count || 0} members</span>
                     </div>
                     
                     <div className="admin-hods-table-cell">
@@ -287,29 +298,39 @@ function AdminHODs() {
                     </div>
                     
                     <div className="admin-hods-table-cell admin-hods-actions">
-                      <button 
-                        className="admin-hods-action-btn admin-hods-edit"
-                        onClick={() => openEditModal(hod)}
-                        title="Edit HOD"
-                      >
-                        <FaEdit />
-                      </button>
-                      
-                      <button 
-                        className={`admin-hods-action-btn ${hod.suspended ? 'admin-hods-activate' : 'admin-hods-suspend'}`}
-                        onClick={() => handleToggleSuspension(hod.id)}
-                        title={hod.suspended ? 'Activate HOD' : 'Suspend HOD'}
-                      >
-                        {hod.suspended ? <FaCheck /> : <FaBan />}
-                      </button>
-                      
-                      <button 
-                        className="admin-hods-action-btn admin-hods-delete"
-                        onClick={() => handleDeleteHOD(hod.id)}
-                        title="Delete HOD"
-                      >
-                        <FaTrash />
-                      </button>
+                      {(() => {
+                        const au = JSON.parse(sessionStorage.getItem('authUser') || localStorage.getItem('authUser') || 'null') || {};
+                        const roleLower = (au.role || '').toString().toLowerCase();
+                        const blocked = roleLower === 'admin1' || roleLower === 'admin4';
+                        if (blocked) return null;
+                        return (
+                          <>
+                            <button 
+                              className="admin-hods-action-btn admin-hods-edit"
+                              onClick={() => openEditModal(hod)}
+                              title="Edit HOD"
+                            >
+                              <FaEdit />
+                            </button>
+                            
+                            <button 
+                              className={`admin-hods-action-btn ${hod.suspended ? 'admin-hods-activate' : 'admin-hods-suspend'}`}
+                              onClick={() => handleToggleSuspension(hod.id)}
+                              title={hod.suspended ? 'Activate HOD' : 'Suspend HOD'}
+                            >
+                              {hod.suspended ? <FaCheck /> : <FaBan />}
+                            </button>
+                            
+                            <button 
+                              className="admin-hods-action-btn admin-hods-delete"
+                              onClick={() => handleDeleteHOD(hod.id)}
+                              title="Delete HOD"
+                            >
+                              <FaTrash />
+                            </button>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))
@@ -338,13 +359,19 @@ function AdminHODs() {
               <form onSubmit={handleCreateHOD}>
                 <div className="admin-hods-form-group">
                   <label>Department Name *</label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.department_name}
                     onChange={(e) => setFormData({...formData, department_name: e.target.value})}
-                    placeholder="Enter department name"
                     required
-                  />
+                  >
+                    <option value="">Select a department</option>
+                    {Array.isArray(departments) && departments.map(dep => (
+                      <option key={`dep-${dep.id || dep.name}`} value={dep.name}>{dep.name}</option>
+                    ))}
+                    {Array.isArray(specialties) && specialties.map(sp => (
+                      <option key={`spec-${sp.id || sp.name}`} value={sp.name}>{sp.name}</option>
+                    ))}
+                  </select>
                 </div>
                 
                 <div className="admin-hods-form-group">
@@ -363,24 +390,10 @@ function AdminHODs() {
                   </select>
                 </div>
                 
-                <div className="admin-hods-form-group">
-                  <label>HOD of Subject *</label>
-                  <select
-                    value={formData.subject_id}
-                    onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
-                    required
-                  >
-                    <option value="">Select a subject</option>
-                    {Array.isArray(subjects) && subjects.map(subject => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.name} ({subject.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Removed HOD of Subject field */}
                 
                 <div className="admin-hods-form-group">
-                  <label>Teachers of the Subject</label>
+                  <label>Members of the Department</label>
                   <div className="admin-hods-teachers-selection">
                     {Array.isArray(users) && users.map(user => (
                       <label key={user.id} className="admin-hods-teacher-checkbox">
@@ -436,13 +449,19 @@ function AdminHODs() {
               <form onSubmit={handleUpdateHOD}>
                 <div className="admin-hods-form-group">
                   <label>Department Name *</label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.department_name}
                     onChange={(e) => setFormData({...formData, department_name: e.target.value})}
-                    placeholder="Enter department name"
                     required
-                  />
+                  >
+                    <option value="">Select a department</option>
+                    {Array.isArray(departments) && departments.map(dep => (
+                      <option key={`dep-${dep.id || dep.name}`} value={dep.name}>{dep.name}</option>
+                    ))}
+                    {Array.isArray(specialties) && specialties.map(sp => (
+                      <option key={`spec-${sp.id || sp.name}`} value={sp.name}>{sp.name}</option>
+                    ))}
+                  </select>
                 </div>
                 
                 <div className="admin-hods-form-group">
@@ -461,24 +480,10 @@ function AdminHODs() {
                   </select>
                 </div>
                 
-                <div className="admin-hods-form-group">
-                  <label>HOD of Subject *</label>
-                  <select
-                    value={formData.subject_id}
-                    onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
-                    required
-                  >
-                    <option value="">Select a subject</option>
-                    {Array.isArray(subjects) && subjects.map(subject => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.name} ({subject.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Removed HOD of Subject field */}
                 
                 <div className="admin-hods-form-group">
-                  <label>Teachers of the Subject</label>
+                  <label>Members of the Department</label>
                   <div className="admin-hods-teachers-selection">
                     {Array.isArray(users) && users.map(user => (
                       <label key={user.id} className="admin-hods-teacher-checkbox">
