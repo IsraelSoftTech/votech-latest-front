@@ -8,12 +8,13 @@
 
 .idcard-template {
   width: 320px;
-  height: 200px;
+  height: auto; /* allow content to grow */
+  min-height: 200px;
   background: linear-gradient(135deg, #6ec6ff 0%, #2196f3 100%);
   border: 2px solid #204080;
   border-radius: 18px;
   box-shadow: 0 4px 16px rgba(32, 64, 128, 0.13);
-  padding: 8px 10px 8px 8px;
+  padding: 10px 10px 8px 10px; /* extra top & left padding to avoid overlaps */
   display: flex;
   flex-direction: column;
   font-family: "Segoe UI", Arial, sans-serif;
@@ -29,7 +30,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-bottom: 1px;
+  margin-bottom: 4px; /* more space before motto */
   z-index: 2;
 }
 .idcard-logo-small {
@@ -46,9 +47,9 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 180px;
-  height: 180px;
-  opacity: 0.09;
+  width: 140px;
+  height: 140px;
+  opacity: 0.04; /* lighter so it never obscures text */
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 0;
@@ -66,13 +67,19 @@
 }
 
 .idcard-motto {
-  font-size: 0.93rem;
+  font-size: 0.86rem;
   color: #e3f2fd;
   text-align: left;
-  margin-bottom: 4px;
-  font-weight: 500;
-  z-index: 2;
-  text-shadow: 0 1px 4px #20408022;
+  margin-bottom: 8px; /* ensure space above data rows */
+  font-weight: 600;
+  z-index: 3;
+  text-shadow: 0 1px 4px #0b2a6a55;
+  position: relative;
+  display: block;
+  max-width: 70%; /* force wrapping to two lines */
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.15;
 }
 
 .idcard-row-main {
@@ -81,7 +88,8 @@
   align-items: center;
   gap: 0;
   z-index: 2;
-  height: 130px;
+  min-height: 130px; /* fits better with two columns */
+  margin-top: 2px; /* ensure not touching motto */
 }
 .idcard-photo-stamp-col {
   display: flex;
@@ -116,10 +124,10 @@
 }
 .idcard-stamp {
   position: absolute;
-  right: -12px;
-  bottom: -12px;
-  width: 48px;
-  height: 48px;
+  right: -6px; /* keep inside rounded edge */
+  bottom: -6px; /* keep inside rounded edge */
+  width: 44px;
+  height: 44px;
   object-fit: contain;
   opacity: 0.82;
   border-radius: 50%;
@@ -132,29 +140,34 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  font-size: 0.72rem;
+  font-size: 0.66rem; /* slightly smaller for more content */
   color: #222;
   justify-content: flex-start;
   z-index: 2;
   margin-left: 16px;
   min-width: 0;
+  overflow: visible;
 }
 .idcard-info-fields {
-  padding: 4px 4px 4px 6px;
+  padding: 6px 6px 6px 8px;
   min-width: 0;
   word-break: break-word;
   white-space: normal;
   overflow: visible;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   color: #0d2547;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 6px;
   box-shadow: 0 1px 4px rgba(32, 64, 128, 0.07);
   border: 1.2px solid #e3f2fd;
+  display: grid; /* two-column layout for compactness */
+  grid-template-columns: 1.1fr 0.9fr; /* give left column a bit more room */
+  column-gap: 6px;
+  row-gap: 1px;
 }
 .idcard-info-fields > div {
-  margin-bottom: 1.5px;
-  line-height: 1.13;
+  margin: 0;
+  line-height: 1.2;
   padding-right: 1px;
 }
 .idcard-info b {
@@ -300,6 +313,7 @@
 }
 
 @media print {
+  @page { size: A4; margin: 8mm; }
   body * {
     visibility: hidden;
   }
@@ -307,23 +321,14 @@
   .idcard-print-area * {
     visibility: visible;
   }
-  .idcard-print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 210mm;
-    min-height: 297mm;
-    background: #e3f2fd;
-    padding: 18mm 8mm 18mm 8mm;
-    box-sizing: border-box;
-    z-index: 9999;
-  }
+  .idcard-print-area { position: static; width: auto; min-height: auto; background: transparent; padding: 0; margin: 0; box-sizing: border-box; }
   .idcard-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    justify-content: flex-start;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: repeat(2, 85.6mm);
+    gap: 6mm 6mm;
+    justify-content: center;
+    align-items: start;
+    page-break-inside: avoid;
   }
   .idcard-template {
     page-break-inside: avoid;
@@ -336,15 +341,7 @@
   .idcard-motto {
     color: #1976d2 !important;
   }
-  .idcard-template {
-    width: 320px !important;
-    height: 200px !important;
-    min-width: 320px !important;
-    max-width: 320px !important;
-    min-height: 200px !important;
-    max-height: 200px !important;
-    margin: 0 8px 18px 0 !important;
-  }
+  /* Remove conflicting pixel dimensions here; dimensions are set below in mm */
   .idcard-print-area select,
   .idcard-print-area button {
     display: none !important;
@@ -355,10 +352,10 @@
 @media print {
   .idcard-template {
     width: 85.6mm !important;
-    height: 53.98mm !important;
+    min-height: 53.98mm !important; /* allow growth if needed */
     border-radius: 8px !important;
-    padding: 4px 6px 4px 4px !important;
-    margin: 2mm !important;
+    padding: 2.2mm 2.8mm 2.2mm 2.2mm !important; /* more usable content area */
+    margin: 0 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
@@ -366,10 +363,10 @@
   .idcard-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 85.6mm) !important;
-    gap: 4mm !important;
+    gap: 6mm 6mm !important;
     justify-content: center !important;
     margin: 0 !important;
-    padding: 4mm !important;
+    padding: 0 !important;
   }
 
   .idcard-photo {
@@ -388,18 +385,12 @@
     opacity: 1 !important;
   }
 
-  .idcard-header {
-    font-size: 0.6rem !important;
-  }
+  .idcard-header { font-size: 0.6rem !important; }
 
-  .idcard-motto {
-    font-size: 0.7rem !important;
-  }
+  .idcard-motto { font-size: 0.65rem !important; max-width: 70% !important; white-space: normal !important; line-height: 1.15 !important; }
 
-  .idcard-info-fields {
-    font-size: 0.55rem !important;
-    padding: 2px 2px 2px 3px !important;
-  }
+  .idcard-info-fields { font-size: 0.48rem !important; padding: 1.6mm 1.6mm 1.6mm 1.8mm !important; overflow: visible !important; display:grid !important; grid-template-columns: 1.1fr 0.9fr !important; column-gap: 1.4mm !important; row-gap: 0.6mm !important; }
+  .idcard-motto { max-width: 70% !important; white-space: normal !important; line-height: 1.15 !important; }
 
   .idcard-info-fields > div {
     margin-bottom: 1px !important;
@@ -418,16 +409,12 @@
     bottom: -6px !important;
   }
 
-  .idcard-row-main {
-    height: 35mm !important;
-  }
+  .idcard-row-main { min-height: 36mm !important; }
 
   .idcard-photo-stamp-col {
     min-width: 22mm !important;
     max-width: 22mm !important;
   }
 
-  .idcard-info {
-    margin-left: 8px !important;
-  }
+  .idcard-info { margin-left: 4mm !important; }
 }

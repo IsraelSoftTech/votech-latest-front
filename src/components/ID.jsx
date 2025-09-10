@@ -145,22 +145,21 @@ function ID() {
                 padding: 0;
                 font-family: 'Segoe UI', Arial, sans-serif;
               }
-              .print-page {
-                page-break-after: always;
-                page-break-inside: avoid;
-                margin-bottom: 20px;
-              }
-              .print-page:last-child {
-                page-break-after: auto;
+              .print-grid { 
+                display: grid; 
+                grid-template-columns: repeat(2, 85.6mm); 
+                gap: 6mm; 
+                justify-content: center; 
+                align-items: start;
               }
               .idcard-template {
-                width: 320px;
-                height: 200px;
+                width: 85.6mm;
+                height: 53.98mm;
                 background: linear-gradient(135deg, #6ec6ff 0%, #2196f3 100%);
                 border: 2px solid #204080;
                 border-radius: 18px;
                 box-shadow: 0 4px 16px rgba(32,64,128,0.13);
-                padding: 8px 10px 8px 8px;
+                padding: 3mm;
                 display: flex;
                 flex-direction: column;
                 font-family: 'Segoe UI', Arial, sans-serif;
@@ -168,15 +167,16 @@ function ID() {
                 overflow: hidden;
                 box-sizing: border-box;
                 page-break-inside: avoid;
-                margin: 5px;
+                break-inside: avoid;
+                margin: 0;
               }
               .idcard-watermark {
                 position: absolute;
                 left: 50%;
                 top: 50%;
-                width: 180px;
-                height: 180px;
-                opacity: 0.09;
+                width: 55mm;
+                height: 55mm;
+                opacity: 0.06;
                 transform: translate(-50%, -50%);
                 pointer-events: none;
                 z-index: 0;
@@ -419,7 +419,7 @@ function ID() {
                       <div><b>Specialty</b>: {student.specialty_name || ''}</div>
                       <div><b>Date Issued</b>: {student.created_at ? new Date(student.created_at).toLocaleDateString('en-GB') : ''}</div>
                       <div><b>Valid Till</b>: {getValidTill(student.created_at)}</div>
-                      <div><b>Contact</b>: {student.guardian_contact || ''}</div>
+                      <div style={{ gridColumn: '1 / -1' }}><b>Contact</b>: {student.guardian_contact || ''}</div>
                     </div>
                   </div>
                 </div>
@@ -539,6 +539,7 @@ function ID() {
 
       {/* Hidden print content */}
       <div ref={printRef} style={{ display: 'none' }}>
+        <div className="print-grid">
         {filteredStudents.map((student, idx) => {
           const fullName = student.full_name || '';
           const firstName = fullName.split(' ')[0] || '';
@@ -550,7 +551,7 @@ function ID() {
           }
           
           return (
-            <div key={student.id || idx} className="print-page">
+            <div key={student.id || idx}>
               <div className="idcard-template">
                 <img src={logo} alt="watermark" className="idcard-watermark" />
                 <div className="idcard-top-row">
@@ -597,6 +598,7 @@ function ID() {
             </div>
           );
         })}
+        </div>
       </div>
     </SideTop>
   );

@@ -5,6 +5,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import Loader from "./components/Loader";
+import Welcome from "./components/Welcome";
 import Signin from "./components/Signin";
 import Signup from "./components/Signup";
 
@@ -147,8 +148,9 @@ function App() {
   return (
     <>
       <Routes>
+        {/* Public */}
+        <Route path="/" element={<Welcome />} />
         {/* Auth */}
-        <Route path="/" element={<Signin />} />
         <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
 

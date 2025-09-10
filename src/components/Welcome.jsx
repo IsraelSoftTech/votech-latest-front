@@ -1,39 +1,77 @@
-import React from 'react';
-import './Welcome.css';
-import { FaArrowRight } from 'react-icons/fa';
-import { useNavigate, useLocation } from 'react-router-dom';
-import buildingImg from '../assets/home.jpg';
-import logo from '../assets/logo.png';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import "./Welcome.css";
+import logo from "../assets/logo.png";
+// Background image is applied via CSS; no direct import needed
 
-const Welcome = () => {
+function Welcome() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const role = params.get('role');
+
+  const handleGetStarted = () => {
+    navigate("/signin");
+  };
+
   return (
-    <div className="welcome-exact-root">
+    <div className="welcome-root">
       <header className="welcome-header">
-        <div className="header-left">
-          <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
-          <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
+        <div className="nav-left">
+          <img src={logo} alt="Votech Logo" className="brand-logo" />
+          <div className="brand-text">
+            <span className="brand-main">VOTECH S7</span>
+            <span className="brand-sub">ACADEMY</span>
+          </div>
         </div>
-        <button className="footer-arrow-btn header-arrow-btn" onClick={() => navigate('/signin')}>
-          <FaArrowRight />
-        </button>
+
+        <nav className="nav-right">
+          <button className="nav-link active">Home</button>
+        </nav>
       </header>
-      <main className="welcome-main-img">
-        <div className="welcome-text-overlay">
-          {role ? `Welcome to ${role} dashboard` : 'WELCOME TO VOLTECH MANAGEMENT SYSTEM'}
-        </div>
-        <img src={buildingImg} alt="Main" />
+
+      <main className="welcome-hero">
+        <section className="hero-left">
+          <h1 className="hero-title">
+            <span>School</span>
+            <span>Management</span>
+            <span>System</span>
+          </h1>
+          <p className="hero-sub">
+            An efficient system for managing student and teacher data
+          </p>
+          <div className="hero-actions">
+            <button className="btn btn-primary" onClick={handleGetStarted}>
+              Get Started
+            </button>
+          </div>
+        </section>
       </main>
+
+      <section id="features" className="features">
+        <h2 className="features-title">Key Features</h2>
+        <div className="features-grid">
+          {[
+            { title: "Student Database", desc: "Easy and secure management of school fee" },
+            { title: "Fee Payment", desc: "Maintain a comprehensive student database" },
+            { title: "Salary Payment", desc: "Efficient management of teacher information" },
+            { title: "Timetable Management", desc: "Empolyed eallbwance" },
+            { title: "Marks Management", desc: "Deska management" },
+            { title: "Report Cards", desc: "Marks management" },
+          ].map((f, i) => (
+            <div key={i} className="feature-card">
+              <div className="feature-icon" />
+              <div className="feature-title">{f.title}</div>
+              <div className="feature-desc">{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <footer className="welcome-footer">
-        <button className="footer-arrow-btn footer-arrow-desktop" onClick={() => navigate('/signin')}>
-          <FaArrowRight />
-        </button>
+        <span>
+          © {new Date().getFullYear()} Votech Academy — Powered by Izzy Tech Team (+237 675 644 383)
+        </span>
       </footer>
     </div>
   );
-};
+}
 
-export default Welcome; 
+export default Welcome;
