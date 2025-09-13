@@ -242,6 +242,7 @@ export default function AdminStudent() {
   const [uploadManyLoading, setUploadManyLoading] = useState(false);
   const [uploadManyError, setUploadManyError] = useState("");
   const [uploadManySuccess, setUploadManySuccess] = useState("");
+  const [usersCount, setUsersCount] = useState(0);
 
   // Photo state
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -257,6 +258,17 @@ export default function AdminStudent() {
         setStudentList(students);
         const accademicYears = await marksApi.get("/academic-years");
         setAcademicYears(accademicYears.data.data);
+        // Fetch users count for Registered Staff card
+        try {
+          const users = await api.getUsers();
+          const count = Array.isArray(users)
+            ? users.length
+            : (users && Array.isArray(users.data) ? users.data.length : 0);
+          setUsersCount(count);
+        } catch (e) {
+          console.log("Failed to fetch users for staff count", e);
+          setUsersCount(0);
+        }
       } catch (err) {
         // Optionally handle error
         toast.error("Failed to fetch page data");
@@ -891,15 +903,8 @@ export default function AdminStudent() {
           <div className="icon">
             <FaChalkboardTeacher />
           </div>
-          <div className="count">47</div>
+          <div className="count">{usersCount}</div>
           <div className="desc">Registered Staff</div>
-        </div>
-        <div className="card fees">
-          <div className="icon">
-            <FaMoneyBill />
-          </div>
-          <div className="count">2000000 XAF</div>
-          <div className="desc">Total Fee Paid</div>
         </div>
       </div>
       {/* Add Button below cards, aligned left */}

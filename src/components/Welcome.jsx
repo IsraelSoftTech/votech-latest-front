@@ -23,7 +23,7 @@ function Welcome() {
         </div>
 
         <nav className="nav-right">
-          <button className="nav-link active">Home</button>
+          <button className="nav-link active" onClick={handleGetStarted}>Login</button>
         </nav>
       </header>
 
@@ -37,11 +37,7 @@ function Welcome() {
           <p className="hero-sub">
             An efficient system for managing student and teacher data
           </p>
-          <div className="hero-actions">
-            <button className="btn btn-primary" onClick={handleGetStarted}>
-              Get Started
-            </button>
-          </div>
+          
         </section>
       </main>
 

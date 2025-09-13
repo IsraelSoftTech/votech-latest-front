@@ -170,7 +170,16 @@ const Signin = () => {
   return (
     <div className="signin-root">
       {showSuccess && <SuccessMessage message={success} type={successType} onClose={() => setShowSuccess(false)} />}
-      <header className="signin-header">
+      <header className="signin-header" style={{ position: 'relative' }}>
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          title="Back to Welcome"
+          className="signin-header-back"
+          style={{ position: 'absolute', right: 16, top: 12, background: 'transparent', border: 'none', cursor: 'pointer', color: '#204080', fontSize: 20 }}
+        >
+          <FaArrowLeft />
+        </button>
         <div className="signin-header-group">
           <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
           <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
@@ -185,6 +194,11 @@ const Signin = () => {
           <Loader poweredBy />
         ) : (
           <form className="signin-form" onSubmit={handleSubmit}>
+            <div className="signin-form-back-arrow">
+              <button type="button" className="signin-back-arrow" onClick={() => navigate('/') } title="Back">
+                <FaArrowLeft />
+              </button>
+            </div>
             <h2 className="signin-form-title">Sign In</h2>
             <button type="button" className="signin-google-btn">
               <FcGoogle className="signin-google-icon" />
