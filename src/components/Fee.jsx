@@ -15,7 +15,8 @@ export default function Fee() {
   const navigate = useNavigate();
   
   // Get permissions
-  const { isReadOnly, isAdmin1 } = usePermissions();
+  const { isReadOnly, userRole } = usePermissions();
+  const isAdmin1 = userRole === 'Admin1';
 
   const [totalPaid, setTotalPaid] = useState(0);
   const [totalOwed, setTotalOwed] = useState(0);
@@ -48,6 +49,22 @@ export default function Fee() {
   const feeReportRef = React.useRef();
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState({ className: '', classId: '', backendResponse: null });
+  
+  // Discount state
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [discountRate, setDiscountRate] = useState(() => {
+    const saved = localStorage.getItem('globalFeeDiscountRate');
+    const parsed = saved ? parseFloat(saved) : 0;
+    return isNaN(parsed) ? 0 : Math.max(0, Math.min(100, parsed));
+  });
+  const [discountApplies, setDiscountApplies] = useState(() => {
+    try {
+      const raw = localStorage.getItem('feeDiscountApplies');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
   
   // Receipt modal state
   const [receiptData, setReceiptData] = useState(null);
@@ -104,6 +121,27 @@ export default function Fee() {
     } finally {
       setStudentsLoading(false);
     }
+  };
+
+  // Persist discount configs whenever they change
+  useEffect(() => {
+    try { localStorage.setItem('globalFeeDiscountRate', String(discountRate || 0)); } catch {}
+  }, [discountRate]);
+  useEffect(() => {
+    try { localStorage.setItem('feeDiscountApplies', JSON.stringify(discountApplies || {})); } catch {}
+  }, [discountApplies]);
+
+  // Helper: compute discounted totals for table display (UI only)
+  const getDiscountedTotals = (studentId) => {
+    const base = getStudentFeeStats(studentId);
+    if (!base) return null;
+    const applies = !!discountApplies[studentId];
+    const rate = (parseFloat(discountRate) || 0) / 100;
+    if (!applies || rate <= 0) return base;
+    const discountedExpected = Math.max(0, Math.round(base.totalExpected * (1 - rate)));
+    const totalPaid = base.totalPaid;
+    const discountedBalance = Math.max(0, discountedExpected - totalPaid);
+    return { ...base, totalExpected: discountedExpected, totalBalance: discountedBalance };
   };
 
   // Function to update totals
@@ -293,7 +331,9 @@ export default function Fee() {
         setReceiptData({
           student: stats.student,
           balance: stats.balance,
-          transactions: transactions
+          transactions: transactions,
+          discountApplied: !!discountApplies[student.id],
+          discountRate: parseFloat(discountRate) || 0
         });
         setReceiptModalOpen(true);
       }
@@ -313,7 +353,9 @@ export default function Fee() {
           student: stats.student,
           balance: stats.balance,
           currentPayment: payment,
-          transactions: transactions
+          transactions: transactions,
+          discountApplied: !!discountApplies[student.id],
+          discountRate: parseFloat(discountRate) || 0
         });
         setReceiptModalOpen(true);
       }
@@ -690,6 +732,29 @@ export default function Fee() {
             <span style={{ fontSize: '16px' }}>🔄</span>
             {studentsLoading ? 'Refreshing...' : 'Refresh'}
           </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => setDiscountModalOpen(true)}
+              style={{
+                background: '#6c757d',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                fontSize: '17px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.2s'
+              }}
+              title="Set discount rate"
+            >
+              <span style={{ fontSize: '16px' }}>💸</span>
+              Discount
+            </button>
+          )}
         </div>
         {searchLoading && <div style={{ textAlign: 'center', color: '#888', marginTop: 12 }}>Searching...</div>}
         {searchError && <div style={{ textAlign: 'center', color: '#e53e3e', marginTop: 12 }}>{searchError}</div>}
@@ -718,7 +783,7 @@ export default function Fee() {
               marginBottom: 24
             }}>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
               <thead>
                     <tr style={{ background: '#204080', color: '#fff' }}>
                       <th style={{ padding: '16px 12px', textAlign: 'left', fontSize: '14px', fontWeight: 600 }}>Student</th>
@@ -726,14 +791,25 @@ export default function Fee() {
                       <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Total Expected</th>
                       <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Total Paid</th>
                       <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Balance</th>
+                      <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Discount {typeof discountRate === 'number' && discountRate > 0 ? `( ${discountRate}% )` : ''}</th>
                       <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Status</th>
-                      <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Actions</th>
+                      {!isAdmin1 && (
+                        <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Actions</th>
+                      )}
                 </tr>
               </thead>
               <tbody>
                     {filteredStudents.map((student, index) => {
-                      const feeStats = getStudentFeeStats(student.id);
-                      const status = getStudentStatus(student.id);
+                      const baseStats = getStudentFeeStats(student.id);
+                      const feeStats = getDiscountedTotals(student.id) || baseStats;
+                      const status = (() => {
+                        if (!feeStats) return 'Unknown';
+                        if (feeStats.totalBalance === 0 && feeStats.totalPaid > 0) return 'Completed';
+                        if (feeStats.totalPaid > 0 && feeStats.totalBalance > 0) return 'Partial';
+                        if (feeStats.totalPaid === 0 && feeStats.totalBalance > 0) return 'Pending';
+                        return 'No Fees';
+                      })();
+                      const applied = !!discountApplies[student.id];
                   
                   return (
                         <tr key={student.id} style={{ 
@@ -757,6 +833,23 @@ export default function Fee() {
                             {feeStats ? feeStats.totalBalance.toLocaleString() : '0'} XAF
                           </td>
                           <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
+                            {!isReadOnly ? (
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={applied}
+                                  onChange={e => {
+                                    const checked = e.target.checked;
+                                    setDiscountApplies(prev => ({ ...prev, [student.id]: checked }));
+                                  }}
+                                />
+                                <span style={{ fontSize: 12, color: '#555' }}>{applied ? 'Apply' : 'No'}</span>
+                              </label>
+                            ) : (
+                              <span style={{ fontSize: 12, color: '#777' }}>{applied ? 'Yes' : 'No'}</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
                             <span style={{
                               padding: '4px 8px',
                               borderRadius: '4px',
@@ -770,69 +863,13 @@ export default function Fee() {
                               {status}
                             </span>
                       </td>
-                          <td style={{ padding: '16px 12px', textAlign: 'center' }}>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                              <button
-                                onClick={() => handleViewDetails(student)}
-                                style={{
-                                  background: '#1976d2',
-                                  color: '#fff',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  padding: '6px 8px',
-                                  fontSize: '12px',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                                title="View Details"
-                              >
-                                <FaEye size={12} />
-                              </button>
-                        {!isReadOnly && (
-                          <button
-                            onClick={() => handlePayFee(student)}
-                            style={{
-                              background: '#28a745',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '4px',
-                              padding: '6px 8px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                            title="Pay Fee"
-                          >
-                            <FaMoneyBillWave size={12} />
-                          </button>
-                        )}
-                              <button
-                                onClick={() => handleShowTransactionHistory(student)}
-                                style={{
-                                  background: '#6f42c1',
-                                  color: '#fff',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  padding: '6px 8px',
-                                  fontSize: '12px',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                                title="View Transaction History"
-                              >
-                                <FaHistory size={12} />
-                              </button>
-                              {status === 'Completed' && !isReadOnly && (
+                          {!isAdmin1 && (
+                            <td style={{ padding: '16px 12px', textAlign: 'center' }}>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
                                 <button
-                                  onClick={() => handleGenerateReceipt(student)}
+                                  onClick={() => handleViewDetails(student)}
                                   style={{
-                                    background: '#17a2b8',
+                                    background: '#1976d2',
                                     color: '#fff',
                                     border: 'none',
                                     borderRadius: '4px',
@@ -843,17 +880,35 @@ export default function Fee() {
                                     alignItems: 'center',
                                     gap: '4px'
                                   }}
-                                  title="Generate Receipt"
+                                  title="View Details"
                                 >
-                                  <FaDownload size={12} />
+                                  <FaEye size={12} />
                                 </button>
-                              )}
-                              {!isReadOnly && (
+                                {!isReadOnly && (
+                                  <button
+                                    onClick={() => handlePayFee(student)}
+                                    style={{
+                                      background: '#28a745',
+                                      color: '#fff',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      padding: '6px 8px',
+                                      fontSize: '12px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                    title="Pay Fee"
+                                  >
+                                    <FaMoneyBillWave size={12} />
+                                  </button>
+                                )}
                                 <button
-                                  onClick={() => handleEditStudentFees(student)}
+                                  onClick={() => handleShowTransactionHistory(student)}
                                   style={{
-                                    background: '#ffc107',
-                                    color: '#000',
+                                    background: '#6f42c1',
+                                    color: '#fff',
                                     border: 'none',
                                     borderRadius: '4px',
                                     padding: '6px 8px',
@@ -863,13 +918,53 @@ export default function Fee() {
                                     alignItems: 'center',
                                     gap: '4px'
                                   }}
-                                  title="Edit Fees"
+                                  title="View Transaction History"
                                 >
-                                  <FaEdit size={12} />
+                                  <FaHistory size={12} />
                                 </button>
-                              )}
-                            </div>
-                        </td>
+                                {status === 'Completed' && !isReadOnly && (
+                                  <button
+                                    onClick={() => handleGenerateReceipt(student)}
+                                    style={{
+                                      background: '#17a2b8',
+                                      color: '#fff',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      padding: '6px 8px',
+                                      fontSize: '12px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                    title="Generate Receipt"
+                                  >
+                                    <FaDownload size={12} />
+                                  </button>
+                                )}
+                                {!isReadOnly && (
+                                  <button
+                                    onClick={() => handleEditStudentFees(student)}
+                                    style={{
+                                      background: '#ffc107',
+                                      color: '#000',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      padding: '6px 8px',
+                                      fontSize: '12px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                    title="Edit Fees"
+                                  >
+                                    <FaEdit size={12} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          )}
                     </tr>
                   );
                     })}
@@ -1096,6 +1191,10 @@ export default function Fee() {
            max-height: 80vh;
            overflow-y: auto;
          }
+         
+         /* Discount Modal Styles */
+         .discount-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(32,64,128,0.13); z-index: 1100; display: flex; align-items: center; justify-content: center; }
+         .discount-modal-content { background: #fff; border-radius: 16px; box-shadow: 0 8px 40px rgba(32,64,128,0.18); padding: 28px; width: 96vw; max-width: 420px; position: relative; text-align: center; }
        `}</style>
       
              {/* Payment Modal */}
@@ -1329,6 +1428,49 @@ export default function Fee() {
                  </div>
                </div>
              )}
+           </div>
+         </div>
+       )}
+ 
+       {/* Discount Modal */}
+       {discountModalOpen && !isReadOnly && (
+         <div className="discount-modal-overlay" onClick={() => setDiscountModalOpen(false)}>
+           <div className="discount-modal-content" onClick={e => e.stopPropagation()}>
+             <button 
+               className="text-button close-btn black-x always-visible" 
+               onClick={() => setDiscountModalOpen(false)} 
+               style={{ position: 'absolute', top: 10, right: 20, zIndex: 10000, color: '#111', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}
+               aria-label="Close"
+             >
+               &#10005;
+             </button>
+             <h2 style={{ marginTop: 4, marginBottom: 12 }}>Set Discount</h2>
+             <p style={{ color: '#666', marginBottom: 16 }}>Choose a discount rate to apply to selected students.</p>
+             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+               {[5,10,15,20,25,30].map(p => (
+                 <button key={p} onClick={() => setDiscountRate(p)} style={{ border: '1px solid #1976d2', background: '#eaf6ff', color: '#204080', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>{p}%</button>
+               ))}
+             </div>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
+               <input
+                 type="number"
+                 min="0"
+                 max="100"
+                 step="0.01"
+                 value={discountRate}
+                 onChange={e => {
+                   const v = parseFloat(e.target.value);
+                   setDiscountRate(isNaN(v) ? 0 : Math.max(0, Math.min(100, v)));
+                 }}
+                 style={{ width: 120, textAlign: 'right', border: '1.5px solid #204080', borderRadius: 7, padding: '8px 10px', fontSize: 16, color: '#204080' }}
+               />
+               <span style={{ fontWeight: 700, color: '#204080' }}>%</span>
+             </div>
+             <div style={{ fontSize: 13, color: '#555', marginBottom: 14 }}>Current rate will affect Total Expected and Balance for checked students.</div>
+             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+               <button onClick={() => { setDiscountModalOpen(false); setSuccessMessage(`Discount rate set to ${parseFloat(discountRate) || 0}%`); setTimeout(()=>setSuccessMessage(''), 3000); }} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 7, padding: '10px 18px', fontWeight: 700, cursor: 'pointer' }}>Save</button>
+               <button onClick={() => { setDiscountRate(0); setSuccessMessage('Discount rate cleared'); setTimeout(()=>setSuccessMessage(''), 3000); }} style={{ background: '#eee', color: '#333', border: '1px solid #ddd', borderRadius: 7, padding: '10px 18px', cursor: 'pointer' }}>Clear Rate</button>
+             </div>
            </div>
          </div>
        )}

@@ -8,7 +8,7 @@ import logoImage from '../assets/logo.png';
 const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) => {
   if (!receipt) return null;
 
-  const { student, balance, transactions = [] } = receipt;
+  const { student, balance, transactions = [], discountApplied = false, discountRate = 0 } = receipt;
   const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
   
   // Function to convert number to words
@@ -26,20 +26,68 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
     return 'Number too large';
   };
   
-  // Calculate amounts
+  const rate = discountApplied ? Math.max(0, Math.min(100, parseFloat(discountRate) || 0)) / 100 : 0;
+
+  // Generate/resolve a unique receipt reference
+  const generateRef = () => {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const y = String(now.getFullYear()).slice(-2);
+    const m = pad(now.getMonth() + 1);
+    const d = pad(now.getDate());
+    const hh = pad(now.getHours());
+    const mm = pad(now.getMinutes());
+    const ss = pad(now.getSeconds());
+    const rand = Math.random().toString(36).toUpperCase().slice(2, 6);
+    const sid = (student?.student_id || 'STD').replace(/[^A-Z0-9]/gi, '').slice(-6).toUpperCase();
+    return `VTA-${y}${m}${d}${hh}${mm}${ss}-${sid}-${rand}`;
+  };
+
+  const getOrCreateRefForPayment = (paymentId) => {
+    try {
+      const key = 'receiptRefByPaymentId';
+      const raw = localStorage.getItem(key);
+      const map = raw ? JSON.parse(raw) : {};
+      if (map[paymentId]) return map[paymentId];
+      const newRef = generateRef();
+      map[paymentId] = newRef;
+      localStorage.setItem(key, JSON.stringify(map));
+      return newRef;
+    } catch {
+      return generateRef();
+    }
+  };
+
+  const resolvedReceiptRef = React.useMemo(() => {
+    if (currentPayment && currentPayment.id) {
+      return getOrCreateRefForPayment(currentPayment.id);
+    }
+    return generateRef();
+  }, [currentPayment]);
+
+  // Calculate amounts (respect discount)
   let paid, total, left, status;
   
   if (currentPayment) {
     // Show only the current payment amount
     paid = currentPayment.amount || 0;
-    total = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
-    left = feeTypes.reduce((sum, type) => sum + (balance[type] || 0), 0);
+    const baseTotal = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
+    total = Math.round(baseTotal * (1 - rate));
+    const baseLeft = feeTypes.reduce((sum, type) => sum + (balance[type] || 0), 0);
+    // If discount applies, recompute left as discounted total minus paid-to-date overall
+    if (rate > 0) {
+      const totalPaidToDate = feeTypes.reduce((sum, type) => sum + ((parseFloat(student[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)), 0);
+      left = Math.max(0, total - totalPaidToDate);
+    } else {
+      left = baseLeft;
+    }
     status = 'Payment Received';
   } else {
-    // Original behavior - show total paid
-    paid = feeTypes.reduce((sum, type) => sum + ((parseFloat(student[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)), 0);
-    total = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
-    left = total - paid;
+    const basePaid = feeTypes.reduce((sum, type) => sum + ((parseFloat(student[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)), 0);
+    const baseTotal = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
+    total = Math.round(baseTotal * (1 - rate));
+    paid = basePaid;
+    left = Math.max(0, total - paid);
     status = left <= 0 ? 'Completed' : 'Uncompleted';
   }
 
@@ -74,26 +122,26 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
         downloadBtn.style.display = 'none';
       }
       
-             // Create a temporary container with two receipts for PDF generation
-       const tempContainer = document.createElement('div');
-       tempContainer.className = 'receipt-container temp-pdf-container';
-       tempContainer.style.cssText = `
-         background: white;
-         width: 210mm;
-         height: 290mm;
-         margin: 0 auto;
-         padding: 3mm;
-         box-sizing: border-box;
-         font-family: 'Times New Roman', serif;
-         color: black;
-         position: absolute;
-         left: -9999px;
-         top: -9999px;
-         overflow: visible;
-         display: flex;
-         flex-direction: column;
-         gap: 4mm;
-       `;
+      // Create a temporary container with two receipts for PDF generation
+      const tempContainer = document.createElement('div');
+      tempContainer.className = 'receipt-container temp-pdf-container';
+      tempContainer.style.cssText = `
+        background: white;
+        width: 210mm;
+        height: 290mm;
+        margin: 0 auto;
+        padding: 3mm;
+        box-sizing: border-box;
+        font-family: 'Times New Roman', serif;
+        color: black;
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        overflow: visible;
+        display: flex;
+        flex-direction: column;
+        gap: 4mm;
+      `;
       
       // Clone the receipt content twice
       const receiptContent = ref.current.querySelector('.receipt-template');
@@ -230,7 +278,7 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
       // Add the image to PDF - only one page, no second page
       pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
 
-      const fileName = `fee_receipt_${student.student_id}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `fee_receipt_${student.student_id}_${resolvedReceiptRef}.pdf`;
       pdf.save(fileName);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -254,6 +302,7 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
         </div>
         <div className="receipt-title-section">
           <h1 className="receipt-title">FEE PAYMENT</h1>
+          <div style={{ fontSize: '10pt', color: '#333' }}>Receipt Ref: <strong>{resolvedReceiptRef}</strong></div>
         </div>
       </div>
 
@@ -276,6 +325,11 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
         <p className="statement-text">
           Fee of <strong>{paid.toLocaleString()}</strong> paid on <strong>{new Date(currentPayment ? currentPayment.paid_at : new Date()).toLocaleDateString()}</strong>
         </p>
+        {discountApplied && rate > 0 && (
+          <p className="statement-text" style={{ color: '#204080' }}>
+            Discount applied: <strong>{Math.round(rate * 100)}%</strong>
+          </p>
+        )}
         <p className="amount-in-words">
           <strong>Amount in words:</strong> {numberToWords(paid)} XAF
         </p>
@@ -334,17 +388,21 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
             <tbody>
               {feeTypes.map(type => {
                 const expectedFee = parseFloat(student[type.toLowerCase() + '_fee']) || 0;
+                const discountedExpected = Math.round(expectedFee * (1 - rate));
                 const balanceOwed = balance[type] || 0;
                 const amountPaid = expectedFee - balanceOwed;
-                const percentage = expectedFee > 0 ? `${Math.round((amountPaid / expectedFee) * 100)}%` : '-';
+                const discountedBalance = Math.max(0, discountedExpected - amountPaid);
+                const pctBase = discountedExpected > 0 ? discountedExpected : expectedFee;
+                const pctPaid = pctBase > 0 ? Math.round((amountPaid / pctBase) * 100) : 0;
+                const percentage = pctBase > 0 ? `${pctPaid}%` : '-';
                 
                 return (
                   <tr key={type}>
                     <td className="fee-type-name">{type}</td>
-                    <td className="fee-expected">{expectedFee.toLocaleString()}</td>
+                    <td className="fee-expected">{(discountApplied && rate > 0 ? discountedExpected : expectedFee).toLocaleString()}</td>
                     <td className="fee-paid">{amountPaid.toLocaleString()}</td>
-                    <td className="fee-balance">{balanceOwed.toLocaleString()}</td>
-                    <td className={`fee-percentage ${expectedFee > 0 ? (amountPaid === expectedFee ? 'completed' : amountPaid > 0 ? 'partial' : 'pending') : 'no-fee'}`}>
+                    <td className="fee-balance">{(discountApplied && rate > 0 ? discountedBalance : balanceOwed).toLocaleString()}</td>
+                    <td className={`fee-percentage ${pctBase > 0 ? (amountPaid >= pctBase ? 'completed' : amountPaid > 0 ? 'partial' : 'pending') : 'no-fee'}`}>
                       {percentage}
                     </td>
                   </tr>
