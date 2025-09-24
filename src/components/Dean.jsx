@@ -40,8 +40,17 @@ export default function Dean() {
           }));
         
         setEvents(upcomingEvents);
-
-
+        // Fetch total users for Staff Members count
+        try {
+          const users = await api.getUsers();
+          const totalUsers = Array.isArray(users)
+            ? users.length
+            : (users && Array.isArray(users.data) ? users.data.length : 0);
+          setStaffCount(totalUsers);
+        } catch (e) {
+          console.log('Failed to fetch users for staff count', e);
+          setStaffCount(0);
+        }
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);

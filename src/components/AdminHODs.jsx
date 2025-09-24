@@ -201,7 +201,7 @@ function AdminHODs() {
           {(() => {
             const au = JSON.parse(sessionStorage.getItem('authUser') || localStorage.getItem('authUser') || 'null') || {};
             const roleLower = (au.role || '').toString().toLowerCase();
-            const blocked = roleLower === 'admin1' || roleLower === 'admin4';
+            const blocked = roleLower === 'admin1';
             return !blocked ? (
               <button 
                 className="admin-hods-create-btn"
@@ -301,7 +301,7 @@ function AdminHODs() {
                       {(() => {
                         const au = JSON.parse(sessionStorage.getItem('authUser') || localStorage.getItem('authUser') || 'null') || {};
                         const roleLower = (au.role || '').toString().toLowerCase();
-                        const blocked = roleLower === 'admin1' || roleLower === 'admin4';
+                        const blocked = roleLower === 'admin1';
                         if (blocked) return null;
                         return (
                           <>
