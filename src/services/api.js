@@ -1700,6 +1700,19 @@ class ApiService {
     }
   }
 
+  async undoSalaryPaid(salaryId) {
+    try {
+      const response = await fetch(`${API_URL}/salary/undo-paid/${salaryId}`, {
+        method: "PUT",
+        headers: this.getAuthHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error("Undo salary paid error:", error);
+      throw error;
+    }
+  }
+
   async getUserSalaryHistory(userId) {
     try {
       const response = await fetch(`${API_URL}/salary/user/${userId}`, {
@@ -1708,6 +1721,33 @@ class ApiService {
       return this.handleResponse(response);
     } catch (error) {
       console.error("Get user salary history error:", error);
+      throw error;
+    }
+  }
+
+  async editPaidSalary(salaryId, { monthNumber, year }) {
+    try {
+      const response = await fetch(`${API_URL}/salary/edit-paid/${salaryId}`, {
+        method: "PUT",
+        headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ monthNumber, year }),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error("Edit paid salary error:", error);
+      throw error;
+    }
+  }
+
+  async deleteSalaryRecord(salaryId) {
+    try {
+      const response = await fetch(`${API_URL}/salary/${salaryId}`, {
+        method: "DELETE",
+        headers: this.getAuthHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error("Delete salary record error:", error);
       throw error;
     }
   }

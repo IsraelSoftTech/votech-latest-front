@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SideTop from './SideTop';
-import { FaEdit, FaSave, FaTimes, FaDollarSign, FaUsers, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaDownload, FaPrint, FaLock } from 'react-icons/fa';
+import { FaEdit, FaSave, FaTimes, FaDollarSign, FaUsers, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaDownload, FaPrint, FaLock, FaEye } from 'react-icons/fa';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
 import MessageBox from './MessageBox';
@@ -39,6 +39,13 @@ export default function Salary({ authUser }) {
   const [showReceipt, setShowReceipt] = useState(false);
   const [paymentReceipt, setPaymentReceipt] = useState(null);
   const receiptRef = useRef();
+  // When editing a PAID salary's month/year via the Pay modal
+  const [paidEditTarget, setPaidEditTarget] = useState(null); // { salaryId, application }
+
+  // History modal
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyRecords, setHistoryRecords] = useState([]);
+  const [historyUser, setHistoryUser] = useState(null); // minimal: { id, name }
 
   // CNPS exclusion preferences per user (persisted locally). Checked = EXCLUDE CNPS.
   const [cnpsPreferences, setCnpsPreferences] = useState(() => {
@@ -197,6 +204,150 @@ export default function Salary({ authUser }) {
     setSalaryAmount('');
   };
 
+  const handleUndoPaid = async (application) => {
+    try {
+      if (!application || !application.salary_id) return;
+      showMessage(
+        'Undo Payment',
+        `Are you sure you want to undo the payment for ${application.applicant_name} (${application.salary_month} ${application.salary_year})?`,
+        'warning',
+        async () => {
+          await api.undoSalaryPaid(application.salary_id);
+          setSuccessMessage('success');
+          await fetchData();
+          setTimeout(() => setSuccessMessage(''), 3000);
+        },
+        'Undo',
+        'Cancel',
+        true
+      );
+    } catch (error) {
+      console.error('Error undoing salary payment:', error);
+      showMessage('Error', `Failed to undo salary payment: ${error.message}`, 'error');
+    }
+  };
+
+  const handlePaidOptions = (application) => {
+    if (!application || !application.salary_id) return;
+    showMessage(
+      'Paid Salary Options',
+      `Choose an action for ${application.applicant_name}'s paid salary (${application.salary_month} ${application.salary_year}).`,
+      'info',
+      async () => {
+        // Edit: open Pay modal pre-filled and route submit to editPaidSalary
+        const monthNumber = (
+          [
+            'January','February','March','April','May','June',
+            'July','August','September','October','November','December'
+          ].indexOf(application.salary_month) + 1
+        ) || (new Date().getMonth() + 1);
+        setPaidEditTarget({ salaryId: application.salary_id, application });
+        setSelectedApplication(application);
+        setPayForm({ name: application.applicant_name, salaryAmount: application.salary_amount > 0 ? String(application.salary_amount) : '', month: monthNumber });
+        setShowSearchResults(false);
+        setSearchQuery(application.applicant_name);
+        setShowPayModal(true);
+      },
+      'Edit',
+      'Delete',
+      true
+    );
+
+    // Override cancel to be delete action by temporarily wiring onConfirm to edit, and onCancel to delete.
+    // MessageBox supports only one callback. We will intercept close and immediately ask delete confirmation.
+    // As a simpler approach, when user clicks cancel on the first box, we open a second confirm for delete:
+    setMessageBox(prevBox => ({
+      ...prevBox,
+      // Keep existing
+      onCancel: async () => {
+        showMessage(
+          'Confirm Delete',
+          `Are you sure you want to permanently delete this paid salary record?`,
+          'error',
+          async () => {
+            try {
+              await api.deleteSalaryRecord(application.salary_id);
+              setSuccessMessage('success');
+              await fetchData();
+              setTimeout(() => setSuccessMessage(''), 3000);
+            } catch (e) {
+              showMessage('Error', e.message, 'error');
+            }
+          },
+          'Delete',
+          'Cancel',
+          true
+        );
+      }
+    }));
+  };
+
+  const openHistory = async (application) => {
+    try {
+      const userId = application.applicant_id;
+      const all = await api.getUserSalaryHistory(userId);
+      const paidOnly = Array.isArray(all) ? all.filter(r => r.paid === true) : [];
+      setHistoryUser({ id: userId, name: application.applicant_name, contact: application.contact });
+      setHistoryRecords(paidOnly);
+      setShowHistory(true);
+    } catch (e) {
+      showMessage('Error', `Failed to load salary history: ${e.message}`, 'error');
+    }
+  };
+
+  const closeHistory = () => {
+    setShowHistory(false);
+    setHistoryRecords([]);
+    setHistoryUser(null);
+  };
+
+  const handleHistoryEdit = async (record, applicationFallback) => {
+    try {
+      const app = applicationFallback || approvedApplications.find(a => a.applicant_id === (historyUser?.id));
+      if (!app) return;
+      const monthNumber = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+      ].indexOf(record.month) + 1 || (new Date().getMonth() + 1);
+      setPaidEditTarget({ salaryId: record.id, application: app });
+      setSelectedApplication(app);
+      setPayForm({ name: app.applicant_name, salaryAmount: app.salary_amount > 0 ? String(app.salary_amount) : String(record.amount || ''), month: monthNumber });
+      setShowSearchResults(false);
+      setSearchQuery(app.applicant_name);
+      setShowPayModal(true);
+      setShowHistory(false);
+    } catch (e) {
+      showMessage('Error', e.message, 'error');
+    }
+  };
+
+  const handleHistoryDelete = async (record) => {
+    showMessage(
+      'Confirm Delete',
+      `Delete ${historyUser?.name || 'this user'}'s payment for ${record.month} ${record.year}?`,
+      'error',
+      async () => {
+        try {
+          await api.deleteSalaryRecord(record.id);
+          await fetchData();
+          // Refresh history view
+          if (historyUser?.id) {
+            const all = await api.getUserSalaryHistory(historyUser.id);
+            const paidOnly = Array.isArray(all) ? all.filter(r => r.paid === true) : [];
+            setHistoryRecords(paidOnly);
+          }
+          setSuccessMessage('success');
+          setTimeout(() => setSuccessMessage(''), 3000);
+        } catch (e) {
+          showMessage('Error', e.message, 'error');
+        }
+      },
+      'Delete',
+      'Cancel',
+      true
+    );
+  };
+
   // Pay Salary Modal Functions
   const openPayModal = () => {
     setShowPayModal(true);
@@ -209,6 +360,7 @@ export default function Salary({ authUser }) {
     setFilteredNames([]);
     setShowSearchResults(false);
     setSelectedApplication(null);
+    setPaidEditTarget(null);
   };
 
   const closePayModal = () => {
@@ -336,36 +488,44 @@ export default function Salary({ authUser }) {
         });
       }
 
-      if (!salaryRecord || !salaryRecord.id) {
-        showMessage('No Salary Record', `No salary record found for ${selectedApplication.applicant_name} for ${selectedMonthName} ${academicYearStart}. Please set a salary amount first.`, 'warning');
-        return;
+      if (!paidEditTarget) {
+        if (!salaryRecord || !salaryRecord.id) {
+          showMessage('No Salary Record', `No salary record found for ${selectedApplication.applicant_name} for ${selectedMonthName} ${academicYearStart}. Please set a salary amount first.`, 'warning');
+          return;
+        }
+        if (salaryRecord.paid === true) {
+          showMessage('Already Paid', `Salary for ${selectedApplication.applicant_name} for ${selectedMonthName} ${academicYearStart} has already been paid.`, 'warning');
+          return;
+        }
       }
 
-      // Check if salary is already paid for the specific month being paid
-      if (salaryRecord.paid === true) {
-        showMessage('Already Paid', `Salary for ${selectedApplication.applicant_name} for ${selectedMonthName} ${academicYearStart} has already been paid.`, 'warning');
-        return;
-      }
-
-      // Confirm payment
+      // Confirm action
       showMessage(
-        'Confirm Payment',
-        `Are you sure you want to pay ${formatCurrency(parseFloat(payForm.salaryAmount))} to ${selectedApplication.applicant_name} for ${selectedMonthName} ${academicYearStart}?\n\nThis action cannot be undone.`,
+        paidEditTarget ? 'Confirm Edit' : 'Confirm Payment',
+        paidEditTarget
+          ? `Move paid salary record to ${selectedMonthName} ${academicYearStart} for ${selectedApplication.applicant_name}?`
+          : `Are you sure you want to pay ${formatCurrency(parseFloat(payForm.salaryAmount))} to ${selectedApplication.applicant_name} for ${selectedMonthName} ${academicYearStart}?\n\nThis action cannot be undone.`,
         'warning',
         async () => {
           try {
-            await api.markSalaryAsPaid(salaryRecord.id);
+            if (paidEditTarget && paidEditTarget.salaryId) {
+              await api.editPaidSalary(paidEditTarget.salaryId, { monthNumber: payForm.month, year: parseInt(academicYearStart) });
+            } else {
+              await api.markSalaryAsPaid(salaryRecord.id);
+            }
 
             setSuccessMessage('success');
             closePayModal();
+            setPaidEditTarget(null);
             
             // Refresh data
             await fetchData();
             
-            // Generate receipt after 2 seconds
-            setTimeout(() => {
-              generateReceipt();
-            }, 2000);
+            if (!paidEditTarget) {
+              setTimeout(() => {
+                generateReceipt();
+              }, 2000);
+            }
             
             // Clear success message after 5 seconds
             setTimeout(() => {
@@ -376,7 +536,7 @@ export default function Salary({ authUser }) {
             
             // Handle specific error messages from backend
             if (error.message.includes('already been paid')) {
-              showMessage('Payment Error', error.message, 'error');
+              showMessage(paidEditTarget ? 'Edit Error' : 'Payment Error', error.message, 'error');
               // Refresh data to show updated status
               await fetchData();
             } else if (error.message.includes('Cannot pay twice')) {
@@ -384,11 +544,11 @@ export default function Salary({ authUser }) {
               // Refresh data to show updated status
               await fetchData();
             } else {
-              showMessage('Error', `Error paying salary: ${error.message}`, 'error');
+              showMessage('Error', `${paidEditTarget ? 'Error editing salary:' : 'Error paying salary:'} ${error.message}`, 'error');
             }
           }
         },
-        'Pay',
+        paidEditTarget ? 'Edit' : 'Pay',
         'Cancel',
         true
       );
@@ -721,13 +881,31 @@ export default function Salary({ authUser }) {
                           </div>
                         ) : (
                           !isReadOnly && (
-                            <button
-                              className="salary-action-btn salary-edit-btn"
-                              onClick={() => handleEditSalary(app)}
-                              title="Edit Salary"
-                            >
-                              <FaEdit />
-                            </button>
+                            <div className="salary-action-buttons">
+                              <button
+                                className="salary-action-btn"
+                                onClick={() => openHistory(app)}
+                                title="View Payments"
+                              >
+                                <FaEye />
+                              </button>
+                              <button
+                                className="salary-action-btn salary-edit-btn"
+                                onClick={() => handleEditSalary(app)}
+                                title="Edit Salary"
+                              >
+                                <FaEdit />
+                              </button>
+                              {app.salary_status === 'paid' && app.salary_id && (
+                                <button
+                                  className="salary-action-btn salary-cancel-btn"
+                                  onClick={() => handlePaidOptions(app)}
+                                  title="Options: Edit month or Delete"
+                                >
+                                  <FaTimes />
+                                </button>
+                              )}
+                            </div>
                           )
                         )}
                       </td>
@@ -853,6 +1031,74 @@ export default function Salary({ authUser }) {
                   disabled={!selectedApplication || !payForm.salaryAmount}
                 >
                   <FaMoneyBillWave /> Pay Salary
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Staff Payment History Modal */}
+        {showHistory && (
+          <div className="salary-receipt-modal-overlay">
+            <div className="salary-receipt-modal">
+              <div className="salary-receipt-modal-header">
+                <h3 className="salary-receipt-modal-title">
+                  <FaEye /> {historyUser?.name}'s Payments
+                </h3>
+                <button 
+                  className="salary-receipt-modal-close-btn"
+                  onClick={closeHistory}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="salary-receipt-modal-body">
+                {historyRecords.length === 0 ? (
+                  <p>No payments found.</p>
+                ) : (
+                  <table className="salary-table" style={{ width: '100%' }}>
+                    <thead className="salary-table-head">
+                      <tr className="salary-table-row">
+                        <th className="salary-table-header-cell">Month</th>
+                        <th className="salary-table-header-cell">Year</th>
+                        <th className="salary-table-header-cell">Amount</th>
+                        <th className="salary-table-header-cell">Paid At</th>
+                        <th className="salary-table-header-cell">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="salary-table-body">
+                      {historyRecords.map(rec => (
+                        <tr key={rec.id} className="salary-table-row">
+                          <td className="salary-table-cell">{rec.month}</td>
+                          <td className="salary-table-cell">{rec.year}</td>
+                          <td className="salary-table-cell">{formatCurrency(parseFloat(rec.amount || 0))}</td>
+                          <td className="salary-table-cell">{rec.paid_at ? new Date(rec.paid_at).toLocaleString() : ''}</td>
+                          <td className="salary-table-cell">
+                            {!isReadOnly && (
+                              <div className="salary-action-buttons">
+                                <button className="salary-action-btn salary-edit-btn" title="Edit" onClick={() => handleHistoryEdit(rec)}>
+                                  <FaEdit />
+                                </button>
+                                <button className="salary-action-btn salary-cancel-btn" title="Delete" onClick={() => handleHistoryDelete(rec)}>
+                                  <FaTimes />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div className="salary-receipt-modal-footer">
+                <button 
+                  className="salary-receipt-modal-close-btn-footer"
+                  onClick={closeHistory}
+                >
+                  Close
                 </button>
               </div>
             </div>
