@@ -283,12 +283,49 @@ export default function Admin2PaySlip({ authUser }) {
       setShowPayslipModal(true);
       setTimeout(async () => {
         if (payslipRef.current) {
-          const canvas = await html2canvas(payslipRef.current, {
-            scale: 2,
+          // Detect mobile device
+          const isMobile = window.innerWidth <= 768;
+          const element = payslipRef.current;
+          
+          // Force a fixed width for mobile to prevent cutting
+          if (isMobile) {
+            element.classList.add('pdf-generation-mobile');
+            element.style.width = '400px'; // Slightly wider for better readability
+            element.style.minWidth = '400px';
+            element.style.maxWidth = '400px';
+            element.style.transform = 'scale(1)';
+            element.style.transformOrigin = 'top left';
+          }
+          
+          // Wait for layout to settle
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // Enhanced html2canvas configuration for better mobile rendering
+          const canvas = await html2canvas(element, {
+            scale: isMobile ? 2.5 : (window.devicePixelRatio || 2), // Balanced scale for mobile
             useCORS: true,
             allowTaint: true,
-            backgroundColor: '#ffffff'
+            backgroundColor: '#ffffff',
+            width: isMobile ? 400 : element.scrollWidth,
+            height: element.scrollHeight,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: isMobile ? 400 : Math.max(element.scrollWidth, 800),
+            windowHeight: Math.max(element.scrollHeight, 600),
+            foreignObjectRendering: false, // Sometimes causes issues on mobile
+            logging: false,
+            removeContainer: true
           });
+          
+          // Reset element styles
+          if (isMobile) {
+            element.classList.remove('pdf-generation-mobile');
+            element.style.width = '';
+            element.style.minWidth = '';
+            element.style.maxWidth = '';
+            element.style.transform = '';
+            element.style.transformOrigin = '';
+          }
           const imgData = canvas.toDataURL('image/png');
           const pdf = new jsPDF('p', 'mm', 'a4');
           const imgWidth = 210;

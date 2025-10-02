@@ -687,6 +687,35 @@
 
 .admin2-payslip-modal-body {
   padding: 24px;
+  /* Ensure proper rendering for PDF generation on mobile */
+  min-width: 800px;
+  overflow-x: auto;
+  position: relative;
+}
+
+/* Mobile specific adjustments for PDF generation */
+@media (max-width: 768px) {
+  .admin2-payslip-modal-body {
+    padding: 8px;
+    min-width: 100%;
+    overflow-x: visible;
+    overflow-y: visible;
+  }
+  
+  /* Ensure modal doesn't constrain the payslip template on mobile */
+  .admin2-payslip-modal {
+    max-width: 95%;
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .admin2-payslip-modal-header {
+    padding: 16px;
+  }
+  
+  .admin2-payslip-modal-footer {
+    padding: 16px;
+  }
 }
 
 /* Pay Slip Content */
