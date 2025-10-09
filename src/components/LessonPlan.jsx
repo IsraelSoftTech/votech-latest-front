@@ -219,7 +219,7 @@ export default function LessonPlan() {
 
   const isAdmin4 = userRole === 'Admin4';
   const isAdmin1 = userRole === 'Admin1';
-  const canUpload = !isAdmin4; // Only Admin4 cannot upload, Admin1 can upload
+  const canUpload = !(isAdmin4 || isAdmin1); // Admin1 and Admin4 cannot upload
   const canReview = isAdmin4;
 
   return (
@@ -287,14 +287,14 @@ export default function LessonPlan() {
                   {(isAdmin1 || isAdmin4) && <th>Submitted By</th>}
                   {(isAdmin1 || isAdmin4) && <th>Role</th>}
                   {(isAdmin1 || isAdmin4) && <th>Review Status</th>}
-                  <th>Admin Comment</th>
+                  <th>View</th>
                   {!isAdmin1 && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {lessonPlans.map((plan) => (
                   <tr key={plan.id}>
-                    <td>{plan.title}</td>
+                    <td className="title-cell"><span className="title-text">{plan.title}</span></td>
                     <td>
                       <span className={`period-type-badge period-${plan.period_type}`}>
                         {plan.period_type}
@@ -314,28 +314,20 @@ export default function LessonPlan() {
                     )}
                     {(isAdmin1 || isAdmin4) && (
                       <td>
-                        {plan.admin_comment ? (
-                          <span title={plan.admin_comment} style={{ cursor: 'help', textDecoration: 'underline' }}>
-                            Reviewed
-                          </span>
-                        ) : '-'}
+                        <span className={`status-badge status-${plan.status}`}>
+                          {plan.status}
+                        </span>
                       </td>
                     )}
-                    <td>
-                      {plan.admin_comment ? (
-                        <span 
-                          title={plan.admin_comment} 
-                          style={{ 
-                            cursor: 'help', 
-                            color: plan.status === 'rejected' ? '#dc3545' : plan.status === 'approved' ? '#28a745' : '#6c757d',
-                            fontWeight: '500'
-                          }}
-                        >
-                          {plan.admin_comment.length > 30 ? `${plan.admin_comment.substring(0, 30)}...` : plan.admin_comment}
-                        </span>
-                      ) : (
-                        <span style={{ color: '#6c757d' }}>-</span>
-                      )}
+                    <td className="actions">
+                      <button 
+                        className="action-btn view" 
+                        onClick={() => handleViewFile(plan.file_url)}
+                        title="View PDF"
+                        aria-label="View lesson plan"
+                      >
+                        <FaEye />
+                      </button>
                     </td>
                     {!isAdmin1 && (
                       <td className="actions">

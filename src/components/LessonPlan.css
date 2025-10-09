@@ -610,6 +610,7 @@
 /* Table */
 .table-container { width: 100%; overflow-x: auto; }
 .title-cell .title-text { font-weight: 600; color: #111827; }
+.title-cell { display: flex; align-items: center; gap: 8px; }
 .teacher-cell .teacher-name { font-weight: 500; color: #374151; }
 .role-badge { display: inline-block; background: #eef2ff; color: #4f46e5; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; }
 .reviewed-badge { display: inline-block; background: #ecfdf5; color: #059669; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
@@ -638,11 +639,15 @@
 .empty-state .empty-icon { font-size: 42px; color: #9ca3af; margin-bottom: 10px; }
 
 /* Content link */
+.title-link { color: #2563eb; text-decoration: none; font-weight: 600; }
+.title-link:hover { text-decoration: underline; }
 .content-cell a { color: #2563eb; text-decoration: none; }
 .content-cell a:hover { text-decoration: underline; }
 
 /* Responsive tweaks */
 @media (max-width: 768px) {
+  .lesson-plan-table-wrapper { overflow-x: auto; }
+  .lesson-plan-table { min-width: 720px; }
   .lesson-plan-stats-grid { grid-template-columns: 1fr; }
   .header-actions { width: 100%; }
   .action-btn.report-btn, .action-btn.upload-btn { width: 100%; justify-content: center; }
