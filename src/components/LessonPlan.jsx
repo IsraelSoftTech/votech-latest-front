@@ -288,7 +288,7 @@ export default function LessonPlan() {
                   {(isAdmin1 || isAdmin4) && <th>Role</th>}
                   {(isAdmin1 || isAdmin4) && <th>Review Status</th>}
                   <th>Admin Comment</th>
-                  <th>Actions</th>
+                  {!isAdmin1 && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -337,53 +337,55 @@ export default function LessonPlan() {
                         <span style={{ color: '#6c757d' }}>-</span>
                       )}
                     </td>
-                    <td className="actions">
-                      <button 
-                        className="action-btn view" 
-                        onClick={() => handleViewFile(plan.file_url)}
-                        title="View PDF"
-                      >
-                        <FaEye />
-                      </button>
-                      
-                      {canUpload && plan.status === 'pending' && (
-                        <>
-                          <button 
-                            className="action-btn edit" 
-                            onClick={() => handleEdit(plan)}
-                            title="Edit"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button 
-                            className="action-btn delete" 
-                            onClick={() => handleDelete(plan.id)}
-                            title="Delete"
-                          >
-                            <FaTrash />
-                          </button>
-                        </>
-                      )}
-                      
-                      {canReview && plan.status === 'pending' && (
-                        <>
-                          <button 
-                            className="action-btn approve" 
-                            onClick={() => handleReview(plan)}
-                            title="Review"
-                          >
-                            <FaCheck />
-                          </button>
-                          <button 
-                            className="action-btn delete" 
-                            onClick={() => handleDelete(plan.id)}
-                            title="Delete"
-                          >
-                            <FaTrash />
-                          </button>
-                        </>
-                      )}
-                    </td>
+                    {!isAdmin1 && (
+                      <td className="actions">
+                        <button 
+                          className="action-btn view" 
+                          onClick={() => handleViewFile(plan.file_url)}
+                          title="View PDF"
+                        >
+                          <FaEye />
+                        </button>
+                        
+                        {canUpload && plan.status === 'pending' && (
+                          <>
+                            <button 
+                              className="action-btn edit" 
+                              onClick={() => handleEdit(plan)}
+                              title="Edit"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button 
+                              className="action-btn delete" 
+                              onClick={() => handleDelete(plan.id)}
+                              title="Delete"
+                            >
+                              <FaTrash />
+                            </button>
+                          </>
+                        )}
+                        
+                        {canReview && plan.status === 'pending' && (
+                          <>
+                            <button 
+                              className="action-btn approve" 
+                              onClick={() => handleReview(plan)}
+                              title="Review"
+                            >
+                              <FaCheck />
+                            </button>
+                            <button 
+                              className="action-btn delete" 
+                              onClick={() => handleDelete(plan.id)}
+                              title="Delete"
+                            >
+                              <FaTrash />
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

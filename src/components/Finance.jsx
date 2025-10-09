@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Admin.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaMoneyBillWave, FaMoneyCheckAlt, FaUserTie, FaChevronDown, FaChartPie, FaBoxes, FaFileInvoiceDollar } from 'react-icons/fa';
+import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaMoneyBillWave, FaMoneyCheckAlt, FaChevronDown, FaChartPie, FaBoxes, FaFileInvoiceDollar } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import ReactDOM from 'react-dom';
@@ -127,11 +127,6 @@ export default function Finance() {
           <div className="icon"><FaMoneyCheckAlt /></div>
           <div className="count">{loadingTotals ? '...' : totalOwed.toLocaleString()} XAF</div>
           <div className="desc">Total Fee Owed</div>
-        </div>
-        <div className="card salary">
-          <div className="icon"><FaUserTie /></div>
-          <div className="count">XAF800,000</div>
-          <div className="desc">Total Salary Paid This Month</div>
         </div>
       </div>
       <div className="finance-metrics">
