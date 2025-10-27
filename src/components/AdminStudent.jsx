@@ -427,15 +427,15 @@ export default function AdminStudent() {
     setRegistering(false);
   };
 
-  const handleDelete = (idx) => {
-    setDeleteIdx(idx);
+  const handleDelete = (studentId) => {
+    setDeleteIdx(studentId);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = async () => {
-    const studentToDelete = studentList[deleteIdx];
+    const studentId = deleteIdx;
     try {
-      await api.deleteStudent(studentToDelete.id);
+      await api.deleteStudent(studentId);
       setSuccess("Student deleted successfully!");
       setSuccessType("success");
       const students = await api.getStudents();
@@ -443,7 +443,6 @@ export default function AdminStudent() {
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError("Failed to delete student.");
-
       setErrorType("error");
     }
     setShowDeleteModal(false);
@@ -1132,7 +1131,7 @@ export default function AdminStudent() {
                         <button
                           className="action-btn delete"
                           title={'Delete'}
-                          onClick={() => handleDelete(idx)}
+                          onClick={() => handleDelete(s.id)}
                         >
                           <FaTrash />
                         </button>
