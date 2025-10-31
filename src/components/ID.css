@@ -30,7 +30,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-bottom: 4px; /* more space before motto */
+  margin-bottom: 1px; /* motto sits directly under name */
   z-index: 2;
 }
 .idcard-logo-small {
@@ -67,10 +67,10 @@
 }
 
 .idcard-motto {
-  font-size: 0.86rem;
+  font-size: 0.6rem; /* smaller motto under name */
   color: #e3f2fd;
   text-align: left;
-  margin-bottom: 8px; /* ensure space above data rows */
+  margin-bottom: 4px; /* some space above data rows */
   font-weight: 600;
   z-index: 3;
   text-shadow: 0 1px 4px #0b2a6a55;
@@ -330,6 +330,11 @@
     align-items: start;
     page-break-inside: avoid;
   }
+  /* Force exactly 8 cards per page */
+  .idcard-grid .idcard-template:nth-of-type(8n) {
+    break-after: page;
+    page-break-after: always;
+  }
   .idcard-template {
     page-break-inside: avoid;
     break-inside: avoid;
@@ -387,7 +392,7 @@
 
   .idcard-header { font-size: 0.6rem !important; }
 
-  .idcard-motto { font-size: 0.65rem !important; max-width: 70% !important; white-space: normal !important; line-height: 1.15 !important; }
+  .idcard-motto { font-size: 0.5rem !important; max-width: 70% !important; white-space: normal !important; line-height: 1.15 !important; }
 
   .idcard-info-fields { font-size: 0.48rem !important; padding: 1.6mm 1.6mm 1.6mm 1.8mm !important; overflow: visible !important; display:grid !important; grid-template-columns: 1.1fr 0.9fr !important; column-gap: 1.4mm !important; row-gap: 0.6mm !important; }
   .idcard-motto { max-width: 70% !important; white-space: normal !important; line-height: 1.15 !important; }

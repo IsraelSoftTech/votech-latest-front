@@ -152,6 +152,11 @@ function ID() {
                 justify-content: center; 
                 align-items: start;
               }
+              /* Force exactly 8 cards per page */
+              .print-grid .idcard-template:nth-of-type(8n) {
+                break-after: page;
+                page-break-after: always;
+              }
               .idcard-template {
                 width: 85.6mm;
                 height: 53.98mm;
@@ -185,7 +190,7 @@ function ID() {
                 display: flex;
                 align-items: center;
                 gap: 7px;
-                margin-bottom: 1px;
+                margin-bottom: 1px; /* motto directly under name */
                 z-index: 2;
               }
               .idcard-logo-small {
@@ -208,10 +213,10 @@ function ID() {
                 margin-bottom: 0;
               }
               .idcard-motto {
-                font-size: 0.93rem;
+                font-size: 0.55rem; /* very small motto */
                 color: #e3f2fd;
                 text-align: left;
-                margin-bottom: 4px;
+                margin-bottom: 3px; /* tight above info */
                 font-weight: 500;
                 z-index: 2;
                 text-shadow: 0 1px 4px #20408022;
