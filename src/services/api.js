@@ -2445,6 +2445,43 @@ class ApiService {
     return await this.handleResponse(response);
   }
 
+  async getStaffEmploymentStatus() {
+    const response = await fetch(`${API_URL}/staff-attendance/employment-status`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async updateStaffEmploymentStatus(staffName, employmentType) {
+    const response = await fetch(`${API_URL}/staff-attendance/employment-status`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ staff_name: staffName, employment_type: employmentType }),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getStaffAttendanceSettings() {
+    const response = await fetch(`${API_URL}/staff-attendance/settings`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async updateStaffAttendanceSettings(fullTimeDays, partTimeDays, startTime, endTime) {
+    const response = await fetch(`${API_URL}/staff-attendance/settings`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ 
+        full_time_expected_days: fullTimeDays, 
+        part_time_expected_days: partTimeDays,
+        start_time: startTime,
+        end_time: endTime
+      }),
+    });
+    return await this.handleResponse(response);
+  }
+
 
 
   // Discipline Cases API endpoints
