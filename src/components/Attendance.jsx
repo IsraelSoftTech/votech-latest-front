@@ -30,6 +30,34 @@ export default function Attendance() {
   const [exportDate, setExportDate] = useState('');
   const [exportReport, setExportReport] = useState(null);
   const exportRef = useRef();
+  const getInitialRole = () => {
+    const stored = sessionStorage.getItem('authUser');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        return parsed?.role || '';
+      } catch (error) {
+        console.error('Failed to parse authUser role:', error);
+      }
+    }
+    return '';
+  };
+  const [userRole, setUserRole] = useState(getInitialRole);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('authUser');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setUserRole(parsed?.role || '');
+      } catch (error) {
+        console.error('Failed to parse authUser role:', error);
+      }
+    }
+  }, []);
+
+  const canManageAttendance = ['Discipline', 'Admin1', 'Admin3'].includes(userRole);
+  const canExportAttendance = canManageAttendance || ['Admin4'].includes(userRole);
 
   useEffect(() => {
     console.log('Loading initial attendance data...');
@@ -100,6 +128,7 @@ export default function Attendance() {
   const totalStudentToday = useMemo(() => summary.students.present + summary.students.absent, [summary]);
 
   const openTakeAttendance = () => {
+    if (!canManageAttendance) return;
     setSelectedClass('');
     setSelectedDate('');
     setSelectedTime('');
@@ -162,11 +191,13 @@ export default function Attendance() {
   };
 
   const proceedClass = () => {
+    if (!canManageAttendance) return;
     setShowClassModal(false);
     setShowDateTimeModal(true);
   };
 
   const proceedDateTime = async () => {
+    if (!canManageAttendance) return;
     if (!selectedClass) return;
     if (!selectedDate || !selectedTime) return;
 
@@ -206,6 +237,7 @@ export default function Attendance() {
   };
 
   const saveAttendance = async () => {
+    if (!canManageAttendance) return;
     if (!sessionId) return;
     const records = students.map(s => ({
       student_id: s.id, 
@@ -237,10 +269,12 @@ export default function Attendance() {
   };
 
   const confirmDeleteAll = () => {
+    if (!canManageAttendance) return;
     setShowDeleteConfirm(true);
   };
 
   const deleteAllAttendance = async () => {
+    if (!canManageAttendance) return;
     setShowDeleteConfirm(false);
     setLoading(true);
     try {
@@ -269,9 +303,15 @@ export default function Attendance() {
       </div>
 
       <div className="actions-row" style={{ gap: 8 }}>
-        <button className="att-primary-btn" onClick={openTakeAttendance}>Take Attendance</button>
-        <button className="att-primary-btn" onClick={openExport}>Export</button>
-        <button className="att-ghost-btn" onClick={confirmDeleteAll}>Delete All</button>
+        {canManageAttendance && (
+          <button className="att-primary-btn" onClick={openTakeAttendance}>Take Attendance</button>
+        )}
+        {canExportAttendance && (
+          <button className="att-primary-btn" onClick={openExport}>Export</button>
+        )}
+        {canManageAttendance && (
+          <button className="att-ghost-btn" onClick={confirmDeleteAll}>Delete All</button>
+        )}
       </div>
 
       {exportReport && (
@@ -361,7 +401,7 @@ export default function Attendance() {
         </div>
       )}
 
-      {showClassModal && (
+      {canManageAttendance && showClassModal && (
         <div className="att-modal-overlay" onClick={() => setShowClassModal(false)}>
           <div className="att-modal" onClick={e => e.stopPropagation()}>
             <h2>Select Class</h2>
@@ -379,7 +419,7 @@ export default function Attendance() {
         </div>
       )}
 
-      {showDateTimeModal && (
+      {canManageAttendance && showDateTimeModal && (
         <div className="att-modal-overlay" onClick={() => setShowDateTimeModal(false)}>
           <div className="att-modal" onClick={e => e.stopPropagation()}>
             <h2>Select Date & Time</h2>
@@ -403,7 +443,7 @@ export default function Attendance() {
         </div>
       )}
 
-      {showSheet && (
+      {canManageAttendance && showSheet && (
         <div className="att-sheet">
           <div className="att-sheet-header">
             <h3>Mark Attendance</h3>
@@ -450,7 +490,7 @@ export default function Attendance() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
+      {canManageAttendance && showDeleteConfirm && (
         <div className="att-modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
           <div className="att-modal" onClick={e => e.stopPropagation()}>
             <h2>Confirm Delete All</h2>
@@ -468,7 +508,7 @@ export default function Attendance() {
       )}
 
       {/* Export Modals */}
-      {showExportClassModal && (
+      {canExportAttendance && showExportClassModal && (
         <div className="att-modal-overlay" onClick={() => setShowExportClassModal(false)}>
           <div className="att-modal" onClick={e => e.stopPropagation()}>
             <h2>Select Class</h2>
@@ -486,7 +526,7 @@ export default function Attendance() {
         </div>
       )}
 
-      {showExportDateModal && (
+      {canExportAttendance && showExportDateModal && (
         <div className="att-modal-overlay" onClick={() => setShowExportDateModal(false)}>
           <div className="att-modal" onClick={e => e.stopPropagation()}>
             <h2>Select Date</h2>

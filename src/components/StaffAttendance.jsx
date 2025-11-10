@@ -38,6 +38,36 @@ export default function StaffAttendance() {
     endTime: '17:00'
   });
   const reportRef = useRef();
+  const getInitialRole = () => {
+    const stored = sessionStorage.getItem('authUser');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        return parsed?.role || '';
+      } catch (error) {
+        console.error('Failed to parse authUser for role:', error);
+      }
+    }
+    return '';
+  };
+
+  const [userRole, setUserRole] = useState(getInitialRole);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('authUser');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setUserRole(parsed?.role || '');
+      } catch (error) {
+        console.error('Failed to parse authUser for role:', error);
+      }
+    }
+  }, []);
+
+  const canManageRecords = ['Admin3', 'Admin1'].includes(userRole);
+  const canManageEmployment = ['Admin3', 'Admin1'].includes(userRole);
+  const canManageSettings = canManageEmployment;
 
   // Generate month options for the last 12 months
   const generateMonthOptions = () => {
@@ -138,6 +168,7 @@ export default function StaffAttendance() {
   };
 
   const handleEmploymentTypeChange = async (staffName, employmentType) => {
+    if (!canManageEmployment) return;
     try {
       await api.updateStaffEmploymentStatus(staffName, employmentType);
       setShowSuccess(true);
@@ -150,6 +181,7 @@ export default function StaffAttendance() {
   };
 
   const handleSaveSettings = async () => {
+    if (!canManageSettings) return;
     try {
       await api.updateStaffAttendanceSettings(
         settingsForm.fullTimeDays, 
@@ -173,6 +205,7 @@ export default function StaffAttendance() {
   };
 
   const handleCreateNew = () => {
+    if (!canManageRecords) return;
     const newRecord = {
       id: 'new',
       date: new Date().toISOString().split('T')[0], // Today's date
@@ -187,6 +220,7 @@ export default function StaffAttendance() {
   };
 
   const handleEdit = (record) => {
+    if (!canManageRecords) return;
     // Convert classes string to array for editing
     const recordForEdit = {
       ...record,
@@ -198,6 +232,7 @@ export default function StaffAttendance() {
   };
 
   const handleSaveEdit = async () => {
+    if (!canManageRecords) return;
     if (!editingRecord) return;
 
     // Validate required fields
@@ -238,7 +273,8 @@ export default function StaffAttendance() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this record?')) return;
+    if (!canManageRecords) return;
+    if (!window.confirm('Are you sure you want to delete this attendance record?')) return;
 
     try {
       await api.deleteStaffAttendanceRecord(id);
@@ -585,7 +621,7 @@ export default function StaffAttendance() {
 
       {/* Action Buttons */}
       <div className="actions-row" style={{ gap: 8, marginBottom: 20 }}>
-        {activeTab === 'records' && (
+        {activeTab === 'records' && canManageRecords && (
           <button 
             className="att-primary-btn" 
             onClick={handleCreateNew}
@@ -630,17 +666,19 @@ export default function StaffAttendance() {
         <div className="att-sessions-table">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h3>Staff Employment Status</h3>
-            <button
-              className="att-primary-btn"
-              onClick={() => setShowSettingsModal(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
-              </svg>
-              Settings
-            </button>
+            {canManageSettings && (
+              <button
+                className="att-primary-btn"
+                onClick={() => setShowSettingsModal(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
+                </svg>
+                Settings
+              </button>
+            )}
           </div>
           <div className="att-table-wrapper">
             <table className="att-table">
@@ -664,10 +702,12 @@ export default function StaffAttendance() {
                           type="checkbox"
                           checked={currentType === 'Full Time'}
                           onChange={(e) => {
+                            if (!canManageEmployment) return;
                             if (e.target.checked) {
                               handleEmploymentTypeChange(user.name, 'Full Time');
                             }
                           }}
+                          disabled={!canManageEmployment}
                         />
                       </td>
                       <td style={{ textAlign: 'center' }}>
@@ -675,10 +715,12 @@ export default function StaffAttendance() {
                           type="checkbox"
                           checked={currentType === 'Part Time'}
                           onChange={(e) => {
+                            if (!canManageEmployment) return;
                             if (e.target.checked) {
                               handleEmploymentTypeChange(user.name, 'Part Time');
                             }
                           }}
+                          disabled={!canManageEmployment}
                         />
                       </td>
                     </tr>
@@ -704,12 +746,12 @@ export default function StaffAttendance() {
                 <th>Time Out</th>
                 <th>Classes Taught</th>
                 <th>Status</th>
-                <th>Actions</th>
+                {canManageRecords && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {/* New record creation row */}
-              {isCreatingNew && (
+              {canManageRecords && isCreatingNew && (
                 <tr style={{ backgroundColor: '#f8f9fa' }}>
                   <td>
                     <input
@@ -803,9 +845,11 @@ export default function StaffAttendance() {
                 </tr>
               )}
               
-              {records.map((record) => (
+              {records.map((record) => {
+                const isRowEditing = canManageRecords && editingRecord && editingRecord.id === record.id;
+                return (
                   <tr key={record.id}>
-                    {editingRecord && editingRecord.id === record.id ? (
+                    {isRowEditing ? (
                       <>
                         <td>
                           <input
@@ -877,25 +921,27 @@ export default function StaffAttendance() {
                             <option value="Half Day">Half Day</option>
                           </select>
                         </td>
-                        <td>
-                          <button 
-                            className="att-primary-btn" 
-                            onClick={handleSaveEdit}
-                            style={{ marginRight: '4px', padding: '4px 8px', fontSize: '12px' }}
-                          >
-                            Save
-                          </button>
-                          <button 
-                            className="att-ghost-btn" 
-                            onClick={() => {
-                              setEditingRecord(null);
-                              setIsCreatingNew(false);
-                            }}
-                            style={{ padding: '4px 8px', fontSize: '12px' }}
-                          >
-                            Cancel
-                          </button>
-                        </td>
+                        {canManageRecords && (
+                          <td>
+                            <button 
+                              className="att-primary-btn" 
+                              onClick={handleSaveEdit}
+                              style={{ marginRight: '4px', padding: '4px 8px', fontSize: '12px' }}
+                            >
+                              Save
+                            </button>
+                            <button 
+                              className="att-ghost-btn" 
+                              onClick={() => {
+                                setEditingRecord(null);
+                                setIsCreatingNew(false);
+                              }}
+                              style={{ padding: '4px 8px', fontSize: '12px' }}
+                            >
+                              Cancel
+                            </button>
+                          </td>
+                        )}
                       </>
                     ) : (
                       <>
@@ -909,26 +955,29 @@ export default function StaffAttendance() {
                             {record.status}
                           </span>
                         </td>
-                        <td>
-                          <button 
-                            className="att-primary-btn" 
-                            onClick={() => handleEdit(record)}
-                            style={{ marginRight: '4px', padding: '4px 8px', fontSize: '12px' }}
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            className="att-ghost-btn" 
-                            onClick={() => handleDelete(record.id)}
-                            style={{ padding: '4px 8px', fontSize: '12px' }}
-                          >
-                            Delete
-                          </button>
-                        </td>
+                        {canManageRecords && (
+                          <td>
+                            <button 
+                              className="att-primary-btn" 
+                              onClick={() => handleEdit(record)}
+                              style={{ marginRight: '4px', padding: '4px 8px', fontSize: '12px' }}
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              className="att-ghost-btn" 
+                              onClick={() => handleDelete(record.id)}
+                              style={{ padding: '4px 8px', fontSize: '12px' }}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        )}
                       </>
                     )}
                   </tr>
-                              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -936,7 +985,7 @@ export default function StaffAttendance() {
       )}
 
       {/* Settings Modal */}
-      {showSettingsModal && (
+      {showSettingsModal && canManageSettings && (
         <div className="att-modal-overlay" onClick={() => setShowSettingsModal(false)}>
           <div className="att-modal" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: '20px' }}>

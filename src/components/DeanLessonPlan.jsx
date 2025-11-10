@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaCheck, FaTimes, FaDownload, FaFileAlt, FaClock } from 'react-icons/fa';
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
@@ -292,6 +292,11 @@ export default function DeanLessonPlan() {
     return lessonPlans.filter(plan => plan.status === status).length;
   };
 
+  const approvedPlans = useMemo(
+    () => lessonPlans.filter((plan) => plan.status === 'approved'),
+    [lessonPlans]
+  );
+
   const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -422,7 +427,7 @@ export default function DeanLessonPlan() {
           </div>
         </div>
 
-        {/* Filters and Search - Only for Dean */}
+        {/* Filters and Search - Only for Dean/Admin4 */}
         {showDashboard && (
           <div className="lesson-plan-filters">
             <div className="filter-group">
@@ -447,6 +452,49 @@ export default function DeanLessonPlan() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="search-input"
               />
+            </div>
+          </div>
+        )}
+
+        {/* Approved Lesson Plans Folder */}
+        {showDashboard && (
+          <div className="lesson-plan-approved-folder">
+            <div className="approved-folder-header">
+              <div>
+                <h3>Approved Lesson Plans Archive</h3>
+                <p>Every plan you approve appears here automatically for quick access.</p>
+              </div>
+              <span className="approved-count">{approvedPlans.length} stored</span>
+            </div>
+            <div className="approved-folder-body">
+              {approvedPlans.length === 0 ? (
+                <div className="approved-empty-state">
+                  <FaFileAlt />
+                  <p>No approved lesson plans yet.</p>
+                </div>
+              ) : (
+                <div className="approved-grid">
+                  {approvedPlans.map((plan) => (
+                    <div key={plan.id} className="approved-card">
+                      <div className="approved-card-meta">
+                        <span className="approved-card-title">{plan.title}</span>
+                        <span className="approved-card-info">
+                          {plan.teacher_name || plan.teacher_username || 'Unknown'}
+                        </span>
+                        <span className="approved-card-date">{formatDate(plan.submitted_at)}</span>
+                      </div>
+                      <div className="approved-card-actions">
+                        <button
+                          className="approved-view-btn"
+                          onClick={() => handleViewFile(plan.file_url, plan)}
+                        >
+                          Open
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

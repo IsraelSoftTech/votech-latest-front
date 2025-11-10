@@ -260,6 +260,8 @@ export default function SideTop({ children }) {
       { label: "Departments", icon: <FaClipboardList />, path: "/admin-specialty" },
       { label: "Messages", icon: <FaEnvelope />, path: "/dean-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
+      { label: "Staff Attendance", icon: <FaClipboardList />, path: "/staff-attendance" },
+      { label: "Student Attendance", icon: <FaUserGraduate />, path: "/student-attendance-report" },
       { label: "Events", icon: <FaCalendarAlt />, path: "/dean-events" },
       { label: "Timetables", icon: <FaCalendarAlt />, path: "/timetables" },
       { label: "All Subjects", path: "/admin4-subjects", icon: <FaBookOpen /> },

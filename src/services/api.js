@@ -940,6 +940,132 @@ class ApiService {
     }
   }
 
+  // Get staff with class and subject assignments
+  async getStaffWithAssignments() {
+    try {
+      // Fetch all staff members
+      const usersResponse = await this.getUsers();
+      const staffRaw = Array.isArray(usersResponse)
+        ? usersResponse
+        : Array.isArray(usersResponse?.data)
+        ? usersResponse.data
+        : [];
+
+      if (!Array.isArray(staffRaw) || staffRaw.length === 0) {
+        return [];
+      }
+
+      // Determine if we need assignment data (only for teachers)
+      const hasTeachers = staffRaw.some(
+        (user) => String(user?.role || '').toLowerCase() === 'teacher'
+      );
+
+      let classSubjects = [];
+      const classMap = new Map();
+      const subjectMap = new Map();
+
+      if (hasTeachers) {
+        // Fetch class-subject assignments
+        const classSubjectsResponse = await fetch(`${API_URL}/v1/class-subjects`, {
+          headers: this.getAuthHeaders(),
+        });
+        const classSubjectsPayload = await this.handleResponse(classSubjectsResponse);
+        classSubjects = Array.isArray(classSubjectsPayload?.data)
+          ? classSubjectsPayload.data
+          : Array.isArray(classSubjectsPayload)
+          ? classSubjectsPayload
+          : [];
+
+        // Fetch class metadata
+        const classesResponse = await this.getClasses();
+        const classesArray = Array.isArray(classesResponse?.data)
+          ? classesResponse.data
+          : Array.isArray(classesResponse)
+          ? classesResponse
+          : [];
+        classesArray.forEach((cls) => {
+          if (cls && cls.id != null) {
+            classMap.set(String(cls.id), cls.name || `Class ${cls.id}`);
+          }
+        });
+
+        // Fetch subject metadata
+        const subjectsResponse = await this.getSubjects();
+        const subjectsArray = Array.isArray(subjectsResponse?.data)
+          ? subjectsResponse.data
+          : Array.isArray(subjectsResponse)
+          ? subjectsResponse
+          : [];
+        subjectsArray.forEach((subj) => {
+          if (subj && subj.id != null) {
+            subjectMap.set(
+              String(subj.id),
+              subj.name || subj.code || `Subject ${subj.id}`
+            );
+          }
+        });
+      }
+
+      // Group assignments by teacher
+      const assignmentsByTeacher = new Map();
+      if (Array.isArray(classSubjects)) {
+        classSubjects.forEach((cs) => {
+          if (!cs || cs.teacher_id == null) return;
+          const teacherKey = String(cs.teacher_id);
+          if (!assignmentsByTeacher.has(teacherKey)) {
+            assignmentsByTeacher.set(teacherKey, []);
+          }
+          assignmentsByTeacher.get(teacherKey).push({
+            classId: cs.class_id,
+            className:
+              classMap.get(String(cs.class_id)) || `Class ${cs.class_id}`,
+            subjectId: cs.subject_id,
+            subjectName:
+              subjectMap.get(String(cs.subject_id)) || `Subject ${cs.subject_id}`,
+          });
+        });
+      }
+
+      // Combine staff with assignments (teachers) or empty data (other roles)
+      const staffWithAssignments = staffRaw.map((staff) => {
+        if (!staff) return null;
+        const staffKey = String(staff.id ?? staff.user_id ?? '');
+        const assignments = staffKey
+          ? assignmentsByTeacher.get(staffKey) || []
+          : [];
+
+        const uniqueClasses = Array.from(
+          new Set(assignments.map((a) => a.className).filter(Boolean))
+        );
+        const uniqueSubjects = Array.from(
+          new Set(assignments.map((a) => a.subjectName).filter(Boolean))
+        );
+
+        return {
+          id: staff.id ?? staff.user_id ?? staffKey,
+          name: staff.name || staff.username || 'Unknown',
+          username: staff.username,
+          contact: staff.contact,
+          role: staff.role,
+          classes: uniqueClasses.length ? uniqueClasses.join(', ') : 'None',
+          subjects: uniqueSubjects.length ? uniqueSubjects.join(', ') : 'None',
+          assignments,
+        };
+      }).filter(Boolean);
+
+      staffWithAssignments.sort((a, b) => {
+        const nameA = String(a.name || a.username || '').toLowerCase();
+        const nameB = String(b.name || b.username || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
+      return staffWithAssignments;
+    } catch (error) {
+      console.error('Get staff with assignments error:', error);
+      return [];
+    }
+  }
+
   // Fee endpoints
   async getTotalFees(year = null) {
     const url = year

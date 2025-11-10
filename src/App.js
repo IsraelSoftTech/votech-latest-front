@@ -193,6 +193,14 @@ function App() {
             </SideTop>
           }
         />
+        <Route
+          path="/student-attendance-report"
+          element={
+            <SideTop>
+              <Attendance />
+            </SideTop>
+          }
+        />
 
         {/* Academics */}
         <Route path="/admin-subjects" element={<Subjects />} />
