@@ -1,4 +1,6 @@
-/* MarksUpload.styles.css */
+/* ============================================= */
+/* BASE STYLES - DESKTOP */
+/* ============================================= */
 
 .marks-upload-page {
   padding: 20px;
@@ -6,13 +8,38 @@
   min-height: 100%;
 }
 
-.marks-upload-page h2 {
+.marks-page-title {
   font-size: 28px;
   margin-bottom: 20px;
   color: #333;
+  font-weight: 600;
 }
 
-.filters-row {
+.marks-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: none;
+  color: #1e3a8a;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  padding: 8px 0;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.marks-back-btn:hover {
+  opacity: 0.8;
+}
+
+.marks-back-btn:active {
+  opacity: 0.6;
+}
+
+/* Filters */
+.marks-filters-row {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
@@ -20,124 +47,461 @@
   align-items: center;
 }
 
-.form-react-select {
+.marks-filter-select {
   min-width: 200px;
   flex: 1;
 }
 
-.marks-table-wrapper {
-  overflow-x: auto;
+/* Buttons */
+.marks-buttons-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
   margin-bottom: 20px;
 }
 
-.marks-table-wrapper table {
+.marks-upload-wrapper {
+  display: inline-block;
+}
+
+.marks-hidden-input {
+  display: none;
+}
+
+.marks-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.marks-btn-export,
+.marks-btn-import {
+  background-color: #1e3a8a;
+  color: white;
+}
+
+.marks-btn-export:hover,
+.marks-btn-import:hover {
+  background-color: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.marks-btn-export:active,
+.marks-btn-import:active {
+  transform: translateY(0);
+}
+
+.marks-btn-export:disabled,
+.marks-btn-import:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.marks-btn-save {
+  background-color: #1e3a8a;
+  color: white;
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+}
+
+.marks-btn-save:hover {
+  background-color: #1e40af;
+}
+
+.marks-btn-save:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Table */
+.marks-table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.marks-table {
   width: 100%;
   border-collapse: collapse;
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.marks-table-wrapper th,
-.marks-table-wrapper td {
-  padding: 10px 12px;
+.marks-table th,
+.marks-table td {
+  padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #e0e0e0;
 }
 
-/* .marks-table-wrapper tr input {
-  display: grid;
-  grid-template-columns: 1fr 2rem;
-} */
-
-.marks-table-wrapper th {
+.marks-table th {
   background-color: #f0f0f0;
   font-weight: 600;
   color: #555;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.marks-table-wrapper tr:hover {
+.marks-table-row:hover {
   background-color: #f9f9f9;
 }
 
-.buttons-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  align-items: center;
+.marks-table .desktop-cell {
+  display: table-cell;
 }
 
-input[type="file"] {
-  cursor: pointer;
-}
-
-.CustomInput {
-  width: 100%;
-}
-
-/* .form-react-select {
-  margin-bottom: 1rem;
-} */
-
-.no-data-msg {
-  color: #888;
-  font-style: italic;
-  margin-bottom: 1rem;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: none;
-  background: none;
-  color: #081435;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.back-btn:hover,
-.btn-upload-excel:hover {
-  opacity: 0.8;
-}
-
-.back-btn:active,
-.btn-upload-excel:active {
-  opacity: 0.6;
-}
-
-.buttons-row {
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-}
-
-.hidden-file-input {
+.marks-table .mobile-marks-cell {
   display: none;
 }
 
-.btn-upload-excel {
-  /* background-color: #f59e0b; */
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  color: white;
-  transition: background-color 0.2s ease-in-out;
+.no-data-cell {
+  text-align: center;
+  padding: 40px 16px;
+  color: #999;
+  font-style: italic;
 }
 
+/* Save section */
+.marks-save-section {
+  margin-top: 20px;
+}
+
+/* ============================================= */
+/* MOBILE OPTIMIZATION - 768px and below */
+/* ============================================= */
+
 @media (max-width: 768px) {
-  .filters-row {
-    display: grid;
-    grid-template-columns: 1fr;
-    /* row-gap: 0.5rem; */
+  .marks-upload-page {
+    padding: 12px;
   }
 
-  .form-react-select {
+  .marks-page-title {
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+
+  .marks-back-btn {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  /* Filters - Stack vertically */
+  .marks-filters-row {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .marks-filter-select {
     width: 100%;
     min-width: unset;
   }
 
-  .buttons-row {
+  /* Buttons - Stack vertically */
+  .marks-buttons-row {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .marks-btn-export,
+  .marks-btn-import {
+    width: 100%;
+    font-size: 15px;
+    padding: 12px 20px;
+  }
+
+  .marks-upload-wrapper {
+    width: 100%;
+  }
+
+  /* Table - Transform to cards */
+  .marks-table-container {
+    overflow-x: visible;
+  }
+
+  .marks-table {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    min-width: unset;
+    width: 100%;
+  }
+
+  .marks-table thead {
+    display: none;
+  }
+
+  .marks-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .marks-table-row {
+    display: block;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  /* Hide desktop cells */
+  .marks-table .desktop-cell {
+    display: none !important;
+  }
+
+  /* Show mobile card */
+  .marks-table .mobile-marks-cell {
+    display: block !important;
+    width: 100%;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  /* Premium Mobile Card */
+  .mobile-marks-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.05),
+      0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .mobile-marks-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+  }
+
+  /* Card Header */
+  .marks-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .student-number {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  .student-id-badge {
+    background: #1e3a8a;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* Card Body */
+  .marks-card-body {
+    padding: 16px;
+  }
+
+  .student-name-row {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .student-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #202124;
+    display: block;
+  }
+
+  /* Marks Input Section */
+  .marks-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .marks-input-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .marks-input-section .CustomInput,
+  .marks-input-section input {
+    font-size: 16px !important; /* Prevent iOS zoom */
+  }
+
+  .marks-placeholder {
+    font-size: 16px;
+    color: #9ca3af;
+    padding: 12px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  /* No data */
+  .no-data-row {
+    display: block;
+    width: 100%;
+  }
+
+  .no-data-cell {
+    display: block !important;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 40px 20px;
+  }
+
+  /* Save button */
+  .marks-btn-save {
+    font-size: 16px;
+    padding: 14px;
+  }
+}
+
+/* ============================================= */
+/* SMALL MOBILE - 480px */
+/* ============================================= */
+
+@media (max-width: 480px) {
+  .marks-upload-page {
+    padding: 10px;
+  }
+
+  .marks-page-title {
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .marks-back-btn {
+    font-size: 13px;
+  }
+
+  .marks-filters-row {
+    gap: 10px;
+  }
+
+  .marks-buttons-row {
+    gap: 8px;
+  }
+
+  .marks-btn-export,
+  .marks-btn-import {
+    font-size: 14px;
+    padding: 11px 18px;
+  }
+
+  .mobile-marks-card {
+    border-radius: 10px;
+  }
+
+  .marks-card-header {
+    padding: 10px 14px;
+  }
+
+  .student-number {
+    font-size: 13px;
+  }
+
+  .student-id-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+
+  .marks-card-body {
+    padding: 14px;
+  }
+
+  .student-name {
+    font-size: 15px;
+  }
+
+  .marks-input-label {
+    font-size: 12px;
+  }
+
+  .marks-btn-save {
+    font-size: 15px;
+    padding: 13px;
+  }
+}
+
+/* ============================================= */
+/* VERY SMALL DEVICES - 320px */
+/* ============================================= */
+
+@media (max-width: 320px) {
+  .marks-upload-page {
+    padding: 8px;
+  }
+
+  .marks-page-title {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .marks-back-btn {
+    font-size: 12px;
+  }
+
+  .marks-btn-export,
+  .marks-btn-import {
+    font-size: 13px;
+    padding: 10px 16px;
+  }
+
+  .mobile-marks-card {
+    border-radius: 8px;
+  }
+
+  .marks-card-header {
+    padding: 8px 12px;
+  }
+
+  .student-number {
+    font-size: 12px;
+  }
+
+  .student-id-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .marks-card-body {
+    padding: 12px;
+  }
+
+  .student-name {
+    font-size: 14px;
+  }
+
+  .marks-input-label {
+    font-size: 11px;
+  }
+
+  .marks-btn-save {
+    font-size: 14px;
+    padding: 12px;
   }
 }

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SideTop from "../../../SideTop";
 import DataTable from "../../components/DataTable/DataTable.component";
-import Modal from "../../components/Modal/Modal.component";
 import "./AcademicYear.styles.css";
 import { toast } from "react-toastify";
 import api from "../../utils/api";
@@ -12,12 +11,156 @@ import {
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
 import Stats from "../../components/Stats/Stats.component";
-import { FaCalendarAlt, FaCalendarCheck, FaLock } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaCalendarCheck,
+  FaLock,
+  FaTimes,
+} from "react-icons/fa";
 
+// Custom hook to detect mobile
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+};
+
+// Academic Year Modal Component (Desktop & Mobile)
+const AcademicYearModal = ({ isOpen, onClose, title, children }) => {
+  const isMobile = useIsMobile();
+  const modalRef = useRef(null);
+  const [startY, setStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
+  // Touch handlers for mobile swipe to dismiss
+  const handleTouchStart = (e) => {
+    if (!isMobile) return;
+    setStartY(e.touches[0].clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isMobile || !isDragging) return;
+    const touchY = e.touches[0].clientY;
+    const diff = touchY - startY;
+
+    if (diff > 0) {
+      setCurrentY(diff);
+      if (modalRef.current) {
+        modalRef.current.style.transform = `translateY(${diff}px)`;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isMobile) return;
+    setIsDragging(false);
+
+    if (currentY > 150) {
+      onClose();
+    }
+
+    if (modalRef.current) {
+      modalRef.current.style.transform = "";
+    }
+    setCurrentY(0);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className={`academic-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        className={`academic-modal-container ${
+          isMobile ? "mobile" : "desktop"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Drag handle - mobile only */}
+        {isMobile && (
+          <div className="academic-modal-drag-handle">
+            <div className="academic-drag-bar"></div>
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="academic-modal-header">
+          <h2 className="academic-modal-title">{title}</h2>
+          <button
+            className="academic-modal-close"
+            onClick={onClose}
+            type="button"
+            aria-label="Close modal"
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="academic-modal-body">{children}</div>
+      </div>
+    </div>
+  );
+};
 
 export const AcademicYear = () => {
-  const isReadOnly = JSON.parse(sessionStorage.getItem('authUser') || '{}').role === 'Admin1';
-  
+  const isReadOnly =
+    JSON.parse(sessionStorage.getItem("authUser") || "{}").role === "Admin1";
+
   const columns = [
     { label: "S/N", accessor: "sn" },
     { label: "Name", accessor: "name" },
@@ -44,14 +187,14 @@ export const AcademicYear = () => {
   const [editLoading, setEditLoading] = useState(false);
   const [stats, setStats] = useState([]);
 
-  // Confirm modal for "set active" scenario (works for create and edit)
+  // Confirm modal for "set active" scenario
   const [confirmActiveOpen, setConfirmActiveOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
 
   // Helpers
   const handleUpdateForm = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-    setFormErrors((prev) => ({ ...prev, [key]: "" })); // clear error on change
+    setFormErrors((prev) => ({ ...prev, [key]: "" }));
   };
 
   const resetForm = () => {
@@ -127,7 +270,6 @@ export const AcademicYear = () => {
   const validateForm = () => {
     const errors = {};
 
-    // if (!form.name.trim()) errors.name = "Academic year name is required.";
     if (!form.start_date) errors.start_date = "Start date is required.";
     if (!form.end_date) errors.end_date = "End date is required.";
 
@@ -154,9 +296,8 @@ export const AcademicYear = () => {
       fetchAcademicYears();
       fetchStats();
     } catch (err) {
-      // console.log(err.response.data.details);
       const serverError =
-        err.response.data.details || "Failed to create academic year.";
+        err.response?.data?.details || "Failed to create academic year.";
       toast.error(serverError);
     } finally {
       setCreateLoading(false);
@@ -225,7 +366,7 @@ export const AcademicYear = () => {
     editYear();
   };
 
-  // Open edit modal with prefilled form
+  // Open edit modal
   const handleEdit = (row) => {
     setForm({
       id: row.id,
@@ -246,11 +387,11 @@ export const AcademicYear = () => {
       fetchAcademicYears();
       fetchStats();
     } catch (err) {
-      toast.error(err.response.data.details || "Delete failed.");
+      toast.error(err.response?.data?.details || "Delete failed.");
     }
   };
 
-  // Row click for details modal
+  // Row click
   const handleRowClick = (row) => setSelectedRow(row);
   const closeModal = () => setSelectedRow(null);
 
@@ -270,11 +411,11 @@ export const AcademicYear = () => {
 
   return (
     <SideTop>
-      <div style={{ padding: "20px" }}>
-        <h2 className="page-title">
+      <div className="academic-year-page">
+        <h2 className="academic-page-title">
           Academic Years
           {isReadOnly && (
-            <span className="read-only-badge">
+            <span className="academic-read-only-badge">
               <FaLock /> Read Only
             </span>
           )}
@@ -282,9 +423,8 @@ export const AcademicYear = () => {
 
         <Stats data={stats} />
 
-        {/* Create Button - Hidden for Admin1 */}
         {!isReadOnly && (
-          <button className="btn btn-create" onClick={openCreateModal}>
+          <button className="academic-btn-create" onClick={openCreateModal}>
             Create Academic Year
           </button>
         )}
@@ -299,69 +439,63 @@ export const AcademicYear = () => {
           limit={10}
           warnDelete={() => {
             toast.warn(
-              "Warning: Deleting this academic year may cause issues because students, marks, and other data are linked to it. Consider archiving instead to preserve data integrity."
+              "Warning: Deleting this academic year may cause issues because students, marks, and other data are linked to it."
             );
           }}
           filterCategories={["active"]}
           editRoles={["Admin3"]}
           deleteRoles={["Admin3"]}
-          userRole={JSON.parse(sessionStorage.getItem('authUser') || '{}').role}
+          userRole={JSON.parse(sessionStorage.getItem("authUser") || "{}").role}
         />
 
         {/* Details Modal */}
-        <Modal
+        <AcademicYearModal
           isOpen={!!selectedRow}
           onClose={closeModal}
           title="Academic Year Details"
         >
           {selectedRow && (
             <div className="academic-year-details">
-              <div className="detail-row">
-                <span className="detail-label">Name:</span>
-                <span className="detail-value">{selectedRow.name}</span>
+              <div className="academic-detail-item">
+                <span className="academic-detail-label">Name</span>
+                <span className="academic-detail-value">
+                  {selectedRow.name}
+                </span>
               </div>
 
-              <div className="detail-row">
-                <span className="detail-label">Start Date:</span>
-                <span className="detail-value">{selectedRow.start_date}</span>
+              <div className="academic-detail-item">
+                <span className="academic-detail-label">Start Date</span>
+                <span className="academic-detail-value">
+                  {selectedRow.start_date}
+                </span>
               </div>
 
-              <div className="detail-row">
-                <span className="detail-label">End Date:</span>
-                <span className="detail-value">{selectedRow.end_date}</span>
+              <div className="academic-detail-item">
+                <span className="academic-detail-label">End Date</span>
+                <span className="academic-detail-value">
+                  {selectedRow.end_date}
+                </span>
               </div>
 
-              <div className="detail-row">
-                <span className="detail-label">Status:</span>
+              <div className="academic-detail-item">
+                <span className="academic-detail-label">Status</span>
                 <span
-                  className={`detail-value status-${selectedRow.status.toLowerCase()}`}
+                  className={`academic-detail-value academic-status-${selectedRow.status.toLowerCase()}`}
                 >
                   {selectedRow.status}
                 </span>
               </div>
             </div>
           )}
-        </Modal>
+        </AcademicYearModal>
 
         {/* Create Modal */}
-        <Modal
+        <AcademicYearModal
           isOpen={createModalOpen}
           onClose={closeCreateModal}
           title="Create Academic Year"
         >
-          <form onSubmit={handleCreateSubmit} className="modal-form">
-            {/* <CustomInput
-              label="Name"
-              type="text"
-              value={form.name}
-              placeholder="e.g 2025/2026 Academic Year"
-              name="name"
-              required
-              onChange={handleUpdateForm}
-              error={formErrors.name}
-              onClear={() => handleUpdateForm("name", "")}
-            /> */}
-
+          <form onSubmit={handleCreateSubmit} className="academic-modal-form">
             <CustomDatePicker
               label="Start Date"
               value={form.start_date}
@@ -402,27 +536,15 @@ export const AcademicYear = () => {
               disabled={createLoading}
             />
           </form>
-        </Modal>
+        </AcademicYearModal>
 
         {/* Edit Modal */}
-        <Modal
+        <AcademicYearModal
           isOpen={editModalOpen}
           onClose={closeEditModal}
           title="Edit Academic Year"
         >
-          <form onSubmit={handleEditSubmit} className="modal-form">
-            {/* <CustomInput
-              label="Name"
-              type="text"
-              value={form.name}
-              placeholder="e.g 2025/2026 Academic Year"
-              name="name"
-              required
-              onChange={handleUpdateForm}
-              error={formErrors.name}
-              onClear={() => handleUpdateForm("name", "")}
-            /> */}
-
+          <form onSubmit={handleEditSubmit} className="academic-modal-form">
             <CustomDatePicker
               label="Start Date"
               value={form.start_date}
@@ -459,36 +581,38 @@ export const AcademicYear = () => {
               disabled={editLoading}
             />
           </form>
-        </Modal>
+        </AcademicYearModal>
 
         {/* Confirm Active Modal */}
-        <Modal
+        <AcademicYearModal
           isOpen={confirmActiveOpen}
           onClose={() => setConfirmActiveOpen(false)}
           title="Set as Active?"
         >
-          <p style={{ marginBottom: "1rem" }}>
-            There’s already an active academic year. Do you want to set this one
-            as active instead?
-          </p>
-          <div className="set-active-prompt-btn">
-            <button
-              className="btn btn-cancel"
-              onClick={() => setConfirmActiveOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-confirm"
-              onClick={() => {
-                if (pendingAction) pendingAction();
-                setConfirmActiveOpen(false);
-              }}
-            >
-              Yes
-            </button>
+          <div className="academic-confirm-content">
+            <p className="academic-confirm-text">
+              There's already an active academic year. Do you want to set this
+              one as active instead?
+            </p>
+            <div className="academic-confirm-buttons">
+              <button
+                className="academic-btn-cancel"
+                onClick={() => setConfirmActiveOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="academic-btn-confirm"
+                onClick={() => {
+                  if (pendingAction) pendingAction();
+                  setConfirmActiveOpen(false);
+                }}
+              >
+                Yes, Set Active
+              </button>
+            </div>
           </div>
-        </Modal>
+        </AcademicYearModal>
       </div>
     </SideTop>
   );

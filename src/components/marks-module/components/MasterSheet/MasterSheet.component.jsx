@@ -1,40 +1,50 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import "./mastersheet.css";
-import { FaDownload } from "react-icons/fa";
+import { FaDownload, FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
-import "pdfmake/build/vfs_fonts"; // side-effect: sets window.pdfMake.vfs
+import "pdfmake/build/vfs_fonts";
 
-// Attach VFS robustly for both ESM/CJS and the side-effect fallback.
-// Do NOT set pdfMake.fonts or defaultStyle.font; use embedded Roboto from VFS.
 pdfMake.vfs =
   pdfFonts?.pdfMake?.vfs ||
   pdfFonts?.vfs ||
   (typeof window !== "undefined" && window.pdfMake?.vfs) ||
   pdfMake.vfs;
 
-// Brand + table colors (match CSS)
+// Brand + table colors
 const BRAND_BLUE = "#204080";
 const BRAND_GOLD = "#c9a96e";
-const HEADER_BG1 = "#eaf0fb"; // group header (row 1)
-const HEADER_BG2 = "#f1f4fb"; // subheader (row 2)
-const COEF_BG = "#fbf6ea"; // faint gold for coef cells
-const ZEBRA_BG = "#fbfcff"; // very light blue zebra rows
+const HEADER_BG1 = "#eaf0fb";
+const HEADER_BG2 = "#f1f4fb";
+const COEF_BG = "#fbf6ea";
+const ZEBRA_BG = "#fbfcff";
 
-/**
- * MasterSheet
- * Props:
- * - data: array of reportCards (your backend shape)
- * - term: 'term1' | 'term2' | 'term3' | 'annual'
- */
+// Mobile detection hook
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+};
+
 export default function MasterSheet({ data = [], term = "annual" }) {
+  const isMobile = useIsMobile();
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
+  const [expandedStudent, setExpandedStudent] = useState(null);
 
   const prepared = useMemo(() => prepare(data, term), [data, term]);
 
-  // Compute class stats from student rows for the selected term/annual
   const computedStats = useMemo(
     () => computeClassStats(prepared?.students || [], term),
     [prepared?.students, term]
@@ -81,7 +91,7 @@ export default function MasterSheet({ data = [], term = "annual" }) {
       const docDefinition = await buildDocDefinitionSequentialLandscapeNoRepeat(
         prepared,
         term,
-        computedStats, // pass computed statistics into the PDF
+        computedStats,
         (curr, total) => setPdfProgress({ current: curr, total })
       );
 
@@ -111,15 +121,21 @@ export default function MasterSheet({ data = [], term = "annual" }) {
     }
   };
 
+  const toggleStudent = (studentId) => {
+    setExpandedStudent(expandedStudent === studentId ? null : studentId);
+  };
+
   return (
     <div className="ms-wrapper">
       <div className="ms-controls no-print">
-        <div>
-          <strong>Master Sheet — {termLabel}</strong>
+        <div className="ms-controls-left">
+          <strong className="ms-controls-title">
+            Master Sheet — {termLabel}
+          </strong>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="ms-controls-right">
           {pdfGenerating && (
-            <div style={{ fontSize: 13 }}>
+            <div className="ms-pdf-status">
               Generating PDF… {pdfProgress.current}/{pdfProgress.total} rows —
               grab a coffee ☕
             </div>
@@ -129,8 +145,10 @@ export default function MasterSheet({ data = [], term = "annual" }) {
             onClick={handleDownloadPDF}
             disabled={pdfGenerating}
           >
-            <FaDownload style={{ marginRight: 6 }} />
-            {pdfGenerating ? "Working…" : "Download PDF"}
+            <FaDownload />
+            <span className="ms-btn-text">
+              {pdfGenerating ? "Working…" : "Download PDF"}
+            </span>
           </button>
         </div>
       </div>
@@ -149,138 +167,269 @@ export default function MasterSheet({ data = [], term = "annual" }) {
           </div>
         </header>
 
-        {/* On-screen table */}
-        <div className="ms-table-wrapper">
-          <table className="ms-table">
-            <thead>
-              {/* Group headers */}
-              <tr>
-                <th className="ms-sticky-col" colSpan={3}>
-                  Student Info
-                </th>
-                {subjects.general.length > 0 && (
-                  <th
-                    className="ms-group"
-                    colSpan={subjects.general.length * subjectSubcolumns.length}
-                  >
-                    General Subjects
+        {/* Desktop table */}
+        {!isMobile && (
+          <div className="ms-table-wrapper">
+            <table className="ms-table">
+              <thead>
+                <tr>
+                  <th className="ms-sticky-col" colSpan={3}>
+                    Student Info
                   </th>
-                )}
-                {subjects.professional.length > 0 && (
-                  <th
-                    className="ms-group"
-                    colSpan={
-                      subjects.professional.length * subjectSubcolumns.length
-                    }
-                  >
-                    Professional Subjects
-                  </th>
-                )}
-                {totalsColumns.length > 0 && (
-                  <th className="ms-group" colSpan={totalsColumns.length}>
-                    Totals
-                  </th>
-                )}
-              </tr>
-
-              {/* Subject codes and totals labels */}
-              <tr>
-                <th className="ms-sticky-col">S/N</th>
-                <th className="ms-sticky-col">Student ID</th>
-                <th className="ms-sticky-col">Student Name</th>
-
-                {subjects.general.map((s) => (
-                  <th
-                    key={`g-${s.code}`}
-                    className="ms-subject"
-                    colSpan={subjectSubcolumns.length}
-                  >
-                    {s.code} — {s.title}
-                  </th>
-                ))}
-                {subjects.professional.map((s) => (
-                  <th
-                    key={`p-${s.code}`}
-                    className="ms-subject"
-                    colSpan={subjectSubcolumns.length}
-                  >
-                    {s.code} — {s.title}
-                  </th>
-                ))}
-
-                {totalsColumns.map((c) => (
-                  <th key={`totals-${c.key}`} className="ms-subject">
-                    {c.label}
-                  </th>
-                ))}
-              </tr>
-
-              {/* Subcolumns */}
-              <tr>
-                <th className="ms-sticky-col" />
-                <th className="ms-sticky-col" />
-                <th className="ms-sticky-col" />
-
-                {[...allSubjects].map((s, idx) =>
-                  subjectSubcolumns.map((sub) => (
+                  {subjects.general.length > 0 && (
                     <th
-                      key={`${s.code}-${sub.key}-${idx}`}
-                      className={`ms-subcol ${
-                        sub.key === "coef" ? "ms-coef" : ""
-                      }`}
+                      className="ms-group"
+                      colSpan={
+                        subjects.general.length * subjectSubcolumns.length
+                      }
                     >
-                      {sub.label}
+                      General Subjects
                     </th>
-                  ))
-                )}
+                  )}
+                  {subjects.professional.length > 0 && (
+                    <th
+                      className="ms-group"
+                      colSpan={
+                        subjects.professional.length * subjectSubcolumns.length
+                      }
+                    >
+                      Professional Subjects
+                    </th>
+                  )}
+                  {totalsColumns.length > 0 && (
+                    <th className="ms-group" colSpan={totalsColumns.length}>
+                      Totals
+                    </th>
+                  )}
+                </tr>
 
-                {totalsColumns.map((c) => (
-                  <th key={`sub-${c.key}`} className="ms-subcol">
-                    {c.short || c.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+                <tr>
+                  <th className="ms-sticky-col">S/N</th>
+                  <th className="ms-sticky-col">Student ID</th>
+                  <th className="ms-sticky-col">Student Name</th>
 
-            <tbody>
-              {prepared.students.map((st, rowIdx) => (
-                <tr key={st.studentId || rowIdx} className="ms-row">
-                  <td className="ms-sticky-col">{rowIdx + 1}</td>
-                  <td className="ms-sticky-col">{st.studentId}</td>
-                  <td className="ms-sticky-col ms-name">{st.name}</td>
-
-                  {[...allSubjects].map((s) => {
-                    const subjScores = st.subjects[s.code] || null;
-                    return subjectSubcolumns.map((sub, si, arr) => {
-                      const val = getSubjectValue(subjScores, sub.key);
-                      return (
-                        <td
-                          key={`${st.studentId}-${s.code}-${sub.key}`}
-                          className={`ms-cell ${
-                            sub.key === "coef" ? "ms-coef" : ""
-                          } ${si === arr.length - 1 ? "ms-block-end" : ""}`}
-                        >
-                          {fmt(val)}
-                        </td>
-                      );
-                    });
-                  })}
+                  {subjects.general.map((s) => (
+                    <th
+                      key={`g-${s.code}`}
+                      className="ms-subject"
+                      colSpan={subjectSubcolumns.length}
+                    >
+                      {s.code} — {s.title}
+                    </th>
+                  ))}
+                  {subjects.professional.map((s) => (
+                    <th
+                      key={`p-${s.code}`}
+                      className="ms-subject"
+                      colSpan={subjectSubcolumns.length}
+                    >
+                      {s.code} — {s.title}
+                    </th>
+                  ))}
 
                   {totalsColumns.map((c) => (
-                    <td
-                      key={`${st.studentId}-tot-${c.key}`}
-                      className="ms-cell"
-                    >
-                      {fmt(getTotalsValue(st, c.key, term))}
-                    </td>
+                    <th key={`totals-${c.key}`} className="ms-subject">
+                      {c.label}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
 
-        {/* Computed statistics and signatures */}
+                <tr>
+                  <th className="ms-sticky-col" />
+                  <th className="ms-sticky-col" />
+                  <th className="ms-sticky-col" />
+
+                  {[...allSubjects].map((s, idx) =>
+                    subjectSubcolumns.map((sub) => (
+                      <th
+                        key={`${s.code}-${sub.key}-${idx}`}
+                        className={`ms-subcol ${
+                          sub.key === "coef" ? "ms-coef" : ""
+                        }`}
+                      >
+                        {sub.label}
+                      </th>
+                    ))
+                  )}
+
+                  {totalsColumns.map((c) => (
+                    <th key={`sub-${c.key}`} className="ms-subcol">
+                      {c.short || c.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {prepared.students.map((st, rowIdx) => (
+                  <tr key={st.studentId || rowIdx} className="ms-row">
+                    <td className="ms-sticky-col">{rowIdx + 1}</td>
+                    <td className="ms-sticky-col">{st.studentId}</td>
+                    <td className="ms-sticky-col ms-name">{st.name}</td>
+
+                    {[...allSubjects].map((s) => {
+                      const subjScores = st.subjects[s.code] || null;
+                      return subjectSubcolumns.map((sub, si, arr) => {
+                        const val = getSubjectValue(subjScores, sub.key);
+                        return (
+                          <td
+                            key={`${st.studentId}-${s.code}-${sub.key}`}
+                            className={`ms-cell ${
+                              sub.key === "coef" ? "ms-coef" : ""
+                            } ${si === arr.length - 1 ? "ms-block-end" : ""}`}
+                          >
+                            {fmt(val)}
+                          </td>
+                        );
+                      });
+                    })}
+
+                    {totalsColumns.map((c) => (
+                      <td
+                        key={`${st.studentId}-tot-${c.key}`}
+                        className="ms-cell"
+                      >
+                        {fmt(getTotalsValue(st, c.key, term))}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Mobile card layout */}
+        {isMobile && (
+          <div className="ms-mobile-container">
+            {prepared.students.map((st, rowIdx) => {
+              const isExpanded = expandedStudent === st.studentId;
+              return (
+                <div key={st.studentId || rowIdx} className="ms-mobile-card">
+                  {/* Card header - always visible */}
+                  <div
+                    className="ms-mobile-card-header"
+                    onClick={() => toggleStudent(st.studentId)}
+                  >
+                    <div className="ms-mobile-student-info">
+                      <div className="ms-mobile-sn">{rowIdx + 1}</div>
+                      <div className="ms-mobile-student-details">
+                        <div className="ms-mobile-student-name">{st.name}</div>
+                        <div className="ms-mobile-student-id">
+                          ID: {st.studentId}
+                        </div>
+                      </div>
+                    </div>
+                    <button className="ms-mobile-expand-btn">
+                      {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
+                  </div>
+
+                  {/* Quick stats - always visible */}
+                  <div className="ms-mobile-quick-stats">
+                    {totalsColumns.map((c) => (
+                      <div key={c.key} className="ms-mobile-stat">
+                        <span className="ms-mobile-stat-label">{c.label}</span>
+                        <span className="ms-mobile-stat-value">
+                          {fmt(getTotalsValue(st, c.key, term))}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Expandable subject details */}
+                  {isExpanded && (
+                    <div className="ms-mobile-card-body">
+                      {/* General Subjects */}
+                      {subjects.general.length > 0 && (
+                        <div className="ms-mobile-subject-group">
+                          <h4 className="ms-mobile-group-title">
+                            General Subjects
+                          </h4>
+                          {subjects.general.map((s) => {
+                            const subjScores = st.subjects[s.code] || null;
+                            return (
+                              <div
+                                key={s.code}
+                                className="ms-mobile-subject-card"
+                              >
+                                <div className="ms-mobile-subject-header">
+                                  {s.code} — {s.title}
+                                </div>
+                                <div className="ms-mobile-subject-scores">
+                                  {subjectSubcolumns.map((sub) => (
+                                    <div
+                                      key={sub.key}
+                                      className={`ms-mobile-score-item ${
+                                        sub.key === "coef" ? "coef" : ""
+                                      }`}
+                                    >
+                                      <span className="ms-mobile-score-label">
+                                        {sub.label}
+                                      </span>
+                                      <span className="ms-mobile-score-value">
+                                        {fmt(
+                                          getSubjectValue(subjScores, sub.key)
+                                        )}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Professional Subjects */}
+                      {subjects.professional.length > 0 && (
+                        <div className="ms-mobile-subject-group">
+                          <h4 className="ms-mobile-group-title">
+                            Professional Subjects
+                          </h4>
+                          {subjects.professional.map((s) => {
+                            const subjScores = st.subjects[s.code] || null;
+                            return (
+                              <div
+                                key={s.code}
+                                className="ms-mobile-subject-card"
+                              >
+                                <div className="ms-mobile-subject-header">
+                                  {s.code} — {s.title}
+                                </div>
+                                <div className="ms-mobile-subject-scores">
+                                  {subjectSubcolumns.map((sub) => (
+                                    <div
+                                      key={sub.key}
+                                      className={`ms-mobile-score-item ${
+                                        sub.key === "coef" ? "coef" : ""
+                                      }`}
+                                    >
+                                      <span className="ms-mobile-score-label">
+                                        {sub.label}
+                                      </span>
+                                      <span className="ms-mobile-score-value">
+                                        {fmt(
+                                          getSubjectValue(subjScores, sub.key)
+                                        )}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Statistics and signatures */}
         {(computedStats || administration) && (
           <section className="ms-footer">
             {computedStats && (
@@ -313,12 +462,12 @@ export default function MasterSheet({ data = [], term = "annual" }) {
   );
 }
 
-/* ===================== PDF: LANDSCAPE, sequential columns (no repeats), full-width, brand colors ===================== */
+/* ===================== All the PDF and helper functions remain the same ===================== */
 
 function buildDocDefinitionSequentialLandscapeNoRepeat(
   prepared,
   selectedTerm,
-  stats, // computed stats passed in
+  stats,
   onProgress
 ) {
   return new Promise((resolve) => {
@@ -331,7 +480,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
       administration,
     } = prepared;
 
-    // Build a typed subject list so we can group headers as General/Professional
     const typedSubjects = [
       ...(subjects.general || []).map((s) => ({ ...s, _type: "general" })),
       ...(subjects.professional || []).map((s) => ({
@@ -340,37 +488,32 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
       })),
     ];
 
-    // Flatten subject subcolumns in order (CODE — Title, subKey/label, subject type)
     const flatCols = [];
     (typedSubjects || []).forEach((s) => {
       (subjectSubcolumns || []).forEach((sub) => {
         flatCols.push({
           code: s.code,
           title: s.title,
-          type: s._type, // 'general' | 'professional'
+          type: s._type,
           subKey: sub.key,
           subLabel: sub.label,
         });
       });
     });
 
-    // LANDSCAPE base capacities
-    const MAX_SUBCOLS_FIRST = 20; // first slice (has Student Info)
-    const MAX_SUBCOLS_MIDDLE = 34; // middle slices (subjects only)
-    const MAX_SUBCOLS_LAST = Math.max(16, 30 - (totalsColumns?.length || 0)); // last slice leaves room for Totals
+    const MAX_SUBCOLS_FIRST = 20;
+    const MAX_SUBCOLS_MIDDLE = 34;
+    const MAX_SUBCOLS_LAST = Math.max(16, 30 - (totalsColumns?.length || 0));
 
-    // Split subject subcolumns across slices; only the final slice reserves space for Totals
     const chunks = [];
     if (!flatCols.length) {
       chunks.push([]);
     } else {
       let start = 0;
-      // First slice
       const firstTake = Math.min(MAX_SUBCOLS_FIRST, flatCols.length);
       chunks.push(flatCols.slice(start, start + firstTake));
       start += firstTake;
 
-      // Middle + last slices
       while (start < flatCols.length) {
         const remaining = flatCols.length - start;
         const isLast = remaining <= MAX_SUBCOLS_LAST;
@@ -382,7 +525,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
       }
     }
 
-    // Only the last slice includes Totals; Student Info on first slice only
     const lastIdx = Math.max(0, chunks.length - 1);
     const slices = chunks.map((cols, idx) => ({
       cols,
@@ -390,7 +532,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
       includeTotals: idx === lastIdx && (totalsColumns?.length || 0) > 0,
     }));
 
-    // Build headers per slice (3 header rows)
     const headersBySlice = slices.map((slice) =>
       buildHeaderRowsForSlice(
         slice.cols,
@@ -400,7 +541,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
       )
     );
 
-    // Build body per slice with batching
     const bodyRowsBySlice = slices.map(() => []);
     const totalRows = students.length;
     const ROW_BATCH = 200;
@@ -436,7 +576,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
             });
           }
 
-          // Subject subcolumns (coef gold; marks/avg < 10 red)
           slice.cols.forEach((col) => {
             const subjScores = st.subjects?.[col.code] || {};
             const raw = getSubjectRaw(subjScores, col.subKey);
@@ -453,7 +592,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
             row.push(cell);
           });
 
-          // Totals only on the last slice (term averages + rank for term downloads)
           if (slice.includeTotals) {
             (totalsColumns || []).forEach((c) => {
               const raw = getTotalsRaw(st, c.key, selectedTerm);
@@ -477,7 +615,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
       if (idx < totalRows) {
         setTimeout(processBatch, 0);
       } else {
-        // Build PDF content
         const termLabel =
           selectedTerm === "term1"
             ? "First Term"
@@ -489,7 +626,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
 
         const content = [];
 
-        // Larger, bold metadata
         content.push({
           text: `Master Sheet — ${termLabel}`,
           alignment: "center",
@@ -530,14 +666,11 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
           margin: [0, 0, 0, 6],
         });
 
-        // Layout helpers (gold vertical lines at subject group ends + before totals)
         const layoutForSlice = (slice) => {
           const leftCount = slice.includeLeft ? 3 : 0;
           const groupBreaks = new Set();
-          // add a vertical line before Totals on last slice
           if (slice.includeTotals)
             groupBreaks.add(leftCount + slice.cols.length);
-          // add lines at the end of each subject (per code group)
           let span = 0;
           for (let i = 0; i < slice.cols.length; i++) {
             span++;
@@ -548,7 +681,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
           }
           return {
             fillColor: (rowIndex) => {
-              // header rows: 0 group band, 1 titles, 2 sublabels; then zebra for body
               if (rowIndex === 0) return HEADER_BG1;
               if (rowIndex === 1) return HEADER_BG1;
               if (rowIndex === 2) return HEADER_BG2;
@@ -565,11 +697,10 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
           };
         };
 
-        // Flexible widths to span full page width on every slice
         const computeWidths = (slice) => {
           const widths = [];
-          if (slice.includeLeft) widths.push("auto", "auto", "auto"); // Student Info
-          for (let k = 0; k < slice.cols.length; k++) widths.push("*"); // subjects flex
+          if (slice.includeLeft) widths.push("auto", "auto", "auto");
+          for (let k = 0; k < slice.cols.length; k++) widths.push("*");
           if (slice.includeTotals) {
             for (let t = 0; t < (totalsColumns?.length || 0); t++)
               widths.push("auto");
@@ -578,7 +709,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
           return widths;
         };
 
-        // Build tables per slice (3 header rows)
         slices.forEach((slice, sIdx) => {
           const [groupRow, codeRow, subRow] = headersBySlice[sIdx];
           const widths = computeWidths(slice);
@@ -594,7 +724,6 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
           });
         });
 
-        // Computed class stats + signatures
         if (stats) {
           content.push({
             margin: [0, 4, 0, 0],
@@ -666,7 +795,7 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
           pageSize: { width: 841.89, height: 595.28 },
           pageOrientation: "landscape",
           pageMargins: [6, 6, 6, 6],
-          defaultStyle: { fontSize: 8.5, lineHeight: 1.12 }, // use default embedded font
+          defaultStyle: { fontSize: 8.5, lineHeight: 1.12 },
           content,
           styles: {
             thCenter: { bold: true, alignment: "center" },
@@ -682,21 +811,16 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
   });
 }
 
-/**
- * Build header rows for a slice, with brand-matching fills.
- * Returns 3 rows: group bands, subject titles, subcolumn labels.
- */
 function buildHeaderRowsForSlice(
   chunkCols,
   includeLeft,
   includeTotals,
   totalsColumns
 ) {
-  const row0 = []; // Group bands: Student Info | General Subjects | Professional Courses | Totals
-  const row1 = []; // Subject code/title groups + totals labels + S/N, ID, Name
-  const row2 = []; // Subcolumn labels under each subject; placeholders under totals
+  const row0 = [];
+  const row1 = [];
+  const row2 = [];
 
-  // Counts for group bands
   const leftCount = includeLeft ? 3 : 0;
   const genSpan = chunkCols.filter((c) => c.type === "general").length;
   const proSpan = chunkCols.filter((c) => c.type === "professional").length;
@@ -718,7 +842,6 @@ function buildHeaderRowsForSlice(
   if (proSpan > 0) pushGroup("Professional Courses", proSpan);
   if (totSpan > 0) pushGroup("Totals", totSpan);
 
-  // Row 1: Left column labels + Subject code/title grouped + Totals labels
   if (includeLeft) {
     row1.push({ text: "S/N", style: "thCenter", fillColor: HEADER_BG1 });
     row1.push({ text: "Student ID", style: "thCenter", fillColor: HEADER_BG1 });
@@ -729,7 +852,6 @@ function buildHeaderRowsForSlice(
     });
   }
 
-  // Group contiguous columns by subject code for titles
   let i = 0;
   while (i < chunkCols.length) {
     const subj = chunkCols[i];
@@ -755,7 +877,6 @@ function buildHeaderRowsForSlice(
     });
   }
 
-  // Row 2: Subcolumn labels under each subject, placeholders under totals
   if (includeLeft) {
     row2.push(
       { text: "", fillColor: HEADER_BG2 },
@@ -780,9 +901,6 @@ function buildHeaderRowsForSlice(
   return [row0, row1, row2];
 }
 
-/* ===================== Helpers (values, coloring, formatting, stats) ===================== */
-
-// On-screen wrappers
 function getSubjectValue(subjScores, key) {
   return getSubjectRaw(subjScores, key);
 }
@@ -790,7 +908,6 @@ function getTotalsValue(student, key, term) {
   return getTotalsRaw(student, key, term);
 }
 
-// Raw subject value (number or string)
 function getSubjectRaw(subjScores, key) {
   if (!subjScores) return "";
   if (key === "coef") return subjScores.coef ?? "";
@@ -810,7 +927,6 @@ function getSubjectRaw(subjScores, key) {
   return subjScores[key] ?? "";
 }
 
-// Totals raw value (student-level)
 function getTotalsRaw(st, key, term) {
   if (st.termTotals) {
     if (key === "rank") {
@@ -829,7 +945,6 @@ function getTotalsRaw(st, key, term) {
   return "";
 }
 
-// Color red for marks/averages < 10; keep coef/rank black (PDF/visual cue)
 function valueColor(key, raw) {
   const k = (key || "").toLowerCase();
   const isMarkOrAvg =
@@ -844,7 +959,6 @@ function valueColor(key, raw) {
   return n < 10 ? "#b91c1c" : "#000";
 }
 
-// Numeric helpers and formatting
 function averageOf(values = []) {
   const nums = (values || [])
     .map((v) => (typeof v === "number" ? v : parseFloat(v)))
@@ -864,7 +978,6 @@ function fmt(v) {
   return Number.isInteger(n) ? String(n) : (Math.round(n * 10) / 10).toFixed(1);
 }
 
-// Compute class stats for the selected term (or annual)
 function computeClassStats(students = [], term = "annual") {
   const values = students
     .map((st) => {
@@ -891,7 +1004,6 @@ function computeClassStats(students = [], term = "annual") {
   return { classAverage, highestAverage, lowestAverage, count: values.length };
 }
 
-/* ===================== Data preparation (adapt to your API shape) ===================== */
 function prepare(payload, term) {
   if (!Array.isArray(payload) || payload.length === 0) return null;
 
@@ -904,12 +1016,10 @@ function prepare(payload, term) {
   const className = studentMeta.class || "Class";
   const academicYear = studentMeta.academicYear || "—";
 
-  // Subject defs from first report card
   const toDef = (s) => ({ code: s.code, title: s.title, coef: s.coef });
   const generalDefs = (firstRC.generalSubjects || []).map(toDef);
   const professionalDefs = (firstRC.professionalSubjects || []).map(toDef);
 
-  // Students rows
   const students = payload.map((rc) => {
     const subjMap = {};
     (rc.generalSubjects || []).forEach((s) => {
@@ -945,7 +1055,6 @@ function prepare(payload, term) {
     };
   });
 
-  // Subject subcolumns by view
   const subjectSubcolumns = getSubjectSubcolumns(term);
   const totalsColumns = getTotalsColumns(term);
 
@@ -955,7 +1064,6 @@ function prepare(payload, term) {
     students,
     subjectSubcolumns,
     totalsColumns,
-    // classStatistics and administration could come from API; we compute stats separately
     classStatistics: firstRC.classStatistics || null,
     administration: firstRC.administration || null,
   };
@@ -983,7 +1091,6 @@ function getSubjectSubcolumns(term) {
       { key: "term3Avg", label: "T3 Avg" },
       { key: "coef", label: "Coef" },
     ];
-  // annual
   return [
     { key: "seq1", label: "S1" },
     { key: "seq2", label: "S2" },
@@ -1015,7 +1122,6 @@ function getTotalsColumns(term) {
       { key: "term3Avg", label: "3rd Term Avg" },
       { key: "rank", label: "Rank" },
     ];
-  // annual
   return [
     { key: "term1Avg", label: "1st Term Avg" },
     { key: "term2Avg", label: "2nd Term Avg" },

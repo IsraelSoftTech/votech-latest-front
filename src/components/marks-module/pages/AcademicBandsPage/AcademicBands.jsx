@@ -1,12 +1,148 @@
 import "./AcademicBands.styles.css";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SideTop from "../../../SideTop";
-import Modal from "../../components/Modal/Modal.component";
 import { toast } from "react-toastify";
 import api, { headers, subBaseURL } from "../../utils/api";
 import Select from "react-select";
 import { CustomInput, SubmitBtn } from "../../components/Inputs/CustumInputs";
-import { FaLock } from "react-icons/fa";
+import { FaLock, FaPlus, FaTimes } from "react-icons/fa";
+
+// Custom hook to detect mobile
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+};
+
+// Academic Bands Modal Component (Desktop & Mobile)
+const AcademicBandsModal = ({ isOpen, onClose, title, children }) => {
+  const isMobile = useIsMobile();
+  const modalRef = useRef(null);
+  const [startY, setStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
+  // Touch handlers for mobile swipe to dismiss
+  const handleTouchStart = (e) => {
+    if (!isMobile) return;
+    setStartY(e.touches[0].clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isMobile || !isDragging) return;
+    const touchY = e.touches[0].clientY;
+    const diff = touchY - startY;
+
+    if (diff > 0) {
+      setCurrentY(diff);
+      if (modalRef.current) {
+        modalRef.current.style.transform = `translateY(${diff}px)`;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isMobile) return;
+    setIsDragging(false);
+
+    if (currentY > 150) {
+      onClose();
+    }
+
+    if (modalRef.current) {
+      modalRef.current.style.transform = "";
+    }
+    setCurrentY(0);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className={`bands-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        className={`bands-modal-container ${isMobile ? "mobile" : "desktop"}`}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Drag handle - mobile only */}
+        {isMobile && (
+          <div className="bands-modal-drag-handle">
+            <div className="bands-drag-bar"></div>
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="bands-modal-header">
+          <h2 className="bands-modal-title">{title}</h2>
+          <button
+            className="bands-modal-close"
+            onClick={onClose}
+            type="button"
+            aria-label="Close modal"
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="bands-modal-body">{children}</div>
+      </div>
+    </div>
+  );
+};
 
 export const AcademicBandsPage = () => {
   const isReadOnly =
@@ -19,7 +155,6 @@ export const AcademicBandsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   const [form, setForm] = useState({
     academic_year_id: null,
@@ -32,7 +167,7 @@ export const AcademicBandsPage = () => {
     academic_year_id: null,
     department_id: null,
     class_id: null,
-    search: "", // single search bar
+    search: "",
   });
 
   const fetchDepartments = async () => {
@@ -158,22 +293,22 @@ export const AcademicBandsPage = () => {
     return true;
   };
 
-  const flattenBandsPayload = ({ bands, ...rest }) => {
-    if (!bands || !Array.isArray(bands) || bands.length === 0) return rest;
-    return { ...rest, ...bands[0] };
-  };
-
   const handleSave = async () => {
     if (!validateForm()) return;
     try {
       setSaving(true);
-      const payload = flattenBandsPayload(form);
       await api.post("/academic-bands/save", form);
       toast.success("Bands saved successfully");
       setCreateModalOpen(false);
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.details || "Failed to save bands.");
+      console.log(err);
+      toast.error(
+        err.response?.data?.details?.message ||
+          err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Something went wrong."
+      );
     } finally {
       setSaving(false);
     }
@@ -233,83 +368,97 @@ export const AcademicBandsPage = () => {
     }))
     .filter((y) => y.departments.length > 0);
 
+  const openCreateModal = () => {
+    setCreateModalOpen(true);
+  };
+
+  const closeCreateModal = () => {
+    setCreateModalOpen(false);
+  };
+
   return (
     <SideTop>
       <div className="academic-bands-page">
-        <div className="page-header">
-          <h2>
+        <div className="bands-page-header">
+          <h2 className="bands-page-title">
             Academic Bands
             {isReadOnly && (
-              <span className="read-only-badge">
+              <span className="bands-read-only-badge">
                 <FaLock /> Read Only
               </span>
             )}
           </h2>
           {!isReadOnly && (
             <button
-              className="btn btn-primary"
-              onClick={() => setCreateModalOpen(true)}
+              className="bands-btn-create bands-btn-desktop"
+              onClick={openCreateModal}
             >
-              Add / Edit Academic Bands
+              <FaPlus />
+              <span>Add / Edit Bands</span>
             </button>
           )}
         </div>
 
+        {/* Mobile FAB */}
+        {!isReadOnly && (
+          <button
+            className="bands-btn-create bands-btn-mobile-fab"
+            onClick={openCreateModal}
+            aria-label="Add / Edit Academic Bands"
+          >
+            <FaPlus />
+          </button>
+        )}
+
         {isLoading ? (
           <div className="skeleton-container">
-            {" "}
             {[1, 2, 3].map((i) => (
               <div key={i} className="skeleton-year-block">
-                {" "}
                 <div
                   className="skeleton skeleton-text"
                   style={{ width: "200px", height: "24px" }}
-                />{" "}
+                />
                 {[1, 2].map((j) => (
                   <div key={j} className="skeleton-department-block">
-                    {" "}
                     <div
                       className="skeleton skeleton-text"
                       style={{ width: "150px", height: "20px" }}
-                    />{" "}
+                    />
                     {[1, 2].map((k) => (
                       <div key={k} className="skeleton-class-block">
-                        {" "}
                         <div
                           className="skeleton skeleton-text"
                           style={{ width: "180px", height: "18px" }}
-                        />{" "}
+                        />
                         <div className="skeleton-table">
-                          {" "}
                           {[1, 2, 3].map((r) => (
                             <div key={r} className="skeleton-row">
-                              {" "}
                               <div
                                 className="skeleton"
                                 style={{ width: "50px", height: "16px" }}
-                              />{" "}
+                              />
                               <div
                                 className="skeleton"
                                 style={{ width: "50px", height: "16px" }}
-                              />{" "}
+                              />
                               <div
                                 className="skeleton"
                                 style={{ width: "120px", height: "16px" }}
-                              />{" "}
+                              />
                             </div>
-                          ))}{" "}
-                        </div>{" "}
+                          ))}
+                        </div>
                       </div>
-                    ))}{" "}
+                    ))}
                   </div>
-                ))}{" "}
+                ))}
               </div>
-            ))}{" "}
+            ))}
           </div>
         ) : (
           <>
             <div className="filters-row">
-              <div className="form-react-select">
+              <div className="bands-form-select">
                 <Select
                   placeholder="Filter Academic Year"
                   options={academicYears.map((y) => ({
@@ -333,10 +482,12 @@ export const AcademicBandsPage = () => {
                     }))
                   }
                   isClearable
+                  className="bands-react-select"
+                  classNamePrefix="bands-select"
                 />
               </div>
 
-              <div className="form-react-select">
+              <div className="bands-form-select">
                 <Select
                   placeholder="Filter Department"
                   options={departments.map((d) => ({
@@ -358,10 +509,12 @@ export const AcademicBandsPage = () => {
                     }))
                   }
                   isClearable
+                  className="bands-react-select"
+                  classNamePrefix="bands-select"
                 />
               </div>
 
-              <div className="form-react-select">
+              <div className="bands-form-select">
                 <Select
                   placeholder="Filter Class"
                   options={classes.map((c) => ({
@@ -386,6 +539,8 @@ export const AcademicBandsPage = () => {
                     }))
                   }
                   isClearable
+                  className="bands-react-select"
+                  classNamePrefix="bands-select"
                 />
               </div>
 
@@ -397,11 +552,10 @@ export const AcademicBandsPage = () => {
                 onChange={(_, val) =>
                   setFilters((prev) => ({ ...prev, search: val }))
                 }
-                style={{ width: "300px" }}
               />
 
               <button
-                className="btn btn-secondary"
+                className="bands-btn-secondary"
                 onClick={() =>
                   setFilters({
                     academic_year_id: null,
@@ -431,24 +585,26 @@ export const AcademicBandsPage = () => {
                             return (
                               <div key={cls.id} className="class-block">
                                 <h5>{`${cls.class.name} (${dept.department.name})`}</h5>
-                                <table>
-                                  <thead>
-                                    <tr>
-                                      <th>Min</th>
-                                      <th>Max</th>
-                                      <th>Comment</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {cls.bands.map((b, idx) => (
-                                      <tr key={idx}>
-                                        <td>{b.band_min}</td>
-                                        <td>{b.band_max}</td>
-                                        <td>{b.comment}</td>
+                                <div className="bands-table-scroll">
+                                  <table className="bands-table">
+                                    <thead>
+                                      <tr>
+                                        <th>Min</th>
+                                        <th>Max</th>
+                                        <th>Comment</th>
                                       </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                    </thead>
+                                    <tbody>
+                                      {cls.bands.map((b, idx) => (
+                                        <tr key={idx}>
+                                          <td>{b.band_min}</td>
+                                          <td>{b.band_max}</td>
+                                          <td>{b.comment}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
                               </div>
                             );
                           })}
@@ -462,9 +618,10 @@ export const AcademicBandsPage = () => {
           </>
         )}
 
-        <Modal
+        {/* Create/Edit Modal */}
+        <AcademicBandsModal
           isOpen={createModalOpen}
-          onClose={() => setCreateModalOpen(false)}
+          onClose={closeCreateModal}
           title="Add / Edit Academic Bands"
         >
           <form
@@ -472,9 +629,10 @@ export const AcademicBandsPage = () => {
               e.preventDefault();
               handleSave();
             }}
-            className="bands-form"
+            className="bands-modal-form"
           >
-            <div className="form-react-select">
+            <div className="bands-form-select">
+              <label className="bands-form-label">Academic Year</label>
               <Select
                 placeholder="Select Academic Year"
                 options={academicYears.map((y) => ({
@@ -495,10 +653,13 @@ export const AcademicBandsPage = () => {
                     academic_year_id: opt?.value || null,
                   }))
                 }
+                className="bands-react-select"
+                classNamePrefix="bands-select"
               />
             </div>
 
-            <div className="form-react-select">
+            <div className="bands-form-select">
+              <label className="bands-form-label">Department</label>
               <Select
                 placeholder="Select Department"
                 options={departments.map((d) => ({
@@ -519,10 +680,13 @@ export const AcademicBandsPage = () => {
                     class_id: null,
                   }))
                 }
+                className="bands-react-select"
+                classNamePrefix="bands-select"
               />
             </div>
 
-            <div className="form-react-select">
+            <div className="bands-form-select">
+              <label className="bands-form-label">Class</label>
               <Select
                 placeholder="Select Class"
                 options={filteredClasses.map((c) => ({
@@ -544,48 +708,64 @@ export const AcademicBandsPage = () => {
                 onChange={(opt) =>
                   setForm((prev) => ({ ...prev, class_id: opt?.value || null }))
                 }
+                className="bands-react-select"
+                classNamePrefix="bands-select"
               />
             </div>
 
-            {form.bands.map((b, idx) => (
-              <div key={idx} className="band-row">
-                <CustomInput
-                  label="Min"
-                  type="number"
-                  value={b.band_min}
-                  onChange={(_, val) => handleBandChange(idx, "band_min", val)}
-                />
-                <CustomInput
-                  label="Max"
-                  type="number"
-                  value={b.band_max}
-                  onChange={(_, val) => handleBandChange(idx, "band_max", val)}
-                />
-                <CustomInput
-                  label="Comment"
-                  type="text"
-                  value={b.comment}
-                  onChange={(_, val) => handleBandChange(idx, "comment", val)}
-                />
-                <button
-                  type="button"
-                  className="btn btn-delete"
-                  onClick={() => removeBandRow(idx)}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
+            <div className="bands-section">
+              <h4 className="bands-section-title">Band Ranges</h4>
+              {form.bands.map((b, idx) => (
+                <div key={idx} className="band-row">
+                  <CustomInput
+                    label="Min"
+                    type="number"
+                    value={b.band_min}
+                    onChange={(_, val) =>
+                      handleBandChange(idx, "band_min", val)
+                    }
+                  />
+                  <CustomInput
+                    label="Max"
+                    type="number"
+                    value={b.band_max}
+                    onChange={(_, val) =>
+                      handleBandChange(idx, "band_max", val)
+                    }
+                  />
+                  <CustomInput
+                    label="Comment"
+                    type="text"
+                    value={b.comment}
+                    onChange={(_, val) => handleBandChange(idx, "comment", val)}
+                  />
+                  {form.bands.length > 1 && (
+                    <button
+                      type="button"
+                      className="bands-btn-delete"
+                      onClick={() => removeBandRow(idx)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
 
-            <button type="button" className="btn btn-add" onClick={addBandRow}>
-              Add Band Row
-            </button>
+              <button
+                type="button"
+                className="bands-btn-add"
+                onClick={addBandRow}
+              >
+                <FaPlus /> Add Band Row
+              </button>
+            </div>
+
             <SubmitBtn
               title={saving ? "Saving..." : "Save Bands"}
-              loading={saving}
+              disabled={saving}
             />
           </form>
-        </Modal>
+        </AcademicBandsModal>
       </div>
     </SideTop>
   );

@@ -37,7 +37,7 @@ import Subjects from "./components/Subjects.jsx";
 import Admin4Sub from "./components/Admin4Sub.jsx";
 import LessonPlan from "./components/LessonPlan.jsx";
 import Marks from "./components/Marks.jsx";
- 
+
 import TimeTable from "./components/TimeTable.jsx";
 import { AcademicYear } from "./components/marks-module/pages/AccademicYearPage/AcademicYear.page";
 import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subject.page";
@@ -52,7 +52,7 @@ import DisciplineSideTop from "./components/DisciplineSideTop";
 import DisciplineDashboard from "./components/DisciplineDashboard";
 import DiscMessage from "./components/DiscMessage.jsx";
 import DiscUserChat from "./components/DiscUserChat.jsx";
- 
+
 import Attendance from "./components/Attendance.jsx";
 import StaffAttendance from "./components/StaffAttendance.jsx";
 import DisciplineCases from "./components/DisciplineCases";
@@ -207,7 +207,7 @@ function App() {
         <Route path="/admin4-subjects" element={<Admin4Sub />} />
         <Route path="/admin-lesson-plans" element={<LessonPlan />} />
         <Route path="/lesson-plans" element={<LessonPlan />} />
-        
+
         <Route path="/admin-inventory" element={<Inventory />} />
         <Route
           path="/admin-timetable"
@@ -219,11 +219,9 @@ function App() {
         <Route path="/admin-group-messages/:groupId" element={<GroupChat />} />
         <Route path="/user-messages/:userId" element={<UserChat />} />
 
-
-
         {/* Discipline area */}
         <Route path="/discipline" element={<DisciplineDashboard />} />
-        
+
         <Route path="/discipline-messages" element={<DiscMessage />} />
         <Route path="/discipline-messages/:userId" element={<DiscUserChat />} />
         <Route
@@ -303,7 +301,6 @@ function App() {
         <Route path="/dean-lesson-plans" element={<DeanLessonPlan />} />
         <Route path="/admin-hods" element={<AdminHODs />} />
 
-
         {/* Marks / Reports */}
         <Route path="/admin-marks" element={<Marks />} />
         <Route path="/dean-marks" element={<Marks />} />
@@ -313,11 +310,14 @@ function App() {
         {/* Psychosocialist Routes */}
         <Route path="/psycho-dashboard" element={<PsycoDash />} />
         <Route path="/psycho-cases" element={<Cases />} />
-        <Route path="/psycho-discipline-cases" element={
-          <SideTop>
-            <DisciplineCases />
-          </SideTop>
-        } />
+        <Route
+          path="/psycho-discipline-cases"
+          element={
+            <SideTop>
+              <DisciplineCases />
+            </SideTop>
+          }
+        />
         <Route path="/psycho-messages" element={<PsychoMessage />} />
         <Route path="/psycho-chat/:userId" element={<PsychoChat />} />
         <Route path="/teacher-cases" element={<TeacherCases />} />

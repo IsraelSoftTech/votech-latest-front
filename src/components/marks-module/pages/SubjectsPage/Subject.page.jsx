@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -14,13 +8,13 @@ import {
   FaUserPlus,
   FaFileAlt,
   FaExclamationCircle,
+  FaTimes,
 } from "react-icons/fa";
 
 import SideTop from "../../../SideTop";
 import "./Subject.styles.css";
 import api, { subBaseURL, headers } from "../../utils/api";
 import DataTable from "../../components/DataTable/DataTable.component";
-import Modal from "../../components/Modal/Modal.component";
 import Stats from "../../components/Stats/Stats.component";
 import AssignCourseModal from "../../components/AssignCourseModal/AssignCourseModal.component";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
@@ -48,6 +42,143 @@ const INITIAL_FORM_STATE = {
   code: "",
   coefficient: 0,
   name: "",
+};
+
+// Custom hook to detect mobile
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+};
+
+// Modal Component (Desktop & Mobile)
+const SubjectModal = ({ isOpen, onClose, title, children }) => {
+  const isMobile = useIsMobile();
+  const modalRef = useRef(null);
+  const [startY, setStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
+  // Touch handlers for mobile swipe to dismiss
+  const handleTouchStart = (e) => {
+    if (!isMobile) return;
+    setStartY(e.touches[0].clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isMobile || !isDragging) return;
+    const touchY = e.touches[0].clientY;
+    const diff = touchY - startY;
+
+    if (diff > 0) {
+      setCurrentY(diff);
+      if (modalRef.current) {
+        modalRef.current.style.transform = `translateY(${diff}px)`;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isMobile) return;
+    setIsDragging(false);
+
+    if (currentY > 150) {
+      onClose();
+    }
+
+    if (modalRef.current) {
+      modalRef.current.style.transform = "";
+    }
+    setCurrentY(0);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className={`subject-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        className={`subject-modal-container ${isMobile ? "mobile" : "desktop"}`}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Drag handle - mobile only */}
+        {isMobile && (
+          <div className="modal-drag-handle">
+            <div className="drag-bar"></div>
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="subject-modal-header">
+          <h2 className="subject-modal-title">{title}</h2>
+          <button
+            className="subject-modal-close"
+            onClick={onClose}
+            type="button"
+            aria-label="Close modal"
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="subject-modal-body">{children}</div>
+      </div>
+    </div>
+  );
 };
 
 export const SubjectPage = () => {
@@ -79,7 +210,6 @@ export const SubjectPage = () => {
   const [classes, setClasses] = useState([]);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignSubject, setAssignSubject] = useState(null);
-  const [finishedLoading, setFinishedLoading] = useState(false);
 
   const hasFetchedRef = useRef(false);
 
@@ -272,26 +402,11 @@ export const SubjectPage = () => {
     fetchStats,
   ]);
 
-  useEffect(() => {
-    if (!isLoading) {
-      // delay slightly to let table finish its animation
-      const timer = setTimeout(() => {
-        setFinishedLoading(true);
-      }, 500); // adjust delay to match your table's loading animation
-
-      return () => clearTimeout(timer);
-    } else {
-      setFinishedLoading(false);
-    }
-  }, [isLoading]);
-
   if (!user) return <div>Unauthorized access</div>;
 
-  // Row click handlers
   const handleRowClick = (row) => setSelectedRow(row);
   const closeModal = () => setSelectedRow(null);
 
-  // Modal open/close helpers
   const openCreateModal = () => {
     resetForm();
     setCreateModalOpen(true);
@@ -419,7 +534,7 @@ export const SubjectPage = () => {
 
   return (
     <SideTop>
-      <div style={{ padding: "20px" }}>
+      <div className="subject-page-container">
         <h2 className="page-title">
           {user.role === "Admin3" ? "All Subjects" : "Subjects Assigned to You"}
         </h2>
@@ -454,12 +569,13 @@ export const SubjectPage = () => {
         )}
       </div>
 
-      <Modal
+      {/* Create Modal */}
+      <SubjectModal
         isOpen={createModalOpen}
         onClose={closeCreateModal}
         title="Create Subject"
       >
-        <form onSubmit={handleCreateSubmit} className="modal-form">
+        <form onSubmit={handleCreateSubmit} className="subject-modal-form">
           <CustomInput
             label="Name"
             value={form.name}
@@ -506,14 +622,15 @@ export const SubjectPage = () => {
             disabled={createLoading}
           />
         </form>
-      </Modal>
+      </SubjectModal>
 
-      <Modal
+      {/* Edit Modal */}
+      <SubjectModal
         isOpen={editModalOpen}
         onClose={closeEditModal}
         title="Edit Academic Subject"
       >
-        <form onSubmit={handleEditSubmit} className="modal-form">
+        <form onSubmit={handleEditSubmit} className="subject-modal-form">
           <CustomInput
             label="Name"
             value={form.name}
@@ -560,42 +677,67 @@ export const SubjectPage = () => {
             disabled={editLoading}
           />
         </form>
-      </Modal>
+      </SubjectModal>
 
-      <Modal
+      {/* Details Modal */}
+      <SubjectModal
         isOpen={!!selectedRow}
         onClose={closeModal}
         title="Subject Details"
       >
         {selectedRow && (
           <div className="subject-details">
-            <h2>{selectedRow.name}</h2>
             <div className="details-grid">
-              <span className="label">Code:</span>
-              <span>{selectedRow.code || "N/A"}</span>
-              <span className="label">Coefficient:</span>
-              <span>{selectedRow.coefficient ?? "N/A"}</span>
-              <span className="label">Category:</span>
-              <span className="text-capitalize">
-                {selectedRow.category || "N/A"}
-              </span>
-              <span className="label">Assigned:</span>
-              <span>{selectedRow.isAssigned}</span>
-              <span className="label">Classes:</span>
-              <span>{selectedRow.className || "None"}</span>
-              <span className="label">Teachers:</span>
-              <span>{selectedRow.teacherName || "None"}</span>
+              <div className="detail-item">
+                <span className="label">Name</span>
+                <span className="value">{selectedRow.name || "N/A"}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Code</span>
+                <span className="value">{selectedRow.code || "N/A"}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Coefficient</span>
+                <span className="value">
+                  {selectedRow.coefficient ?? "N/A"}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Category</span>
+                <span className="value text-capitalize">
+                  {selectedRow.category || "N/A"}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Assigned</span>
+                <span className="value">{selectedRow.isAssigned}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Classes</span>
+                <span className="value">{selectedRow.className || "None"}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Teachers</span>
+                <span className="value">
+                  {selectedRow.teacherName || "None"}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Departments</span>
+                <span className="value">
+                  {selectedRow.department || "None"}
+                </span>
+              </div>
             </div>
           </div>
         )}
-      </Modal>
+      </SubjectModal>
 
-      <Modal
+      {/* Assign Modal */}
+      <SubjectModal
         isOpen={assignModalOpen}
         onClose={closeAssignModal}
-        title={`Assign ${assignSubject?.name || "Subject"} (${
-          assignSubject?.code || ""
-        }) To Classes and Teachers`}
+        title={`Assign ${assignSubject?.name || "Subject"}`}
       >
         <AssignCourseModal
           departmentsOptions={departments}
@@ -604,7 +746,7 @@ export const SubjectPage = () => {
           subject={assignSubject}
           onUpdate={fetchSubjects}
         />
-      </Modal>
+      </SubjectModal>
     </SideTop>
   );
 };
@@ -616,28 +758,11 @@ function NoSubjectsAssigned() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 30 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        background: "linear-gradient(135deg, #f8f9fa, #e9ecef)",
-        padding: "30px 20px",
-        borderRadius: "12px",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
-        maxWidth: "500px",
-        margin: "50px auto",
-        color: "#495057",
-      }}
+      className="no-subjects-container"
     >
-      <FaExclamationCircle
-        size={50}
-        color="#f03e3e"
-        style={{ marginBottom: "15px" }}
-      />
-      <h2 style={{ marginBottom: "10px" }}>No Subjects Assigned</h2>
-      <p style={{ fontSize: "16px", lineHeight: "1.5" }}>
+      <FaExclamationCircle className="no-subjects-icon" />
+      <h2>No Subjects Assigned</h2>
+      <p>
         Sorry, you have no subjects assigned to you at the moment. <br />
         If you expected to have subjects, please contact system admins or apply
         to be assigned a subject.

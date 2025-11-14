@@ -1,19 +1,160 @@
 import "./Class.styles.css";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SideTop from "../../../SideTop";
 import DataTable from "../../components/DataTable/DataTable.component";
-import Modal from "../../components/Modal/Modal.component";
 import { toast } from "react-toastify";
 import api, { headers, subBaseURL } from "../../utils/api";
 import Select from "react-select";
 import {
-  // CustomDatePicker,
   CustomDropdown,
   CustomInput,
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
 import Stats from "../../components/Stats/Stats.component";
-import { FaBan, FaCheckCircle, FaLayerGroup } from "react-icons/fa";
+import {
+  FaBan,
+  FaCheckCircle,
+  FaLayerGroup,
+  FaPlus,
+  FaTimes,
+} from "react-icons/fa";
+
+// Custom hook to detect mobile
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+};
+
+// Class Modal Component (Desktop & Mobile)
+const ClassModal = ({ isOpen, onClose, title, children }) => {
+  const isMobile = useIsMobile();
+  const modalRef = useRef(null);
+  const [startY, setStartY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
+  // Touch handlers for mobile swipe to dismiss
+  const handleTouchStart = (e) => {
+    if (!isMobile) return;
+    setStartY(e.touches[0].clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isMobile || !isDragging) return;
+    const touchY = e.touches[0].clientY;
+    const diff = touchY - startY;
+
+    if (diff > 0) {
+      setCurrentY(diff);
+      if (modalRef.current) {
+        modalRef.current.style.transform = `translateY(${diff}px)`;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isMobile) return;
+    setIsDragging(false);
+
+    if (currentY > 150) {
+      onClose();
+    }
+
+    if (modalRef.current) {
+      modalRef.current.style.transform = "";
+    }
+    setCurrentY(0);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className={`class-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        className={`class-modal-container ${isMobile ? "mobile" : "desktop"}`}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Drag handle - mobile only */}
+        {isMobile && (
+          <div className="class-modal-drag-handle">
+            <div className="class-drag-bar"></div>
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="class-modal-header">
+          <h2 className="class-modal-title">{title}</h2>
+          <button
+            className="class-modal-close"
+            onClick={onClose}
+            type="button"
+            aria-label="Close modal"
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="class-modal-body">{children}</div>
+      </div>
+    </div>
+  );
+};
 
 export const ClassPage = () => {
   const capitalizeWords = (str) =>
@@ -28,10 +169,6 @@ export const ClassPage = () => {
     { label: "Department", accessor: "department" },
     { label: "Class Master", accessor: "classMaster" },
     { label: "Status", accessor: "suspended" },
-    // { label: "Registration Fee ", accessor: "registration_fee" },
-    // { label: "Bus Fee", accessor: "bus_fee" },
-    // { label: "Internship Fee", accessor: "internship_fee" },
-    // { label: "Remedial Fee", accessor: "remedial_fee" },
     { label: "Tuition Fee", accessor: "tuition_fee" },
     { label: "PTA Fee", accessor: "pta_fee" },
     { label: "Total Fee", accessor: "total_fee" },
@@ -64,10 +201,7 @@ export const ClassPage = () => {
   });
 
   function transformClassForm(form) {
-    // Copy the form to avoid mutating the original
     const result = { ...form };
-
-    // Convert fee fields to numbers
     const feeFields = [
       "registration_fee",
       "bus_fee",
@@ -82,10 +216,8 @@ export const ClassPage = () => {
       result[field] = Number.isNaN(value) || value < 0 ? 0 : value;
     });
 
-    // Calculate total_fee
     result.total_fee = feeFields.reduce((sum, field) => sum + result[field], 0);
 
-    // Convert suspended string to boolean
     if (typeof result.suspended === "string") {
       result.suspended = result.suspended.toLowerCase() === "suspended";
     }
@@ -127,7 +259,6 @@ export const ClassPage = () => {
       const subFilters = new Set();
       const res = await api.get("/classes");
       if (res.data?.data) {
-        // console.log(res.data.data);
         const formatted = res.data.data.map((el, index) => {
           subFilters.add(el.department?.name);
           return {
@@ -212,7 +343,6 @@ export const ClassPage = () => {
         label: dep.name,
       }));
       setDepartments(data);
-      // console.log(data);
     } catch (err) {
       toast.error("Error fetching departments.");
       console.log(err);
@@ -228,7 +358,6 @@ export const ClassPage = () => {
         data.icon = icons[index];
       });
       setStats(res.data.data.stats);
-      console.log(stats);
     } catch (err) {
       toast.error(err?.response?.data?.details || "Error fetching statistics");
       console.log(err);
@@ -362,37 +491,57 @@ export const ClassPage = () => {
   const handleRowClick = (row) => setSelectedRow(row);
   const closeModal = () => setSelectedRow(null);
 
+  const openCreateModal = () => {
+    resetForm();
+    setCreateModalOpen(true);
+  };
+
   return (
     <SideTop>
-      <div style={{ padding: "20px" }}>
-        <h2 className="page-title">Classes</h2>
+      <div className="class-page">
+        <div className="class-page-header">
+          <h2 className="class-page-title">Classes</h2>
+          <button
+            className="class-btn-create class-btn-desktop"
+            onClick={openCreateModal}
+          >
+            <FaPlus />
+            <span>Create Class</span>
+          </button>
+        </div>
+
         <Stats data={stats} />
+
+        {/* Mobile FAB */}
         <button
-          className="btn btn-create"
-          onClick={() => setCreateModalOpen(true)}
+          className="class-btn-create class-btn-mobile-fab"
+          onClick={openCreateModal}
+          aria-label="Create Class"
         >
-          Create Class
+          <FaPlus />
         </button>
 
-        <DataTable
-          columns={columns}
-          data={data}
-          onEdit={handleEdit}
-          onDelete={deleteClass}
-          loading={isLoading}
-          limit={12}
-          onRowClick={handleRowClick}
-          warnDelete={() => {}}
-          filterCategories={filters}
-        />
+        <div className="class-table-container">
+          <DataTable
+            columns={columns}
+            data={data}
+            onEdit={handleEdit}
+            onDelete={deleteClass}
+            loading={isLoading}
+            limit={12}
+            onRowClick={handleRowClick}
+            warnDelete={() => {}}
+            filterCategories={filters}
+          />
+        </div>
 
         {/* Create Modal */}
-        <Modal
+        <ClassModal
           isOpen={createModalOpen}
           onClose={closeCreateModal}
           title="Create Class"
         >
-          <form onSubmit={handleCreateSubmit} className="modal-form">
+          <form onSubmit={handleCreateSubmit} className="class-modal-form">
             <CustomInput
               label="Name"
               type="text"
@@ -402,7 +551,8 @@ export const ClassPage = () => {
               error={formErrors.name}
             />
 
-            <div className="form-react-select">
+            <div className="class-form-group">
+              <label className="class-form-label">Department</label>
               <Select
                 options={departments}
                 value={departments.find((d) => d.value === form.department_id)}
@@ -411,13 +561,16 @@ export const ClassPage = () => {
                 }
                 isSearchable
                 placeholder="Select Department"
+                className="class-react-select"
+                classNamePrefix="class-select"
               />
               {formErrors.department_id && (
-                <p className="error">{formErrors.department_id}</p>
+                <p className="class-form-error">{formErrors.department_id}</p>
               )}
             </div>
 
-            <div className="form-react-select">
+            <div className="class-form-group">
+              <label className="class-form-label">Class Master</label>
               <Select
                 options={teachers}
                 value={teachers.find((t) => t.value === form.class_master_id)}
@@ -426,29 +579,37 @@ export const ClassPage = () => {
                 }
                 isSearchable
                 placeholder="Select Class Master"
+                className="class-react-select"
+                classNamePrefix="class-select"
               />
               {formErrors.class_master_id && (
-                <p className="error">{formErrors.class_master_id}</p>
+                <p className="class-form-error">{formErrors.class_master_id}</p>
               )}
             </div>
 
             {/* Fees */}
-            {[
-              { key: "registration_fee", label: "Registration Fee" },
-              { key: "bus_fee", label: "Bus Fee" },
-              { key: "internship_fee", label: "Internship Fee" },
-              { key: "remedial_fee", label: "Remedial Fee" },
-              { key: "tuition_fee", label: "Tuition Fee" },
-              { key: "pta_fee", label: "PTA Fee" },
-            ].map((fee) => (
-              <CustomInput
-                key={fee.key}
-                label={fee.label}
-                value={form[fee.key]}
-                onChange={handleUpdateForm}
-                name={fee.key}
-              />
-            ))}
+            <div className="class-fees-section">
+              <h4 className="class-section-title">Fee Structure</h4>
+              <div className="class-fees-grid">
+                {[
+                  { key: "registration_fee", label: "Registration Fee" },
+                  { key: "bus_fee", label: "Bus Fee" },
+                  { key: "internship_fee", label: "Internship Fee" },
+                  { key: "remedial_fee", label: "Remedial Fee" },
+                  { key: "tuition_fee", label: "Tuition Fee" },
+                  { key: "pta_fee", label: "PTA Fee" },
+                ].map((fee) => (
+                  <CustomInput
+                    key={fee.key}
+                    label={fee.label}
+                    value={form[fee.key]}
+                    onChange={handleUpdateForm}
+                    name={fee.key}
+                    type="number"
+                  />
+                ))}
+              </div>
+            </div>
 
             <CustomDropdown
               label={"Status"}
@@ -463,15 +624,15 @@ export const ClassPage = () => {
               disabled={createLoading}
             />
           </form>
-        </Modal>
+        </ClassModal>
 
         {/* Edit Modal */}
-        <Modal
+        <ClassModal
           isOpen={editModalOpen}
           onClose={closeEditModal}
           title="Edit Class"
         >
-          <form onSubmit={handleEditSubmit} className="modal-form">
+          <form onSubmit={handleEditSubmit} className="class-modal-form">
             <CustomInput
               label="Name"
               type="text"
@@ -481,7 +642,8 @@ export const ClassPage = () => {
               error={formErrors.name}
             />
 
-            <div className="form-react-select">
+            <div className="class-form-group">
+              <label className="class-form-label">Department</label>
               <Select
                 options={departments}
                 value={departments.find((d) => d.value === form.department_id)}
@@ -490,13 +652,16 @@ export const ClassPage = () => {
                 }
                 isSearchable
                 placeholder="Select Department"
+                className="class-react-select"
+                classNamePrefix="class-select"
               />
               {formErrors.department_id && (
-                <p className="error">{formErrors.department_id}</p>
+                <p className="class-form-error">{formErrors.department_id}</p>
               )}
             </div>
 
-            <div className="form-react-select">
+            <div className="class-form-group">
+              <label className="class-form-label">Class Master</label>
               <Select
                 options={teachers}
                 value={teachers.find((t) => t.value === form.class_master_id)}
@@ -505,30 +670,40 @@ export const ClassPage = () => {
                 }
                 isSearchable
                 placeholder="Select Class Master"
+                className="class-react-select"
+                classNamePrefix="class-select"
               />
               {formErrors.class_master_id && (
-                <p className="error">{formErrors.class_master_id}</p>
+                <p className="class-form-error">{formErrors.class_master_id}</p>
               )}
             </div>
 
-            {[
-              "registration_fee",
-              "bus_fee",
-              "internship_fee",
-              "remedial_fee",
-              "tuition_fee",
-              "pta_fee",
-            ].map((fee) => (
-              <CustomInput
-                key={fee}
-                label={capitalizeWords(fee)}
-                value={
-                  form[fee] != null ? String(form[fee]).replace(/\s+/g, "") : ""
-                }
-                onChange={handleUpdateForm}
-                name={fee}
-              />
-            ))}
+            <div className="class-fees-section">
+              <h4 className="class-section-title">Fee Structure</h4>
+              <div className="class-fees-grid">
+                {[
+                  "registration_fee",
+                  "bus_fee",
+                  "internship_fee",
+                  "remedial_fee",
+                  "tuition_fee",
+                  "pta_fee",
+                ].map((fee) => (
+                  <CustomInput
+                    key={fee}
+                    label={capitalizeWords(fee)}
+                    value={
+                      form[fee] != null
+                        ? String(form[fee]).replace(/\s+/g, "")
+                        : ""
+                    }
+                    onChange={handleUpdateForm}
+                    name={fee}
+                    type="number"
+                  />
+                ))}
+              </div>
+            </div>
 
             <CustomDropdown
               label={"Status"}
@@ -543,10 +718,10 @@ export const ClassPage = () => {
               disabled={editLoading}
             />
           </form>
-        </Modal>
+        </ClassModal>
 
         {/* Details Modal */}
-        <Modal
+        <ClassModal
           isOpen={!!selectedRow}
           onClose={closeModal}
           title="Class Details"
@@ -554,66 +729,91 @@ export const ClassPage = () => {
           {selectedRow && (
             <div className="class-details-card">
               <header className="class-details-header">
-                <h2>
-                  {selectedRow.department} {selectedRow.name}
-                </h2>
-                <span
-                  className={`status-badge ${
-                    selectedRow.suspended === "Suspended"
-                      ? "suspended"
-                      : "active"
-                  }`}
-                >
-                  {selectedRow.suspended === "Suspended"
-                    ? "Suspended"
-                    : "Active"}
-                </span>
+                <div className="class-details-title-wrapper">
+                  <h2 className="class-details-title">
+                    {selectedRow.department} {selectedRow.name}
+                  </h2>
+                  <span
+                    className={`class-status-badge ${
+                      selectedRow.suspended === "Suspended"
+                        ? "suspended"
+                        : "active"
+                    }`}
+                  >
+                    {selectedRow.suspended === "Suspended"
+                      ? "Suspended"
+                      : "Active"}
+                  </span>
+                </div>
               </header>
 
               <section className="class-details-body">
-                <div className="info-group">
-                  <div className="info-item">
-                    <i className="icon-department" /> Department
-                    <span>{selectedRow.department}</span>
+                <div className="class-info-group">
+                  <div className="class-info-item">
+                    <span className="class-info-label">Department</span>
+                    <span className="class-info-value">
+                      {selectedRow.department}
+                    </span>
                   </div>
-                  <div className="info-item">
-                    <i className="icon-teacher" /> Class Master
-                    <span>{selectedRow.classMaster}</span>
+                  <div className="class-info-item">
+                    <span className="class-info-label">Class Master</span>
+                    <span className="class-info-value">
+                      {selectedRow.classMaster}
+                    </span>
                   </div>
                 </div>
 
-                <div className="fee-group">
-                  <h4>Fees Overview</h4>
-                  <div className="fee-item">
-                    <span>Registration Fee:</span>{" "}
-                    {selectedRow.registration_fee || "N/A"}
-                  </div>
-                  <div className="fee-item">
-                    <span>Bus Fee:</span> {selectedRow.bus_fee || "N/A"}
-                  </div>
-                  <div className="fee-item">
-                    <span>Internship Fee:</span>{" "}
-                    {selectedRow.internship_fee || "N/A"}
-                  </div>
-                  <div className="fee-item">
-                    <span>Remedial Fee:</span>{" "}
-                    {selectedRow.remedial_fee || "N/A"}
-                  </div>
-                  <div className="fee-item">
-                    <span>Tuition Fee:</span> {selectedRow.tuition_fee || "N/A"}
-                  </div>
-                  <div className="fee-item">
-                    <span>PTA Fee:</span> {selectedRow.pta_fee || "N/A"}
-                  </div>
-                  <div className="fee-item total">
-                    <span>Total Fee:</span>{" "}
-                    {`${selectedRow.total_fee} FCFA` || "N/A"}
+                <div className="class-fee-group">
+                  <h4 className="class-fee-title">Fees Overview</h4>
+                  <div className="class-fee-list">
+                    <div className="class-fee-item">
+                      <span>Registration Fee</span>
+                      <span className="class-fee-value">
+                        {selectedRow.registration_fee || "N/A"}
+                      </span>
+                    </div>
+                    <div className="class-fee-item">
+                      <span>Bus Fee</span>
+                      <span className="class-fee-value">
+                        {selectedRow.bus_fee || "N/A"}
+                      </span>
+                    </div>
+                    <div className="class-fee-item">
+                      <span>Internship Fee</span>
+                      <span className="class-fee-value">
+                        {selectedRow.internship_fee || "N/A"}
+                      </span>
+                    </div>
+                    <div className="class-fee-item">
+                      <span>Remedial Fee</span>
+                      <span className="class-fee-value">
+                        {selectedRow.remedial_fee || "N/A"}
+                      </span>
+                    </div>
+                    <div className="class-fee-item">
+                      <span>Tuition Fee</span>
+                      <span className="class-fee-value">
+                        {selectedRow.tuition_fee || "N/A"}
+                      </span>
+                    </div>
+                    <div className="class-fee-item">
+                      <span>PTA Fee</span>
+                      <span className="class-fee-value">
+                        {selectedRow.pta_fee || "N/A"}
+                      </span>
+                    </div>
+                    <div className="class-fee-item class-fee-total">
+                      <span>Total Fee</span>
+                      <span className="class-fee-value">
+                        {`${selectedRow.total_fee} FCFA` || "N/A"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </section>
             </div>
           )}
-        </Modal>
+        </ClassModal>
       </div>
     </SideTop>
   );

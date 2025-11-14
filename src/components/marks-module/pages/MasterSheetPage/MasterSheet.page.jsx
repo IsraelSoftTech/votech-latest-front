@@ -231,16 +231,18 @@ const MasterSheetPage = () => {
             <FaArrowLeft /> <span>Go Back</span>
           </button>
 
-          <Select
-            placeholder="Select term to load…"
-            options={TERM_OPTIONS}
-            value={termValue}
-            onChange={(opt) => setSelectedTerm(opt?.value || null)}
-            menuPortalTarget={document.body}
-            styles={{
-              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-            }}
-          />
+          <div style={{ marginBottom: "20px" }}>
+            <Select
+              placeholder="Select term to load…"
+              options={TERM_OPTIONS}
+              value={termValue}
+              onChange={(opt) => setSelectedTerm(opt?.value || null)}
+              menuPortalTarget={document.body}
+              styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+              }}
+            />
+          </div>
         </div>
 
         {loading && (
