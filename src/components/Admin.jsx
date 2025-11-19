@@ -76,7 +76,7 @@ function Admin() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayCount = studentList.filter(s => s.created_at && s.created_at.slice(0, 10) === todayStr).length;
 
-  // Chart data: aggregate by registration date
+
   const [studentChartData, setStudentChartData] = useState([]);
   useEffect(() => {
     // Build date map: {date: {date, today: count, total: cumulative}}
