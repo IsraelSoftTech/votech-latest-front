@@ -9,8 +9,13 @@ const API_URL = config.API_URL;
 class ApiService {
   constructor() {
     // Initialize token and user from storage (session first, then local)
-    this.token = sessionStorage.getItem("token") || localStorage.getItem("token");
-    this.user = JSON.parse(sessionStorage.getItem("authUser") || localStorage.getItem("authUser") || "null");
+    this.token =
+      sessionStorage.getItem("token") || localStorage.getItem("token");
+    this.user = JSON.parse(
+      sessionStorage.getItem("authUser") ||
+        localStorage.getItem("authUser") ||
+        "null"
+    );
   }
 
   setToken(token) {
@@ -25,7 +30,8 @@ class ApiService {
 
   getToken() {
     // Always read fresh from storage to avoid stale/missing tokens
-    const latest = sessionStorage.getItem("token") || localStorage.getItem("token");
+    const latest =
+      sessionStorage.getItem("token") || localStorage.getItem("token");
     this.token = latest || null;
     return this.token;
   }
@@ -136,14 +142,30 @@ class ApiService {
     return data;
   }
 
-  async createAccount({ username, contact, password, role, name, email, gender }) {
+  async createAccount({
+    username,
+    contact,
+    password,
+    role,
+    name,
+    email,
+    gender,
+  }) {
     try {
       const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, contact, password, role, name, email, gender }),
+        body: JSON.stringify({
+          username,
+          contact,
+          password,
+          role,
+          name,
+          email,
+          gender,
+        }),
       });
 
       // First try to parse the response as text
@@ -207,8 +229,8 @@ class ApiService {
 
   async checkIfAdmin3Exists() {
     try {
-      console.log('API: Checking if Admin3 exists...');
-      
+      console.log("API: Checking if Admin3 exists...");
+
       // Method 1: Try to check if Admin3 user exists by username
       try {
         const response = await fetch(`${API_URL}/check-user`, {
@@ -221,15 +243,15 @@ class ApiService {
 
         if (response.ok) {
           const data = await response.json();
-          console.log('API: Check user response:', data);
+          console.log("API: Check user response:", data);
           // If the user exists, check if it's Admin3 role
           if (data.exists && data.user && data.user.role === "Admin3") {
-            console.log('API: Admin3 exists (method 1):', true);
+            console.log("API: Admin3 exists (method 1):", true);
             return true;
           }
         }
       } catch (error) {
-        console.log('API: Method 1 failed, trying method 2...');
+        console.log("API: Method 1 failed, trying method 2...");
       }
 
       // Method 2: Try to get all users (fallback)
@@ -242,17 +264,18 @@ class ApiService {
 
         if (response.ok) {
           const data = await response.json();
-          console.log('API: Users data:', data);
+          console.log("API: Users data:", data);
           // Check if any user has role "Admin3"
-          const admin3Exists = data && data.some(user => user.role === "Admin3");
-          console.log('API: Admin3 exists (method 2):', admin3Exists);
+          const admin3Exists =
+            data && data.some((user) => user.role === "Admin3");
+          console.log("API: Admin3 exists (method 2):", admin3Exists);
           return admin3Exists;
         }
       } catch (error) {
-        console.log('API: Method 2 failed');
+        console.log("API: Method 2 failed");
       }
 
-      console.log('API: All methods failed, assuming Admin3 does not exist');
+      console.log("API: All methods failed, assuming Admin3 does not exist");
       return false;
     } catch (error) {
       console.error("Check if Admin3 exists error:", error);
@@ -262,15 +285,15 @@ class ApiService {
 
   async getAdmin3Count() {
     try {
-      console.log('API: Getting Admin3 count...');
+      console.log("API: Getting Admin3 count...");
       const response = await fetch(`${API_URL}/users/admin3-count`, {
         headers: { "Content-Type": "application/json" },
       });
       if (response.ok) {
         const data = await response.json();
-        console.log('API: Admin3 count response:', data);
+        console.log("API: Admin3 count response:", data);
         const admin3Count = data.count || 0;
-        console.log('API: Admin3 count:', admin3Count);
+        console.log("API: Admin3 count:", admin3Count);
         return admin3Count;
       }
       return 0;
@@ -594,16 +617,26 @@ class ApiService {
   async createStudent(formData) {
     const authHeaders = this.getAuthHeaders();
     const headers = {};
-    if (authHeaders["Authorization"]) headers["Authorization"] = authHeaders["Authorization"];
-    const response = await fetch(`${API_URL}/students`, { method: "POST", headers, body: formData });
+    if (authHeaders["Authorization"])
+      headers["Authorization"] = authHeaders["Authorization"];
+    const response = await fetch(`${API_URL}/students`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
     return this.handleResponse(response);
   }
 
   async updateStudent(id, formData) {
     const authHeaders = this.getAuthHeaders();
     const headers = {};
-    if (authHeaders["Authorization"]) headers["Authorization"] = authHeaders["Authorization"];
-    const response = await fetch(`${API_URL}/students/${id}`, { method: "PUT", headers, body: formData });
+    if (authHeaders["Authorization"])
+      headers["Authorization"] = authHeaders["Authorization"];
+    const response = await fetch(`${API_URL}/students/${id}`, {
+      method: "PUT",
+      headers,
+      body: formData,
+    });
     return this.handleResponse(response);
   }
 
@@ -614,12 +647,18 @@ class ApiService {
   }
 
   async deleteStudent(id) {
-    const response = await fetch(`${API_URL}/students/${id}`, { method: "DELETE", headers: this.getAuthHeaders() });
+    const response = await fetch(`${API_URL}/students/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
     return this.handleResponse(response);
   }
 
   async uploadManyStudents(formData) {
-    const response = await fetch(`${API_URL}/students/upload-many`, { method: "POST", body: formData });
+    const response = await fetch(`${API_URL}/students/upload-many`, {
+      method: "POST",
+      body: formData,
+    });
     return this.handleResponse(response);
   }
 
@@ -957,7 +996,7 @@ class ApiService {
 
       // Determine if we need assignment data (only for teachers)
       const hasTeachers = staffRaw.some(
-        (user) => String(user?.role || '').toLowerCase() === 'teacher'
+        (user) => String(user?.role || "").toLowerCase() === "teacher"
       );
 
       let classSubjects = [];
@@ -966,10 +1005,15 @@ class ApiService {
 
       if (hasTeachers) {
         // Fetch class-subject assignments
-        const classSubjectsResponse = await fetch(`${API_URL}/v1/class-subjects`, {
-          headers: this.getAuthHeaders(),
-        });
-        const classSubjectsPayload = await this.handleResponse(classSubjectsResponse);
+        const classSubjectsResponse = await fetch(
+          `${API_URL}/v1/class-subjects`,
+          {
+            headers: this.getAuthHeaders(),
+          }
+        );
+        const classSubjectsPayload = await this.handleResponse(
+          classSubjectsResponse
+        );
         classSubjects = Array.isArray(classSubjectsPayload?.data)
           ? classSubjectsPayload.data
           : Array.isArray(classSubjectsPayload)
@@ -1021,47 +1065,52 @@ class ApiService {
               classMap.get(String(cs.class_id)) || `Class ${cs.class_id}`,
             subjectId: cs.subject_id,
             subjectName:
-              subjectMap.get(String(cs.subject_id)) || `Subject ${cs.subject_id}`,
+              subjectMap.get(String(cs.subject_id)) ||
+              `Subject ${cs.subject_id}`,
           });
         });
       }
 
       // Combine staff with assignments (teachers) or empty data (other roles)
-      const staffWithAssignments = staffRaw.map((staff) => {
-        if (!staff) return null;
-        const staffKey = String(staff.id ?? staff.user_id ?? '');
-        const assignments = staffKey
-          ? assignmentsByTeacher.get(staffKey) || []
-          : [];
+      const staffWithAssignments = staffRaw
+        .map((staff) => {
+          if (!staff) return null;
+          const staffKey = String(staff.id ?? staff.user_id ?? "");
+          const assignments = staffKey
+            ? assignmentsByTeacher.get(staffKey) || []
+            : [];
 
-        const uniqueClasses = Array.from(
-          new Set(assignments.map((a) => a.className).filter(Boolean))
-        );
-        const uniqueSubjects = Array.from(
-          new Set(assignments.map((a) => a.subjectName).filter(Boolean))
-        );
+          const uniqueClasses = Array.from(
+            new Set(assignments.map((a) => a.className).filter(Boolean))
+          );
+          const uniqueSubjects = Array.from(
+            new Set(assignments.map((a) => a.subjectName).filter(Boolean))
+          );
 
-        return {
-          id: staff.id ?? staff.user_id ?? staffKey,
-          name: staff.name || staff.username || 'Unknown',
-          username: staff.username,
-          contact: staff.contact,
-          role: staff.role,
-          classes: uniqueClasses.length ? uniqueClasses.join(', ') : 'None',
-          subjects: uniqueSubjects.length ? uniqueSubjects.join(', ') : 'None',
-          assignments,
-        };
-      }).filter(Boolean);
+          return {
+            id: staff.id ?? staff.user_id ?? staffKey,
+            name: staff.name || staff.username || "Unknown",
+            username: staff.username,
+            contact: staff.contact,
+            role: staff.role,
+            classes: uniqueClasses.length ? uniqueClasses.join(", ") : "None",
+            subjects: uniqueSubjects.length
+              ? uniqueSubjects.join(", ")
+              : "None",
+            assignments,
+          };
+        })
+        .filter(Boolean);
 
       staffWithAssignments.sort((a, b) => {
-        const nameA = String(a.name || a.username || '').toLowerCase();
-        const nameB = String(b.name || b.username || '').toLowerCase();
+        const nameA = String(a.name || a.username || "").toLowerCase();
+        const nameB = String(b.name || b.username || "").toLowerCase();
         return nameA.localeCompare(nameB);
       });
 
       return staffWithAssignments;
     } catch (error) {
-      console.error('Get staff with assignments error:', error);
+      console.error("Get staff with assignments error:", error);
       return [];
     }
   }
@@ -1221,7 +1270,6 @@ class ApiService {
     return await response.json();
   }
 
-
   // Delete budget head
   async deleteBudgetHead(id) {
     try {
@@ -1331,19 +1379,25 @@ class ApiService {
 
   async getBalanceSheet(asOfDate = null) {
     const params = asOfDate ? `?as_of_date=${asOfDate}` : "";
-    const response = await fetch(`${API_URL}/inventory/balance-sheet${params}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${API_URL}/inventory/balance-sheet${params}`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
     if (!response.ok) throw new Error("Failed to fetch balance sheet");
     return await response.json();
   }
 
   async calculateDepreciation(month, year) {
-    const response = await fetch(`${API_URL}/inventory/calculate-depreciation`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ month, year }),
-    });
+    const response = await fetch(
+      `${API_URL}/inventory/calculate-depreciation`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ month, year }),
+      }
+    );
     if (!response.ok) throw new Error("Failed to calculate depreciation");
     return await response.json();
   }
@@ -1803,7 +1857,10 @@ class ApiService {
     try {
       const response = await fetch(`${API_URL}/salary/update`, {
         method: "POST",
-        headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
+        headers: {
+          ...this.getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ userId, amount }),
       });
       return this.handleResponse(response);
@@ -1855,7 +1912,10 @@ class ApiService {
     try {
       const response = await fetch(`${API_URL}/salary/edit-paid/${salaryId}`, {
         method: "PUT",
-        headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
+        headers: {
+          ...this.getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ monthNumber, year }),
       });
       return this.handleResponse(response);
@@ -1912,8 +1972,8 @@ class ApiService {
 
   async setCnpsPreference(userId, excluded) {
     const response = await fetch(`${API_URL}/salary/cnps/${userId}`, {
-      method: 'PUT',
-      headers: { ...this.getAuthHeaders(), 'Content-Type': 'application/json' },
+      method: "PUT",
+      headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({ excluded }),
     });
     return this.handleResponse(response);
@@ -2302,21 +2362,27 @@ class ApiService {
   }
 
   async getStudentsForCases() {
-    console.log('API: Getting students for cases from:', `${API_URL}/cases/students/list`);
-    console.log('API: Auth headers:', this.getAuthHeaders());
+    console.log(
+      "API: Getting students for cases from:",
+      `${API_URL}/cases/students/list`
+    );
+    console.log("API: Auth headers:", this.getAuthHeaders());
     const response = await fetch(`${API_URL}/cases/students/list`, {
       headers: this.getAuthHeaders(),
     });
-    console.log('API: Students response status:', response.status);
+    console.log("API: Students response status:", response.status);
     return await this.handleResponse(response);
   }
 
   async getClassesForCases() {
-    console.log('API: Getting classes for cases from:', `${API_URL}/cases/classes/list`);
+    console.log(
+      "API: Getting classes for cases from:",
+      `${API_URL}/cases/classes/list`
+    );
     const response = await fetch(`${API_URL}/cases/classes/list`, {
       headers: this.getAuthHeaders(),
     });
-    console.log('API: Classes response status:', response.status);
+    console.log("API: Classes response status:", response.status);
     return await this.handleResponse(response);
   }
 
@@ -2491,7 +2557,7 @@ class ApiService {
 
   async uploadStaffAttendanceFile(file) {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     const authHeaders = this.getAuthHeaders();
     const headers = {};
@@ -2509,14 +2575,17 @@ class ApiService {
 
   async getStaffAttendanceRecords(params = {}) {
     const queryParams = new URLSearchParams();
-    if (params.page) queryParams.set('page', params.page);
-    if (params.limit) queryParams.set('limit', params.limit);
-    if (params.month) queryParams.set('month', params.month);
-    if (params.year) queryParams.set('year', params.year);
+    if (params.page) queryParams.set("page", params.page);
+    if (params.limit) queryParams.set("limit", params.limit);
+    if (params.month) queryParams.set("month", params.month);
+    if (params.year) queryParams.set("year", params.year);
 
-    const response = await fetch(`${API_URL}/staff-attendance/records?${queryParams.toString()}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${API_URL}/staff-attendance/records?${queryParams.toString()}`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
     return await this.handleResponse(response);
   }
 
@@ -2548,12 +2617,15 @@ class ApiService {
 
   async generateStaffMonthlyReport(month, year) {
     const params = new URLSearchParams();
-    params.set('month', month);
-    params.set('year', year);
+    params.set("month", month);
+    params.set("year", year);
 
-    const response = await fetch(`${API_URL}/staff-attendance/monthly-report?${params.toString()}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${API_URL}/staff-attendance/monthly-report?${params.toString()}`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
     return await this.handleResponse(response);
   }
 
@@ -2572,18 +2644,27 @@ class ApiService {
   }
 
   async getStaffEmploymentStatus() {
-    const response = await fetch(`${API_URL}/staff-attendance/employment-status`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${API_URL}/staff-attendance/employment-status`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
     return await this.handleResponse(response);
   }
 
   async updateStaffEmploymentStatus(staffName, employmentType) {
-    const response = await fetch(`${API_URL}/staff-attendance/employment-status`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ staff_name: staffName, employment_type: employmentType }),
-    });
+    const response = await fetch(
+      `${API_URL}/staff-attendance/employment-status`,
+      {
+        method: "PUT",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          staff_name: staffName,
+          employment_type: employmentType,
+        }),
+      }
+    );
     return await this.handleResponse(response);
   }
 
@@ -2594,21 +2675,24 @@ class ApiService {
     return await this.handleResponse(response);
   }
 
-  async updateStaffAttendanceSettings(fullTimeDays, partTimeDays, startTime, endTime) {
+  async updateStaffAttendanceSettings(
+    fullTimeDays,
+    partTimeDays,
+    startTime,
+    endTime
+  ) {
     const response = await fetch(`${API_URL}/staff-attendance/settings`, {
-      method: 'PUT',
+      method: "PUT",
       headers: this.getAuthHeaders(),
-      body: JSON.stringify({ 
-        full_time_expected_days: fullTimeDays, 
+      body: JSON.stringify({
+        full_time_expected_days: fullTimeDays,
         part_time_expected_days: partTimeDays,
         start_time: startTime,
-        end_time: endTime
+        end_time: endTime,
       }),
     });
     return await this.handleResponse(response);
   }
-
-
 
   // Discipline Cases API endpoints
   async getDisciplineCases() {
@@ -2619,20 +2703,26 @@ class ApiService {
   }
 
   async getDisciplineStudents() {
-    console.log('API: Getting discipline students from:', `${API_URL}/discipline-cases/students`);
+    console.log(
+      "API: Getting discipline students from:",
+      `${API_URL}/discipline-cases/students`
+    );
     const response = await fetch(`${API_URL}/discipline-cases/students`, {
       headers: this.getAuthHeaders(),
     });
-    console.log('API: Discipline students response status:', response.status);
+    console.log("API: Discipline students response status:", response.status);
     return await this.handleResponse(response);
   }
 
   async getDisciplineClasses() {
-    console.log('API: Getting discipline classes from:', `${API_URL}/discipline-cases/classes`);
+    console.log(
+      "API: Getting discipline classes from:",
+      `${API_URL}/discipline-cases/classes`
+    );
     const response = await fetch(`${API_URL}/discipline-cases/classes`, {
       headers: this.getAuthHeaders(),
     });
-    console.log('API: Discipline classes response status:', response.status);
+    console.log("API: Discipline classes response status:", response.status);
     return await this.handleResponse(response);
   }
 
@@ -2815,12 +2905,19 @@ class ApiService {
 
   async updateTeacherDisciplineCaseStatus(id, data) {
     // repurpose to general update
-    const response = await fetch(`${API_URL}/teacher-discipline-cases/${id}`, { method: "PUT", headers: this.getAuthHeaders(), body: JSON.stringify(data) });
+    const response = await fetch(`${API_URL}/teacher-discipline-cases/${id}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
     return await this.handleResponse(response);
   }
 
   async deleteTeacherDisciplineCase(id) {
-    const response = await fetch(`${API_URL}/teacher-discipline-cases/${id}`, { method: "DELETE", headers: this.getAuthHeaders() });
+    const response = await fetch(`${API_URL}/teacher-discipline-cases/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
     return await this.handleResponse(response);
   }
 
@@ -2879,7 +2976,6 @@ class ApiService {
     });
     return await this.handleResponse(response);
   }
-
 }
 
 const api = new ApiService();

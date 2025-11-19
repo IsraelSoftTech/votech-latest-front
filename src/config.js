@@ -1,17 +1,29 @@
-// Determine if we're in development mode
-const isDevelopment = process.env.NODE_ENV === 'development' || 
-                     window.location.hostname === 'localhost' || 
-                     window.location.hostname === '127.0.0.1';
+const LOCAL_IP = "192.168.1.201";
+
+// First, read NODE_ENV
+const env = process.env.NODE_ENV;
+
+// Self-detect fallback based on hostname
+const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+
+const isDevelopment =
+  env === "development" || hostname === "localhost" || hostname === "127.0.0.1";
+
+const isDesktop = env === "desktop" || hostname === LOCAL_IP;
 
 const config = {
-  // API URL configuration - use local for development, production for live
-  API_URL: isDevelopment ? "http://localhost:5000/api" : "https://api.votechs7academygroup.com/api",
+  API_URL: isDevelopment
+    ? "https://localhost:5000/api"
+    : isDesktop
+    ? `http://${LOCAL_IP}:5000/api`
+    : "https://api.votechs7academygroup.com/api",
 
-  // Frontend URL
-  FRONTEND_URL: isDevelopment ? "http://localhost:3000" : "https://api.votechs7academygroup.com/api",
-   
+  FRONTEND_URL: isDevelopment
+    ? "http://localhost:3000"
+    : isDesktop
+    ? `http://${LOCAL_IP}:3000`
+    : "https://votechs7academygroup.com",
 
-  // FTP URL (for reference)
   FTP_URL: "https://st60307.ispot.cc/votechs7academygroup",
 };
 

@@ -297,7 +297,7 @@ export const AcademicYear = () => {
       fetchStats();
     } catch (err) {
       const serverError =
-        err.response?.data?.details || "Failed to create academic year.";
+        err.response?.data?.message || "Failed to create academic year.";
       toast.error(serverError);
     } finally {
       setCreateLoading(false);
