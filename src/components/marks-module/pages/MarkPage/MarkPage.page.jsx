@@ -2,7 +2,7 @@ import "./MarksUpload.styles.css";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import SideTop from "../../../SideTop";
 import { toast } from "react-toastify";
-import api, { headers, subBaseURL } from "../../utils/api";
+import api from "../../utils/api";
 import Select from "react-select";
 import { CustomInput } from "../../components/Inputs/CustumInputs";
 import * as XLSX from "xlsx";
@@ -132,7 +132,6 @@ export const MarksUploadPage = () => {
           : (classesRes?.data?.data || [])
               .map((cls) => ({
                 ...cls,
-                // Only include classSubjects assigned to this teacher
                 classSubjects: (cls.classSubjects || []).filter((cs) =>
                   classSubjects.some(
                     (teacherCs) =>
@@ -140,15 +139,12 @@ export const MarksUploadPage = () => {
                   )
                 ),
               }))
-              // Only keep classes that now have classSubjects
               .filter((cls) => cls.classSubjects.length > 0)
       );
       setTerms(termsRes?.data?.data || []);
       setSequences(sequencesRes?.data?.data || []);
       setSubject(subRes?.data?.data || {});
 
-      // console.log(yearsRes?.data?.data);
-      // Fetch separately to avoid await blocking the page render
       fetchDepartments();
       fetchSubjectClasses();
     } catch (err) {
@@ -156,7 +152,7 @@ export const MarksUploadPage = () => {
     } finally {
       setLoadingPage(false);
     }
-  });
+  }, [id, user]);
 
   useEffect(() => {
     if (!user || hasFetchedRef.current) return;
@@ -167,7 +163,6 @@ export const MarksUploadPage = () => {
   const loadStudentsMarks = useCallback(async () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
 
-    // Missing filters: reset table and exit
     if (
       !academic_year_id ||
       !class_id ||
@@ -182,7 +177,6 @@ export const MarksUploadPage = () => {
 
     setLoadingTable(true);
     try {
-      // Check if the subject is assigned to the selected class
       const classAssigned = subjectClasses.some(
         (sc) => Number(sc.class_id) === Number(class_id)
       );
@@ -199,7 +193,6 @@ export const MarksUploadPage = () => {
         return;
       }
 
-      // Fetch students in this class/department/academic year
       const resStudents = await api.get(
         `/students?class_id=${class_id}&specialty_id=${
           filters.department_id || ""
@@ -208,7 +201,6 @@ export const MarksUploadPage = () => {
       const studentsList = resStudents?.data?.data || [];
       setStudents(studentsList);
 
-      // Fetch existing marks for these students
       const resMarks = await api.get(
         `/marks?subject_id=${subject.id}&academic_year_id=${academic_year_id}&class_id=${class_id}&term_id=${term_id}&sequence_id=${sequence_id}`
       );
@@ -303,7 +295,6 @@ export const MarksUploadPage = () => {
       return;
     }
 
-    // Metadata for user
     const wsData = [
       [
         "⚠️ WARNING: Do NOT edit any column except 'Score'. Leave all other columns unchanged!",
@@ -341,9 +332,8 @@ export const MarksUploadPage = () => {
             ?.name || ""
         }`,
       ],
-      [], // empty row
-      ["Student Name", "Student ID", "Score"], // visible header
-      // hidden IDs row for internal use
+      [],
+      ["Student Name", "Student ID", "Score"],
       [
         "",
         "",
@@ -373,17 +363,16 @@ export const MarksUploadPage = () => {
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    // Hide hidden columns (D–I)
     ws["!cols"] = [
-      { wch: 25 }, // Student Name
-      { wch: 15 }, // Student ID
-      { wch: 10 }, // Score
-      { hidden: true }, // department_id
-      { hidden: true }, // academic_year_id
-      { hidden: true }, // class_id
-      { hidden: true }, // term_id
-      { hidden: true }, // sequence_id
-      { hidden: true }, // subject_id
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 10 },
+      { hidden: true },
+      { hidden: true },
+      { hidden: true },
+      { hidden: true },
+      { hidden: true },
+      { hidden: true },
     ];
 
     const wb = XLSX.utils.book_new();
@@ -417,21 +406,10 @@ export const MarksUploadPage = () => {
 
       if (json.length < 11) throw new Error("Excel file missing data rows.");
 
-      // rows starting from 10th index (skip warning + metadata + header rows)
       const rows = json.slice(10);
 
       const newMarks = rows.map((row) => {
-        const [
-          fullName,
-          studentId,
-          score, // hidden department_id // hidden academic_year_id // hidden class_id // hidden term_id // hidden sequence_id
-          ,
-          ,
-          ,
-          ,
-          ,
-          subjectId,
-        ] = row;
+        const [fullName, studentId, score, , , , , , subjectId] = row;
 
         const student = students.find((s) => s.student_id === studentId);
         if (!student) throw new Error(`Student ${fullName} not found.`);
@@ -440,7 +418,6 @@ export const MarksUploadPage = () => {
           throw new Error(`Invalid score for ${fullName}. Must be 0–20.`);
         }
 
-        // Set subject from hidden column (first row is enough)
         setSubject((prev) => ({ ...prev, id: subjectId }));
 
         return {
@@ -469,9 +446,6 @@ export const MarksUploadPage = () => {
     (t) => Number(t.id) === Number(filters.term_id)
   );
 
-  // console.log(sequences);
-
-  // Key fix: filter sequences by selected term_id + academic_year_id
   const filteredSequences =
     filters.academic_year_id && selectedTerm
       ? sequences
@@ -493,20 +467,20 @@ export const MarksUploadPage = () => {
   return (
     <SideTop>
       <div className="marks-upload-page">
-        <h2>Upload {subject.name} Marks</h2>
+        <h2 className="marks-page-title">Upload {subject.name} Marks</h2>
 
         {loadingPage ? (
           <Skeleton height={35} count={6} style={{ marginBottom: "10px" }} />
         ) : (
           <>
             <div>
-              <button className="back-btn" onClick={() => navigate(-1)}>
+              <button className="marks-back-btn" onClick={() => navigate(-1)}>
                 <FaArrowLeft /> <span>Go Back to Subjects</span>
               </button>
             </div>
 
-            <div className="filters-row">
-              <div className="form-react-select">
+            <div className="marks-filters-row">
+              <div className="marks-filter-select">
                 <Select
                   placeholder="Academic Year"
                   options={academicYears.map((y) => ({
@@ -527,14 +501,14 @@ export const MarksUploadPage = () => {
                     setFilters((prev) => ({
                       ...prev,
                       academic_year_id: opt?.value || null,
-                      term_id: null, // reset term when year changes
-                      sequence_id: null, // reset sequence as well
+                      term_id: null,
+                      sequence_id: null,
                     }))
                   }
                 />
               </div>
 
-              <div className="form-react-select">
+              <div className="marks-filter-select">
                 <Select
                   placeholder="Department"
                   options={departments.map((d) => ({
@@ -562,7 +536,7 @@ export const MarksUploadPage = () => {
                 />
               </div>
 
-              <div className="form-react-select">
+              <div className="marks-filter-select">
                 <Select
                   placeholder="Select Class"
                   options={filteredClasses.map((c) => ({
@@ -578,7 +552,7 @@ export const MarksUploadPage = () => {
                             (c) => c.id === filters.class_id
                           )?.name,
                         }
-                      : null // placeholder shows if class is invalid or reset
+                      : null
                   }
                   onChange={(opt) =>
                     setFilters((prev) => ({
@@ -590,7 +564,7 @@ export const MarksUploadPage = () => {
                 />
               </div>
 
-              <div className="form-react-select">
+              <div className="marks-filter-select">
                 <Select
                   placeholder="Select Term"
                   options={filteredTerms.map((t) => ({
@@ -606,20 +580,20 @@ export const MarksUploadPage = () => {
                             (t) => t.id === filters.term_id
                           )?.name,
                         }
-                      : null // ensures placeholder shows if term is invalid or reset
+                      : null
                   }
                   onChange={(opt) =>
                     setFilters((prev) => ({
                       ...prev,
                       term_id: opt?.value || null,
-                      sequence_id: null, // reset sequence when term changes
+                      sequence_id: null,
                     }))
                   }
                   isClearable
                 />
               </div>
 
-              <div className="form-react-select">
+              <div className="marks-filter-select">
                 <Select
                   placeholder="Select Sequence"
                   options={filteredSequences.map((s) => ({
@@ -636,7 +610,7 @@ export const MarksUploadPage = () => {
                             (s) => s.id === filters.sequence_id
                           )?.name,
                         }
-                      : null // placeholder when sequence is invalid/reset
+                      : null
                   }
                   onChange={(opt) =>
                     setFilters((prev) => ({
@@ -649,11 +623,10 @@ export const MarksUploadPage = () => {
               </div>
             </div>
 
-            <div className="buttons-row">
+            <div className="marks-buttons-row">
               <button
-                className="btn btn-create"
+                className="marks-btn marks-btn-export"
                 onClick={handleExportExcel}
-                style={{ marginBottom: 0 }}
                 disabled={
                   !students.length || students.some((s) => s.id === "none")
                 }
@@ -663,21 +636,20 @@ export const MarksUploadPage = () => {
                   : "Export to Excel"}
               </button>
 
-              <div className="custom-upload-wrapper">
+              <div className="marks-upload-wrapper">
                 <input
                   type="file"
                   accept=".xlsx, .xls"
                   id="uploadExcelInput"
                   onChange={handleImportExcel}
-                  className="hidden-file-input"
+                  className="marks-hidden-input"
                 />
                 <button
                   type="button"
-                  className="btn btn-create"
+                  className="marks-btn marks-btn-import"
                   onClick={() =>
                     document.getElementById("uploadExcelInput").click()
                   }
-                  style={{ marginBottom: 0 }}
                 >
                   {importingExcelFile
                     ? "Uploading Excel File..."
@@ -686,11 +658,11 @@ export const MarksUploadPage = () => {
               </div>
             </div>
 
-            <div className="marks-table-wrapper">
+            <div className="marks-table-container">
               {loadingTable ? (
                 <Skeleton count={5} height={30} />
               ) : (
-                <table>
+                <table className="marks-table">
                   <thead>
                     <tr>
                       <th>S/N</th>
@@ -702,11 +674,12 @@ export const MarksUploadPage = () => {
                   <tbody>
                     {students.length > 0 ? (
                       students.map((s, index) => (
-                        <tr key={s.id}>
-                          <td>{index + 1}</td>
-                          <td>{s.student_id}</td>
-                          <td>{s.full_name}</td>
-                          <td style={{ maxWidth: "1rem" }}>
+                        <tr key={s.id} className="marks-table-row">
+                          {/* Desktop cells */}
+                          <td className="desktop-cell">{index + 1}</td>
+                          <td className="desktop-cell">{s.student_id}</td>
+                          <td className="desktop-cell">{s.full_name}</td>
+                          <td className="desktop-cell">
                             {s.id === "none" ? (
                               "-"
                             ) : (
@@ -723,14 +696,55 @@ export const MarksUploadPage = () => {
                               />
                             )}
                           </td>
+
+                          {/* Mobile card */}
+                          <td className="mobile-marks-cell" colSpan={4}>
+                            <div className="mobile-marks-card">
+                              <div className="marks-card-header">
+                                <span className="student-number">
+                                  #{index + 1}
+                                </span>
+                                <span className="student-id-badge">
+                                  {s.student_id}
+                                </span>
+                              </div>
+
+                              <div className="marks-card-body">
+                                <div className="student-name-row">
+                                  <span className="student-name">
+                                    {s.full_name}
+                                  </span>
+                                </div>
+
+                                <div className="marks-input-section">
+                                  <label className="marks-input-label">
+                                    Enter Mark
+                                  </label>
+                                  {s.id === "none" ? (
+                                    <div className="marks-placeholder">-</div>
+                                  ) : (
+                                    <CustomInput
+                                      type="number"
+                                      value={
+                                        marks.find((m) => m.student_id === s.id)
+                                          ?.score ?? ""
+                                      }
+                                      onChange={(_, val) =>
+                                        handleMarkChange(s.id, val)
+                                      }
+                                      onClear={() => handleMarkChange(s.id, "")}
+                                      placeholder="0-20"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
                         </tr>
                       ))
                     ) : (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          style={{ fontStyle: "italic", textAlign: "center" }}
-                        >
+                      <tr className="no-data-row">
+                        <td colSpan={4} className="no-data-cell">
                           No students found
                         </td>
                       </tr>
@@ -740,12 +754,11 @@ export const MarksUploadPage = () => {
               )}
             </div>
 
-            <div>
+            <div className="marks-save-section">
               <button
-                className="btn btn-create"
+                className="marks-btn marks-btn-save"
                 onClick={handleSave}
-                style={{ width: "100%", padding: "0.8rem" }}
-                disabled={students.some((s) => s.id === "none")}
+                disabled={students.some((s) => s.id === "none") || saving}
               >
                 {saving ? "Saving Marks..." : "Save Marks"}
               </button>

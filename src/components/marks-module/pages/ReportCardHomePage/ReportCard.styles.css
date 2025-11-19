@@ -1,21 +1,54 @@
+/* ============================================= */
+/* BASE STYLES - DESKTOP */
+/* ============================================= */
+
 .report-card-home-page {
-  padding: 2rem;
-  background: #f9f9f9;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #f9fafb;
   min-height: 100vh;
 }
 
-/* Heading */
-.report-card-home-page h2 {
-  margin-bottom: 1.5rem;
-  font-size: 1.8rem;
-  font-weight: 600;
+/* Header */
+.report-card-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-.read-only-badge {
+.report-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #e5e7eb;
+  color: #333;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.report-back-btn:hover {
+  background: #d1d5db;
+}
+
+.report-card-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.report-read-only-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -28,190 +61,614 @@
   border: 1px solid rgba(108, 117, 125, 0.3);
 }
 
-.read-only-text {
+.report-read-only-text {
   color: #6c757d;
   font-style: italic;
   font-size: 0.9rem;
 }
 
-/* Back Button */
-.back-btn {
+/* Filters Section */
+.report-filters-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.report-filters-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #204080;
+  margin: 0 0 16px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.report-filters-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.report-form-select {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.report-form-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.report-react-select .report-select__control {
+  min-height: 44px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.report-react-select .report-select__control:hover {
+  border-color: #d1d5db;
+}
+
+.report-react-select .report-select__control--is-focused {
+  border-color: #204080;
+  box-shadow: 0 0 0 1px #204080;
+}
+
+/* FIXED: Disabled state with muted blue */
+.report-react-select .report-select__control--is-disabled {
+  background-color: rgba(32, 64, 128, 0.05);
+  border-color: rgba(32, 64, 128, 0.2);
+  opacity: 0.7;
+}
+
+/* Actions Section */
+.report-actions-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  justify-content: flex-end;
+}
+
+.report-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #e0e0e0;
-  color: #333;
+  gap: 8px;
+  padding: 12px 24px;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-bottom: 1rem;
-  transition: background 0.2s;
-}
-
-.back-btn:hover {
-  background: #d5d5d5;
-}
-
-/* Filters Row */
-.filters-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.form-react-select {
-  flex: 1 1 180px;
-  min-width: 150px;
-}
-
-/* Buttons Row */
-.buttons-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.btn-view:hover {
-  background-color: #059669;
-}
-
-/* Upload Wrapper */
-.custom-upload-wrapper {
-  position: relative;
-}
-
-.hidden-file-input {
-  display: none;
-}
-
-/* Table Wrapper */
-.students-table-wrapper {
-  width: 100%;
-  background: #fff;
   border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  overflow-x: auto; /* horizontal scroll for small screens */
-  overflow-y: visible; /* allow dropdowns to expand */
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Table */
-.students-table-wrapper table {
+/* FIXED: Disabled state with muted blue */
+.report-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: rgba(32, 64, 128, 0.3) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: none;
+}
+
+.report-btn-primary {
+  background: #204080;
+  color: white;
+}
+
+.report-btn-primary:hover:not(:disabled) {
+  background: #163060;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.report-btn-download {
+  background: #10b981;
+  color: white;
+}
+
+.report-btn-download:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* FIXED: Specific disabled state for download button */
+.report-btn-download:disabled {
+  background: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Students Section */
+.report-students-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.report-students-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #204080;
+  margin: 0 0 16px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.report-students-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+.report-students-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto; /* adjust columns to content */
+  table-layout: auto;
 }
 
-/* Table cells */
-.students-table-wrapper th,
-.students-table-wrapper td {
-  padding: 0.75rem 1rem;
+.report-students-table th,
+.report-students-table td {
+  padding: 12px 16px;
   text-align: left;
-  border-bottom: 1px solid #e0e0e0;
-  font-size: 0.95rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
   vertical-align: middle;
 }
 
-/* Table header */
-.students-table-wrapper th {
-  background-color: #f3f4f6;
+.report-students-table th {
+  background-color: #f9fafb;
   font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
 }
 
-.students-table-wrapper tr:last-child td {
+.report-students-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.report-students-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Ensure react-select dropdown inside table is visible */
-.students-table-wrapper .react-select__menu {
-  z-index: 1000;
+.report-table-select .report-select__control {
+  min-height: 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
 }
 
-.master-sheet-holder {
-  display: flex;
-  justify-content: right;
-  gap: 2rem;
+/* FIXED: Disabled select in table */
+.report-table-select .report-select__control--is-disabled {
+  background-color: rgba(32, 64, 128, 0.05);
+  border-color: rgba(32, 64, 128, 0.2);
+  opacity: 0.7;
 }
 
-.master-sheet-holder .btn.btn-create[disabled] {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-  filter: grayscale(20%);
+.report-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
 }
 
-/* Full-screen overlay */
+.report-empty-state p {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* PDF Progress Overlay */
 .pdf-progress-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(17, 24, 39, 0.6); /* gray-900 @ 60% */
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000; /* Higher than react-select portal */
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
 }
 
-/* Card */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .pdf-progress-card {
   width: min(560px, 92vw);
   background: #ffffff;
-  border-radius: 14px;
-  padding: 22px 22px 18px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
   text-align: center;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .pdf-progress-emoji {
-  font-size: 28px;
-  margin-bottom: 6px;
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .pdf-progress-card h3 {
-  margin: 0 0 6px 0;
+  margin: 0 0 12px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .pdf-progress-card p {
-  margin: 0 0 16px 0;
-  color: #4b5563; /* gray-600 */
+  margin: 0 0 24px 0;
+  color: #6b7280;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
-/* Progress bar */
 .pdf-progress-bar {
   width: 100%;
-  height: 10px;
+  height: 12px;
   border-radius: 999px;
-  background: #eef2f7;
+  background: #e5e7eb;
   overflow: hidden;
   position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .pdf-progress-fill {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, #c9a96e, #204080);
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 8px rgba(32, 64, 128, 0.4);
   transition: width 500ms ease;
+  border-radius: 999px;
 }
 
 .pdf-progress-percent {
-  margin-top: 8px;
-  font-weight: 600;
+  margin-top: 12px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #204080;
 }
 
-/* Responsive adjustments */
+/* ============================================= */
+/* MOBILE STYLES */
+/* ============================================= */
+
 @media (max-width: 768px) {
-  /* .filters-row {
-    flex-direction: column;
-  } */
-
-  .buttons-row {
-    flex-direction: column;
+  .report-card-home-page {
+    padding: 12px;
+    background: #f9fafb;
   }
 
-  .form-react-select {
-    flex: 1 1 100%;
+  /* Header */
+  .report-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
   }
+
+  .report-back-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .report-card-title {
+    font-size: 22px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .report-read-only-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  /* Filters Section */
+  .report-filters-section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .report-filters-title {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .report-filters-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .report-form-label {
+    font-size: 13px;
+  }
+
+  .report-react-select .report-select__control {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  /* Actions Section */
+  .report-actions-section {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .report-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  /* Students Section */
+  .report-students-section {
+    padding: 16px;
+  }
+
+  .report-students-title {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .report-students-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .report-students-table {
+    min-width: 600px;
+  }
+
+  .report-students-table th,
+  .report-students-table td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .report-students-table th {
+    font-size: 12px;
+  }
+
+  .report-table-select .report-select__control {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .report-empty-state {
+    padding: 30px 16px;
+  }
+
+  .report-empty-state p {
+    font-size: 14px;
+  }
+
+  /* PDF Progress */
+  .pdf-progress-card {
+    padding: 24px;
+  }
+
+  .pdf-progress-emoji {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+
+  .pdf-progress-card h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .pdf-progress-card p {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .pdf-progress-bar {
+    height: 10px;
+  }
+
+  .pdf-progress-percent {
+    font-size: 16px;
+    margin-top: 10px;
+  }
+}
+
+/* ============================================= */
+/* SMALL MOBILE - 480px */
+/* ============================================= */
+
+@media (max-width: 480px) {
+  .report-card-home-page {
+    padding: 10px;
+  }
+
+  .report-card-header {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .report-back-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .report-card-title {
+    font-size: 20px;
+  }
+
+  .report-filters-section {
+    padding: 14px;
+  }
+
+  .report-filters-title {
+    font-size: 15px;
+  }
+
+  .report-students-section {
+    padding: 14px;
+  }
+
+  .report-students-title {
+    font-size: 15px;
+  }
+
+  .report-students-table th,
+  .report-students-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .pdf-progress-card {
+    padding: 20px;
+  }
+
+  .pdf-progress-emoji {
+    font-size: 36px;
+  }
+
+  .pdf-progress-card h3 {
+    font-size: 18px;
+  }
+
+  .pdf-progress-card p {
+    font-size: 13px;
+  }
+}
+
+/* ============================================= */
+/* VERY SMALL DEVICES - 320px */
+/* ============================================= */
+
+@media (max-width: 320px) {
+  .report-card-home-page {
+    padding: 8px;
+  }
+
+  .report-card-title {
+    font-size: 18px;
+  }
+
+  .report-filters-section {
+    padding: 12px;
+  }
+
+  .report-filters-title {
+    font-size: 14px;
+  }
+
+  .report-students-section {
+    padding: 12px;
+  }
+
+  .report-students-title {
+    font-size: 14px;
+  }
+
+  .report-students-table th,
+  .report-students-table td {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .report-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .pdf-progress-card {
+    padding: 18px;
+  }
+
+  .pdf-progress-emoji {
+    font-size: 32px;
+  }
+
+  .pdf-progress-card h3 {
+    font-size: 17px;
+  }
+
+  .pdf-progress-card p {
+    font-size: 12px;
+  }
+}
+
+/* ============================================= */
+/* ACCESSIBILITY & PERFORMANCE */
+/* ============================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-progress-overlay,
+  .pdf-progress-card,
+  .pdf-progress-emoji {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .report-filters-section,
+  .report-students-section {
+    border: 2px solid #333;
+  }
+
+  .report-students-table th,
+  .report-students-table td {
+    border: 1px solid #333;
+  }
+}
+
+/* Touch-friendly */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select {
+  touch-action: manipulation;
+}
+
+/* Ensure react-select dropdowns are visible */
+.report-react-select .report-select__menu {
+  z-index: 1000;
+}
+
+.report-table-select .report-select__menu {
+  z-index: 1001;
 }

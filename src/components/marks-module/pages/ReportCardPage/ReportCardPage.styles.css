@@ -29,6 +29,7 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .action-btn {
@@ -111,4 +112,10 @@
     size: A4;
     margin: 0;
   }
+}
+
+.report-page-header-back-n-print-btn {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }

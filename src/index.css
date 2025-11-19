@@ -27,3 +27,40 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+/* Base global toast styling */
+.Toastify__toast {
+  font-size: 16px;
+  padding: 12px 16px;
+  max-width: 350px;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .Toastify__toast {
+    font-size: 14px !important;
+    /* padding: 10px 14px !important; */
+    max-width: 260px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .Toastify__toast {
+    font-size: 12px !important;
+    /* padding: 8px 12px !important; */
+    max-width: 240px !important;
+  }
+}
+
+.back-btn {
+  background-color: var(--button-bg);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 20px;
+  /* height: fit-content !important; */
+}

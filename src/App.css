@@ -36,3 +36,26 @@
     transform: rotate(360deg);
   }
 }
+/* Base global toast styling */
+.Toastify__toast {
+  font-size: 16px;
+  padding: 12px 16px;
+  max-width: 350px;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .Toastify__toast {
+    font-size: 14px !important;
+    padding: 10px 14px !important;
+    max-width: 260px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .Toastify__toast {
+    font-size: 1px !important;
+    padding: 8px 12px !important;
+    max-width: 240px !important;
+  }
+}

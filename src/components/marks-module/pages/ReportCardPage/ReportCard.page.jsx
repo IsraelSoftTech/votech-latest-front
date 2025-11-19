@@ -93,19 +93,20 @@ export const ReportCardPage = () => {
       {/* Header */}
       <header className="report-page-header">
         <h2>Student Report Card</h2>
-        <div className="report-actions">
+        <div class="report-page-header-back-n-print-btn">
           <button className="back-btn" onClick={handleGoBack}>
             <FaArrowLeft /> <span>Go Back</span>
           </button>
-
-          <button
-            className="btn btn-create"
-            onClick={() => {
-              window.print();
-            }}
-          >
-            <FaPrint /> <span>Print</span>
-          </button>
+          <div className="report-actions">
+            <button
+              className="btn btn-create"
+              onClick={() => {
+                window.print();
+              }}
+            >
+              <FaPrint /> <span>Print</span>
+            </button>
+          </div>
         </div>
       </header>
 

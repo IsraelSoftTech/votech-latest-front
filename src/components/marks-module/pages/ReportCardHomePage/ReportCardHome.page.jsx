@@ -6,11 +6,29 @@ import api, { headers, subBaseURL } from "../../utils/api";
 import Select from "react-select";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { FaArrowLeft, FaDownload, FaLock } from "react-icons/fa";
+import { FaArrowLeft, FaDownload, FaLock, FaEye } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+
+// Custom hook to detect mobile
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+};
 
 export const ReportCardHomePage = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const isReadOnly =
     JSON.parse(sessionStorage.getItem("authUser") || "{}").role === "Admin1";
 
@@ -31,7 +49,7 @@ export const ReportCardHomePage = () => {
       academic_year_id: null,
       department_id: null,
       class_id: null,
-      bulk_term: "annual", // 'annual' or a specific term id
+      bulk_term: "annual",
     };
     if (!saved) return base;
     try {
@@ -52,7 +70,6 @@ export const ReportCardHomePage = () => {
     pdfTimersRef.current = [];
   };
 
-  // Simulate 30% → 50% → 70% then pause until real completion
   const startPdfSimProgress = () => {
     setPdfProgress(0);
     setLoadingReportCardPdfs(true);
@@ -90,26 +107,6 @@ export const ReportCardHomePage = () => {
     };
   }, []);
 
-  const fetchReportCards = async () => {
-    try {
-      const { class_id, department_id, academic_year_id } = filters;
-
-      if (!class_id || !department_id || !academic_year_id) {
-        toast.error("Filters incomplete.");
-        return;
-      }
-
-      const res = await api.get(
-        `/report-cards/bulk?academicYearId=${academic_year_id}&departmentId=${department_id}&classId=${class_id}`
-      );
-
-      console.log(res.data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  // save filters to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem("reportCardFilters", JSON.stringify(filters));
   }, [filters]);
@@ -144,7 +141,7 @@ export const ReportCardHomePage = () => {
   const fetchStudents = async () => {
     const { class_id, department_id, academic_year_id } = filters;
     if (!class_id || !department_id || !academic_year_id) {
-      setStudents([]); // clear table if filters incomplete
+      setStudents([]);
       return;
     }
 
@@ -154,7 +151,6 @@ export const ReportCardHomePage = () => {
         `/students?class_id=${class_id}&specialty_id=${department_id}&academic_year_id=${academic_year_id}`
       );
       setStudents(res.data.data || []);
-      // fetchReportCards();
     } catch (err) {
       toast.error("Failed to fetch students.");
     } finally {
@@ -170,12 +166,11 @@ export const ReportCardHomePage = () => {
     const { class_id, department_id, academic_year_id } = filters;
     if (class_id && department_id && academic_year_id) {
       fetchStudents();
-      // fetchReportCards();
     }
   }, [filters]);
 
-  // --- NAVIGATE TO REPORT CARD PAGE ---
-  const handleGoToReportCard = (student, termObj, sequenceObj) => {
+  // --- NAVIGATE TO REPORT CARD PAGE (FIXED) ---
+  const handleGoToReportCard = (student, termObj) => {
     const academicYear =
       academicYears.find((y) => y.id === filters.academic_year_id) || null;
     const department =
@@ -187,6 +182,13 @@ export const ReportCardHomePage = () => {
       return;
     }
 
+    if (!termObj) {
+      toast.error("Please select a term.");
+      return;
+    }
+
+    console.log("Navigating with term:", termObj); // Debug log
+
     navigate(`/academics/report-card/${student.id}`, {
       state: {
         // full objects (preferred)
@@ -194,17 +196,19 @@ export const ReportCardHomePage = () => {
         department,
         class: klass,
         student,
-        term: termObj || null,
-        sequence: sequenceObj || null,
+        term: termObj,
+        sequence: null,
 
         // keep ids too (optional/back-compat)
         academic_year_id: academicYear.id,
         department_id: department.id,
         class_id: klass.id,
+        term_id: termObj?.id || null,
         ids: {
           academic_year_id: academicYear.id,
           department_id: department.id,
           class_id: klass.id,
+          term_id: termObj?.id || null,
         },
       },
     });
@@ -228,14 +232,14 @@ export const ReportCardHomePage = () => {
       state: {
         academicYear: academicYearObj,
         department: departmentObj,
-        class: classObj, // must be "class" key, not "studentClass"
+        class: classObj,
         academic_year_id: filters.academic_year_id,
         ids: {
           academic_year_id: filters.academic_year_id,
           department_id: departmentObj.id,
           class_id: classObj.id,
         },
-        bulk_term: filters.bulk_term, // optional, for MasterSheetPage
+        bulk_term: filters.bulk_term,
       },
     });
   };
@@ -243,7 +247,6 @@ export const ReportCardHomePage = () => {
   const handleDownloadBulkPdfs = () => {
     const downloadPdfs = async () => {
       try {
-        // Start the simulated progress
         startPdfSimProgress();
 
         const termParam = filters.bulk_term || "annual";
@@ -254,10 +257,9 @@ export const ReportCardHomePage = () => {
           }&academicYearId=${
             filters.academic_year_id
           }&term=${encodeURIComponent(termParam)}`,
-          { responseType: "blob", timeout: 0 } // ensure we get raw bytes
+          { responseType: "blob", timeout: 0 }
         );
 
-        // fallback values
         const academicYear =
           academicYears.find((y) => y.id === filters.academic_year_id)?.name ||
           "AcademicYear";
@@ -267,18 +269,15 @@ export const ReportCardHomePage = () => {
         const klass =
           classes.find((c) => c.id === filters.class_id)?.name || "Class";
 
-        // derive term label for filename
         const termObj = terms.find(
           (t) => String(t.id) === String(filters.bulk_term)
         );
         const termLabel =
           filters.bulk_term === "annual" ? "Annual" : termObj?.name || "Term";
 
-        // create blob and object URL
         const blob = new Blob([res.data], { type: "application/pdf" });
         const url = window.URL.createObjectURL(blob);
 
-        // determine filename
         let fileName = `${academicYear}-${department}-${klass}-${termLabel}-ReportCards.pdf`;
         const contentDisposition = res.headers["content-disposition"];
         if (contentDisposition) {
@@ -286,37 +285,28 @@ export const ReportCardHomePage = () => {
           if (match?.[1]) fileName = match[1];
         }
 
-        // trigger download
         const link = document.createElement("a");
         link.href = url;
         link.download = fileName;
         document.body.appendChild(link);
         link.click();
 
-        // cleanup
         link.remove();
         window.URL.revokeObjectURL(url);
-        console.log("Report cards PDF downloaded successfully.");
         toast.success("Report cards PDF downloaded successfully.");
 
-        // Rush to 100% and close overlay
         finishPdfSimProgress();
       } catch (err) {
-        // Handle blob error from server
         if (err.response?.data) {
           const blob = err.response.data;
           try {
-            // convert Blob to text then parse JSON
             const text = await blob.text();
             const json = JSON.parse(text);
-            console.error("Server error JSON:", json);
             toast.error(json.details || json.message || "Server error");
           } catch (parseErr) {
-            console.error("Failed to parse error blob:", parseErr, blob);
             toast.error("Server returned an invalid error response");
           }
         } else {
-          console.error("Axios error:", err);
           toast.error(err.message || "Unknown error");
         }
         failPdfSimProgress();
@@ -333,25 +323,17 @@ export const ReportCardHomePage = () => {
   const filteredTerms = filters.academic_year_id
     ? terms.filter((t) => t.academic_year_id === filters.academic_year_id)
     : [];
-  const filteredSequences = filters.academic_year_id
-    ? sequences.filter((s) => s.academic_year_id === filters.academic_year_id)
-    : [];
 
   const isMasterSheetReady = Boolean(
     filters.academic_year_id && filters.department_id && filters.class_id
   );
 
-  // Options for Bulk PDF term select
   const bulkTermOptions = [
     { value: "annual", label: "Annual (All Terms)" },
     { value: "t1", label: "First Term" },
     { value: "t2", label: "Second Term" },
     { value: "t3", label: "Third Term" },
   ];
-  const bulkTermValue =
-    bulkTermOptions.find(
-      (opt) => String(opt.value) === String(filters.bulk_term)
-    ) || bulkTermOptions[0];
 
   // --- RENDER ---
   return (
@@ -387,201 +369,239 @@ export const ReportCardHomePage = () => {
       )}
 
       <div className="report-card-home-page">
-        <h2>
-          Generate Report Cards
-          {isReadOnly && (
-            <span className="read-only-badge">
-              <FaLock /> Read Only
-            </span>
-          )}
-        </h2>
+        <div className="report-card-header">
+          <button className="report-back-btn" onClick={() => navigate(-1)}>
+            <FaArrowLeft />
+            {!isMobile && <span>Go Back</span>}
+          </button>
+          <h2 className="report-card-title">
+            Generate Report Cards
+            {isReadOnly && (
+              <span className="report-read-only-badge">
+                <FaLock /> {!isMobile && "Read Only"}
+              </span>
+            )}
+          </h2>
+        </div>
 
         {loadingPage ? (
           <Skeleton height={35} count={6} style={{ marginBottom: "10px" }} />
         ) : (
           <>
-            <div>
-              <button className="back-btn" onClick={() => navigate(-1)}>
-                <FaArrowLeft /> <span>Go Back</span>
-              </button>
-            </div>
             {/* --- FILTER ROW --- */}
-            <div className="filters-row">
-              <div className="form-react-select">
-                <Select
-                  placeholder="Select Academic Year"
-                  options={academicYears.map((y) => ({
-                    value: y.id,
-                    label: y.name,
-                  }))}
-                  value={
-                    academicYears
-                      .map((y) => ({ value: y.id, label: y.name }))
-                      .find((opt) => opt.value === filters.academic_year_id) ||
-                    null
-                  }
-                  onChange={(opt) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      academic_year_id: opt?.value || null,
-                      bulk_term: "annual", // reset bulk term when year changes
-                    }))
-                  }
-                  isDisabled={loadingReportCardPdfs}
-                  isClearable
-                />
-              </div>
-
-              <div className="form-react-select">
-                <Select
-                  placeholder="Select Department"
-                  options={(departments || []).map((d) => ({
-                    value: d.id,
-                    label: d.name,
-                  }))}
-                  value={
-                    (departments || []).find(
-                      (d) => d.id === filters.department_id
-                    ) && {
-                      value: filters.department_id,
-                      label: (departments || []).find(
-                        (d) => d.id === filters.department_id
-                      )?.name,
+            <div className="report-filters-section">
+              <h3 className="report-filters-title">Filter Options</h3>
+              <div className="report-filters-row">
+                <div className="report-form-select">
+                  <label className="report-form-label">Academic Year</label>
+                  <Select
+                    placeholder="Select Academic Year"
+                    options={academicYears.map((y) => ({
+                      value: y.id,
+                      label: y.name,
+                    }))}
+                    value={
+                      academicYears
+                        .map((y) => ({ value: y.id, label: y.name }))
+                        .find(
+                          (opt) => opt.value === filters.academic_year_id
+                        ) || null
                     }
-                  }
-                  onChange={(opt) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      department_id: opt?.value || null,
-                      class_id: null, // reset class when department changes
-                    }))
-                  }
-                  isDisabled={loadingReportCardPdfs}
-                  isClearable
-                />
-              </div>
+                    onChange={(opt) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        academic_year_id: opt?.value || null,
+                        bulk_term: "annual",
+                      }))
+                    }
+                    isDisabled={loadingReportCardPdfs}
+                    isClearable
+                    className="report-react-select"
+                    classNamePrefix="report-select"
+                  />
+                </div>
 
-              <div className="form-react-select">
-                <Select
-                  placeholder="Select Class"
-                  options={filteredClasses.map((c) => ({
-                    value: c.id,
-                    label: c.name,
-                  }))}
-                  value={
-                    filteredClasses.find((c) => c.id === filters.class_id)
-                      ? {
-                          value: filters.class_id,
-                          label: filteredClasses.find(
-                            (c) => c.id === filters.class_id
-                          )?.name,
-                        }
-                      : null
-                  }
-                  onChange={(opt) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      class_id: opt?.value || null,
-                    }))
-                  }
-                  isDisabled={loadingReportCardPdfs}
-                  isClearable
-                />
-              </div>
+                <div className="report-form-select">
+                  <label className="report-form-label">Department</label>
+                  <Select
+                    placeholder="Select Department"
+                    options={(departments || []).map((d) => ({
+                      value: d.id,
+                      label: d.name,
+                    }))}
+                    value={
+                      (departments || []).find(
+                        (d) => d.id === filters.department_id
+                      ) && {
+                        value: filters.department_id,
+                        label: (departments || []).find(
+                          (d) => d.id === filters.department_id
+                        )?.name,
+                      }
+                    }
+                    onChange={(opt) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        department_id: opt?.value || null,
+                        class_id: null,
+                      }))
+                    }
+                    isDisabled={loadingReportCardPdfs}
+                    isClearable
+                    className="report-react-select"
+                    classNamePrefix="report-select"
+                  />
+                </div>
 
-              {/* Term for Bulk PDF */}
-              <div className="form-react-select">
-                <Select
-                  placeholder="Term (Bulk PDF)"
-                  options={bulkTermOptions}
-                  value={
-                    bulkTermOptions.find(
-                      (opt) => String(opt.value) === String(filters.bulk_term)
-                    ) || bulkTermOptions[0]
-                  }
-                  onChange={(opt) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      bulk_term: opt?.value || "annual",
-                    }))
-                  }
-                  isDisabled={loadingReportCardPdfs}
-                  isClearable
-                />
+                <div className="report-form-select">
+                  <label className="report-form-label">Class</label>
+                  <Select
+                    placeholder="Select Class"
+                    options={filteredClasses.map((c) => ({
+                      value: c.id,
+                      label: c.name,
+                    }))}
+                    value={
+                      filteredClasses.find((c) => c.id === filters.class_id)
+                        ? {
+                            value: filters.class_id,
+                            label: filteredClasses.find(
+                              (c) => c.id === filters.class_id
+                            )?.name,
+                          }
+                        : null
+                    }
+                    onChange={(opt) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        class_id: opt?.value || null,
+                      }))
+                    }
+                    isDisabled={loadingReportCardPdfs}
+                    isClearable
+                    className="report-react-select"
+                    classNamePrefix="report-select"
+                  />
+                </div>
+
+                <div className="report-form-select">
+                  <label className="report-form-label">Term (Bulk PDF)</label>
+                  <Select
+                    placeholder="Term (Bulk PDF)"
+                    options={bulkTermOptions}
+                    value={
+                      bulkTermOptions.find(
+                        (opt) => String(opt.value) === String(filters.bulk_term)
+                      ) || bulkTermOptions[0]
+                    }
+                    onChange={(opt) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        bulk_term: opt?.value || "annual",
+                      }))
+                    }
+                    isDisabled={loadingReportCardPdfs}
+                    isClearable
+                    className="report-react-select"
+                    classNamePrefix="report-select"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="master-sheet-holder">
+            {/* Action Buttons */}
+            <div className="report-actions-section">
               <button
-                className="btn btn-create"
+                className="report-btn report-btn-primary"
                 onClick={handleGoToMasterSheet}
                 disabled={!isMasterSheetReady}
                 aria-disabled={!isMasterSheetReady}
               >
-                View Master Sheet
+                <FaEye />
+                <span>View Master Sheet</span>
               </button>
 
               {!isReadOnly && (
                 <button
-                  className="btn btn-create"
+                  className="report-btn report-btn-download"
                   disabled={!isMasterSheetReady || loadingReportCardPdfs}
                   aria-disabled={!isMasterSheetReady || loadingReportCardPdfs}
                   onClick={handleDownloadBulkPdfs}
                 >
-                  Download all Report Cards <FaDownload />
+                  <FaDownload />
+                  <span>Download All Report Cards</span>
                 </button>
               )}
             </div>
-            {/* --- STUDENTS TABLE --- */}
 
-            <div className="students-table-wrapper">
-              {loadingTable ? (
-                <Skeleton count={5} height={30} />
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>S/N</th>
-                      <th>Student ID</th>
-                      <th>Student Name</th>
-                      <th>Generate Report Card</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map((s, index) => (
-                      <tr key={s.id}>
-                        <td>{index + 1}</td>
-                        <td>{s.student_id}</td>
-                        <td>{s.full_name ?? s.name}</td>
-                        <td>
-                          {!isReadOnly ? (
-                            <Select
-                              placeholder="Select Term"
-                              options={filteredTerms.map((t) => ({
-                                label: `${t.name} (Term)`,
-                                value: { term: t, sequence: null },
-                              }))}
-                              onChange={(opt) =>
-                                handleGoToReportCard(s, opt.value.term, null)
-                              }
-                              menuPortalTarget={document.body}
-                              styles={{
-                                menuPortal: (base) => ({
-                                  ...base,
-                                  zIndex: 9999,
-                                }),
-                              }}
-                              isDisabled={loadingReportCardPdfs}
-                            />
-                          ) : (
-                            <span className="read-only-text">View Only</span>
-                          )}
-                        </td>
+            {/* --- STUDENTS TABLE --- */}
+            <div className="report-students-section">
+              <h3 className="report-students-title">
+                Students ({students.length})
+              </h3>
+              <div className="report-students-table-wrapper">
+                {loadingTable ? (
+                  <Skeleton count={5} height={30} />
+                ) : students.length === 0 ? (
+                  <div className="report-empty-state">
+                    <p>No students found. Please adjust your filters.</p>
+                  </div>
+                ) : (
+                  <table className="report-students-table">
+                    <thead>
+                      <tr>
+                        <th>S/N</th>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Generate Report Card</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                    </thead>
+                    <tbody>
+                      {students.map((s, index) => (
+                        <tr key={s.id}>
+                          <td>{index + 1}</td>
+                          <td>{s.student_id}</td>
+                          <td>{s.full_name ?? s.name}</td>
+                          <td>
+                            {!isReadOnly ? (
+                              <Select
+                                placeholder="Select Term"
+                                options={filteredTerms.map((t) => ({
+                                  label: `${t.name} (Term)`,
+                                  value: t.id, // FIXED: Use term ID directly
+                                  termData: t, // Store full term object
+                                }))}
+                                onChange={(opt) => {
+                                  // FIXED: Get term from filteredTerms by ID
+                                  const selectedTerm = filteredTerms.find(
+                                    (t) => t.id === opt.value
+                                  );
+                                  console.log("Selected term:", selectedTerm); // Debug
+                                  handleGoToReportCard(s, selectedTerm);
+                                }}
+                                menuPortalTarget={document.body}
+                                styles={{
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999,
+                                  }),
+                                }}
+                                isDisabled={loadingReportCardPdfs}
+                                className="report-table-select"
+                                classNamePrefix="report-select"
+                              />
+                            ) : (
+                              <span className="report-read-only-text">
+                                View Only
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
           </>
         )}

@@ -1,108 +1,777 @@
+/* ============================================= */
+/* BASE STYLES - DESKTOP */
+/* ============================================= */
+
+.class-page {
+  padding: 20px;
+  max-width: 100%;
+}
+
+.class-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.class-page-title {
+  font-size: 28px;
+  margin: 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.class-btn-create {
+  background-color: #204080;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.class-btn-create:hover {
+  background-color: #163060;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.class-btn-create:active {
+  transform: translateY(0);
+}
+
+.class-btn-mobile-fab {
+  display: none;
+}
+
+.class-table-container {
+  margin-top: 20px;
+}
+
+/* ============================================= */
+/* MODAL - DESKTOP STYLES */
+/* ============================================= */
+
+.class-modal-overlay.desktop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.class-modal-container.desktop {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.class-modal-container.desktop .class-modal-drag-handle {
+  display: none;
+}
+
+.class-modal-header {
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.class-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #204080;
+  margin: 0;
+  flex: 1;
+  padding-right: 16px;
+}
+
+.class-modal-close {
+  background: #f3f4f6;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 18px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.class-modal-close:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.class-modal-close:active {
+  transform: scale(0.95);
+}
+
+.class-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.class-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.class-modal-body::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.class-modal-body::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.class-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Modal Form */
+.class-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.class-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.class-form-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.class-form-error {
+  color: #dc3545;
+  font-size: 13px;
+  margin: 4px 0 0 0;
+}
+
+.class-react-select .class-select__control {
+  min-height: 44px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.class-react-select .class-select__control:hover {
+  border-color: #d1d5db;
+}
+
+.class-react-select .class-select__control--is-focused {
+  border-color: #204080;
+  box-shadow: 0 0 0 1px #204080;
+}
+
+.class-fees-section {
+  margin: 8px 0;
+}
+
+.class-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #204080;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.class-fees-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* Class Details Card */
 .class-details-card {
   background: #fff;
-  border-radius: 16px;
   width: 100%;
-  margin: 0 auto;
   color: #333;
   font-family: "Segoe UI", sans-serif;
 }
 
 .class-details-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 12px;
+  padding-bottom: 16px;
   margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
 }
 
-.class-details-header h2 {
-  font-size: 1.8rem;
+.class-details-title-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.class-details-title {
+  font-size: 22px;
   margin: 0;
   font-weight: 700;
+  color: #1e293b;
 }
 
-.status-badge {
+.class-status-badge {
   padding: 6px 14px;
   border-radius: 50px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 13px;
   color: #fff;
   text-transform: uppercase;
+  width: fit-content;
+  letter-spacing: 0.5px;
 }
 
-.status-badge.active {
+.class-status-badge.active {
   background-color: #204080;
 }
 
-.status-badge.suspended {
+.class-status-badge.suspended {
   background-color: #dc3545;
 }
 
 .class-details-body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
-.info-group {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
+.class-info-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
-.info-item {
+.class-info-item {
   display: flex;
   flex-direction: column;
   background: #f7f8fa;
-  padding: 12px 16px;
+  padding: 16px;
   border-radius: 12px;
-  flex: 1;
-  text-align: center;
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
-.info-item i {
-  font-size: 1.2rem;
+.class-info-label {
+  font-size: 12px;
+  color: #666;
   margin-bottom: 6px;
-  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
-.info-item span {
+.class-info-value {
   font-weight: 600;
   color: #222;
-  margin-top: 4px;
+  font-size: 15px;
 }
 
-.fee-group {
+.class-fee-group {
   background: #fefefe;
-  padding: 15px 20px;
+  padding: 20px;
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-.fee-group h4 {
-  margin: 0 0 10px 0;
-  font-size: 1.1rem;
+.class-fee-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
   font-weight: 600;
-  color: #555;
+  color: #204080;
 }
 
-.fee-item {
+.class-fee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.class-fee-item {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0;
+  padding: 12px 0;
   font-weight: 500;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.fee-item.total {
+.class-fee-item:last-child {
+  border-bottom: none;
+}
+
+.class-fee-value {
+  font-weight: 600;
+  color: #204080;
+}
+
+.class-fee-item.class-fee-total {
   font-weight: 700;
-  font-size: 1.05rem;
-  border-top: 1px solid #eee;
+  font-size: 17px;
+  border-top: 2px solid #e0e0e0;
   margin-top: 8px;
-  padding-top: 10px;
+  padding-top: 16px;
 }
 
-.form-react-select {
-  margin: 6px 0 18px 0;
+.class-fee-item.class-fee-total .class-fee-value {
+  color: #28a745;
+  font-size: 18px;
+}
+
+/* ============================================= */
+/* MOBILE STYLES */
+/* ============================================= */
+
+@media (max-width: 768px) {
+  .class-page {
+    padding: 12px;
+    padding-bottom: 80px; /* Space for FAB */
+  }
+
+  .class-page-header {
+    margin-bottom: 16px;
+  }
+
+  .class-page-title {
+    font-size: 22px;
+  }
+
+  /* Hide desktop button, show FAB */
+  .class-btn-desktop {
+    display: none;
+  }
+
+  .class-btn-mobile-fab {
+    display: flex;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    box-shadow: 0 4px 12px rgba(32, 64, 128, 0.4);
+    font-size: 20px;
+  }
+
+  .class-btn-mobile-fab:active {
+    transform: scale(0.95);
+  }
+
+  /* Mobile Modal Overlay */
+  .class-modal-overlay.mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 9999;
+    padding: 0;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  /* Mobile Modal Container */
+  .class-modal-container.mobile {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    background: white;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overscroll-behavior: contain;
+  }
+
+  @keyframes slideUpMobile {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Drag Handle */
+  .class-modal-drag-handle {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0 8px;
+    cursor: grab;
+    flex-shrink: 0;
+  }
+
+  .class-modal-drag-handle:active {
+    cursor: grabbing;
+  }
+
+  .class-drag-bar {
+    width: 40px;
+    height: 5px;
+    background: #d1d5db;
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+
+  .class-modal-drag-handle:active .class-drag-bar {
+    background: #9ca3af;
+  }
+
+  /* Mobile Header */
+  .class-modal-container.mobile .class-modal-header {
+    padding: 4px 20px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .class-modal-container.mobile .class-modal-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .class-modal-container.mobile .class-modal-close {
+    width: 32px;
+    height: 32px;
+    background: #f3f4f6;
+    font-size: 16px;
+  }
+
+  .class-modal-container.mobile .class-modal-close:active {
+    background: #e5e7eb;
+    transform: scale(0.92);
+  }
+
+  /* Mobile Body */
+  .class-modal-container.mobile .class-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .class-modal-container.mobile .class-modal-body::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  /* Mobile Form */
+  .class-modal-form {
+    gap: 14px;
+  }
+
+  .class-modal-form input,
+  .class-modal-form select {
+    font-size: 16px !important; /* Prevent iOS zoom */
+  }
+
+  .class-react-select .class-select__control {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .class-fees-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .class-section-title {
+    font-size: 15px;
+  }
+
+  .class-modal-form button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+
+  /* Mobile Details */
+  .class-details-title {
+    font-size: 18px;
+  }
+
+  .class-status-badge {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+
+  .class-info-group {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .class-info-item {
+    padding: 14px;
+  }
+
+  .class-info-label {
+    font-size: 11px;
+  }
+
+  .class-info-value {
+    font-size: 14px;
+  }
+
+  .class-fee-group {
+    padding: 16px;
+  }
+
+  .class-fee-title {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+
+  .class-fee-item {
+    padding: 10px 0;
+    font-size: 14px;
+  }
+
+  .class-fee-item.class-fee-total {
+    font-size: 16px;
+    padding-top: 14px;
+  }
+
+  .class-fee-item.class-fee-total .class-fee-value {
+    font-size: 17px;
+  }
+}
+
+/* ============================================= */
+/* SMALL MOBILE - 480px */
+/* ============================================= */
+
+@media (max-width: 480px) {
+  .class-page {
+    padding: 10px;
+  }
+
+  .class-page-title {
+    font-size: 20px;
+  }
+
+  .class-btn-mobile-fab {
+    width: 52px;
+    height: 52px;
+    bottom: 16px;
+    right: 16px;
+    font-size: 18px;
+  }
+
+  .class-modal-container.mobile {
+    max-height: 94vh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .class-modal-drag-handle {
+    padding: 10px 0 6px;
+  }
+
+  .class-drag-bar {
+    width: 36px;
+    height: 4px;
+  }
+
+  .class-modal-container.mobile .class-modal-header {
+    padding: 4px 16px 14px;
+  }
+
+  .class-modal-container.mobile .class-modal-title {
+    font-size: 17px;
+  }
+
+  .class-modal-container.mobile .class-modal-close {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+
+  .class-modal-container.mobile .class-modal-body {
+    padding: 16px;
+  }
+
+  .class-modal-form {
+    gap: 12px;
+  }
+
+  .class-modal-form button[type="submit"] {
+    padding: 13px;
+    font-size: 15px;
+  }
+
+  .class-details-title {
+    font-size: 17px;
+  }
+
+  .class-fee-item {
+    font-size: 13px;
+  }
+}
+
+/* ============================================= */
+/* VERY SMALL DEVICES - 320px */
+/* ============================================= */
+
+@media (max-width: 320px) {
+  .class-page {
+    padding: 8px;
+  }
+
+  .class-page-title {
+    font-size: 18px;
+  }
+
+  .class-btn-mobile-fab {
+    width: 50px;
+    height: 50px;
+    font-size: 17px;
+  }
+
+  .class-modal-container.mobile {
+    max-height: 95vh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .class-modal-container.mobile .class-modal-header {
+    padding: 4px 14px 12px;
+  }
+
+  .class-modal-container.mobile .class-modal-title {
+    font-size: 16px;
+  }
+
+  .class-modal-container.mobile .class-modal-close {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .class-modal-container.mobile .class-modal-body {
+    padding: 14px;
+  }
+
+  .class-modal-form {
+    gap: 10px;
+  }
+
+  .class-details-title {
+    font-size: 16px;
+  }
+
+  .class-section-title {
+    font-size: 14px;
+  }
+
+  .class-fee-item {
+    font-size: 12px;
+  }
+
+  .class-fee-item.class-fee-total {
+    font-size: 14px;
+  }
+}
+
+/* ============================================= */
+/* ACCESSIBILITY & PERFORMANCE */
+/* ============================================= */
+
+.class-modal-close:focus-visible {
+  outline: 2px solid #204080;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .class-modal-overlay,
+  .class-modal-container {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .class-modal-header {
+    border-bottom-width: 2px;
+  }
+
+  .class-modal-close {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Touch-friendly */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select {
+  touch-action: manipulation;
 }

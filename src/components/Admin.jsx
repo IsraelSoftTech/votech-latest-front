@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom';
 import SideTop from './SideTop';
 
 const menuItems = [
-  { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+  { label: 'Dashboard1', icon: <FaTachometerAlt />, path: '/admin' },
   { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
   { label: 'Staff', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
   { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
