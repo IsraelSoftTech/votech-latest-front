@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaCheck, FaTimes, FaDownload, FaFileAlt, FaClock } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaCheck, FaTimes, FaDownload, FaFileAlt, FaClock, FaFolderOpen } from 'react-icons/fa';
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
@@ -10,6 +10,9 @@ export default function DeanLessonPlan() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showApprovedModal, setShowApprovedModal] = useState(false);
+  const [savingAll, setSavingAll] = useState(false);
+  const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0 });
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [form, setForm] = useState({ title: '', period_type: 'weekly' });
   const [selectedFile, setSelectedFile] = useState(null);
@@ -297,6 +300,123 @@ export default function DeanLessonPlan() {
     [lessonPlans]
   );
 
+  const resolveFileUrl = (fileUrl) => {
+    if (!fileUrl) return null;
+    if (fileUrl.startsWith('http')) return fileUrl;
+    const isDevelopment = process.env.NODE_ENV === 'development' || 
+      window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1';
+    const apiUrl = process.env.REACT_APP_API_URL || (isDevelopment 
+      ? 'http://localhost:5000' 
+      : 'https://api.votechs7academygroup.com');
+    return `${apiUrl}${fileUrl}`;
+  };
+
+  const getAuthHeadersFromStorage = () => {
+    try {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (token) return { Authorization: `Bearer ${token}` };
+    } catch (_) {}
+    return {};
+  };
+
+  const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSaveAllApproved = async () => {
+    try {
+      const files = approvedPlans
+        .filter(p => p.type === 'file' && p.file_url)
+        .map(p => ({
+          url: resolveFileUrl(p.file_url),
+          name: `${(p.title || 'lesson_plan').replace(/[^a-z0-9_\-\s]/gi, '_')}.pdf`
+        }));
+      if (files.length === 0) {
+        alert('There are no approved file-based lesson plans to save.');
+        return;
+      }
+
+      setSavingAll(true);
+      setSaveProgress({ current: 0, total: files.length });
+
+      // Trigger individual downloads (browser saves to default downloads folder)
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        let downloaded = false;
+        try {
+          const headers = { ...getAuthHeadersFromStorage(), Accept: 'application/pdf' };
+          const resp = await fetch(f.url, { credentials: 'include', mode: 'cors', headers }).catch(() => null);
+          if (resp && resp.ok) {
+            const ct = resp.headers.get('content-type') || '';
+            const blob = await resp.blob();
+            if (ct.includes('pdf') || f.name.toLowerCase().endsWith('.pdf')) {
+              downloadBlob(blob, f.name);
+              downloaded = true;
+            }
+          }
+        } catch (_) {}
+        if (!downloaded) {
+          // Fallback: open in new tab to let the browser handle the download
+          const a = document.createElement('a');
+          a.href = f.url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.download = f.name;
+          document.body.appendChild(a);
+          // Space out to reduce popup blocking
+          await new Promise(r => setTimeout(r, 60));
+          a.click();
+          a.remove();
+        }
+        setSaveProgress({ current: i + 1, total: files.length });
+        await new Promise(r => setTimeout(r, 180));
+      }
+    } catch (e) {
+      console.error('Save all approved failed:', e);
+      setError('Failed to save approved lesson plans');
+      setTimeout(() => setError(''), 2500);
+    } finally {
+      setSavingAll(false);
+    }
+  };
+
+  const handleDownloadSingle = async (plan) => {
+    if (!plan || plan.type !== 'file' || !plan.file_url) return;
+    try {
+      const url = resolveFileUrl(plan.file_url);
+      const headers = { ...getAuthHeadersFromStorage(), Accept: 'application/pdf' };
+      const resp = await fetch(url, { credentials: 'include', mode: 'cors', headers }).catch(() => null);
+      if (resp && resp.ok) {
+        const ct = resp.headers.get('content-type') || '';
+        const blob = await resp.blob();
+        const filename = `${(plan.title || 'lesson_plan').replace(/[^a-z0-9_\-\s]/gi, '_')}.pdf`;
+        if (ct.includes('pdf') || filename.toLowerCase().endsWith('.pdf')) {
+          downloadBlob(blob, filename);
+          return;
+        }
+      }
+      // Fallback: open in new tab
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.download = `${(plan.title || 'lesson_plan').replace(/[^a-z0-9_\-\s]/gi, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      console.error('Download failed:', e);
+    }
+  };
+
   const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -456,7 +576,7 @@ export default function DeanLessonPlan() {
           </div>
         )}
 
-        {/* Approved Lesson Plans Folder */}
+        {/* Approved Lesson Plans Folder (single folder UI) */}
         {showDashboard && (
           <div className="lesson-plan-approved-folder">
             <div className="approved-folder-header">
@@ -464,35 +584,22 @@ export default function DeanLessonPlan() {
                 <h3>Approved Lesson Plans Archive</h3>
                 <p>Every plan you approve appears here automatically for quick access.</p>
               </div>
-              <span className="approved-count">{approvedPlans.length} stored</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button 
+                  className="approved-folder-icon-btn" 
+                  onClick={() => setShowApprovedModal(true)}
+                  title="Open approved lesson plans"
+                >
+                  <FaFolderOpen />
+                </button>
+                <span className="approved-count">{approvedPlans.length} stored</span>
+              </div>
             </div>
             <div className="approved-folder-body">
-              {approvedPlans.length === 0 ? (
+              {approvedPlans.length === 0 && (
                 <div className="approved-empty-state">
                   <FaFileAlt />
                   <p>No approved lesson plans yet.</p>
-                </div>
-              ) : (
-                <div className="approved-grid">
-                  {approvedPlans.map((plan) => (
-                    <div key={plan.id} className="approved-card">
-                      <div className="approved-card-meta">
-                        <span className="approved-card-title">{plan.title}</span>
-                        <span className="approved-card-info">
-                          {plan.teacher_name || plan.teacher_username || 'Unknown'}
-                        </span>
-                        <span className="approved-card-date">{formatDate(plan.submitted_at)}</span>
-                      </div>
-                      <div className="approved-card-actions">
-                        <button
-                          className="approved-view-btn"
-                          onClick={() => handleViewFile(plan.file_url, plan)}
-                        >
-                          Open
-                        </button>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               )}
             </div>
@@ -872,6 +979,69 @@ export default function DeanLessonPlan() {
           </div>
         )}
       </div>
+
+      {/* Approved Archive Modal */}
+      {showApprovedModal && (
+        <div className="lesson-plan-modal-overlay" onClick={() => setShowApprovedModal(false)}>
+          <div className="approved-archive-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="lesson-plan-modal-close" onClick={() => setShowApprovedModal(false)}>×</button>
+            <div className="approved-archive-header">
+              <h2><FaFolderOpen style={{ marginRight: 8 }} /> Approved Lesson Plans</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button 
+                  className="approved-downloadall-btn" 
+                  onClick={handleSaveAllApproved}
+                  disabled={savingAll || approvedPlans.length === 0}
+                >
+                  {savingAll ? `Downloading ${saveProgress.current}/${saveProgress.total}...` : 'Download All'}
+                </button>
+                <span className="approved-count">{approvedPlans.length} stored</span>
+              </div>
+            </div>
+            <div className="approved-list">
+              {approvedPlans.length === 0 ? (
+                <div className="approved-empty-state" style={{ padding: 20 }}>
+                  <FaFileAlt />
+                  <p>No approved lesson plans found.</p>
+                </div>
+              ) : (
+                <table className="approved-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Title</th>
+                      <th>Teacher</th>
+                      <th>Submitted</th>
+                      <th>Download</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {approvedPlans
+                      .filter(p => p.type === 'file' && p.file_url)
+                      .map((plan, idx) => (
+                        <tr key={plan.id}>
+                          <td>{idx + 1}</td>
+                          <td>{plan.title}</td>
+                          <td>{plan.teacher_name || plan.teacher_username || '-'}</td>
+                          <td>{formatDate(plan.submitted_at)}</td>
+                          <td>
+                            <button 
+                              className="approved-download-link" 
+                              onClick={() => handleDownloadSingle(plan)}
+                              title="Download PDF"
+                            >
+                              <FaDownload style={{ marginRight: 6 }} /> Download
+                            </button>
+                          </td>
+                        </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </SideTop>
   );
 } 

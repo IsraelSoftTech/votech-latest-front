@@ -49,7 +49,7 @@ function Admin() {
 
   const [loading, setLoading] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  // Get username from sessionStorage
+
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const username = authUser?.username || 'User';
   
