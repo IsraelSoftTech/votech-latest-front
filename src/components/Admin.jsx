@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom';
 import SideTop from './SideTop';
 
 const menuItems = [
-  { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
+  { label: 'Dashboard1', icon: <FaTachometerAlt />, path: '/admin' },
   { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
   { label: 'Staff', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
   { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
@@ -49,7 +49,7 @@ function Admin() {
 
   const [loading, setLoading] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  // Get username from sessionStorage
+
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const username = authUser?.username || 'User';
   
@@ -76,7 +76,7 @@ function Admin() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayCount = studentList.filter(s => s.created_at && s.created_at.slice(0, 10) === todayStr).length;
 
-  // Chart data: aggregate by registration date
+
   const [studentChartData, setStudentChartData] = useState([]);
   useEffect(() => {
     // Build date map: {date: {date, today: count, total: cumulative}}

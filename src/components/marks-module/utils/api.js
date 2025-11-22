@@ -4,13 +4,20 @@ import axios from "axios";
 // export const baseURL = "http://localhost:5000/api/v1/";
 // export const subBaseURL = "http://localhost:5000/api";
 
-// Environment-based API URLs
+const LOCAL_IP = "192.168.1.201";
+
+const env = process.env.NODE_ENV;
+const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+
 const isDevelopment =
-  process.env.NODE_ENV === "development" ||
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1";
+  env === "development" || hostname === "localhost" || hostname === "127.0.0.1";
+
+const isDesktop = env === "desktop" || hostname === LOCAL_IP;
+
 const apiBase = isDevelopment
   ? "http://localhost:5000"
+  : isDesktop
+  ? `http://${LOCAL_IP}:5000`
   : "https://api.votechs7academygroup.com";
 
 export const baseURL = `${apiBase}/api/v1/`;

@@ -766,3 +766,107 @@
 .approved-view-btn:hover {
   background: #162b5c;
 } 
+
+.approved-open-btn {
+  border: none;
+  background: transparent;
+  color: #204080;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.approved-saveall-btn {
+  border: none;
+  background: #204080;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.approved-saveall-btn:disabled {
+  background: #9aa9c8;
+  cursor: not-allowed;
+}
+
+.approved-archive-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: min(1000px, 92vw);
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.approved-archive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.approved-list {
+  padding: 12px 20px 20px 20px;
+  max-height: calc(90vh - 120px);
+  overflow: auto;
+}
+
+.approved-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.approved-table th, .approved-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.approved-view-link {
+  border: none;
+  background: transparent;
+  color: #204080;
+  font-weight: 600;
+  cursor: pointer;
+} 
+
+.approved-folder-icon-btn {
+  border: none;
+  background: transparent;
+  color: #204080;
+  font-size: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.approved-downloadall-btn {
+  border: none;
+  background: #204080;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.approved-downloadall-btn:disabled {
+  background: #9aa9c8;
+  cursor: not-allowed;
+}
+
+.approved-download-link {
+  border: 1px solid rgba(32,64,128,0.2);
+  background: #fff;
+  color: #204080;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+} 

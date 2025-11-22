@@ -536,7 +536,7 @@ export const SubjectPage = () => {
     <SideTop>
       <div className="subject-page-container">
         <h2 className="page-title">
-          {user.role === "Admin3" ? "All Subjects" : "Subjects Assigned to You"}
+          {user.role === "Admin3" ? "All Subjects Test Updates" : "Subjects Assigned to You Test Updates"}
         </h2>
         {user.role === "Admin3" && <Stats data={data} />}
         {user.role === "Admin3" && (
