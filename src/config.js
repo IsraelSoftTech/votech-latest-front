@@ -1,4 +1,4 @@
-const LOCAL_IP = "192.168.0.100";
+const LOCAL_IP = "http://192.168.0.100";
 
 const env = process.env.REACT_APP_NODE_ENV || "production";
 const hostname = typeof window !== "undefined" ? window.location.hostname : "";
