@@ -9,8 +9,8 @@ const apiBase =
     ? process.env.REACT_APP_API_URL_DESKTOP
     : process.env.REACT_APP_API_URL_PROD;
 
-export const baseURL = `${apiBase}api/v1/`;
-export const subBaseURL = `${apiBase}api`;
+export const baseURL = `${apiBase}/api/v1/`;
+export const subBaseURL = `${apiBase}/api`;
 
 console.log("API URL: ", env, apiBase);
 
