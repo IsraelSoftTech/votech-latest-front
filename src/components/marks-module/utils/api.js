@@ -1,27 +1,18 @@
-// API utility functions for marks module
 import axios from "axios";
 
-// export const baseURL = "http://localhost:5000/api/v1/";
-// export const subBaseURL = "http://localhost:5000/api";
+const env = process.env.REACT_APP_NODE_ENV || "production";
 
-const LOCAL_IP = "192.168.1.201";
+const apiBase =
+  env === "development"
+    ? process.env.REACT_APP_API_URL_DEV
+    : env === "desktop"
+    ? process.env.REACT_APP_API_URL_DESKTOP
+    : process.env.REACT_APP_API_URL_PROD;
 
-const env = process.env.NODE_ENV;
-const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+export const baseURL = `${apiBase}api/v1/`;
+export const subBaseURL = `${apiBase}api`;
 
-const isDevelopment =
-  env === "development" || hostname === "localhost" || hostname === "127.0.0.1";
-
-const isDesktop = env === "desktop" || hostname === LOCAL_IP;
-
-const apiBase = isDevelopment
-  ? "http://localhost:5000"
-  : isDesktop
-  ? `http://${LOCAL_IP}:5000`
-  : "https://api.votechs7academygroup.com";
-
-export const baseURL = `${apiBase}/api/v1/`;
-export const subBaseURL = `${apiBase}/api`;
+console.log("API URL: ", env, apiBase);
 
 const api = axios.create({
   baseURL,
@@ -42,11 +33,8 @@ export const headers = () => {
 api.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      delete config.headers.Authorization;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    else delete config.headers.Authorization;
     return config;
   },
   (error) => Promise.reject(error)

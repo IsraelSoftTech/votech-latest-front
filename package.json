@@ -4,6 +4,7 @@
     "ajv-keywords": "3.5.2",
     "axios": "^1.11.0",
     "checking": "^1.0.1",
+    "dotenv": "^17.2.3",
     "form-data": "^4.0.4",
     "framer-motion": "^12.23.12",
     "html2canvas": "^1.4.1",
