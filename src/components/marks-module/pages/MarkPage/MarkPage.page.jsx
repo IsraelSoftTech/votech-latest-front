@@ -9,7 +9,13 @@ import * as XLSX from "xlsx";
 import { useParams, useNavigate } from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { FaArrowLeft } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaSort,
+  FaSortAlphaDown,
+  FaSortAlphaUp,
+  FaSearch,
+} from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 
 export const MarksUploadPage = () => {
@@ -27,6 +33,8 @@ export const MarksUploadPage = () => {
   );
 
   const hasFetchedRef = useRef(false);
+  const searchInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
 
   const [loadingPage, setLoadingPage] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
@@ -52,6 +60,19 @@ export const MarksUploadPage = () => {
 
   const [marks, setMarks] = useState([]);
   const [saving, setSaving] = useState(false);
+
+  // Sorting, Search, and Pagination states
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [studentsPerPage, setStudentsPerPage] = useState(10);
+
+  // NEW: Debounced search and suggestions
+  const [searchInput, setSearchInput] = useState(""); // What user is typing
+  const [debouncedSearch, setDebouncedSearch] = useState(""); // Debounced value for suggestions
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState(null); // For single student view
+  const [highlightedIndex, setHighlightedIndex] = useState(-1); // For keyboard navigation
 
   // --- FETCH FUNCTIONS ---
   const fetchDepartments = async () => {
@@ -220,6 +241,42 @@ export const MarksUploadPage = () => {
     loadStudentsMarks();
   }, [loadStudentsMarks]);
 
+  // NEW: Debounce effect for search suggestions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // NEW: Show suggestions when debounced search updates
+  useEffect(() => {
+    if (debouncedSearch.trim()) {
+      setShowSuggestions(true);
+      setHighlightedIndex(-1);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [debouncedSearch]);
+
+  // NEW: Click outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // --- HANDLERS ---
   const handleMarkChange = (studentId, value) => {
     if (value !== "" && (Number(value) < 0 || Number(value) > 20)) {
@@ -248,6 +305,20 @@ export const MarksUploadPage = () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
     if (!academic_year_id || !class_id || !term_id || !sequence_id) {
       toast.error("Select all filters before saving marks.");
+      return;
+    }
+
+    const displayedStudents = getFilteredAndSortedStudents();
+    const missingMarks = displayedStudents.filter((s) => {
+      if (s.id === "none") return false;
+      const mark = marks.find((m) => m.student_id === s.id);
+      return mark?.score == null || mark.score === "";
+    });
+
+    if (missingMarks.length > 0) {
+      toast.error(
+        `Please enter marks for all students. ${missingMarks.length} student(s) missing marks.`
+      );
       return;
     }
 
@@ -432,6 +503,7 @@ export const MarksUploadPage = () => {
       toast.error(err.message || "Failed to load Excel. Check formatting.");
     } finally {
       setImportingExcelFile(false);
+      e.target.value = null;
     }
   };
 
@@ -462,6 +534,155 @@ export const MarksUploadPage = () => {
         (c) => Number(c.department_id) === Number(filters.department_id)
       )
     : [];
+
+  // --- SORT, FILTER, AND PAGINATE STUDENTS ---
+  const getFilteredAndSortedStudents = () => {
+    let filtered = [...students];
+
+    // NEW: If a specific student is selected, show only that student
+    if (selectedStudentId) {
+      filtered = filtered.filter((s) => s.id === selectedStudentId);
+    }
+    // Otherwise filter by search term
+    else if (searchTerm.trim()) {
+      filtered = filtered.filter(
+        (s) =>
+          s.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          s.student_id?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Sort alphabetically
+    filtered.sort((a, b) => {
+      const nameA = (a.full_name || "").toLowerCase();
+      const nameB = (b.full_name || "").toLowerCase();
+      if (sortOrder === "asc") {
+        return nameA.localeCompare(nameB);
+      } else {
+        return nameB.localeCompare(nameA);
+      }
+    });
+
+    return filtered;
+  };
+
+  const filteredAndSortedStudents = getFilteredAndSortedStudents();
+
+  // NEW: Get search suggestions
+  const getSearchSuggestions = () => {
+    if (!debouncedSearch.trim() || students.length === 0) return [];
+
+    return students
+      .filter(
+        (s) =>
+          s.id !== "none" &&
+          (s.full_name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            s.student_id?.toLowerCase().includes(debouncedSearch.toLowerCase()))
+      )
+      .slice(0, 8) // Limit to 8 suggestions
+      .sort((a, b) => {
+        const nameA = (a.full_name || "").toLowerCase();
+        const nameB = (b.full_name || "").toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+  };
+
+  const searchSuggestions = getSearchSuggestions();
+
+  // Pagination
+  const totalStudents = filteredAndSortedStudents.length;
+  const totalPages =
+    studentsPerPage === "all" ? 1 : Math.ceil(totalStudents / studentsPerPage);
+
+  const paginatedStudents =
+    studentsPerPage === "all"
+      ? filteredAndSortedStudents
+      : filteredAndSortedStudents.slice(
+          (currentPage - 1) * studentsPerPage,
+          currentPage * studentsPerPage
+        );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sortOrder, studentsPerPage, selectedStudentId]);
+
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
+  // NEW: Handle search input change
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    setSelectedStudentId(null); // Clear single student selection when typing
+  };
+
+  // NEW: Handle search execution (Enter or button click)
+  const handleSearchExecute = () => {
+    setSearchTerm(searchInput);
+    setShowSuggestions(false);
+    setSelectedStudentId(null);
+    setHighlightedIndex(-1);
+  };
+
+  // NEW: Handle suggestion click
+  const handleSuggestionClick = (student) => {
+    setSearchInput(student.full_name);
+    setSearchTerm(""); // Clear general search
+    setSelectedStudentId(student.id); // Show only this student
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+  };
+
+  // NEW: Clear all search
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setSearchTerm("");
+    setSelectedStudentId(null);
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+  };
+
+  // NEW: Handle keyboard navigation
+  const handleSearchKeyDown = (e) => {
+    if (!showSuggestions || searchSuggestions.length === 0) {
+      if (e.key === "Enter") {
+        handleSearchExecute();
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev < searchSuggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (
+          highlightedIndex >= 0 &&
+          highlightedIndex < searchSuggestions.length
+        ) {
+          handleSuggestionClick(searchSuggestions[highlightedIndex]);
+        } else {
+          handleSearchExecute();
+        }
+        break;
+      case "Escape":
+        setShowSuggestions(false);
+        setHighlightedIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
 
   // --- RENDER ---
   return (
@@ -658,6 +879,123 @@ export const MarksUploadPage = () => {
               </div>
             </div>
 
+            {/* NEW: Enhanced Search with Suggestions */}
+            <div className="marks-controls-container">
+              <div className="marks-search-wrapper">
+                <div className="marks-search-bar" ref={searchInputRef}>
+                  <FaSearch className="search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or student ID..."
+                    value={searchInput}
+                    onChange={handleSearchInputChange}
+                    onKeyDown={handleSearchKeyDown}
+                    onFocus={() => {
+                      if (debouncedSearch.trim()) setShowSuggestions(true);
+                    }}
+                    className="marks-search-input"
+                  />
+                  {(searchInput || selectedStudentId) && (
+                    <button
+                      className="search-clear-btn"
+                      onClick={handleClearSearch}
+                      type="button"
+                    >
+                      ✕
+                    </button>
+                  )}
+                  <button
+                    className="search-execute-btn"
+                    onClick={handleSearchExecute}
+                    type="button"
+                    title="Search"
+                  >
+                    <FaSearch />
+                  </button>
+                </div>
+
+                {/* NEW: Search Suggestions Dropdown */}
+                {showSuggestions && searchSuggestions.length > 0 && (
+                  <div className="search-suggestions" ref={suggestionsRef}>
+                    <div className="suggestions-header">
+                      <span>Select a student or press Enter to search all</span>
+                    </div>
+                    {searchSuggestions.map((student, index) => (
+                      <div
+                        key={student.id}
+                        className={`suggestion-item ${
+                          index === highlightedIndex ? "highlighted" : ""
+                        }`}
+                        onClick={() => handleSuggestionClick(student)}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                      >
+                        <div className="suggestion-name">
+                          {student.full_name}
+                        </div>
+                        <div className="suggestion-id">
+                          {student.student_id}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="marks-controls-right">
+                <button
+                  className="marks-sort-btn"
+                  onClick={toggleSortOrder}
+                  title={sortOrder === "asc" ? "Sort Z-A" : "Sort A-Z"}
+                >
+                  {sortOrder === "asc" ? (
+                    <>
+                      <FaSortAlphaDown /> A-Z
+                    </>
+                  ) : (
+                    <>
+                      <FaSortAlphaUp /> Z-A
+                    </>
+                  )}
+                </button>
+
+                <Select
+                  className="marks-per-page-select"
+                  options={[
+                    { value: 10, label: "Show 10" },
+                    { value: 25, label: "Show 25" },
+                    { value: 50, label: "Show 50" },
+                    { value: "all", label: "Show All" },
+                  ]}
+                  value={{
+                    value: studentsPerPage,
+                    label:
+                      studentsPerPage === "all"
+                        ? "Show All"
+                        : `Show ${studentsPerPage}`,
+                  }}
+                  onChange={(opt) => setStudentsPerPage(opt.value)}
+                  isSearchable={false}
+                />
+              </div>
+            </div>
+
+            <div className="marks-info-bar">
+              <span className="marks-count-info">
+                Showing {paginatedStudents.length} of {totalStudents} student(s)
+              </span>
+              {selectedStudentId && (
+                <span className="marks-search-info">
+                  Viewing:{" "}
+                  {students.find((s) => s.id === selectedStudentId)?.full_name}
+                </span>
+              )}
+              {searchTerm && !selectedStudentId && (
+                <span className="marks-search-info">
+                  Filtered by: "{searchTerm}"
+                </span>
+              )}
+            </div>
+
             <div className="marks-table-container">
               {loadingTable ? (
                 <Skeleton count={5} height={30} />
@@ -672,80 +1010,91 @@ export const MarksUploadPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {students.length > 0 ? (
-                      students.map((s, index) => (
-                        <tr key={s.id} className="marks-table-row">
-                          {/* Desktop cells */}
-                          <td className="desktop-cell">{index + 1}</td>
-                          <td className="desktop-cell">{s.student_id}</td>
-                          <td className="desktop-cell">{s.full_name}</td>
-                          <td className="desktop-cell">
-                            {s.id === "none" ? (
-                              "-"
-                            ) : (
-                              <CustomInput
-                                type="number"
-                                value={
-                                  marks.find((m) => m.student_id === s.id)
-                                    ?.score ?? ""
-                                }
-                                onChange={(_, val) =>
-                                  handleMarkChange(s.id, val)
-                                }
-                                onClear={() => handleMarkChange(s.id, "")}
-                              />
-                            )}
-                          </td>
+                    {paginatedStudents.length > 0 ? (
+                      paginatedStudents.map((s, index) => {
+                        const globalIndex =
+                          studentsPerPage === "all"
+                            ? index
+                            : (currentPage - 1) * studentsPerPage + index;
+                        return (
+                          <tr key={s.id} className="marks-table-row">
+                            {/* Desktop cells */}
+                            <td className="desktop-cell">{globalIndex + 1}</td>
+                            <td className="desktop-cell">{s.student_id}</td>
+                            <td className="desktop-cell">{s.full_name}</td>
+                            <td className="desktop-cell">
+                              {s.id === "none" ? (
+                                "-"
+                              ) : (
+                                <CustomInput
+                                  type="number"
+                                  value={
+                                    marks.find((m) => m.student_id === s.id)
+                                      ?.score ?? ""
+                                  }
+                                  onChange={(_, val) =>
+                                    handleMarkChange(s.id, val)
+                                  }
+                                  onClear={() => handleMarkChange(s.id, "")}
+                                />
+                              )}
+                            </td>
 
-                          {/* Mobile card */}
-                          <td className="mobile-marks-cell" colSpan={4}>
-                            <div className="mobile-marks-card">
-                              <div className="marks-card-header">
-                                <span className="student-number">
-                                  #{index + 1}
-                                </span>
-                                <span className="student-id-badge">
-                                  {s.student_id}
-                                </span>
-                              </div>
-
-                              <div className="marks-card-body">
-                                <div className="student-name-row">
-                                  <span className="student-name">
-                                    {s.full_name}
+                            {/* Mobile card */}
+                            <td className="mobile-marks-cell" colSpan={4}>
+                              <div className="mobile-marks-card">
+                                <div className="marks-card-header">
+                                  <span className="student-number">
+                                    #{globalIndex + 1}
+                                  </span>
+                                  <span className="student-id-badge">
+                                    {s.student_id}
                                   </span>
                                 </div>
 
-                                <div className="marks-input-section">
-                                  <label className="marks-input-label">
-                                    Enter Mark
-                                  </label>
-                                  {s.id === "none" ? (
-                                    <div className="marks-placeholder">-</div>
-                                  ) : (
-                                    <CustomInput
-                                      type="number"
-                                      value={
-                                        marks.find((m) => m.student_id === s.id)
-                                          ?.score ?? ""
-                                      }
-                                      onChange={(_, val) =>
-                                        handleMarkChange(s.id, val)
-                                      }
-                                      onClear={() => handleMarkChange(s.id, "")}
-                                      placeholder="0-20"
-                                    />
-                                  )}
+                                <div className="marks-card-body">
+                                  <div className="student-name-row">
+                                    <span className="student-name">
+                                      {s.full_name}
+                                    </span>
+                                  </div>
+
+                                  <div className="marks-input-section">
+                                    <label className="marks-input-label">
+                                      Enter Mark (0-20)
+                                    </label>
+                                    {s.id === "none" ? (
+                                      <div className="marks-placeholder">-</div>
+                                    ) : (
+                                      <CustomInput
+                                        type="number"
+                                        value={
+                                          marks.find(
+                                            (m) => m.student_id === s.id
+                                          )?.score ?? ""
+                                        }
+                                        onChange={(_, val) =>
+                                          handleMarkChange(s.id, val)
+                                        }
+                                        onClear={() =>
+                                          handleMarkChange(s.id, "")
+                                        }
+                                        placeholder="0-20"
+                                      />
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr className="no-data-row">
                         <td colSpan={4} className="no-data-cell">
-                          No students found
+                          {searchTerm || selectedStudentId
+                            ? `No students found matching your search`
+                            : "No students found"}
                         </td>
                       </tr>
                     )}
@@ -753,6 +1102,60 @@ export const MarksUploadPage = () => {
                 </table>
               )}
             </div>
+
+            {/* Pagination */}
+            {studentsPerPage !== "all" && totalPages > 1 && (
+              <div className="marks-pagination">
+                <button
+                  className="marks-pagination-btn"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+
+                <div className="marks-pagination-numbers">
+                  {[...Array(totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    if (
+                      pageNum === 1 ||
+                      pageNum === totalPages ||
+                      Math.abs(pageNum - currentPage) <= 1
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          className={`marks-pagination-number ${
+                            currentPage === pageNum ? "active" : ""
+                          }`}
+                          onClick={() => setCurrentPage(pageNum)}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    } else if (
+                      pageNum === currentPage - 2 ||
+                      pageNum === currentPage + 2
+                    ) {
+                      return <span key={pageNum}>...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <button
+                  className="marks-pagination-btn"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
+              </div>
+            )}
 
             <div className="marks-save-section">
               <button
