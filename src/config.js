@@ -13,7 +13,7 @@ const isDesktop = env === "desktop" || hostname === LOCAL_IP;
 
 const config = {
   API_URL: isDevelopment
-    ? "https://localhost:5000/api"
+    ? "http://localhost:5000/api"
     : isDesktop
     ? `http://${LOCAL_IP}:5000/api`
     : "https://api.votechs7academygroup.com/api",

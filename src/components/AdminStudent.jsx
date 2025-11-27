@@ -36,7 +36,7 @@ import SideTop from "./SideTop";
 import marksApi from "./marks-module/utils/api";
 import { toast } from "react-toastify";
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import autoTable from 'jspdf-autotable';
 const menuItems = [
   { label: "Dashboard", icon: <FaTachometerAlt /> },
   { label: "Students", icon: <FaUserGraduate /> },
@@ -230,6 +230,8 @@ export default function AdminStudent() {
   const [excelHeaders, setExcelHeaders] = useState([]);
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [printClass, setPrintClass] = useState("");
+  const [isDownloadingClassList, setIsDownloadingClassList] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [showStudentListReportModal, setShowStudentListReportModal] =
     useState(false);
   const [generatedStudentListReport, setGeneratedStudentListReport] =
@@ -541,6 +543,8 @@ export default function AdminStudent() {
 
   // Print handler - generates PDF directly
   const generateStudentListReport = async () => {
+    if (isDownloadingClassList) return;
+
     if (!printClass) {
       setError("Please select a class first.");
       setErrorType("error");
@@ -556,174 +560,123 @@ export default function AdminStudent() {
       return;
     }
 
+    // Start visual download progress
+    setIsDownloadingClassList(true);
+    setDownloadProgress(0);
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += 5;
+      if (progress >= 90) {
+        progress = 90;
+        setDownloadProgress(progress);
+        clearInterval(progressInterval);
+      } else {
+        setDownloadProgress(progress);
+      }
+    }, 120);
+
     // Sort students alphabetically by full name
     const sortedStudents = classStudents.sort((a, b) => 
       (a.full_name || '').localeCompare(b.full_name || '')
     );
 
     try {
-      // Create a temporary container for PDF generation
-      const tempContainer = document.createElement('div');
-      tempContainer.className = 'class-list-pdf-container';
-      tempContainer.style.cssText = `
-        background: white;
-        width: 210mm;
-        min-height: 297mm;
-        margin: 0 auto;
-        padding: 15mm;
-        box-sizing: border-box;
-        font-family: 'Times New Roman', serif;
-        color: black;
-        position: absolute;
-        left: -9999px;
-        top: -9999px;
-        overflow: visible;
-        line-height: 1.4;
-      `;
-
-      // Create the class list content
-      const classListHTML = `
-        <div class="class-list-header">
-          <div class="header-with-logo">
-            <img src="${logo}" alt="School Logo" style="width: 60px; height: 60px; object-fit: contain;" />
-            <div class="school-info">
-              <div style="font-size: 24px; font-weight: bold; color: #1976d2; margin-bottom: 5px;">VOTECH(S7) ACADEMY</div>
-              <div style="font-size: 18px; font-weight: 600; color: #333;">Class List</div>
-            </div>
-          </div>
-          <div style="margin-top: 20px; text-align: center;">
-            <div style="font-size: 16px; font-weight: 600; color: #1976d2; margin-bottom: 5px;">${printClass}</div>
-            <div style="font-size: 14px; color: #666;">Academic Year: ${selectedYear}</div>
-            <div style="font-size: 14px; color: #666;">Generated on: ${new Date().toLocaleDateString()}</div>
-            <div style="font-size: 14px; color: #666; margin-top: 5px;">Total Students: ${sortedStudents.length}</div>
-          </div>
-        </div>
-        
-        <div class="class-list-table" style="margin-top: 25px;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-            <thead>
-              <tr style="background-color: #f5f5f5;">
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold;">S/N</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Student ID</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Full Name</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold;">Sex</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold;">Date of Birth</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Father's Contact</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${sortedStudents.map((student, index) => `
-                <tr style="page-break-inside: avoid;">
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${index + 1}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">${student.student_id || ''}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: 500;">${student.full_name || ''}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${student.sex || ''}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString() : ''}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">${student.guardian_contact || ''}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-
-      tempContainer.innerHTML = classListHTML;
-
-      // Add styles for the header
-      const style = document.createElement('style');
-      style.textContent = `
-        .header-with-logo {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          margin-bottom: 20px;
-        }
-        .school-info {
-          flex: 1;
-        }
-        .class-list-table table {
-          page-break-inside: auto;
-        }
-        .class-list-table tr {
-          page-break-inside: avoid;
-          page-break-after: auto;
-        }
-        .class-list-table thead {
-          display: table-header-group;
-        }
-        .class-list-table tfoot {
-          display: table-footer-group;
-        }
-      `;
-      tempContainer.appendChild(style);
-
-      // Add to DOM temporarily
-      document.body.appendChild(tempContainer);
-
-      // Wait for rendering
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Capture the temporary container
-      const canvas = await html2canvas(tempContainer, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        width: tempContainer.scrollWidth,
-        height: tempContainer.scrollHeight,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: tempContainer.scrollWidth,
-        windowHeight: tempContainer.scrollHeight,
-        logging: false,
-        removeContainer: false,
-      });
-
-      // Remove temporary container
-      document.body.removeChild(tempContainer);
-
-      const imgData = canvas.toDataURL('image/png');
-
       // Create PDF with A4 portrait dimensions
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      // Add the image to PDF
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      // Header content (same text as before)
+      pdf.setFont('Times', 'Bold');
+      pdf.setFontSize(18);
+      pdf.setTextColor(25, 118, 210);
+      pdf.text('VOTECH(S7) ACADEMY', 105, 20, { align: 'center' });
 
-      // Handle page breaks if content is taller than A4
-      if (imgHeight > 297) {
-        const pageHeight = 297;
-        let yPosition = 0;
-        let pageNumber = 1;
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Class List', 105, 28, { align: 'center' });
 
-        while (yPosition < imgHeight) {
-          if (pageNumber > 1) {
-            pdf.addPage();
-          }
-          
-          const remainingHeight = imgHeight - yPosition;
-          const currentPageHeight = Math.min(pageHeight, remainingHeight);
-          
-          pdf.addImage(imgData, 'PNG', 0, -yPosition, imgWidth, imgHeight);
-          yPosition += pageHeight;
-          pageNumber++;
-        }
-      }
+      pdf.setFontSize(12);
+      pdf.setTextColor(25, 118, 210);
+      pdf.text(String(printClass), 105, 38, { align: 'center' });
 
-      const fileName = `class_list_${printClass.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.setTextColor(102, 102, 102);
+      pdf.text(`Academic Year: ${selectedYear}`, 105, 44, { align: 'center' });
+      pdf.text(
+        `Generated on: ${new Date().toLocaleDateString()}`,
+        105,
+        50,
+        { align: 'center' }
+      );
+      pdf.text(
+        `Total Students: ${sortedStudents.length}`,
+        105,
+        56,
+        { align: 'center' }
+      );
+
+      // Table data (same columns/content as HTML table)
+      const tableColumn = [
+        'S/N',
+        'Student ID',
+        'Full Name',
+        'Sex',
+        'Date of Birth',
+        "Father's Contact",
+      ];
+
+      const tableRows = sortedStudents.map((student, index) => [
+        index + 1,
+        student.student_id || '',
+        student.full_name || '',
+        student.sex || '',
+        student.date_of_birth
+          ? new Date(student.date_of_birth).toLocaleDateString()
+          : '',
+        student.guardian_contact || '',
+      ]);
+
+      autoTable(pdf, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 64,
+        styles: {
+          font: 'Times',
+          fontSize: 10,
+          cellPadding: 3,
+        },
+        headStyles: {
+          fillColor: [245, 245, 245],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+        },
+        theme: 'grid',
+      });
+
+      const fileName = `class_list_${printClass.replace(
+        /\s+/g,
+        '_'
+      )}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
 
       // Close the modal
-    setPrintModalOpen(false);
+      setPrintModalOpen(false);
       setSuccess(`Class list for ${printClass} downloaded successfully!`);
       setTimeout(() => setSuccess(""), 3000);
+
+      // Complete progress animation
+      setDownloadProgress(100);
+      clearInterval(progressInterval);
+      setTimeout(() => {
+        setIsDownloadingClassList(false);
+        setDownloadProgress(0);
+      }, 400);
 
     } catch (error) {
       console.error('Error generating PDF:', error);
       setError("Failed to generate class list PDF.");
       setErrorType("error");
+      clearInterval(progressInterval);
+      setIsDownloadingClassList(false);
+      setDownloadProgress(0);
     }
   };
 
@@ -1013,7 +966,9 @@ export default function AdminStudent() {
             <button
               className="signup-btn"
               style={{
-                background: "#388e3c",
+                position: "relative",
+                overflow: "hidden",
+                background: !printClass ? "#9e9e9e" : "#616161",
                 color: "#fff",
                 minWidth: 120,
                 fontSize: 16,
@@ -1022,9 +977,28 @@ export default function AdminStudent() {
                 marginBottom: 8,
               }}
               onClick={generateStudentListReport}
-              disabled={!printClass}
+              disabled={!printClass || isDownloadingClassList}
             >
-              Download
+              <span
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  height: "100%",
+                  width: `${downloadProgress}%`,
+                  background: "#388e3c",
+                  transition: "width 0.2s linear",
+                  zIndex: 1,
+                }}
+              />
+              <span
+                style={{
+                  position: "relative",
+                  zIndex: 2,
+                }}
+              >
+                {isDownloadingClassList ? "Downloading..." : "Download"}
+              </span>
             </button>
           </div>
         </div>
