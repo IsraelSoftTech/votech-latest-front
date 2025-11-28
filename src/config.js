@@ -1,8 +1,4 @@
 // Determine if we're in development mode
-const isDevelopment =
-  process.env.NODE_ENV === "development" ||
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1";
 
 const config = {
   // API URL configuration - use local for development, production for live
