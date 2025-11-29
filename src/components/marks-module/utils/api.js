@@ -1,18 +1,23 @@
 import axios from "axios";
 
 const env = process.env.REACT_APP_NODE_ENV || "production";
+const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+const isDevelopment = env === "development" || hostname === "localhost" || hostname === "127.0.0.1";
 
 const apiBase =
-  env === "development"
+  env === "development" || isDevelopment
     ? process.env.REACT_APP_API_URL_DEV
     : env === "desktop"
     ? process.env.REACT_APP_API_URL_DESKTOP
     : process.env.REACT_APP_API_URL_PROD;
 
-export const baseURL = `${apiBase}/api/v1/`;
-export const subBaseURL = `${apiBase}/api`;
+// Ensure apiBase has a fallback value
+const safeApiBase = apiBase || (isDevelopment ? "http://localhost:5000" : "https://votechs7academygroup.com");
 
-console.log("API URL: ", env, apiBase);
+export const baseURL = `${safeApiBase}/api/v1/`;
+export const subBaseURL = `${safeApiBase}/api`;
+
+console.log("API URL: ", env, safeApiBase);
 
 const api = axios.create({
   baseURL,
