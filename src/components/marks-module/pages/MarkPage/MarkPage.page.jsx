@@ -1,7 +1,6 @@
 import "./MarksUpload.styles.css";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import SideTop from "../../../SideTop";
-import { toast } from "react-toastify";
 import api from "../../utils/api";
 import Select from "react-select";
 import { CustomInput } from "../../components/Inputs/CustumInputs";
@@ -11,12 +10,346 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import {
   FaArrowLeft,
-  FaSort,
   FaSortAlphaDown,
   FaSortAlphaUp,
   FaSearch,
+  FaCheck,
+  FaTimes,
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaTimesCircle,
 } from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
+import Modal from "../../components/Modal/Modal.component";
+
+// Utility function for string similarity (Levenshtein distance)
+const calculateSimilarity = (str1, str2) => {
+  const s1 = str1?.toLowerCase().trim() || "";
+  const s2 = str2?.toLowerCase().trim() || "";
+
+  if (s1 === s2) return 1;
+  if (s1.length === 0 || s2.length === 0) return 0;
+
+  const matrix = Array(s2.length + 1)
+    .fill(null)
+    .map(() => Array(s1.length + 1).fill(null));
+
+  for (let i = 0; i <= s1.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= s2.length; j++) matrix[j][0] = j;
+
+  for (let j = 1; j <= s2.length; j++) {
+    for (let i = 1; i <= s1.length; i++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i] + 1,
+        matrix[j - 1][i - 1] + cost
+      );
+    }
+  }
+
+  const maxLength = Math.max(s1.length, s2.length);
+  return 1 - matrix[s2.length][s1.length] / maxLength;
+};
+
+// Simple Modal Component
+const SimpleModal = ({ type, title, message, onClose }) => {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
+  return (
+    <div className="simple-modal-overlay" onClick={onClose}>
+      <div className="simple-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="simple-modal-close" onClick={onClose}>
+          <FaTimes />
+        </button>
+
+        <div className={`simple-modal-icon ${type}`}>
+          {type === "success" ? <FaCheckCircle /> : <FaTimesCircle />}
+        </div>
+
+        <h3 className="simple-modal-title">{title}</h3>
+        <p className="simple-modal-message">{message}</p>
+
+        <button className="simple-modal-button" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Name Matching Modal Component
+const NameMatchingModal = ({
+  unmatchedStudents,
+  existingStudents,
+  onComplete,
+  onCancel,
+  totalImported,
+}) => {
+  const [currentStep, setCurrentStep] = useState("summary");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [resolvedMatches, setResolvedMatches] = useState([]);
+  const [skipped, setSkipped] = useState([]);
+  const [history, setHistory] = useState([]);
+
+  // Safety checks
+  if (!Array.isArray(unmatchedStudents) || unmatchedStudents.length === 0) {
+    return null;
+  }
+
+  if (!Array.isArray(existingStudents) || existingStudents.length === 0) {
+    return null;
+  }
+
+  const currentStudent = unmatchedStudents[currentIndex];
+  const totalUnmatched = unmatchedStudents.length;
+  const matchedCount = Math.max(0, totalImported - totalUnmatched);
+
+  // Find similar names for current student
+  const getSuggestions = (student) => {
+    if (!student || !student.fullName) return [];
+
+    try {
+      return existingStudents
+        .filter((s) => s && s.full_name && s.id) // Safety filter
+        .map((s) => ({
+          ...s,
+          similarity: calculateSimilarity(student.fullName, s.full_name),
+        }))
+        .filter((s) => s.similarity > 0.5)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 5);
+    } catch (error) {
+      console.error("Error getting suggestions:", error);
+      return [];
+    }
+  };
+
+  const suggestions = currentStudent ? getSuggestions(currentStudent) : [];
+
+  const handleStartMatching = () => {
+    setCurrentStep("matching");
+  };
+
+  const handleSelectMatch = (matchedStudent) => {
+    if (!matchedStudent || !currentStudent) return;
+
+    const newMatch = {
+      excelStudent: currentStudent,
+      systemStudent: matchedStudent,
+      score: currentStudent.score,
+    };
+
+    setResolvedMatches((prev) => [...prev, newMatch]);
+    setHistory((prev) => [...prev, { index: currentIndex, action: "matched" }]);
+
+    // Move to next student
+    if (currentIndex < totalUnmatched - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      // All done
+      handleFinish([...resolvedMatches, newMatch], skipped);
+    }
+  };
+
+  const handleSkip = () => {
+    if (!currentStudent) return;
+
+    setSkipped((prev) => [...prev, currentStudent]);
+    setHistory((prev) => [...prev, { index: currentIndex, action: "skipped" }]);
+
+    // Move to next student
+    if (currentIndex < totalUnmatched - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      // All done
+      handleFinish(resolvedMatches, [...skipped, currentStudent]);
+    }
+  };
+
+  const handleBack = () => {
+    if (history.length === 0) {
+      setCurrentStep("summary");
+      return;
+    }
+
+    const lastAction = history[history.length - 1];
+    setHistory((prev) => prev.slice(0, -1));
+    setCurrentIndex(lastAction.index);
+
+    if (lastAction.action === "matched") {
+      setResolvedMatches((prev) => prev.slice(0, -1));
+    } else {
+      setSkipped((prev) => prev.slice(0, -1));
+    }
+  };
+
+  const handleFinish = (matches, skippedStudents) => {
+    if (typeof onComplete === "function") {
+      onComplete(matches, skippedStudents);
+    }
+  };
+
+  const handleCancel = () => {
+    if (typeof onCancel === "function") {
+      onCancel();
+    }
+  };
+
+  // Summary View
+  if (currentStep === "summary") {
+    return (
+      <Modal isOpen={true} onClose={handleCancel} title="Import Summary">
+        <div className="match-summary">
+          <div className="summary-stats">
+            <div className="stat-card matched">
+              <div className="stat-number">{matchedCount}</div>
+              <div className="stat-label">
+                <FaCheck className="stat-icon" />
+                Matched
+              </div>
+            </div>
+
+            <div className="stat-card unmatched">
+              <div className="stat-number">{totalUnmatched}</div>
+              <div className="stat-label">
+                <FaExclamationTriangle className="stat-icon" />
+                Need Review
+              </div>
+            </div>
+          </div>
+
+          <div className="summary-message">
+            <p>
+              {matchedCount} student{matchedCount !== 1 ? "s" : ""} matched
+              automatically.
+            </p>
+            <p>
+              {totalUnmatched} student
+              {totalUnmatched !== 1 ? "s need" : " needs"} manual matching.
+            </p>
+          </div>
+
+          <div className="summary-actions">
+            <button className="btn-secondary" onClick={handleCancel}>
+              Cancel Import
+            </button>
+            <button className="btn-primary" onClick={handleStartMatching}>
+              Start Matching
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  // Safety check for matching view
+  if (!currentStudent) {
+    return null;
+  }
+
+  // Matching View
+  return (
+    <Modal isOpen={true} onClose={handleCancel} title="Match Students">
+      <div className="match-container">
+        {/* Progress Bar */}
+        <div className="match-progress">
+          <div className="progress-info">
+            <span className="progress-label">
+              Student {currentIndex + 1} of {totalUnmatched}
+            </span>
+            <span className="progress-count">
+              {resolvedMatches.length} matched • {skipped.length} skipped
+            </span>
+          </div>
+          <div className="progress-bar-track">
+            <div
+              className="progress-bar-fill"
+              style={{
+                width: `${Math.min(
+                  100,
+                  ((currentIndex + 1) / totalUnmatched) * 100
+                )}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Excel Student */}
+        <div className="excel-student">
+          <div className="excel-label">From Excel File:</div>
+          <div className="excel-card">
+            <h4>{currentStudent.fullName || "Unknown"}</h4>
+            <div className="excel-meta">
+              <span>ID: {currentStudent.studentId || "N/A"}</span>
+              <span>•</span>
+              <span>
+                Score:{" "}
+                {currentStudent.score !== "" ? currentStudent.score : "N/A"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Suggestions */}
+        <div className="suggestions-container">
+          <div className="suggestions-label">Click the matching student:</div>
+          <div className="suggestions-list">
+            {suggestions.length > 0 ? (
+              suggestions.map((student) => (
+                <button
+                  key={student.id}
+                  className="suggestion-btn"
+                  onClick={() => handleSelectMatch(student)}
+                  type="button"
+                >
+                  <div className="suggestion-info">
+                    <div className="suggestion-name">
+                      {student.full_name || "Unknown"}
+                    </div>
+                    <div className="suggestion-id">
+                      ID: {student.student_id || "N/A"}
+                    </div>
+                  </div>
+                  <div className="suggestion-match">
+                    {Math.round((student.similarity || 0) * 100)}% match
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="no-matches">
+                <FaExclamationTriangle />
+                <p>No similar students found</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="match-actions">
+          <button
+            className="btn-secondary"
+            onClick={handleBack}
+            disabled={currentIndex === 0 && history.length === 0}
+            type="button"
+          >
+            <FaArrowLeft />
+            Back
+          </button>
+          <button className="btn-outline" onClick={handleSkip} type="button">
+            Skip
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
 
 export const MarksUploadPage = () => {
   const navigate = useNavigate();
@@ -35,6 +368,7 @@ export const MarksUploadPage = () => {
   const hasFetchedRef = useRef(false);
   const searchInputRef = useRef(null);
   const suggestionsRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   // Loading states
   const [loadingPage, setLoadingPage] = useState(true);
@@ -77,34 +411,29 @@ export const MarksUploadPage = () => {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-  // NEW: Track initial data loading completion
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
-  // --- FETCH FUNCTIONS ---
-  const fetchDepartments = useCallback(async () => {
-    try {
-      const res = await api.get("/departments");
-      const departments = res.data?.data;
+  // Name matching modal states
+  const [unmatchedStudents, setUnmatchedStudents] = useState([]);
+  const [showMatchingModal, setShowMatchingModal] = useState(false);
+  const [totalImportedCount, setTotalImportedCount] = useState(0);
 
-      if (Array.isArray(departments) && departments.length > 0) {
-        setDepartments(departments);
-        return departments;
-      } else {
-        setDepartments([]);
-        return [];
-      }
-    } catch (err) {
-      console.error("Failed to fetch departments:", err);
-      toast.error(
-        err.response?.data?.details ||
-          err.response?.data?.message ||
-          "Failed to fetch departments."
-      );
-      setDepartments([]);
-      return [];
-    }
+  // Simple modal state
+  const [simpleModal, setSimpleModal] = useState(null);
+
+  const showModal = (type, title, message) => {
+    setSimpleModal({ type, title, message });
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
+  // --- FETCH FUNCTIONS ---
   const fetchStudents = useCallback(
     async (classId, departmentId, academicYearId) => {
       try {
@@ -113,59 +442,29 @@ export const MarksUploadPage = () => {
             departmentId || ""
           }&academic_year_id=${academicYearId}`
         );
-        const list = res?.data?.data || [];
-        setStudents(list);
+        const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+        if (isMountedRef.current) {
+          setStudents(list);
+        }
         return list;
       } catch (err) {
         console.error("Failed to fetch students:", err);
-        toast.error(
-          err.response?.data?.details ||
-            err.response?.data?.message ||
-            "Failed to fetch students."
-        );
-        setStudents([]);
+        if (isMountedRef.current) {
+          showModal(
+            "error",
+            "Failed to Load Students",
+            err.response?.data?.details ||
+              err.response?.data?.message ||
+              "Could not load students. Please try again."
+          );
+          setStudents([]);
+        }
         return [];
       }
     },
     []
   );
 
-  const fetchSubjectClasses = useCallback(async () => {
-    try {
-      const res = await api.get(`/class-subjects?subject_id=${id}`);
-      const data = res?.data?.data || [];
-      setSubjectClasses(data);
-      return data;
-    } catch (err) {
-      console.error("Failed to fetch subject classes:", err);
-      toast.error(
-        err.response?.data?.details ||
-          err.response?.data?.message ||
-          "Failed to fetch subject classes."
-      );
-      setSubjectClasses([]);
-      return [];
-    }
-  }, [id]);
-
-  const fetchSubject = useCallback(async () => {
-    try {
-      const res = await api.get(`/subjects/${id}`);
-      const subjectData = res?.data?.data || {};
-      setSubject(subjectData);
-      return subjectData;
-    } catch (err) {
-      console.error("Failed to fetch subject:", err);
-      toast.error(
-        err.response?.data?.details ||
-          err.response?.data?.message ||
-          "Failed to fetch subject."
-      );
-      return {};
-    }
-  }, [id]);
-
-  // --- MAIN DROPDOWN FETCH WITH PROPER ERROR HANDLING ---
   const fetchDropdowns = useCallback(async () => {
     if (!user?.id) {
       console.warn("User not available for fetchDropdowns");
@@ -173,9 +472,10 @@ export const MarksUploadPage = () => {
     }
 
     try {
-      setLoadingPage(true);
+      if (isMountedRef.current) {
+        setLoadingPage(true);
+      }
 
-      // Fetch all data in parallel
       const [
         subRes,
         yearsRes,
@@ -196,108 +496,134 @@ export const MarksUploadPage = () => {
         api.get(`/class-subjects?subject_id=${id}`),
       ]);
 
-      // Handle subject fetch
+      if (!isMountedRef.current) return;
+
       if (subRes.status === "fulfilled") {
         setSubject(subRes.value?.data?.data || {});
       } else {
         console.error("Subject fetch failed:", subRes.reason);
-        toast.error("Failed to load subject");
+        showModal(
+          "error",
+          "Failed to Load",
+          "Could not load subject information."
+        );
         setSubject({});
       }
 
-      // Handle academic years
       if (yearsRes.status === "fulfilled") {
-        setAcademicYears(yearsRes.value?.data?.data || []);
+        setAcademicYears(
+          Array.isArray(yearsRes.value?.data?.data)
+            ? yearsRes.value.data.data
+            : []
+        );
       } else {
-        console.error("Academic years fetch failed:", yearsRes.reason);
         setAcademicYears([]);
       }
 
-      // Handle terms
       if (termsRes.status === "fulfilled") {
-        setTerms(termsRes.value?.data?.data || []);
+        setTerms(
+          Array.isArray(termsRes.value?.data?.data)
+            ? termsRes.value.data.data
+            : []
+        );
       } else {
-        console.error("Terms fetch failed:", termsRes.reason);
         setTerms([]);
       }
 
-      // Handle sequences
       if (sequencesRes.status === "fulfilled") {
-        setSequences(sequencesRes.value?.data?.data || []);
+        setSequences(
+          Array.isArray(sequencesRes.value?.data?.data)
+            ? sequencesRes.value.data.data
+            : []
+        );
       } else {
-        console.error("Sequences fetch failed:", sequencesRes.reason);
         setSequences([]);
       }
 
-      // Handle departments
       if (deptRes.status === "fulfilled") {
-        setDepartments(deptRes.value?.data?.data || []);
+        setDepartments(
+          Array.isArray(deptRes.value?.data?.data)
+            ? deptRes.value.data.data
+            : []
+        );
       } else {
-        console.error("Departments fetch failed:", deptRes.reason);
         setDepartments([]);
       }
 
-      // Handle subject classes for students
       if (subjectClassRes.status === "fulfilled") {
-        setSubjectClasses(subjectClassRes.value?.data?.data || []);
+        setSubjectClasses(
+          Array.isArray(subjectClassRes.value?.data?.data)
+            ? subjectClassRes.value.data.data
+            : []
+        );
       } else {
-        console.error("Subject classes fetch failed:", subjectClassRes.reason);
         setSubjectClasses([]);
       }
 
-      // Handle classes with proper filtering based on user role
       if (classesRes.status === "fulfilled") {
-        const classData = classesRes.value?.data?.data || [];
+        const classData = Array.isArray(classesRes.value?.data?.data)
+          ? classesRes.value.data.data
+          : [];
         const classSubjects =
           classSubjectRes.status === "fulfilled"
-            ? classSubjectRes.value?.data?.data || []
+            ? Array.isArray(classSubjectRes.value?.data?.data)
+              ? classSubjectRes.value.data.data
+              : []
             : [];
 
         if (user.role === "Admin3") {
           setClasses(classData);
         } else {
-          // For Teacher and other roles, filter classes
           const filteredClasses = classData
             .map((cls) => ({
               ...cls,
-              classSubjects: (cls.classSubjects || []).filter((cs) =>
+              classSubjects: (Array.isArray(cls.classSubjects)
+                ? cls.classSubjects
+                : []
+              ).filter((cs) =>
                 classSubjects.some(
                   (teacherCs) =>
                     teacherCs.id === cs.id && teacherCs.teacher_id === user.id
                 )
               ),
             }))
-            .filter((cls) => cls.classSubjects.length > 0);
+            .filter(
+              (cls) =>
+                Array.isArray(cls.classSubjects) && cls.classSubjects.length > 0
+            );
 
           setClasses(filteredClasses);
         }
       } else {
-        console.error("Classes fetch failed:", classesRes.reason);
         setClasses([]);
       }
 
       setInitialDataLoaded(true);
     } catch (err) {
       console.error("Unexpected error in fetchDropdowns:", err);
-      toast.error("Failed to load page data. Please refresh.");
+      if (isMountedRef.current) {
+        showModal(
+          "error",
+          "Error",
+          "Failed to load page data. Please refresh."
+        );
+      }
     } finally {
-      setLoadingPage(false);
+      if (isMountedRef.current) {
+        setLoadingPage(false);
+      }
     }
   }, [id, user?.id, user?.role]);
 
-  // --- EFFECT: Initialize page on mount ---
   useEffect(() => {
     if (!user || hasFetchedRef.current) return;
-
     hasFetchedRef.current = true;
     fetchDropdowns();
   }, [user, fetchDropdowns]);
 
-  // --- LOAD STUDENTS AND MARKS ---
   const loadStudentsMarks = useCallback(async () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
 
-    // Validate all required filters are set
     if (
       !academic_year_id ||
       !class_id ||
@@ -305,44 +631,49 @@ export const MarksUploadPage = () => {
       !sequence_id ||
       !subject?.id
     ) {
-      setStudents([]);
-      setMarks([]);
-      setLoadingTable(false);
-      return;
-    }
-
-    // Ensure initial data is loaded before loading students
-    if (!initialDataLoaded) {
-      console.warn("Waiting for initial data to load...");
-      return;
-    }
-
-    setLoadingTable(true);
-    try {
-      // Check if subject is assigned to class
-      const classAssigned = subjectClasses.some(
-        (sc) => Number(sc.class_id) === Number(class_id)
-      );
-
-      if (!classAssigned) {
-        setStudents([
-          {
-            id: "none",
-            full_name: "Subject has not been assigned to this class",
-            student_id: "-",
-          },
-        ]);
+      if (isMountedRef.current) {
+        setStudents([]);
         setMarks([]);
         setLoadingTable(false);
+      }
+      return;
+    }
+
+    if (!initialDataLoaded) {
+      return;
+    }
+
+    if (isMountedRef.current) {
+      setLoadingTable(true);
+    }
+
+    try {
+      const classAssigned =
+        Array.isArray(subjectClasses) &&
+        subjectClasses.some((sc) => Number(sc.class_id) === Number(class_id));
+
+      if (!classAssigned) {
+        if (isMountedRef.current) {
+          setStudents([
+            {
+              id: "none",
+              full_name: "Subject has not been assigned to this class",
+              student_id: "-",
+            },
+          ]);
+          setMarks([]);
+          setLoadingTable(false);
+        }
         return;
       }
 
-      // Fetch students
       const studentsList = await fetchStudents(
         class_id,
         filters.department_id,
         academic_year_id
       );
+
+      if (!isMountedRef.current) return;
 
       if (!Array.isArray(studentsList) || studentsList.length === 0) {
         setStudents([]);
@@ -351,47 +682,65 @@ export const MarksUploadPage = () => {
         return;
       }
 
-      // Fetch marks
       try {
         const marksRes = await api.get(
           `/marks?subject_id=${subject.id}&academic_year_id=${academic_year_id}&class_id=${class_id}&term_id=${term_id}&sequence_id=${sequence_id}`
         );
-        setMarks(marksRes?.data?.data || []);
+        if (isMountedRef.current) {
+          setMarks(
+            Array.isArray(marksRes?.data?.data) ? marksRes.data.data : []
+          );
+        }
       } catch (marksErr) {
         console.error("Failed to fetch marks:", marksErr);
-        toast.error("Failed to fetch marks. Try again.");
-        setMarks([]);
+        if (isMountedRef.current) {
+          showModal(
+            "error",
+            "Failed to Load Marks",
+            "Could not load existing marks. Try again."
+          );
+          setMarks([]);
+        }
       }
     } catch (err) {
       console.error("Error in loadStudentsMarks:", err);
-      toast.error(
-        err.response?.data?.details ||
-          err.response?.data?.message ||
-          "Failed to fetch students or marks."
-      );
-      setStudents([]);
-      setMarks([]);
+      if (isMountedRef.current) {
+        showModal(
+          "error",
+          "Error",
+          err.response?.data?.details ||
+            err.response?.data?.message ||
+            "Failed to load students or marks."
+        );
+        setStudents([]);
+        setMarks([]);
+      }
     } finally {
-      setLoadingTable(false);
+      if (isMountedRef.current) {
+        setLoadingTable(false);
+      }
     }
   }, [filters, subjectClasses, subject?.id, initialDataLoaded, fetchStudents]);
 
-  // --- EFFECT: Load students when filters change ---
   useEffect(() => {
     if (!initialDataLoaded) return;
     loadStudentsMarks();
-  }, [initialDataLoaded, loadStudentsMarks]);
+  }, [
+    initialDataLoaded,
+    filters.academic_year_id,
+    filters.class_id,
+    filters.term_id,
+    filters.sequence_id,
+    subject?.id,
+  ]);
 
-  // --- DEBOUNCE SEARCH EFFECT ---
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchInput);
     }, 300);
-
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // --- SHOW/HIDE SUGGESTIONS ---
   useEffect(() => {
     if (debouncedSearch.trim()) {
       setShowSuggestions(true);
@@ -401,7 +750,6 @@ export const MarksUploadPage = () => {
     }
   }, [debouncedSearch]);
 
-  // --- CLICK OUTSIDE TO CLOSE SUGGESTIONS ---
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -418,18 +766,33 @@ export const MarksUploadPage = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- HANDLERS ---
   const handleMarkChange = (studentId, value) => {
-    if (value !== "" && (Number(value) < 0 || Number(value) > 20)) {
-      toast.error("Marks must be between 0 and 20.");
+    // Validate student ID
+    if (!studentId) {
+      console.error("Invalid student ID");
       return;
     }
 
+    // Validate value
+    if (value !== "") {
+      const numValue = Number(value);
+      if (isNaN(numValue)) {
+        showModal("error", "Invalid Mark", "Please enter a valid number.");
+        return;
+      }
+      if (numValue < 0 || numValue > 20) {
+        showModal("error", "Invalid Mark", "Marks must be between 0 and 20.");
+        return;
+      }
+    }
+
     setMarks((prev) => {
-      const exists = prev.find((m) => m.student_id === studentId);
+      if (!Array.isArray(prev)) return [];
+
+      const exists = prev.find((m) => m && m.student_id === studentId);
       if (exists) {
         return prev.map((m) =>
-          m.student_id === studentId
+          m && m.student_id === studentId
             ? { ...m, score: value === "" ? "" : Number(value) }
             : m
         );
@@ -444,21 +807,49 @@ export const MarksUploadPage = () => {
 
   const handleSave = async () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
+
+    // Validation
     if (!academic_year_id || !class_id || !term_id || !sequence_id) {
-      toast.error("Select all filters before saving marks.");
+      showModal(
+        "error",
+        "Missing Information",
+        "Please select all filters before saving marks."
+      );
+      return;
+    }
+
+    if (!subject || !subject.id) {
+      showModal(
+        "error",
+        "Missing Subject",
+        "Subject information is missing. Please refresh the page."
+      );
+      return;
+    }
+
+    if (!Array.isArray(students) || students.length === 0) {
+      showModal("error", "No Students", "No students found to save marks for.");
       return;
     }
 
     const displayedStudents = getFilteredAndSortedStudents();
-    const missingMarks = displayedStudents.filter((s) => {
-      if (s.id === "none") return false;
+    const validStudents = displayedStudents.filter((s) => s.id !== "none");
+
+    if (validStudents.length === 0) {
+      showModal("error", "No Valid Students", "No valid students found.");
+      return;
+    }
+
+    const missingMarks = validStudents.filter((s) => {
       const mark = marks.find((m) => m.student_id === s.id);
       return mark?.score == null || mark.score === "";
     });
 
     if (missingMarks.length > 0) {
-      toast.error(
-        `Please enter marks for all students. ${missingMarks.length} student(s) missing marks.`
+      showModal(
+        "error",
+        "Incomplete Marks",
+        `Please enter marks for all students. ${missingMarks.length} student(s) are missing marks.`
       );
       return;
     }
@@ -466,203 +857,551 @@ export const MarksUploadPage = () => {
     try {
       setSaving(true);
 
+      // Prepare marks data with validation
       const filledMarks = students
-        .filter((s) => s.id !== "none")
+        .filter((s) => s.id !== "none" && s.id)
         .map((s) => {
           const m = marks.find((mk) => mk.student_id === s.id);
+          const score =
+            m?.score == null || m.score === "" ? 0 : Number(m.score);
+
+          // Extra validation
+          if (isNaN(score) || score < 0 || score > 20) {
+            throw new Error(`Invalid score for ${s.full_name}: ${m?.score}`);
+          }
+
           return {
             student_id: s.id,
-            score: m?.score == null || m.score === "" ? 0 : Number(m.score),
+            score: score,
           };
         });
 
-      await api.post("/marks/save", {
+      if (filledMarks.length === 0) {
+        throw new Error("No marks to save.");
+      }
+
+      const payload = {
         subject_id: subject.id,
         academic_year_id,
         class_id,
         term_id,
         sequence_id,
         marks: filledMarks,
-      });
+      };
 
-      toast.success("Marks saved successfully.");
-      await loadStudentsMarks();
+      await api.post("/marks/save", payload);
+
+      if (isMountedRef.current) {
+        showModal(
+          "success",
+          "Success",
+          `Marks for ${filledMarks.length} student(s) saved successfully.`
+        );
+        // Reload marks to get fresh data
+        await loadStudentsMarks();
+      }
     } catch (err) {
-      toast.error(
-        err.response?.data?.details ||
+      console.error("Save error:", err);
+      if (isMountedRef.current) {
+        const errorMessage =
+          err.response?.data?.details ||
           err.response?.data?.message ||
-          "Failed to save marks."
-      );
+          err.message ||
+          "Failed to save marks. Please try again.";
+
+        showModal("error", "Save Failed", errorMessage);
+      }
     } finally {
-      setSaving(false);
+      if (isMountedRef.current) {
+        setSaving(false);
+      }
     }
   };
 
-  // --- EXPORT TO EXCEL ---
   const handleExportExcel = () => {
     setExportingExcelFile(true);
-    if (!students.length || students.some((s) => s.id === "none")) {
+
+    try {
+      if (
+        !Array.isArray(students) ||
+        students.length === 0 ||
+        students.some((s) => s.id === "none")
+      ) {
+        setExportingExcelFile(false);
+        showModal("error", "Cannot Export", "No valid students to export.");
+        return;
+      }
+
+      const wsData = [
+        [
+          "⚠️ WARNING: Do NOT edit any column except 'Score'. Leave all other columns unchanged!",
+        ],
+        [
+          `Academic Year: ${
+            academicYears.find(
+              (y) => Number(y.id) === Number(filters.academic_year_id)
+            )?.name || ""
+          }`,
+        ],
+        [
+          `Department: ${
+            departments.find(
+              (d) => Number(d.id) === Number(filters.department_id)
+            )?.name || ""
+          }`,
+        ],
+        [
+          `Class: ${
+            classes.find((c) => Number(c.id) === Number(filters.class_id))
+              ?.name || ""
+          }`,
+        ],
+        [`Subject: ${subject.name || ""} (${subject.code || ""})`],
+        [
+          `Term: ${
+            terms.find((t) => Number(t.id) === Number(filters.term_id))?.name ||
+            ""
+          }`,
+        ],
+        [
+          `Sequence: ${
+            sequences.find((s) => Number(s.id) === Number(filters.sequence_id))
+              ?.name || ""
+          }`,
+        ],
+        [],
+        ["Student Name", "Student ID", "Score"],
+        [
+          "",
+          "",
+          "",
+          "department_id",
+          "academic_year_id",
+          "class_id",
+          "term_id",
+          "sequence_id",
+          "subject_id",
+        ],
+        ...students.map((s) => {
+          const m = marks.find((mk) => mk.student_id === s.id);
+          return [
+            s.full_name ?? s.name,
+            s.student_id,
+            m?.score ?? "",
+            filters.department_id,
+            filters.academic_year_id,
+            filters.class_id,
+            filters.term_id,
+            filters.sequence_id,
+            subject.id,
+          ];
+        }),
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      ws["!cols"] = [
+        { wch: 25 },
+        { wch: 15 },
+        { wch: 10 },
+        { hidden: true },
+        { hidden: true },
+        { hidden: true },
+        { hidden: true },
+        { hidden: true },
+        { hidden: true },
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Marks");
+
+      XLSX.writeFile(
+        wb,
+        `Marks_${subject.code || subject.id}_${filters.class_id}_${
+          filters.academic_year_id
+        }.xlsx`
+      );
+    } catch (err) {
+      console.error("Export error:", err);
+      showModal("error", "Export Failed", "Failed to export Excel file.");
+    } finally {
       setExportingExcelFile(false);
-      toast.warn("No valid students to export.");
+    }
+  };
+
+  const handleMatchingComplete = (matches, skippedStudents) => {
+    setShowMatchingModal(false);
+
+    // Validate inputs
+    if (!Array.isArray(matches)) matches = [];
+    if (!Array.isArray(skippedStudents)) skippedStudents = [];
+
+    // Apply matched marks to existing marks
+    if (matches.length > 0) {
+      const newMatches = matches
+        .filter(
+          (match) => match && match.systemStudent && match.systemStudent.id
+        )
+        .map((match) => ({
+          student_id: match.systemStudent.id,
+          score:
+            match.score !== "" &&
+            match.score !== null &&
+            match.score !== undefined
+              ? Number(match.score)
+              : "",
+        }));
+
+      if (newMatches.length > 0) {
+        setMarks((prev) => {
+          if (!Array.isArray(prev)) return newMatches;
+
+          const updated = [...prev];
+          newMatches.forEach((newMark) => {
+            const existingIndex = updated.findIndex(
+              (m) => m && m.student_id === newMark.student_id
+            );
+            if (existingIndex >= 0) {
+              updated[existingIndex] = newMark;
+            } else {
+              updated.push(newMark);
+            }
+          });
+          return updated;
+        });
+      }
+    }
+
+    // Show result
+    const totalProcessed = matches.length + skippedStudents.length;
+    const messages = [];
+
+    if (matches.length > 0) {
+      messages.push(`${matches.length} student(s) matched successfully.`);
+    }
+    if (skippedStudents.length > 0) {
+      messages.push(`${skippedStudents.length} student(s) skipped.`);
+    }
+
+    if (messages.length > 0) {
+      showModal(
+        matches.length > 0 ? "success" : "error",
+        "Matching Complete",
+        messages.join(" ")
+      );
+    }
+
+    // Reset state
+    setUnmatchedStudents([]);
+    setTotalImportedCount(0);
+  };
+
+  const handleMatchingCancel = () => {
+    setShowMatchingModal(false);
+    setUnmatchedStudents([]);
+    setTotalImportedCount(0);
+    showModal("error", "Import Cancelled", "No marks were imported.");
+  };
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validExtensions = [".xlsx", ".xls"];
+    const fileExtension = file.name
+      .substring(file.name.lastIndexOf("."))
+      .toLowerCase();
+    if (!validExtensions.includes(fileExtension)) {
+      showModal(
+        "error",
+        "Invalid File Type",
+        "Please upload an Excel file (.xlsx or .xls)"
+      );
+      e.target.value = null;
       return;
     }
 
-    const wsData = [
-      [
-        "⚠️ WARNING: Do NOT edit any column except 'Score'. Leave all other columns unchanged!",
-      ],
-      [
-        `Academic Year: ${
-          academicYears.find(
-            (y) => Number(y.id) === Number(filters.academic_year_id)
-          )?.name || ""
-        }`,
-      ],
-      [
-        `Department: ${
-          departments.find(
-            (d) => Number(d.id) === Number(filters.department_id)
-          )?.name || ""
-        }`,
-      ],
-      [
-        `Class: ${
-          classes.find((c) => Number(c.id) === Number(filters.class_id))
-            ?.name || ""
-        }`,
-      ],
-      [`Subject: ${subject.name || ""} (${subject.code || ""})`],
-      [
-        `Term: ${
-          terms.find((t) => Number(t.id) === Number(filters.term_id))?.name ||
-          ""
-        }`,
-      ],
-      [
-        `Sequence: ${
-          sequences.find((s) => Number(s.id) === Number(filters.sequence_id))
-            ?.name || ""
-        }`,
-      ],
-      [],
-      ["Student Name", "Student ID", "Score"],
-      [
-        "",
-        "",
-        "",
-        "department_id",
-        "academic_year_id",
-        "class_id",
-        "term_id",
-        "sequence_id",
-        "subject_id",
-      ],
-      ...students.map((s) => {
-        const m = marks.find((mk) => mk.student_id === s.id);
-        return [
-          s.full_name ?? s.name,
-          s.student_id,
-          m?.score ?? "",
-          filters.department_id,
-          filters.academic_year_id,
-          filters.class_id,
-          filters.term_id,
-          filters.sequence_id,
-          subject.id,
-        ];
-      }),
-    ];
-
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    ws["!cols"] = [
-      { wch: 25 },
-      { wch: 15 },
-      { wch: 10 },
-      { hidden: true },
-      { hidden: true },
-      { hidden: true },
-      { hidden: true },
-      { hidden: true },
-      { hidden: true },
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Marks");
-
-    XLSX.writeFile(
-      wb,
-      `Marks_${subject.code || subject.id}_${filters.class_id}_${
-        filters.academic_year_id
-      }.xlsx`
-    );
-
-    setExportingExcelFile(false);
-  };
-
-  // --- IMPORT EXCEL ---
-  const handleImportExcel = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      showModal(
+        "error",
+        "File Too Large",
+        "Please upload a file smaller than 10MB"
+      );
+      e.target.value = null;
+      return;
+    }
 
     try {
       setImportingExcelFile(true);
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-      if (!students.length) {
-        await fetchStudents(
-          filters.class_id,
-          filters.department_id,
-          filters.academic_year_id
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+
+      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+        throw new Error("Excel file is empty or corrupted.");
+      }
+
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+      if (!Array.isArray(json) || json.length < 11) {
+        throw new Error(
+          "Excel file format is invalid. Please use the exported template."
         );
       }
 
-      if (json.length < 11) throw new Error("Excel file missing data rows.");
-
+      // Get students from the actual data rows (starting at row 11, index 10)
       const rows = json.slice(10);
 
-      const newMarks = rows.map((row) => {
-        const [fullName, studentId, score, , , , , , subjectId] = row;
+      if (!rows || rows.length === 0) {
+        throw new Error("No student data found in Excel file.");
+      }
 
-        const student = students.find((s) => s.student_id === studentId);
-        if (!student) throw new Error(`Student ${fullName} not found.`);
+      // Extract metadata from the first data row (columns D-I, index 3-8)
+      const firstRow = rows[0];
+      if (!Array.isArray(firstRow) || firstRow.length < 9) {
+        throw new Error(
+          "Excel file is missing required metadata. Please use the exported template."
+        );
+      }
 
-        if (score !== "" && (Number(score) < 0 || Number(score) > 20)) {
-          throw new Error(`Invalid score for ${fullName}. Must be 0–20.`);
+      const [
+        ,
+        ,
+        ,
+        excelDeptId,
+        excelYearId,
+        excelClassId,
+        excelTermId,
+        excelSeqId,
+        excelSubjectId,
+      ] = firstRow;
+
+      // Validate all metadata exists
+      if (
+        !excelYearId ||
+        !excelClassId ||
+        !excelTermId ||
+        !excelSeqId ||
+        !excelSubjectId
+      ) {
+        throw new Error(
+          "Excel file metadata is incomplete. Please export a fresh template."
+        );
+      }
+
+      // Validate metadata matches current filters
+      const {
+        academic_year_id,
+        department_id,
+        class_id,
+        term_id,
+        sequence_id,
+      } = filters;
+
+      const mismatches = [];
+      if (String(excelYearId) !== String(academic_year_id)) {
+        mismatches.push("Academic Year");
+      }
+      if (String(excelClassId) !== String(class_id)) {
+        mismatches.push("Class");
+      }
+      if (String(excelTermId) !== String(term_id)) {
+        mismatches.push("Term");
+      }
+      if (String(excelSeqId) !== String(sequence_id)) {
+        mismatches.push("Sequence");
+      }
+      if (String(excelSubjectId) !== String(subject.id)) {
+        mismatches.push("Subject");
+      }
+
+      if (mismatches.length > 0) {
+        throw new Error(
+          `Excel file does not match current selection. Mismatched: ${mismatches.join(
+            ", "
+          )}. Please export a fresh template with current filters.`
+        );
+      }
+
+      // Ensure students are loaded
+      let currentStudents = students;
+      if (
+        !Array.isArray(currentStudents) ||
+        currentStudents.length === 0 ||
+        currentStudents.some((s) => s.id === "none")
+      ) {
+        currentStudents = await fetchStudents(
+          class_id,
+          department_id,
+          academic_year_id
+        );
+      }
+
+      if (!isMountedRef.current) return;
+
+      if (!Array.isArray(currentStudents) || currentStudents.length === 0) {
+        throw new Error("No students found for the selected class.");
+      }
+
+      // Process student data
+      const newMarks = [];
+      const unmatched = [];
+      const errors = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!Array.isArray(row) || row.length < 3) continue;
+
+        const [fullName, studentId, score] = row;
+
+        // Skip empty rows or header rows
+        const nameStr = String(fullName || "").trim();
+        const idStr = String(studentId || "").trim();
+
+        if (!nameStr || !idStr || nameStr === "" || idStr === "") continue;
+
+        // Try exact student_id match first (case-insensitive)
+        let student = currentStudents.find(
+          (s) =>
+            s &&
+            s.student_id &&
+            String(s.student_id).trim().toLowerCase() === idStr.toLowerCase()
+        );
+
+        if (student) {
+          // Validate score
+          if (score !== "" && score !== null && score !== undefined) {
+            const numScore = Number(score);
+            if (isNaN(numScore)) {
+              errors.push(
+                `Row ${i + 11}: Invalid score "${score}" for ${nameStr}`
+              );
+              continue;
+            }
+            if (numScore < 0 || numScore > 20) {
+              errors.push(
+                `Row ${
+                  i + 11
+                }: Score ${numScore} out of range (0-20) for ${nameStr}`
+              );
+              continue;
+            }
+            newMarks.push({
+              student_id: student.id,
+              score: numScore,
+            });
+          } else {
+            // Empty score - still add as empty
+            newMarks.push({
+              student_id: student.id,
+              score: "",
+            });
+          }
+        } else {
+          // No exact match - add to unmatched
+          const scoreValue =
+            score !== "" && score !== null && score !== undefined
+              ? Number(score)
+              : "";
+
+          // Only add if score is valid or empty
+          if (scoreValue !== "") {
+            const numScore = Number(scoreValue);
+            if (isNaN(numScore) || numScore < 0 || numScore > 20) {
+              errors.push(`Row ${i + 11}: Invalid score for ${nameStr}`);
+              continue;
+            }
+          }
+
+          unmatched.push({
+            fullName: nameStr,
+            studentId: idStr,
+            score: scoreValue,
+          });
         }
+      }
 
-        return {
-          student_id: student.id,
-          score: score === "" ? "" : Number(score),
-        };
-      });
+      // Show errors if any
+      if (errors.length > 0) {
+        throw new Error(
+          `Found ${errors.length} error(s) in Excel file:\n${errors
+            .slice(0, 5)
+            .join("\n")}${
+            errors.length > 5 ? `\n...and ${errors.length - 5} more` : ""
+          }`
+        );
+      }
 
-      setMarks(newMarks);
-      toast.success("Excel marks loaded successfully.");
+      if (newMarks.length === 0 && unmatched.length === 0) {
+        throw new Error("No valid student data found in Excel file.");
+      }
+
+      if (unmatched.length > 0) {
+        // Some students need matching
+        setUnmatchedStudents(unmatched);
+        setTotalImportedCount(newMarks.length + unmatched.length);
+
+        // Apply the matched marks immediately
+        setMarks((prev) => {
+          const updated = [...prev];
+          newMarks.forEach((newMark) => {
+            const existingIndex = updated.findIndex(
+              (m) => m.student_id === newMark.student_id
+            );
+            if (existingIndex >= 0) {
+              updated[existingIndex] = newMark;
+            } else {
+              updated.push(newMark);
+            }
+          });
+          return updated;
+        });
+
+        setShowMatchingModal(true);
+      } else {
+        // All matched - apply marks
+        setMarks(newMarks);
+        showModal(
+          "success",
+          "Import Successful",
+          `${newMarks.length} student mark${
+            newMarks.length !== 1 ? "s" : ""
+          } imported successfully.`
+        );
+      }
     } catch (err) {
-      toast.error(err.message || "Failed to load Excel. Check formatting.");
+      console.error("Import error:", err);
+      showModal(
+        "error",
+        "Import Failed",
+        err.message ||
+          "Failed to load Excel. Please check the file format and try again."
+      );
     } finally {
-      setImportingExcelFile(false);
+      if (isMountedRef.current) {
+        setImportingExcelFile(false);
+      }
       e.target.value = null;
     }
   };
 
-  // --- FILTERED ARRAYS ---
-  const filteredTerms = filters.academic_year_id
-    ? terms.filter(
-        (t) => Number(t.academic_year_id) === Number(filters.academic_year_id)
-      )
-    : [];
+  const filteredTerms =
+    filters.academic_year_id && Array.isArray(terms)
+      ? terms.filter(
+          (t) => Number(t.academic_year_id) === Number(filters.academic_year_id)
+        )
+      : [];
 
-  const selectedTerm = terms.find(
-    (t) => Number(t.id) === Number(filters.term_id)
-  );
+  const selectedTerm = Array.isArray(terms)
+    ? terms.find((t) => Number(t.id) === Number(filters.term_id))
+    : null;
 
   const filteredSequences =
-    filters.academic_year_id && selectedTerm
+    filters.academic_year_id && selectedTerm && Array.isArray(sequences)
       ? sequences
           .filter(
             (s) =>
@@ -672,44 +1411,56 @@ export const MarksUploadPage = () => {
           .sort((a, b) => Number(a.order_number) - Number(b.order_number))
       : [];
 
-  const filteredClasses = filters.department_id
-    ? classes.filter(
-        (c) => Number(c.department_id) === Number(filters.department_id)
-      )
-    : [];
+  const filteredClasses =
+    filters.department_id && Array.isArray(classes)
+      ? classes.filter(
+          (c) => Number(c.department_id) === Number(filters.department_id)
+        )
+      : [];
 
-  // --- SORT, FILTER, AND PAGINATE STUDENTS ---
   const getFilteredAndSortedStudents = () => {
-    let filtered = [...students];
+    if (!Array.isArray(students) || students.length === 0) return [];
 
-    if (selectedStudentId) {
-      filtered = filtered.filter((s) => s.id === selectedStudentId);
-    } else if (searchTerm.trim()) {
-      filtered = filtered.filter(
-        (s) =>
-          s.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.student_id?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+    try {
+      let filtered = students.filter((s) => s && s.id); // Remove null/undefined entries
 
-    filtered.sort((a, b) => {
-      const nameA = (a.full_name || "").toLowerCase();
-      const nameB = (b.full_name || "").toLowerCase();
-      if (sortOrder === "asc") {
-        return nameA.localeCompare(nameB);
-      } else {
-        return nameB.localeCompare(nameA);
+      if (selectedStudentId) {
+        filtered = filtered.filter((s) => s.id === selectedStudentId);
+      } else if (searchTerm && searchTerm.trim()) {
+        const searchLower = searchTerm.toLowerCase().trim();
+        filtered = filtered.filter(
+          (s) =>
+            (s.full_name && s.full_name.toLowerCase().includes(searchLower)) ||
+            (s.student_id && s.student_id.toLowerCase().includes(searchLower))
+        );
       }
-    });
 
-    return filtered;
+      filtered.sort((a, b) => {
+        const nameA = (a.full_name || "").toLowerCase();
+        const nameB = (b.full_name || "").toLowerCase();
+        if (sortOrder === "asc") {
+          return nameA.localeCompare(nameB);
+        } else {
+          return nameB.localeCompare(nameA);
+        }
+      });
+
+      return filtered;
+    } catch (error) {
+      console.error("Error filtering students:", error);
+      return students;
+    }
   };
 
   const filteredAndSortedStudents = getFilteredAndSortedStudents();
 
-  // NEW: Get search suggestions
   const getSearchSuggestions = () => {
-    if (!debouncedSearch.trim() || students.length === 0) return [];
+    if (
+      !debouncedSearch.trim() ||
+      !Array.isArray(students) ||
+      students.length === 0
+    )
+      return [];
 
     return students
       .filter(
@@ -728,7 +1479,6 @@ export const MarksUploadPage = () => {
 
   const searchSuggestions = getSearchSuggestions();
 
-  // Pagination
   const totalStudents = filteredAndSortedStudents.length;
   const totalPages =
     studentsPerPage === "all" ? 1 : Math.ceil(totalStudents / studentsPerPage);
@@ -741,7 +1491,6 @@ export const MarksUploadPage = () => {
           currentPage * studentsPerPage
         );
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, sortOrder, studentsPerPage, selectedStudentId]);
@@ -818,7 +1567,6 @@ export const MarksUploadPage = () => {
     }
   };
 
-  // --- RENDER ---
   return (
     <SideTop>
       <div className="marks-upload-page">
@@ -983,12 +1731,12 @@ export const MarksUploadPage = () => {
                 className="marks-btn marks-btn-export"
                 onClick={handleExportExcel}
                 disabled={
-                  !students.length || students.some((s) => s.id === "none")
+                  !Array.isArray(students) ||
+                  students.length === 0 ||
+                  students.some((s) => s.id === "none")
                 }
               >
-                {exportingExcelFile
-                  ? "Downloading Excel File..."
-                  : "Export to Excel"}
+                {exportingExcelFile ? "Downloading..." : "Export to Excel"}
               </button>
 
               <div className="marks-upload-wrapper">
@@ -1002,18 +1750,20 @@ export const MarksUploadPage = () => {
                 <button
                   type="button"
                   className="marks-btn marks-btn-import"
+                  disabled={
+                    !Array.isArray(students) ||
+                    students.length === 0 ||
+                    students.some((s) => s.id === "none")
+                  }
                   onClick={() =>
-                    document.getElementById("uploadExcelInput").click()
+                    document.getElementById("uploadExcelInput")?.click()
                   }
                 >
-                  {importingExcelFile
-                    ? "Uploading Excel File..."
-                    : "Upload Excel Document"}
+                  {importingExcelFile ? "Uploading..." : "Upload Excel"}
                 </button>
               </div>
             </div>
 
-            {/* Enhanced Search with Suggestions */}
             <div className="marks-controls-container">
               <div className="marks-search-wrapper">
                 <div className="marks-search-bar" ref={searchInputRef}>
@@ -1048,7 +1798,6 @@ export const MarksUploadPage = () => {
                   </button>
                 </div>
 
-                {/* Search Suggestions Dropdown */}
                 {showSuggestions && searchSuggestions.length > 0 && (
                   <div className="search-suggestions" ref={suggestionsRef}>
                     <div className="suggestions-header">
@@ -1152,7 +1901,6 @@ export const MarksUploadPage = () => {
                             : (currentPage - 1) * studentsPerPage + index;
                         return (
                           <tr key={s.id} className="marks-table-row">
-                            {/* Desktop cells */}
                             <td className="desktop-cell">{globalIndex + 1}</td>
                             <td className="desktop-cell">{s.student_id}</td>
                             <td className="desktop-cell">{s.full_name}</td>
@@ -1174,7 +1922,6 @@ export const MarksUploadPage = () => {
                               )}
                             </td>
 
-                            {/* Mobile card */}
                             <td className="mobile-marks-cell" colSpan={4}>
                               <div className="mobile-marks-card">
                                 <div className="marks-card-header">
@@ -1237,7 +1984,6 @@ export const MarksUploadPage = () => {
               )}
             </div>
 
-            {/* Pagination */}
             {studentsPerPage !== "all" && totalPages > 1 && (
               <div className="marks-pagination">
                 <button
@@ -1297,10 +2043,29 @@ export const MarksUploadPage = () => {
                 onClick={handleSave}
                 disabled={students.some((s) => s.id === "none") || saving}
               >
-                {saving ? "Saving Marks..." : "Save Marks"}
+                {saving ? "Saving..." : "Save Marks"}
               </button>
             </div>
           </>
+        )}
+
+        {showMatchingModal && unmatchedStudents.length > 0 && (
+          <NameMatchingModal
+            unmatchedStudents={unmatchedStudents}
+            existingStudents={students.filter((s) => s.id !== "none")}
+            onComplete={handleMatchingComplete}
+            onCancel={handleMatchingCancel}
+            totalImported={totalImportedCount}
+          />
+        )}
+
+        {simpleModal && (
+          <SimpleModal
+            type={simpleModal.type}
+            title={simpleModal.title}
+            message={simpleModal.message}
+            onClose={() => setSimpleModal(null)}
+          />
         )}
       </div>
     </SideTop>
