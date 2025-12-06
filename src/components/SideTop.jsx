@@ -67,10 +67,10 @@ export default function SideTop({ children }) {
 
   const authUser = JSON.parse(sessionStorage.getItem("authUser"));
   const username = authUser?.username || "User";
-  
+
   // Debug logging for Admin4 role detection
-  console.log('Current user role:', authUser?.role);
-  console.log('Is Admin4?', authUser?.role === "Admin4");
+  console.log("Current user role:", authUser?.role);
+  console.log("Is Admin4?", authUser?.role === "Admin4");
 
   // Added: derive unread flag to avoid undefined reference
   const hasUnread = unreadMessageCount > 0;
@@ -84,7 +84,11 @@ export default function SideTop({ children }) {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
-      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
+      {
+        label: "Teachers' Cases",
+        icon: <FaExclamationTriangle />,
+        path: "/teacher-cases",
+      },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
       {
         label: "Departments",
@@ -144,7 +148,11 @@ export default function SideTop({ children }) {
         icon: <FaClipboardList />,
         path: "/admin-discipline-cases",
       },
-      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
+      {
+        label: "Teachers' Cases",
+        icon: <FaExclamationTriangle />,
+        path: "/teacher-cases",
+      },
       {
         label: "Counselling Cases",
         icon: <FaClipboardList />,
@@ -154,7 +162,7 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Admin2") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
- 
+
       {
         label: "Financial Summary",
         icon: <FaMoneyBill />,
@@ -185,7 +193,7 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Admin3") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
- 
+
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
       {
@@ -253,23 +261,39 @@ export default function SideTop({ children }) {
       { label: "Events", icon: <FaCalendarAlt />, path: "/my-events" },
     ];
   } else if (authUser?.role === "Admin4") {
-    console.log('Setting Admin4 menu items');
+    console.log("Setting Admin4 menu items");
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/dean" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
-      { label: "Departments", icon: <FaClipboardList />, path: "/admin-specialty" },
+      {
+        label: "Departments",
+        icon: <FaClipboardList />,
+        path: "/admin-specialty",
+      },
       { label: "Messages", icon: <FaEnvelope />, path: "/dean-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
-      { label: "Staff Attendance", icon: <FaClipboardList />, path: "/staff-attendance" },
-      { label: "Student Attendance", icon: <FaUserGraduate />, path: "/student-attendance-report" },
+      {
+        label: "Staff Attendance",
+        icon: <FaClipboardList />,
+        path: "/staff-attendance",
+      },
+      {
+        label: "Student Attendance",
+        icon: <FaUserGraduate />,
+        path: "/student-attendance-report",
+      },
       { label: "Events", icon: <FaCalendarAlt />, path: "/dean-events" },
       { label: "Timetables", icon: <FaCalendarAlt />, path: "/timetables" },
       { label: "All Subjects", path: "/admin4-subjects", icon: <FaBookOpen /> },
       { label: "Subjects", path: "/academics/subjects", icon: <FaBookOpen /> },
-      { label: "Lesson Plans", icon: <FaPenFancy />, path: "/dean-lesson-plans" },
+      {
+        label: "Lesson Plans",
+        icon: <FaPenFancy />,
+        path: "/dean-lesson-plans",
+      },
       { label: "HODs", icon: <FaUserTie />, path: "/admin-hods" },
     ];
-    console.log('Admin4 menu items set:', menuItems);
+    console.log("Admin4 menu items set:", menuItems);
   } else if (authUser?.role === "Teacher") {
     menuItems = [
       {
@@ -277,7 +301,7 @@ export default function SideTop({ children }) {
         icon: <MdDashboard />,
         path: "/teacher-dashboard",
       },
- 
+
       { label: "Messages", icon: <FaEnvelope />, path: "/teacher-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       {
@@ -296,7 +320,7 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Discipline") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
- 
+
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       { label: "Staff", icon: <FaChalkboardTeacher />, path: "/admin-teacher" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
@@ -328,10 +352,18 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Psychosocialist") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/psycho-dashboard" },
- 
+
       { label: "Cases", icon: <FaClipboardList />, path: "/psycho-cases" },
-      { label: "Discipline Cases", icon: <FaExclamationTriangle />, path: "/psycho-discipline-cases" },
-      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
+      {
+        label: "Discipline Cases",
+        icon: <FaExclamationTriangle />,
+        path: "/psycho-discipline-cases",
+      },
+      {
+        label: "Teachers' Cases",
+        icon: <FaExclamationTriangle />,
+        path: "/teacher-cases",
+      },
       {
         label: "Subjects",
         path: "/academics/subjects",
@@ -348,15 +380,27 @@ export default function SideTop({ children }) {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/dsc-dashboard" },
       { label: "Cases", icon: <FaClipboardList />, path: "/dsc-cases" },
-      { label: "Discipline Cases", icon: <FaExclamationTriangle />, path: "/dsc-discipline-cases" },
-      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
+      {
+        label: "Discipline Cases",
+        icon: <FaExclamationTriangle />,
+        path: "/dsc-discipline-cases",
+      },
+      {
+        label: "Teachers' Cases",
+        icon: <FaExclamationTriangle />,
+        path: "/teacher-cases",
+      },
       { label: "Messages", icon: <FaEnvelope />, path: "/dsc-messages" },
     ];
   } else if (authUser?.role === "Admin1") {
     // Inject Teachers' Cases into Admin1 menu (view-only page handles RBAC)
     const base = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin-dashboard" },
-      { label: "Teachers' Cases", icon: <FaExclamationTriangle />, path: "/teacher-cases" },
+      {
+        label: "Teachers' Cases",
+        icon: <FaExclamationTriangle />,
+        path: "/teacher-cases",
+      },
     ];
     // Keep existing Admin1 items if present earlier in file; here we minimal-add to ensure visibility
     menuItems = [...base, ...menuItems];
@@ -385,24 +429,27 @@ export default function SideTop({ children }) {
 
   // Filter out My Classes for Admin1 users
   const filterMenuItems = (items) => {
-    console.log('Filtering menu items for role:', authUser?.role);
-    console.log('Input items:', items);
+    console.log("Filtering menu items for role:", authUser?.role);
+    console.log("Input items:", items);
     if (authUser?.role === "Admin1") {
       const filtered = items.filter((item) => item?.label !== "My Classes");
-      console.log('Filtered Admin1 items:', filtered);
+      console.log("Filtered Admin1 items:", filtered);
       return filtered;
     }
-    console.log('No filtering applied, returning all items:', items);
+    console.log("No filtering applied, returning all items:", items);
     return items;
   };
 
   let menuToShow = filterMenuItems(menuItems);
-  console.log('Final menuToShow:', menuToShow);
+  console.log("Final menuToShow:", menuToShow);
 
   // Fetch my payslip count for roles that have Pay Slip
   useEffect(() => {
     let isMounted = true;
-    const isPageVisible = () => typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
+    const isPageVisible = () =>
+      typeof document !== "undefined"
+        ? document.visibilityState === "visible"
+        : true;
     async function fetchPayslipCount() {
       if (!isPageVisible()) return; // pause when tab hidden
       try {
@@ -418,11 +465,11 @@ export default function SideTop({ children }) {
     const onVisibility = () => {
       if (isPageVisible()) fetchPayslipCount();
     };
-    document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       isMounted = false;
       clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisibility);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [authUser?.id]);
 
@@ -432,7 +479,10 @@ export default function SideTop({ children }) {
 
   useEffect(() => {
     let isMounted = true;
-    const isPageVisible = () => typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
+    const isPageVisible = () =>
+      typeof document !== "undefined"
+        ? document.visibilityState === "visible"
+        : true;
     async function fetchStatus() {
       if (!isPageVisible()) return;
       if (isTeacher) {
@@ -479,13 +529,15 @@ export default function SideTop({ children }) {
     fetchStatus();
     // Listen for status update events
     const handler = () => fetchStatus();
-    const visHandler = () => { if (isPageVisible()) fetchStatus(); };
+    const visHandler = () => {
+      if (isPageVisible()) fetchStatus();
+    };
     window.addEventListener("teacher-status-updated", handler);
-    document.addEventListener('visibilitychange', visHandler);
+    document.addEventListener("visibilitychange", visHandler);
     return () => {
       isMounted = false;
       window.removeEventListener("teacher-status-updated", handler);
-      document.removeEventListener('visibilitychange', visHandler);
+      document.removeEventListener("visibilitychange", visHandler);
     };
   }, [isTeacher, authUser]);
 
@@ -496,7 +548,7 @@ export default function SideTop({ children }) {
       icon: <MdDashboard />,
       path: "/teacher-dashboard",
     },
-    
+
     { label: "Messages", icon: <FaEnvelope />, path: "/teacher-messages" },
     { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
     {
@@ -516,7 +568,7 @@ export default function SideTop({ children }) {
   // Dean/Admin4 menu items (from provided image)
   const deanMenuItems = [
     { label: "Dashboard", icon: <MdDashboard />, path: "/dean" },
-    
+
     { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
 
     { label: "HODs", icon: <FaUserTie />, path: "/admin-hods" },
@@ -545,7 +597,10 @@ export default function SideTop({ children }) {
   if (authUser?.role === "Admin3") menuToShow = filterMenuItems(menuItems);
 
   useEffect(() => {
-    const isPageVisible = () => typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
+    const isPageVisible = () =>
+      typeof document !== "undefined"
+        ? document.visibilityState === "visible"
+        : true;
     const fetchUnreadCount = async () => {
       if (!isPageVisible()) return;
       try {
@@ -568,14 +623,16 @@ export default function SideTop({ children }) {
 
     window.addEventListener("messageSent", handleMessageChange);
     window.addEventListener("messageReceived", handleMessageChange);
-    const onVisibility = () => { if (isPageVisible()) fetchUnreadCount(); };
-    document.addEventListener('visibilitychange', onVisibility);
+    const onVisibility = () => {
+      if (isPageVisible()) fetchUnreadCount();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener("messageSent", handleMessageChange);
       window.removeEventListener("messageReceived", handleMessageChange);
-      document.removeEventListener('visibilitychange', onVisibility);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
@@ -599,16 +656,23 @@ export default function SideTop({ children }) {
   };
 
   useEffect(() => {
-    const isPageVisible = () => typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
-    const wrapped = () => { if (isPageVisible()) refreshEventsCount(); };
+    const isPageVisible = () =>
+      typeof document !== "undefined"
+        ? document.visibilityState === "visible"
+        : true;
+    const wrapped = () => {
+      if (isPageVisible()) refreshEventsCount();
+    };
     wrapped();
     // Increase interval from 5 minutes to 7 minutes and pause when hidden
     const interval = setInterval(wrapped, 7 * 60 * 1000);
-    const onVisibility = () => { if (isPageVisible()) wrapped(); };
-    document.addEventListener('visibilitychange', onVisibility);
+    const onVisibility = () => {
+      if (isPageVisible()) wrapped();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisibility);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
@@ -705,9 +769,9 @@ export default function SideTop({ children }) {
         </div>
 
         <nav className="menu">
-          {console.log('Rendering menu items:', menuToShow)}
+          {console.log("Rendering menu items:", menuToShow)}
           {menuToShow.filter(Boolean).map((item) => {
-            console.log('Rendering menu item:', item);
+            console.log("Rendering menu item:", item);
             const hasSubmenu =
               Array.isArray(item.submenu) && item.submenu.length > 0;
             const isExpanded = hasSubmenu && expandedMenu === item.label;

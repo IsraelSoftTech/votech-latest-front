@@ -36,11 +36,13 @@ export const MarksUploadPage = () => {
   const searchInputRef = useRef(null);
   const suggestionsRef = useRef(null);
 
+  // Loading states
   const [loadingPage, setLoadingPage] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [exportingExcelFile, setExportingExcelFile] = useState(false);
   const [importingExcelFile, setImportingExcelFile] = useState(false);
 
+  // Data states
   const [students, setStudents] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -50,6 +52,7 @@ export const MarksUploadPage = () => {
   const [subjectClasses, setSubjectClasses] = useState([]);
   const [subject, setSubject] = useState({});
 
+  // Filter states
   const [filters, setFilters] = useState({
     academic_year_id: null,
     department_id: null,
@@ -67,123 +70,234 @@ export const MarksUploadPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [studentsPerPage, setStudentsPerPage] = useState(10);
 
-  // NEW: Debounced search and suggestions
-  const [searchInput, setSearchInput] = useState(""); // What user is typing
-  const [debouncedSearch, setDebouncedSearch] = useState(""); // Debounced value for suggestions
+  // Search states
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedStudentId, setSelectedStudentId] = useState(null); // For single student view
-  const [highlightedIndex, setHighlightedIndex] = useState(-1); // For keyboard navigation
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
+  // NEW: Track initial data loading completion
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
   // --- FETCH FUNCTIONS ---
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     try {
       const res = await api.get("/departments");
       const departments = res.data?.data;
 
       if (Array.isArray(departments) && departments.length > 0) {
         setDepartments(departments);
+        return departments;
       } else {
         setDepartments([]);
+        return [];
       }
     } catch (err) {
+      console.error("Failed to fetch departments:", err);
       toast.error(
         err.response?.data?.details ||
           err.response?.data?.message ||
           "Failed to fetch departments."
       );
-      console.log(err);
-    }
-  };
-
-  const fetchStudents = async () => {
-    try {
-      const res = await api.get(
-        `/students?class_id=${filters.class_id}&specialty_id=${
-          filters.department_id || ""
-        }&academic_year_id=${filters.academic_year_id}`
-      );
-      const list = res?.data?.data || [];
-      setStudents(list);
-      return list;
-    } catch (err) {
-      toast.error(
-        err.response?.data?.details ||
-          err.response?.data?.message ||
-          "Failed to fetch students."
-      );
-      setStudents([]);
+      setDepartments([]);
       return [];
     }
-  };
+  }, []);
 
-  const fetchSubjectClasses = async () => {
+  const fetchStudents = useCallback(
+    async (classId, departmentId, academicYearId) => {
+      try {
+        const res = await api.get(
+          `/students?class_id=${classId}&specialty_id=${
+            departmentId || ""
+          }&academic_year_id=${academicYearId}`
+        );
+        const list = res?.data?.data || [];
+        setStudents(list);
+        return list;
+      } catch (err) {
+        console.error("Failed to fetch students:", err);
+        toast.error(
+          err.response?.data?.details ||
+            err.response?.data?.message ||
+            "Failed to fetch students."
+        );
+        setStudents([]);
+        return [];
+      }
+    },
+    []
+  );
+
+  const fetchSubjectClasses = useCallback(async () => {
     try {
       const res = await api.get(`/class-subjects?subject_id=${id}`);
-      setSubjectClasses(res?.data?.data || []);
+      const data = res?.data?.data || [];
+      setSubjectClasses(data);
+      return data;
     } catch (err) {
+      console.error("Failed to fetch subject classes:", err);
       toast.error(
         err.response?.data?.details ||
           err.response?.data?.message ||
           "Failed to fetch subject classes."
       );
+      setSubjectClasses([]);
+      return [];
     }
-  };
+  }, [id]);
 
+  const fetchSubject = useCallback(async () => {
+    try {
+      const res = await api.get(`/subjects/${id}`);
+      const subjectData = res?.data?.data || {};
+      setSubject(subjectData);
+      return subjectData;
+    } catch (err) {
+      console.error("Failed to fetch subject:", err);
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to fetch subject."
+      );
+      return {};
+    }
+  }, [id]);
+
+  // --- MAIN DROPDOWN FETCH WITH PROPER ERROR HANDLING ---
   const fetchDropdowns = useCallback(async () => {
+    if (!user?.id) {
+      console.warn("User not available for fetchDropdowns");
+      return;
+    }
+
     try {
       setLoadingPage(true);
-      const subRes = await api.get(`/subjects/${id}`);
 
-      const [yearsRes, classesRes, termsRes, sequencesRes, classSubjectRes] =
-        await Promise.all([
-          api.get("/academic-years"),
-          api.get("/classes"),
-          api.get("/marks/terms"),
-          api.get("/marks/sequences"),
-          api.get(`/class-subjects?teacher_id=${user.id}`),
-        ]);
+      // Fetch all data in parallel
+      const [
+        subRes,
+        yearsRes,
+        classesRes,
+        termsRes,
+        sequencesRes,
+        classSubjectRes,
+        deptRes,
+        subjectClassRes,
+      ] = await Promise.allSettled([
+        api.get(`/subjects/${id}`),
+        api.get("/academic-years"),
+        api.get("/classes"),
+        api.get("/marks/terms"),
+        api.get("/marks/sequences"),
+        api.get(`/class-subjects?teacher_id=${user.id}`),
+        api.get("/departments"),
+        api.get(`/class-subjects?subject_id=${id}`),
+      ]);
 
-      const classSubjects = classSubjectRes.data.data || [];
+      // Handle subject fetch
+      if (subRes.status === "fulfilled") {
+        setSubject(subRes.value?.data?.data || {});
+      } else {
+        console.error("Subject fetch failed:", subRes.reason);
+        toast.error("Failed to load subject");
+        setSubject({});
+      }
 
-      setAcademicYears(yearsRes?.data?.data || []);
+      // Handle academic years
+      if (yearsRes.status === "fulfilled") {
+        setAcademicYears(yearsRes.value?.data?.data || []);
+      } else {
+        console.error("Academic years fetch failed:", yearsRes.reason);
+        setAcademicYears([]);
+      }
 
-      setClasses(
-        user.role === "Admin3"
-          ? classesRes.data.data
-          : (classesRes?.data?.data || [])
-              .map((cls) => ({
-                ...cls,
-                classSubjects: (cls.classSubjects || []).filter((cs) =>
-                  classSubjects.some(
-                    (teacherCs) =>
-                      teacherCs.id === cs.id && teacherCs.teacher_id === user.id
-                  )
-                ),
-              }))
-              .filter((cls) => cls.classSubjects.length > 0)
-      );
-      setTerms(termsRes?.data?.data || []);
-      setSequences(sequencesRes?.data?.data || []);
-      setSubject(subRes?.data?.data || {});
+      // Handle terms
+      if (termsRes.status === "fulfilled") {
+        setTerms(termsRes.value?.data?.data || []);
+      } else {
+        console.error("Terms fetch failed:", termsRes.reason);
+        setTerms([]);
+      }
 
-      fetchDepartments();
-      fetchSubjectClasses();
+      // Handle sequences
+      if (sequencesRes.status === "fulfilled") {
+        setSequences(sequencesRes.value?.data?.data || []);
+      } else {
+        console.error("Sequences fetch failed:", sequencesRes.reason);
+        setSequences([]);
+      }
+
+      // Handle departments
+      if (deptRes.status === "fulfilled") {
+        setDepartments(deptRes.value?.data?.data || []);
+      } else {
+        console.error("Departments fetch failed:", deptRes.reason);
+        setDepartments([]);
+      }
+
+      // Handle subject classes for students
+      if (subjectClassRes.status === "fulfilled") {
+        setSubjectClasses(subjectClassRes.value?.data?.data || []);
+      } else {
+        console.error("Subject classes fetch failed:", subjectClassRes.reason);
+        setSubjectClasses([]);
+      }
+
+      // Handle classes with proper filtering based on user role
+      if (classesRes.status === "fulfilled") {
+        const classData = classesRes.value?.data?.data || [];
+        const classSubjects =
+          classSubjectRes.status === "fulfilled"
+            ? classSubjectRes.value?.data?.data || []
+            : [];
+
+        if (user.role === "Admin3") {
+          setClasses(classData);
+        } else {
+          // For Teacher and other roles, filter classes
+          const filteredClasses = classData
+            .map((cls) => ({
+              ...cls,
+              classSubjects: (cls.classSubjects || []).filter((cs) =>
+                classSubjects.some(
+                  (teacherCs) =>
+                    teacherCs.id === cs.id && teacherCs.teacher_id === user.id
+                )
+              ),
+            }))
+            .filter((cls) => cls.classSubjects.length > 0);
+
+          setClasses(filteredClasses);
+        }
+      } else {
+        console.error("Classes fetch failed:", classesRes.reason);
+        setClasses([]);
+      }
+
+      setInitialDataLoaded(true);
     } catch (err) {
-      toast.error("Failed to load dropdowns.");
+      console.error("Unexpected error in fetchDropdowns:", err);
+      toast.error("Failed to load page data. Please refresh.");
     } finally {
       setLoadingPage(false);
     }
-  }, [id, user]);
+  }, [id, user?.id, user?.role]);
 
+  // --- EFFECT: Initialize page on mount ---
   useEffect(() => {
     if (!user || hasFetchedRef.current) return;
+
     hasFetchedRef.current = true;
     fetchDropdowns();
-  }, [id, user, fetchDropdowns]);
+  }, [user, fetchDropdowns]);
 
+  // --- LOAD STUDENTS AND MARKS ---
   const loadStudentsMarks = useCallback(async () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
 
+    // Validate all required filters are set
     if (
       !academic_year_id ||
       !class_id ||
@@ -193,11 +307,19 @@ export const MarksUploadPage = () => {
     ) {
       setStudents([]);
       setMarks([]);
+      setLoadingTable(false);
+      return;
+    }
+
+    // Ensure initial data is loaded before loading students
+    if (!initialDataLoaded) {
+      console.warn("Waiting for initial data to load...");
       return;
     }
 
     setLoadingTable(true);
     try {
+      // Check if subject is assigned to class
       const classAssigned = subjectClasses.some(
         (sc) => Number(sc.class_id) === Number(class_id)
       );
@@ -211,46 +333,65 @@ export const MarksUploadPage = () => {
           },
         ]);
         setMarks([]);
+        setLoadingTable(false);
         return;
       }
 
-      const resStudents = await api.get(
-        `/students?class_id=${class_id}&specialty_id=${
-          filters.department_id || ""
-        }&academic_year_id=${academic_year_id}`
+      // Fetch students
+      const studentsList = await fetchStudents(
+        class_id,
+        filters.department_id,
+        academic_year_id
       );
-      const studentsList = resStudents?.data?.data || [];
-      setStudents(studentsList);
 
-      const resMarks = await api.get(
-        `/marks?subject_id=${subject.id}&academic_year_id=${academic_year_id}&class_id=${class_id}&term_id=${term_id}&sequence_id=${sequence_id}`
-      );
-      setMarks(resMarks?.data?.data || []);
+      if (!Array.isArray(studentsList) || studentsList.length === 0) {
+        setStudents([]);
+        setMarks([]);
+        setLoadingTable(false);
+        return;
+      }
+
+      // Fetch marks
+      try {
+        const marksRes = await api.get(
+          `/marks?subject_id=${subject.id}&academic_year_id=${academic_year_id}&class_id=${class_id}&term_id=${term_id}&sequence_id=${sequence_id}`
+        );
+        setMarks(marksRes?.data?.data || []);
+      } catch (marksErr) {
+        console.error("Failed to fetch marks:", marksErr);
+        toast.error("Failed to fetch marks. Try again.");
+        setMarks([]);
+      }
     } catch (err) {
+      console.error("Error in loadStudentsMarks:", err);
       toast.error(
         err.response?.data?.details ||
           err.response?.data?.message ||
           "Failed to fetch students or marks."
       );
+      setStudents([]);
+      setMarks([]);
     } finally {
       setLoadingTable(false);
     }
-  }, [filters, subjectClasses, subject?.id]);
+  }, [filters, subjectClasses, subject?.id, initialDataLoaded, fetchStudents]);
 
+  // --- EFFECT: Load students when filters change ---
   useEffect(() => {
+    if (!initialDataLoaded) return;
     loadStudentsMarks();
-  }, [loadStudentsMarks]);
+  }, [initialDataLoaded, loadStudentsMarks]);
 
-  // NEW: Debounce effect for search suggestions
+  // --- DEBOUNCE SEARCH EFFECT ---
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchInput);
-    }, 300); // 300ms delay
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // NEW: Show suggestions when debounced search updates
+  // --- SHOW/HIDE SUGGESTIONS ---
   useEffect(() => {
     if (debouncedSearch.trim()) {
       setShowSuggestions(true);
@@ -260,7 +401,7 @@ export const MarksUploadPage = () => {
     }
   }, [debouncedSearch]);
 
-  // NEW: Click outside to close suggestions
+  // --- CLICK OUTSIDE TO CLOSE SUGGESTIONS ---
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -472,7 +613,11 @@ export const MarksUploadPage = () => {
       const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
       if (!students.length) {
-        await fetchStudents();
+        await fetchStudents(
+          filters.class_id,
+          filters.department_id,
+          filters.academic_year_id
+        );
       }
 
       if (json.length < 11) throw new Error("Excel file missing data rows.");
@@ -488,8 +633,6 @@ export const MarksUploadPage = () => {
         if (score !== "" && (Number(score) < 0 || Number(score) > 20)) {
           throw new Error(`Invalid score for ${fullName}. Must be 0–20.`);
         }
-
-        setSubject((prev) => ({ ...prev, id: subjectId }));
 
         return {
           student_id: student.id,
@@ -539,12 +682,9 @@ export const MarksUploadPage = () => {
   const getFilteredAndSortedStudents = () => {
     let filtered = [...students];
 
-    // NEW: If a specific student is selected, show only that student
     if (selectedStudentId) {
       filtered = filtered.filter((s) => s.id === selectedStudentId);
-    }
-    // Otherwise filter by search term
-    else if (searchTerm.trim()) {
+    } else if (searchTerm.trim()) {
       filtered = filtered.filter(
         (s) =>
           s.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -552,7 +692,6 @@ export const MarksUploadPage = () => {
       );
     }
 
-    // Sort alphabetically
     filtered.sort((a, b) => {
       const nameA = (a.full_name || "").toLowerCase();
       const nameB = (b.full_name || "").toLowerCase();
@@ -579,7 +718,7 @@ export const MarksUploadPage = () => {
           (s.full_name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
             s.student_id?.toLowerCase().includes(debouncedSearch.toLowerCase()))
       )
-      .slice(0, 8) // Limit to 8 suggestions
+      .slice(0, 8)
       .sort((a, b) => {
         const nameA = (a.full_name || "").toLowerCase();
         const nameB = (b.full_name || "").toLowerCase();
@@ -611,14 +750,12 @@ export const MarksUploadPage = () => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
   };
 
-  // NEW: Handle search input change
   const handleSearchInputChange = (e) => {
     const value = e.target.value;
     setSearchInput(value);
-    setSelectedStudentId(null); // Clear single student selection when typing
+    setSelectedStudentId(null);
   };
 
-  // NEW: Handle search execution (Enter or button click)
   const handleSearchExecute = () => {
     setSearchTerm(searchInput);
     setShowSuggestions(false);
@@ -626,16 +763,14 @@ export const MarksUploadPage = () => {
     setHighlightedIndex(-1);
   };
 
-  // NEW: Handle suggestion click
   const handleSuggestionClick = (student) => {
     setSearchInput(student.full_name);
-    setSearchTerm(""); // Clear general search
-    setSelectedStudentId(student.id); // Show only this student
+    setSearchTerm("");
+    setSelectedStudentId(student.id);
     setShowSuggestions(false);
     setHighlightedIndex(-1);
   };
 
-  // NEW: Clear all search
   const handleClearSearch = () => {
     setSearchInput("");
     setSearchTerm("");
@@ -644,7 +779,6 @@ export const MarksUploadPage = () => {
     setHighlightedIndex(-1);
   };
 
-  // NEW: Handle keyboard navigation
   const handleSearchKeyDown = (e) => {
     if (!showSuggestions || searchSuggestions.length === 0) {
       if (e.key === "Enter") {
@@ -879,7 +1013,7 @@ export const MarksUploadPage = () => {
               </div>
             </div>
 
-            {/* NEW: Enhanced Search with Suggestions */}
+            {/* Enhanced Search with Suggestions */}
             <div className="marks-controls-container">
               <div className="marks-search-wrapper">
                 <div className="marks-search-bar" ref={searchInputRef}>
@@ -914,7 +1048,7 @@ export const MarksUploadPage = () => {
                   </button>
                 </div>
 
-                {/* NEW: Search Suggestions Dropdown */}
+                {/* Search Suggestions Dropdown */}
                 {showSuggestions && searchSuggestions.length > 0 && (
                   <div className="search-suggestions" ref={suggestionsRef}>
                     <div className="suggestions-header">
