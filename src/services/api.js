@@ -94,6 +94,7 @@ class ApiService {
       });
 
       const data = await this.handleResponse(response);
+      console.log("Auth data: ", data);
 
       if (data.token) {
         this.setToken(data.token);
