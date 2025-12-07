@@ -320,17 +320,20 @@ export default function AdminStudent() {
     setPhotoPreview(null);
   };
 
-  // 4. Update studentId when fullName or regDate changes
+  // 4. Update studentId when fullName or regDate changes (ONLY for new students)
   useEffect(() => {
-    setForm((f) => ({
-      ...f,
-      studentId: generateStudentId(
-        f.fullName,
-        f.regDate,
-        studentList && Array.isArray(studentList) ? studentList.length : 0
-      ),
-    }));
-  }, [form.fullName, form.regDate, studentList.length]);
+    // Only generate student ID for new students, not during editing
+    if (!editId) {
+      setForm((f) => ({
+        ...f,
+        studentId: generateStudentId(
+          f.fullName,
+          f.regDate,
+          studentList && Array.isArray(studentList) ? studentList.length : 0
+        ),
+      }));
+    }
+  }, [form.fullName, form.regDate, studentList.length, editId]);
 
   // 5. Update handleFormChange to handle regDate
   const handleFormChange = (e) => {

@@ -8,6 +8,7 @@ import ReactDOM from 'react-dom';
 import api from '../services/api';
 import NotificationBell from './NotificationBell';
 import MessageIcon from './MessageIcon';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const menuItems = [
   { label: 'Dashboard', icon: <MdDashboard />, path: '/discipline' },
@@ -137,10 +138,7 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
     // Fetch on mount
     fetchUpcomingEvents();
 
-    // Set up periodic refresh (every 2 hours instead of every hour to reduce load)
-    const interval = setInterval(fetchUpcomingEvents, 2 * 60 * 60 * 1000);
-
-    // Listen for custom events
+    // Listen for custom events (fallback)
     const handleEventCreated = () => {
       console.log('DisciplineSideTop: Event created, refreshing count');
       fetchUpcomingEvents();
@@ -159,12 +157,18 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
     window.addEventListener('eventDeleted', handleEventDeleted);
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener('eventCreated', handleEventCreated);
       window.removeEventListener('eventUpdated', handleEventUpdated);
       window.removeEventListener('eventDeleted', handleEventDeleted);
     };
   }, []);
+
+  // WebSocket listener for events count updates
+  useWebSocket({
+    onEventsCountUpdate: (count) => {
+      setUpcomingEventsCount(count);
+    },
+  });
 
   // Fetch unread message count
   useEffect(() => {
@@ -178,12 +182,10 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
       }
     };
 
+    // Initial fetch on mount
     fetchUnreadCount();
 
-    // Set up periodic refresh every 2 minutes for messages (increased from 30 seconds)
-    const interval = setInterval(fetchUnreadCount, 2 * 60 * 1000);
-
-    // Listen for custom events when messages are sent/received
+    // Listen for custom events when messages are sent/received (fallback)
     const handleMessageChange = () => {
       fetchUnreadCount();
     };
@@ -192,11 +194,17 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
     window.addEventListener('messageReceived', handleMessageChange);
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener('messageSent', handleMessageChange);
       window.removeEventListener('messageReceived', handleMessageChange);
     };
   }, []);
+
+  // WebSocket listener for unread message count updates
+  useWebSocket({
+    onUnreadCountUpdate: (count) => {
+      setUnreadMessageCount(count);
+    },
+  });
 
   // Function to refresh events count
   const refreshEventsCount = async () => {

@@ -485,15 +485,13 @@ export default function SideTop({ children }) {
         : true;
     async function fetchStatus() {
       if (!isPageVisible()) return;
-      if (isTeacher) {
+      if (isTeacher && authUser?.id) {
         try {
           const all = await api.getAllTeachers();
           let rec = null;
 
           // Try to match by user_id first (most reliable)
-          if (authUser?.id) {
-            rec = all.find((t) => t.user_id === authUser.id);
-          }
+          rec = all.find((t) => t.user_id === authUser.id);
 
           // If not found, try to match by contact
           if (!rec && authUser?.contact) {
@@ -539,7 +537,7 @@ export default function SideTop({ children }) {
       window.removeEventListener("teacher-status-updated", handler);
       document.removeEventListener("visibilitychange", visHandler);
     };
-  }, [isTeacher, authUser]);
+  }, [isTeacher, authUser?.id]); // Only depend on authUser.id, not the whole authUser object
 
   // Teacher menu items (from deleted TeacherSideTop)
   const teacherMenuItems = [

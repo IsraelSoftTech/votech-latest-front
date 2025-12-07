@@ -103,6 +103,73 @@ function ID() {
     setShowPrintModal(true);
   };
 
+  // Generate print content with photos from backend
+  const generatePrintContent = (studentsWithPhotos) => {
+    return studentsWithPhotos.map((student, idx) => {
+      const fullName = student.full_name || '';
+      const firstName = fullName.split(' ')[0] || '';
+      const lastName = fullName.split(' ').slice(1).join(' ');
+      const className = student.class?.name || '';
+      
+      // Get photo URL - use base64 from backend if available
+      let photoSrc;
+      if (student.photo) {
+        // Backend provides base64 string
+        photoSrc = `data:image/jpeg;base64,${student.photo}`;
+      } else if (student.photo_url) {
+        photoSrc = student.photo_url;
+      } else {
+        // Fallback avatar
+        photoSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || 'Student')}&background=1976d2&color=fff&size=200`;
+      }
+      
+      return `
+        <div class="idcard-template">
+          <img src="${logo}" alt="watermark" class="idcard-watermark" />
+          <div class="idcard-top-row">
+            <img src="${logo}" alt="logo" class="idcard-logo-small" />
+            <div class="idcard-header">VOTECH STUDENT ID CARD</div>
+          </div>
+          <div class="idcard-motto">Motto: Igniting "Preneurs"</div>
+          <div class="idcard-row idcard-row-main">
+            <div class="idcard-photo-stamp-col">
+              <div class="idcard-photo">
+                <img 
+                  src="${photoSrc}" 
+                  alt="student" 
+                  style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: 50%;
+                    background: #f7f8fa;
+                    display: block;
+                    visibility: visible;
+                    opacity: 1;
+                  "
+                />
+              </div>
+              <div style="height: 16px" />
+              <img src="${stamp}" alt="stamp" class="idcard-stamp" />
+            </div>
+            <div class="idcard-info">
+              <div class="idcard-info-fields">
+                <div><b>Full Name</b>: ${firstName} ${lastName}</div>
+                <div><b>Sex</b>: ${student.sex || ''}</div>
+                <div><b>Date of Birth</b>: ${student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</div>
+                <div><b>Student ID</b>: ${student.student_id || ''}</div>
+                <div><b>Class</b>: ${className}</div>
+                <div><b>Card Number</b>: ${student.card_number || ''}</div>
+                <div><b>Date Issued</b>: ${new Date().toLocaleDateString('en-GB')}</div>
+                <div><b>Valid Till</b>: 30/09/${new Date().getFullYear() + 1}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
   const handleClassSelect = (className) => {
     setSelectedClass(className);
     if (className === 'All Classes') {
