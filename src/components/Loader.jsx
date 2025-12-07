@@ -8,7 +8,7 @@ const Loader = ({ poweredBy }) => (
       <div className="spinner-ring ring-darkblue"></div>
       <div className="spinner-ring ring-orange"></div>
     </div>
-    <div className={`loader-powered-by${poweredBy ? ' loader-powered-by--visible' : ''}`}>Powered by Izzy Tech Team...</div>
+    <div className={`loader-powered-by${poweredBy ? ' loader-powered-by--visible' : ''}`}>By Izzy Tech Team</div>
   </div>
 );
 
