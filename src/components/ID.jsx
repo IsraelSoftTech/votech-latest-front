@@ -92,8 +92,7 @@ function ID() {
       console.log('Trying FTP URL:', ftpUrl1);
       return ftpUrl1;
     }
-    
-    // Fallback to a simple, reliable avatar
+
     const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'Student')}&background=1976d2&color=fff&size=200`;
     console.log('Using fallback avatar:', avatarUrl);
     return avatarUrl;
