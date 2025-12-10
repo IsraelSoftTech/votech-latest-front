@@ -139,5 +139,6 @@ CREATE TABLE transactions (
 5. Open a Pull Request
 
 ## License
+Live update
 
 This project is licensed under the MIT License - see the LICENSE file for details. 
