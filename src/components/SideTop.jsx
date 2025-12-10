@@ -69,8 +69,8 @@ export default function SideTop({ children }) {
   const username = authUser?.username || "User";
 
   // Debug logging for Admin4 role detection
-  console.log("Current user role:", authUser?.role);
-  console.log("Is Admin4?", authUser?.role === "Admin4");
+  // console.log("Current user role:", authUser?.role);
+  // console.log("Is Admin4?", authUser?.role === "Admin4");
 
   // Added: derive unread flag to avoid undefined reference
   const hasUnread = unreadMessageCount > 0;
@@ -261,7 +261,7 @@ export default function SideTop({ children }) {
       { label: "Events", icon: <FaCalendarAlt />, path: "/my-events" },
     ];
   } else if (authUser?.role === "Admin4") {
-    console.log("Setting Admin4 menu items");
+    // console.log("Setting Admin4 menu items");
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/dean" },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
@@ -293,7 +293,7 @@ export default function SideTop({ children }) {
       },
       { label: "HODs", icon: <FaUserTie />, path: "/admin-hods" },
     ];
-    console.log("Admin4 menu items set:", menuItems);
+    // console.log("Admin4 menu items set:", menuItems);
   } else if (authUser?.role === "Teacher") {
     menuItems = [
       {
@@ -429,19 +429,19 @@ export default function SideTop({ children }) {
 
   // Filter out My Classes for Admin1 users
   const filterMenuItems = (items) => {
-    console.log("Filtering menu items for role:", authUser?.role);
-    console.log("Input items:", items);
+    // console.log("Filtering menu items for role:", authUser?.role);
+    // console.log("Input items:", items);
     if (authUser?.role === "Admin1") {
       const filtered = items.filter((item) => item?.label !== "My Classes");
       console.log("Filtered Admin1 items:", filtered);
       return filtered;
     }
-    console.log("No filtering applied, returning all items:", items);
+    // console.log("No filtering applied, returning all items:", items);
     return items;
   };
 
   let menuToShow = filterMenuItems(menuItems);
-  console.log("Final menuToShow:", menuToShow);
+  // console.log("Final menuToShow:", menuToShow);
 
   // Fetch my payslip count for roles that have Pay Slip
   useEffect(() => {
@@ -744,7 +744,7 @@ export default function SideTop({ children }) {
       setShowProfileModal(false);
       window.location.reload();
     } catch (error) {
-      console.error("Error updating profile:", error);
+      // console.error("Error updating profile:", error);
     } finally {
       setIsUpdating(false);
     }
@@ -767,9 +767,9 @@ export default function SideTop({ children }) {
         </div>
 
         <nav className="menu">
-          {console.log("Rendering menu items:", menuToShow)}
+          {/* {console.log("Rendering menu items:", menuToShow)} */}
           {menuToShow.filter(Boolean).map((item) => {
-            console.log("Rendering menu item:", item);
+            // console.log("Rendering menu item:", item);
             const hasSubmenu =
               Array.isArray(item.submenu) && item.submenu.length > 0;
             const isExpanded = hasSubmenu && expandedMenu === item.label;
