@@ -20,6 +20,10 @@ function ID() {
   const username = authUser?.username || 'User';
   const printRef = useRef();
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20); // Default to 20 ID cards per page for optimal viewing
+
   // Admin3 guard
   if (authUser?.role !== 'Admin3') {
     return (
@@ -51,12 +55,14 @@ function ID() {
         ]);
         setStudents(studentsData);
         setClasses(classesData);
+        setFilteredStudents(studentsData); // Initialize filteredStudents with all students
         if (studentsData.length > 0) {
           testPictureEndpoint(studentsData[0].id);
         }
       } catch (err) {
         setStudents([]);
         setClasses([]);
+        setFilteredStudents([]); // Also initialize filteredStudents on error
       }
     }
     fetchData();
@@ -75,27 +81,22 @@ function ID() {
   }
 
   function getPhotoUrl(student) {
-    console.log('getPhotoUrl called for student:', student.full_name, 'ID:', student.id);
-    
+    // Ultra-fast image loading with aggressive optimization
     if (student.photo_url) {
-      console.log('Using existing photo_url:', student.photo_url);
-      return student.photo_url;
+      // Add multiple optimization parameters for instant loading
+      const separator = student.photo_url.includes('?') ? '&' : '?';
+      return `${student.photo_url}${separator}quality=5&width=80&height=80&format=webp&blur=0`;
     }
     
-    // Try to construct URL from FTP storage
+    // Try to construct URL from FTP storage with maximum optimization
     if (student.id) {
-      // Use the FTP URL from config
       const ftpUrl = config.FTP_URL;
-      
-      // Try a simple, direct approach first
-      const ftpUrl1 = `${ftpUrl}/students/${student.id}.jpg`;
-      console.log('Trying FTP URL:', ftpUrl1);
-      return ftpUrl1;
+      // Ultra-compressed with webp format for instant loading
+      return `${ftpUrl}/students/${student.id}.jpg?quality=3&width=80&height=80&format=webp&blur=0`;
     }
 
-    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'Student')}&background=1976d2&color=fff&size=200`;
-    console.log('Using fallback avatar:', avatarUrl);
-    return avatarUrl;
+    // Fallback avatar - already optimized
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'Student')}&background=1976d2&color=fff&size=80&format=webp`;
   }
 
   const handlePrintClick = () => {
@@ -171,6 +172,7 @@ function ID() {
 
   const handleClassSelect = (className) => {
     setSelectedClass(className);
+    setCurrentPage(1); // Reset to first page when changing class
     if (className === 'All Classes') {
       setFilteredStudents(students);
     } else {
@@ -185,6 +187,39 @@ function ID() {
       setFilteredStudents(filtered);
     }
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset pagination when filtered students change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredStudents]);
 
   const handlePrint = () => {
     if (filteredStudents.length === 0) {
@@ -435,7 +470,7 @@ function ID() {
       </div>
       <div className="idcard-print-area">
         <div className="idcard-grid">
-          {students.map((student, idx) => {
+          {paginatedStudents.map((student, idx) => {
             const fullName = student.full_name || '';
             const firstName = fullName.split(' ')[0] || '';
             const lastName = fullName.split(' ').slice(1).join(' ');
@@ -499,6 +534,76 @@ function ID() {
           })}
         </div>
       </div>
+
+      {/* Professional Pagination */}
+      {filteredStudents.length > 0 && (
+        <div className="pagination-container">
+          {/* Items per page selector */}
+          <div className="pagination-items-per-page">
+            <span>Show</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+              className="pagination-select"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+            <span>cards</span>
+          </div>
+          
+          {/* Page info */}
+          <div className="pagination-info">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredStudents.length)} of {filteredStudents.length} cards
+          </div>
+          
+          {/* Navigation buttons */}
+          <div className="pagination-controls">
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className="pagination-btn pagination-btn-prev"
+            >
+              Previous
+            </button>
+            
+            {/* Page numbers */}
+            <div className="pagination-numbers">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`pagination-number ${currentPage === pageNum ? 'active' : ''}`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="pagination-btn pagination-btn-next"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Print Modal */}
       {showPrintModal && (
