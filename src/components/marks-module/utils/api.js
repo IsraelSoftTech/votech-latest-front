@@ -1,47 +1,59 @@
 import axios from "axios";
 
+const LOCAL_IP = "http://192.168.0.100";
+
 const env = process.env.REACT_APP_NODE_ENV || "production";
 const hostname = typeof window !== "undefined" ? window.location.hostname : "";
 
-// Detect environment based on hostname first (most reliable), then env variable
+const LOCAL_IP_HOST = LOCAL_IP.replace(/^https?:\/\//, "").split(":")[0];
+
 const isDevelopment =
+  env === "development" ||
   hostname === "localhost" ||
   hostname === "127.0.0.1" ||
   hostname.startsWith("192.168.") ||
   hostname.startsWith("10.") ||
-  hostname.startsWith("172.") ||
-  env === "development";
+  hostname.startsWith("172.");
 
-// Check if we're on production domain
-const isProduction = hostname === "votechs7academygroup.com" || 
-                     hostname === "www.votechs7academygroup.com" ||
-                     hostname.includes("votechs7academygroup.com");
+const isDesktop = env === "desktop" || hostname === LOCAL_IP_HOST;
 
-const apiBase =
-  isDevelopment
-    ? process.env.REACT_APP_API_URL_DEV
-    : env === "desktop"
-    ? process.env.REACT_APP_API_URL_DESKTOP
-    : process.env.REACT_APP_API_URL_PROD;
+const envApiDev = process.env.REACT_APP_API_URL_DEV;
+const envApiDesktop = process.env.REACT_APP_API_URL_DESKTOP;
+const envApiProd = process.env.REACT_APP_API_URL_PROD;
 
-// Ensure apiBase has a fallback value
-// Use production API only if we're actually on production domain
-const safeApiBase = apiBase || (isDevelopment ? "http://localhost:5000" : (isProduction ? "https://api.votechs7academygroup.com" : "http://localhost:5000"));
+const rawApiBase = isDevelopment
+  ? envApiDev
+  : isDesktop
+  ? envApiDesktop
+  : envApiProd;
 
-export const baseURL = `${safeApiBase}/api/v1/`;
-export const subBaseURL = `${safeApiBase}/api`;
+const fallbackDev = "http://localhost:5000";
+const fallbackDesktop = LOCAL_IP; // e.g. "http://192.168.0.100"
+const fallbackProd = "https://api.votechs7academygroup.com";
 
-console.log("Marks Module API loaded:", {
-  env,
-  hostname,
-  isDevelopment,
-  isProduction,
-  apiBase: apiBase || "not set (using fallback)",
-  safeApiBase,
-  baseURL,
-  subBaseURL,
-});
+const safeApiBase =
+  rawApiBase ||
+  (isDevelopment ? fallbackDev : isDesktop ? fallbackDesktop : fallbackProd);
 
+// normalize base so it does NOT end with a trailing slash
+const normalize = (u) => (u ? u.replace(/\/+$/, "") : u);
+const normalizedApiBase = normalize(safeApiBase);
+
+/* --- build API and frontend URLs --- */
+const API_URL = `${normalizedApiBase}/api`; // e.g. https://.../api
+const FRONTEND_URL = isDevelopment
+  ? "http://localhost:3000"
+  : isDesktop
+  ? `http://${LOCAL_IP_HOST.replace(/\/+$/, "")}:3000`
+  : "https://votechs7academygroup.com";
+
+/* extra endpoints you used previously */
+const FTP_URL = "https://st60307.ispot.cc/votechs7academygroup";
+
+export const baseURL = `${API_URL}/v1/`; // your axios instance base (matches previous /api/v1)
+export const subBaseURL = `${API_URL}`;
+
+/* --- axios instance configured similarly to your original api --- */
 const api = axios.create({
   baseURL,
   timeout: 300000,
@@ -50,31 +62,47 @@ const api = axios.create({
   },
 });
 
+/* header helper */
 export const headers = () => {
-  const token = sessionStorage.getItem("token");
+  const token =
+    typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
   return {
     Authorization: token ? `Bearer ${token}` : undefined,
     "Content-Type": "application/json",
   };
 };
 
+/* request interceptor to attach bearer token */
 api.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem("token");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    else delete config.headers.Authorization;
+    try {
+      const token = sessionStorage.getItem("token");
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+      else delete config.headers.Authorization;
+    } catch (err) {
+      // safe fallback for SSR or non-browser envs
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
+/* response interceptor with retry-on-timeout (single retry) */
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.code === "ECONNABORTED" && error.message.includes("timeout")) {
-      if (!error.config._retry) {
-        error.config._retry = true;
-        return api(error.config);
+    const configRequest = error.config || {};
+    // retry once on timeout/ECONNABORTED
+    if (
+      !configRequest._retry &&
+      (error.code === "ECONNABORTED" ||
+        (error.message && error.message.includes("timeout")))
+    ) {
+      configRequest._retry = true;
+      try {
+        return await api(configRequest);
+      } catch (e) {
+        return Promise.reject(e);
       }
     }
     return Promise.reject(error);
