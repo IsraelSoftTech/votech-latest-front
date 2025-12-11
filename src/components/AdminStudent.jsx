@@ -246,6 +246,10 @@ export default function AdminStudent() {
   const [uploadManySuccess, setUploadManySuccess] = useState("");
   const [usersCount, setUsersCount] = useState(0);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   // Photo state
   const [photoPreview, setPhotoPreview] = useState(null);
 
@@ -706,6 +710,39 @@ export default function AdminStudent() {
       )
     : [];
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
+  // Pagination handlers
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset pagination when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   // Helper to get image URL
   const baseApiUrl =
     (api.API_URL && api.API_URL.replace("/api", "")) || "http://localhost:5000";
@@ -1040,7 +1077,7 @@ export default function AdminStudent() {
                 </td>
               </tr>
             ) : (
-              filteredStudents.map((s, idx) => (
+              paginatedStudents.map((s, idx) => (
                 <tr key={s.id || idx}>
                   <td>{s.student_id}</td>
                   <td>{s.registration_date ? String(s.registration_date).slice(0,10) : (s.created_at ? String(s.created_at).slice(0,10) : "")}</td>
@@ -1121,6 +1158,77 @@ export default function AdminStudent() {
           </tbody>
         </table>
       </div>
+      
+      {/* Professional Pagination */}
+      {filteredStudents.length > 0 && (
+        <div className="pagination-container">
+          {/* Items per page selector */}
+          <div className="pagination-items-per-page">
+            <span>Show</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+              className="pagination-select"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+            <span>entries</span>
+          </div>
+          
+          {/* Page info */}
+          <div className="pagination-info">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredStudents.length)} of {filteredStudents.length} entries
+          </div>
+          
+          {/* Navigation buttons */}
+          <div className="pagination-controls">
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className="pagination-btn pagination-btn-prev"
+            >
+              Previous
+            </button>
+            
+            {/* Page numbers */}
+            <div className="pagination-numbers">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`pagination-number ${currentPage === pageNum ? 'active' : ''}`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="pagination-btn pagination-btn-next"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+      
       {showModal && (
         <div
           className="student-register-modal-overlay"
@@ -1939,6 +2047,72 @@ export default function AdminStudent() {
         
         .file-btn input {
           cursor: pointer;
+        }
+        
+        /* Pagination Responsive Styles */
+        .pagination-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 0;
+          flex-wrap: wrap;
+          gap: 16px;
+          border-top: 1px solid #e0e0e0;
+          margin-top: 16px;
+        }
+        
+        @media (max-width: 768px) {
+          .pagination-container {
+            flex-direction: column;
+            gap: 12px;
+            padding: 12px 0;
+          }
+          
+          .pagination-container > div:first-child {
+            order: 2;
+          }
+          
+          .pagination-container > div:nth-child(2) {
+            order: 1;
+          }
+          
+          .pagination-container > div:last-child {
+            order: 3;
+            width: 100%;
+            justify-content: center;
+          }
+          
+          .pagination-container button {
+            padding: 8px 12px;
+            font-size: 13px;
+          }
+          
+          .pagination-container select {
+            padding: 8px 10px;
+            font-size: 13px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .pagination-container {
+            gap: 8px;
+            padding: 8px 0;
+          }
+          
+          .pagination-container button {
+            padding: 6px 10px;
+            font-size: 12px;
+            min-width: 28px;
+          }
+          
+          .pagination-container select {
+            padding: 6px 8px;
+            font-size: 12px;
+          }
+          
+          .pagination-container > div {
+            font-size: 12px;
+          }
         }
       `}</style>
     </SideTop>
