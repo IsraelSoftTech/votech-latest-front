@@ -1037,7 +1037,7 @@ export default function AdminStudent() {
                   zIndex: 2,
                 }}
               >
-                {isDownloadingClassList ? "Downloading..." : "Download"}
+                {isDownloadingClassList ? "Downloading...." : "Download"}
               </span>
             </button>
           </div>
