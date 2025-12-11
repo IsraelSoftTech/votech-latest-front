@@ -12,12 +12,15 @@ import {
   FaArrowLeft,
   FaSortAlphaDown,
   FaSortAlphaUp,
+  FaSortNumericDown,
+  FaSortNumericUp,
   FaSearch,
   FaCheck,
   FaTimes,
   FaExclamationTriangle,
   FaCheckCircle,
   FaTimesCircle,
+  FaFilter,
 } from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import Modal from "../../components/Modal/Modal.component";
@@ -84,7 +87,106 @@ const SimpleModal = ({ type, title, message, onClose }) => {
   );
 };
 
-// Name Matching Modal Component
+// Saving Modal Component with Upload Animation
+const SavingModal = ({ marksCount = 0 }) => {
+  return (
+    <div className="simple-modal-overlay">
+      <div
+        className="simple-modal saving-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Animated Upload Icon */}
+        <div className="saving-icon-container">
+          <div className="saving-spinner">
+            <div className="spinner-ring"></div>
+            <div className="spinner-ring"></div>
+            <div className="spinner-ring"></div>
+            <div className="upload-icon">
+              <FaCheckCircle />
+            </div>
+          </div>
+        </div>
+
+        <h3 className="saving-title">Saving Marks</h3>
+        <p className="saving-message">
+          Uploading{" "}
+          {marksCount > 0
+            ? `${marksCount} mark${marksCount !== 1 ? "s" : ""}`
+            : "marks"}{" "}
+          to the database...
+        </p>
+        <p className="saving-submessage">
+          This may take a moment. Please don't close this window.
+        </p>
+
+        {/* Animated Dots */}
+        <div className="saving-dots">
+          <span className="dot"></span>
+          <span className="dot"></span>
+          <span className="dot"></span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Missing Marks Confirmation Modal
+const MissingMarksModal = ({ missingStudents, onAssignZero, onCancel }) => {
+  const displayLimit = 10;
+  const hasMore = missingStudents.length > displayLimit;
+
+  return (
+    <Modal isOpen={true} onClose={onCancel} title="Missing Marks Detected">
+      <div className="missing-marks-modal">
+        <div className="missing-marks-icon">
+          <FaExclamationTriangle />
+        </div>
+
+        <p className="missing-marks-message">
+          <strong>{missingStudents.length}</strong> student
+          {missingStudents.length !== 1 ? "s" : ""}{" "}
+          {missingStudents.length !== 1 ? "do" : "does"} not have marks
+          assigned.
+        </p>
+
+        <div className="missing-students-list">
+          {missingStudents.slice(0, displayLimit).map((student, index) => (
+            <div key={student.id} className="missing-student-item">
+              <span className="student-number">{index + 1}.</span>
+              <span className="student-name">{student.full_name}</span>
+              <span className="student-id">({student.student_id})</span>
+            </div>
+          ))}
+          {hasMore && (
+            <div className="missing-students-more">
+              ... and {missingStudents.length - displayLimit} more student
+              {missingStudents.length - displayLimit !== 1 ? "s" : ""}
+            </div>
+          )}
+        </div>
+
+        <p className="missing-marks-question">
+          Would you like to assign <strong>0</strong> to these students, or fill
+          in their marks manually?
+        </p>
+
+        <div className="missing-marks-actions">
+          <button className="btn-secondary" onClick={onCancel}>
+            <FaTimes /> Cancel
+          </button>
+          <button className="btn-outline" onClick={() => onCancel(true)}>
+            <FaFilter /> Filter & Fill Manually
+          </button>
+          <button className="btn-primary" onClick={onAssignZero}>
+            <FaCheck /> Assign Zero
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+// Name Matching Modal Component (unchanged from original)
 const NameMatchingModal = ({
   unmatchedStudents,
   existingStudents,
@@ -98,7 +200,6 @@ const NameMatchingModal = ({
   const [skipped, setSkipped] = useState([]);
   const [history, setHistory] = useState([]);
 
-  // Safety checks
   if (!Array.isArray(unmatchedStudents) || unmatchedStudents.length === 0) {
     return null;
   }
@@ -111,13 +212,12 @@ const NameMatchingModal = ({
   const totalUnmatched = unmatchedStudents.length;
   const matchedCount = Math.max(0, totalImported - totalUnmatched);
 
-  // Find similar names for current student
   const getSuggestions = (student) => {
     if (!student || !student.fullName) return [];
 
     try {
       return existingStudents
-        .filter((s) => s && s.full_name && s.id) // Safety filter
+        .filter((s) => s && s.full_name && s.id)
         .map((s) => ({
           ...s,
           similarity: calculateSimilarity(student.fullName, s.full_name),
@@ -149,11 +249,9 @@ const NameMatchingModal = ({
     setResolvedMatches((prev) => [...prev, newMatch]);
     setHistory((prev) => [...prev, { index: currentIndex, action: "matched" }]);
 
-    // Move to next student
     if (currentIndex < totalUnmatched - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      // All done
       handleFinish([...resolvedMatches, newMatch], skipped);
     }
   };
@@ -164,11 +262,9 @@ const NameMatchingModal = ({
     setSkipped((prev) => [...prev, currentStudent]);
     setHistory((prev) => [...prev, { index: currentIndex, action: "skipped" }]);
 
-    // Move to next student
     if (currentIndex < totalUnmatched - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      // All done
       handleFinish(resolvedMatches, [...skipped, currentStudent]);
     }
   };
@@ -202,7 +298,6 @@ const NameMatchingModal = ({
     }
   };
 
-  // Summary View
   if (currentStep === "summary") {
     return (
       <Modal isOpen={true} onClose={handleCancel} title="Import Summary">
@@ -249,16 +344,13 @@ const NameMatchingModal = ({
     );
   }
 
-  // Safety check for matching view
   if (!currentStudent) {
     return null;
   }
 
-  // Matching View
   return (
     <Modal isOpen={true} onClose={handleCancel} title="Match Students">
       <div className="match-container">
-        {/* Progress Bar */}
         <div className="match-progress">
           <div className="progress-info">
             <span className="progress-label">
@@ -281,7 +373,6 @@ const NameMatchingModal = ({
           </div>
         </div>
 
-        {/* Excel Student */}
         <div className="excel-student">
           <div className="excel-label">From Excel File:</div>
           <div className="excel-card">
@@ -297,7 +388,6 @@ const NameMatchingModal = ({
           </div>
         </div>
 
-        {/* Suggestions */}
         <div className="suggestions-container">
           <div className="suggestions-label">Click the matching student:</div>
           <div className="suggestions-list">
@@ -331,7 +421,6 @@ const NameMatchingModal = ({
           </div>
         </div>
 
-        {/* Actions */}
         <div className="match-actions">
           <button
             className="btn-secondary"
@@ -399,10 +488,17 @@ export const MarksUploadPage = () => {
   const [saving, setSaving] = useState(false);
 
   // Sorting, Search, and Pagination states
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortConfig, setSortConfig] = useState({ key: "name", order: "asc" }); // Changed from sortOrder
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [studentsPerPage, setStudentsPerPage] = useState(10);
+
+  // NEW: Mark filter state
+  const [markFilter, setMarkFilter] = useState("all"); // 'all', 'with-marks', 'without-marks'
+
+  // NEW: Frozen filter state - captures students when filter is first applied
+  // This prevents students from disappearing as you type marks
+  const [frozenFilterStudents, setFrozenFilterStudents] = useState(null);
 
   // Search states
   const [searchInput, setSearchInput] = useState("");
@@ -420,6 +516,10 @@ export const MarksUploadPage = () => {
 
   // Simple modal state
   const [simpleModal, setSimpleModal] = useState(null);
+
+  // NEW: Missing marks modal state
+  const [showMissingMarksModal, setShowMissingMarksModal] = useState(false);
+  const [missingMarksStudents, setMissingMarksStudents] = useState([]);
 
   const showModal = (type, title, message) => {
     setSimpleModal({ type, title, message });
@@ -767,22 +867,21 @@ export const MarksUploadPage = () => {
   }, []);
 
   const handleMarkChange = (studentId, value) => {
-    // Validate student ID
     if (!studentId) {
       console.error("Invalid student ID");
       return;
     }
 
-    // Validate value
-    if (value !== "") {
+    // Allow typing in progress - don't validate until value is complete
+    // This prevents filtering students away while they're still typing
+    if (value !== "" && value !== null && value !== undefined) {
       const numValue = Number(value);
-      if (isNaN(numValue)) {
-        showModal("error", "Invalid Mark", "Please enter a valid number.");
-        return;
-      }
-      if (numValue < 0 || numValue > 20) {
-        showModal("error", "Invalid Mark", "Marks must be between 0 and 20.");
-        return;
+      // Only validate if it's a complete number entry
+      if (!isNaN(numValue)) {
+        if (numValue < 0 || numValue > 20) {
+          // Don't show error immediately, just prevent the value
+          return;
+        }
       }
     }
 
@@ -793,13 +892,16 @@ export const MarksUploadPage = () => {
       if (exists) {
         return prev.map((m) =>
           m && m.student_id === studentId
-            ? { ...m, score: value === "" ? "" : Number(value) }
+            ? { ...m, score: value === "" ? "" : value === null ? "" : value }
             : m
         );
       } else {
         return [
           ...prev,
-          { student_id: studentId, score: value === "" ? "" : Number(value) },
+          {
+            student_id: studentId,
+            score: value === "" ? "" : value === null ? "" : value,
+          },
         ];
       }
     });
@@ -832,74 +934,170 @@ export const MarksUploadPage = () => {
       return;
     }
 
-    const displayedStudents = getFilteredAndSortedStudents();
-    const validStudents = displayedStudents.filter((s) => s.id !== "none");
+    if (!user || !user.id) {
+      showModal(
+        "error",
+        "Authentication Error",
+        "User information is missing."
+      );
+      return;
+    }
+
+    const validStudents = students.filter((s) => s.id !== "none" && s.id);
 
     if (validStudents.length === 0) {
       showModal("error", "No Valid Students", "No valid students found.");
       return;
     }
 
+    // Check for missing marks
     const missingMarks = validStudents.filter((s) => {
       const mark = marks.find((m) => m.student_id === s.id);
       return mark?.score == null || mark.score === "";
     });
 
     if (missingMarks.length > 0) {
-      showModal(
-        "error",
-        "Incomplete Marks",
-        `Please enter marks for all students. ${missingMarks.length} student(s) are missing marks.`
-      );
+      setMissingMarksStudents(missingMarks);
+      setShowMissingMarksModal(true);
       return;
     }
 
+    // Proceed with save
+    await performSave(validStudents);
+  };
+
+  const handleMissingMarksAssignZero = async () => {
+    setShowMissingMarksModal(false);
+
+    // Assign 0 to all missing students
+    setMarks((prev) => {
+      const updated = [...prev];
+      missingMarksStudents.forEach((student) => {
+        const existingIndex = updated.findIndex(
+          (m) => m.student_id === student.id
+        );
+        if (existingIndex >= 0) {
+          updated[existingIndex] = { ...updated[existingIndex], score: 0 };
+        } else {
+          updated.push({ student_id: student.id, score: 0 });
+        }
+      });
+      return updated;
+    });
+
+    // Wait for state to update, then save
+    setTimeout(async () => {
+      const validStudents = students.filter((s) => s.id !== "none" && s.id);
+      await performSave(validStudents);
+    }, 100);
+  };
+
+  const handleMissingMarksCancel = (filterToMissing = false) => {
+    setShowMissingMarksModal(false);
+
+    if (filterToMissing) {
+      // Filter to show only students without marks
+      setMarkFilter("without-marks");
+      showModal(
+        "error",
+        "Filter Applied",
+        `Showing ${missingMarksStudents.length} student(s) without marks. Please fill in their marks.`
+      );
+    }
+
+    setMissingMarksStudents([]);
+  };
+
+  const performSave = async (validStudents) => {
     try {
       setSaving(true);
 
-      // Prepare marks data with validation
-      const filledMarks = students
-        .filter((s) => s.id !== "none" && s.id)
-        .map((s) => {
-          const m = marks.find((mk) => mk.student_id === s.id);
-          const score =
-            m?.score == null || m.score === "" ? 0 : Number(m.score);
+      // Prepare marks with ALL required fields
+      const marksToSave = validStudents.map((s) => {
+        const m = marks.find((mk) => mk.student_id === s.id);
+        const score = m?.score == null || m.score === "" ? 0 : Number(m.score);
 
-          // Extra validation
-          if (isNaN(score) || score < 0 || score > 20) {
-            throw new Error(`Invalid score for ${s.full_name}: ${m?.score}`);
-          }
+        // Extra validation
+        if (isNaN(score) || score < 0 || score > 20) {
+          throw new Error(`Invalid score for ${s.full_name}: ${m?.score}`);
+        }
 
-          return {
-            student_id: s.id,
-            score: score,
-          };
-        });
+        return {
+          student_id: s.id,
+          score: score,
+        };
+      });
 
-      if (filledMarks.length === 0) {
+      if (marksToSave.length === 0) {
         throw new Error("No marks to save.");
       }
 
       const payload = {
         subject_id: subject.id,
-        academic_year_id,
-        class_id,
-        term_id,
-        sequence_id,
-        marks: filledMarks,
+        academic_year_id: filters.academic_year_id,
+        class_id: filters.class_id,
+        term_id: filters.term_id,
+        sequence_id: filters.sequence_id,
+        uploaded_by: user.id,
+        marks: marksToSave,
       };
 
-      await api.post("/marks/save", payload);
+      console.log("Saving marks payload:", payload);
 
-      if (isMountedRef.current) {
+      const response = await api.post("/marks/save", payload);
+
+      if (!isMountedRef.current) return;
+
+      const summary = response.data?.summary || {};
+      const hasErrors =
+        (response.data?.validationErrors?.length || 0) > 0 ||
+        (response.data?.saveErrors?.length || 0) > 0;
+
+      if (hasErrors) {
+        // Partial success
+        const errorMessages = [];
+        if (response.data?.validationErrors?.length > 0) {
+          errorMessages.push(
+            `${response.data.validationErrors.length} validation error(s)`
+          );
+        }
+        if (response.data?.saveErrors?.length > 0) {
+          errorMessages.push(
+            `${response.data.saveErrors.length} save error(s)`
+          );
+        }
+
+        showModal(
+          "error",
+          "Partial Save",
+          `Saved ${summary.successful || 0}/${
+            summary.total || 0
+          } marks. ${errorMessages.join(
+            ", "
+          )}. Please check the console for details.`
+        );
+
+        console.error("Save errors:", {
+          validationErrors: response.data?.validationErrors,
+          saveErrors: response.data?.saveErrors,
+        });
+      } else {
+        // Complete success
         showModal(
           "success",
           "Success",
-          `Marks for ${filledMarks.length} student(s) saved successfully.`
+          `All ${
+            summary.successful || marksToSave.length
+          } marks saved successfully! ${
+            summary.created
+              ? `(${summary.created} new, ${summary.updated} updated)`
+              : ""
+          }`
         );
-        // Reload marks to get fresh data
-        await loadStudentsMarks();
       }
+
+      // Reload marks to get fresh data
+      await loadStudentsMarks();
     } catch (err) {
       console.error("Save error:", err);
       if (isMountedRef.current) {
@@ -1032,11 +1230,9 @@ export const MarksUploadPage = () => {
   const handleMatchingComplete = (matches, skippedStudents) => {
     setShowMatchingModal(false);
 
-    // Validate inputs
     if (!Array.isArray(matches)) matches = [];
     if (!Array.isArray(skippedStudents)) skippedStudents = [];
 
-    // Apply matched marks to existing marks
     if (matches.length > 0) {
       const newMatches = matches
         .filter(
@@ -1072,7 +1268,6 @@ export const MarksUploadPage = () => {
       }
     }
 
-    // Show result
     const totalProcessed = matches.length + skippedStudents.length;
     const messages = [];
 
@@ -1091,7 +1286,6 @@ export const MarksUploadPage = () => {
       );
     }
 
-    // Reset state
     setUnmatchedStudents([]);
     setTotalImportedCount(0);
   };
@@ -1107,7 +1301,6 @@ export const MarksUploadPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const validExtensions = [".xlsx", ".xls"];
     const fileExtension = file.name
       .substring(file.name.lastIndexOf("."))
@@ -1122,8 +1315,7 @@ export const MarksUploadPage = () => {
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
       showModal(
         "error",
@@ -1153,14 +1345,12 @@ export const MarksUploadPage = () => {
         );
       }
 
-      // Get students from the actual data rows (starting at row 11, index 10)
       const rows = json.slice(10);
 
       if (!rows || rows.length === 0) {
         throw new Error("No student data found in Excel file.");
       }
 
-      // Extract metadata from the first data row (columns D-I, index 3-8)
       const firstRow = rows[0];
       if (!Array.isArray(firstRow) || firstRow.length < 9) {
         throw new Error(
@@ -1180,7 +1370,6 @@ export const MarksUploadPage = () => {
         excelSubjectId,
       ] = firstRow;
 
-      // Validate all metadata exists
       if (
         !excelYearId ||
         !excelClassId ||
@@ -1193,7 +1382,6 @@ export const MarksUploadPage = () => {
         );
       }
 
-      // Validate metadata matches current filters
       const {
         academic_year_id,
         department_id,
@@ -1227,7 +1415,6 @@ export const MarksUploadPage = () => {
         );
       }
 
-      // Ensure students are loaded
       let currentStudents = students;
       if (
         !Array.isArray(currentStudents) ||
@@ -1247,7 +1434,6 @@ export const MarksUploadPage = () => {
         throw new Error("No students found for the selected class.");
       }
 
-      // Process student data
       const newMarks = [];
       const unmatched = [];
       const errors = [];
@@ -1258,13 +1444,11 @@ export const MarksUploadPage = () => {
 
         const [fullName, studentId, score] = row;
 
-        // Skip empty rows or header rows
         const nameStr = String(fullName || "").trim();
         const idStr = String(studentId || "").trim();
 
         if (!nameStr || !idStr || nameStr === "" || idStr === "") continue;
 
-        // Try exact student_id match first (case-insensitive)
         let student = currentStudents.find(
           (s) =>
             s &&
@@ -1273,7 +1457,6 @@ export const MarksUploadPage = () => {
         );
 
         if (student) {
-          // Validate score
           if (score !== "" && score !== null && score !== undefined) {
             const numScore = Number(score);
             if (isNaN(numScore)) {
@@ -1295,20 +1478,17 @@ export const MarksUploadPage = () => {
               score: numScore,
             });
           } else {
-            // Empty score - still add as empty
             newMarks.push({
               student_id: student.id,
               score: "",
             });
           }
         } else {
-          // No exact match - add to unmatched
           const scoreValue =
             score !== "" && score !== null && score !== undefined
               ? Number(score)
               : "";
 
-          // Only add if score is valid or empty
           if (scoreValue !== "") {
             const numScore = Number(scoreValue);
             if (isNaN(numScore) || numScore < 0 || numScore > 20) {
@@ -1325,7 +1505,6 @@ export const MarksUploadPage = () => {
         }
       }
 
-      // Show errors if any
       if (errors.length > 0) {
         throw new Error(
           `Found ${errors.length} error(s) in Excel file:\n${errors
@@ -1341,11 +1520,9 @@ export const MarksUploadPage = () => {
       }
 
       if (unmatched.length > 0) {
-        // Some students need matching
         setUnmatchedStudents(unmatched);
         setTotalImportedCount(newMarks.length + unmatched.length);
 
-        // Apply the matched marks immediately
         setMarks((prev) => {
           const updated = [...prev];
           newMarks.forEach((newMark) => {
@@ -1363,7 +1540,6 @@ export const MarksUploadPage = () => {
 
         setShowMatchingModal(true);
       } else {
-        // All matched - apply marks
         setMarks(newMarks);
         showModal(
           "success",
@@ -1422,8 +1598,52 @@ export const MarksUploadPage = () => {
     if (!Array.isArray(students) || students.length === 0) return [];
 
     try {
-      let filtered = students.filter((s) => s && s.id); // Remove null/undefined entries
+      // START WITH: Either frozen students (if mark filter active) or all students
+      let filtered;
 
+      if (markFilter !== "all" && frozenFilterStudents !== null) {
+        // Use frozen snapshot - students won't disappear while typing
+        filtered = frozenFilterStudents.filter((s) => s && s.id);
+      } else if (markFilter !== "all") {
+        // First time applying filter - create snapshot and freeze it
+        filtered = students.filter((s) => s && s.id);
+
+        // Apply mark filter ONCE to create initial snapshot
+        if (markFilter === "with-marks") {
+          filtered = filtered.filter((s) => {
+            const mark = marks.find((m) => m.student_id === s.id);
+            const score = mark?.score;
+            return (
+              score !== null &&
+              score !== "" &&
+              score !== undefined &&
+              !isNaN(Number(score))
+            );
+          });
+        } else if (markFilter === "without-marks") {
+          filtered = filtered.filter((s) => {
+            const mark = marks.find((m) => m.student_id === s.id);
+            const score = mark?.score;
+            return (
+              score == null ||
+              score === "" ||
+              score === undefined ||
+              isNaN(Number(score))
+            );
+          });
+        }
+
+        // Freeze this snapshot so students don't disappear while typing
+        setFrozenFilterStudents(filtered);
+      } else {
+        // No mark filter active - use all students and clear frozen state
+        filtered = students.filter((s) => s && s.id);
+        if (frozenFilterStudents !== null) {
+          setFrozenFilterStudents(null);
+        }
+      }
+
+      // Apply search filter (if any)
       if (selectedStudentId) {
         filtered = filtered.filter((s) => s.id === selectedStudentId);
       } else if (searchTerm && searchTerm.trim()) {
@@ -1435,14 +1655,41 @@ export const MarksUploadPage = () => {
         );
       }
 
+      // Apply sorting
       filtered.sort((a, b) => {
-        const nameA = (a.full_name || "").toLowerCase();
-        const nameB = (b.full_name || "").toLowerCase();
-        if (sortOrder === "asc") {
-          return nameA.localeCompare(nameB);
-        } else {
-          return nameB.localeCompare(nameA);
+        if (sortConfig.key === "name") {
+          const nameA = (a.full_name || "").toLowerCase();
+          const nameB = (b.full_name || "").toLowerCase();
+          if (sortConfig.order === "asc") {
+            return nameA.localeCompare(nameB);
+          } else {
+            return nameB.localeCompare(nameA);
+          }
+        } else if (sortConfig.key === "score") {
+          const markA = marks.find((m) => m.student_id === a.id);
+          const markB = marks.find((m) => m.student_id === b.id);
+
+          // Handle in-progress typing - treat as -1 for sorting
+          const scoreA =
+            markA?.score == null ||
+            markA?.score === "" ||
+            isNaN(Number(markA?.score))
+              ? -1
+              : Number(markA.score);
+          const scoreB =
+            markB?.score == null ||
+            markB?.score === "" ||
+            isNaN(Number(markB?.score))
+              ? -1
+              : Number(markB.score);
+
+          if (sortConfig.order === "asc") {
+            return scoreA - scoreB;
+          } else {
+            return scoreB - scoreA;
+          }
         }
+        return 0;
       });
 
       return filtered;
@@ -1493,10 +1740,17 @@ export const MarksUploadPage = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, sortOrder, studentsPerPage, selectedStudentId]);
+    // Reset frozen filter when mark filter changes
+    if (markFilter === "all") {
+      setFrozenFilterStudents(null);
+    }
+  }, [searchTerm, sortConfig, studentsPerPage, selectedStudentId, markFilter]);
 
-  const toggleSortOrder = () => {
-    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  const toggleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      order: prev.key === key && prev.order === "asc" ? "desc" : "asc",
+    }));
   };
 
   const handleSearchInputChange = (e) => {
@@ -1825,18 +2079,63 @@ export const MarksUploadPage = () => {
               </div>
 
               <div className="marks-controls-right">
+                {/* NEW: Mark Filter Dropdown */}
+                <Select
+                  className="marks-filter-dropdown"
+                  options={[
+                    { value: "all", label: "All Students" },
+                    { value: "with-marks", label: "With Marks" },
+                    { value: "without-marks", label: "Without Marks" },
+                  ]}
+                  value={{
+                    value: markFilter,
+                    label:
+                      markFilter === "all"
+                        ? "All Students"
+                        : markFilter === "with-marks"
+                        ? "With Marks"
+                        : "Without Marks",
+                  }}
+                  onChange={(opt) => setMarkFilter(opt.value)}
+                  isSearchable={false}
+                />
+
                 <button
                   className="marks-sort-btn"
-                  onClick={toggleSortOrder}
-                  title={sortOrder === "asc" ? "Sort Z-A" : "Sort A-Z"}
+                  onClick={() => toggleSort("name")}
+                  title={
+                    sortConfig.key === "name" && sortConfig.order === "asc"
+                      ? "Sort Z-A"
+                      : "Sort A-Z"
+                  }
                 >
-                  {sortOrder === "asc" ? (
+                  {sortConfig.key === "name" && sortConfig.order === "asc" ? (
                     <>
                       <FaSortAlphaDown /> A-Z
                     </>
                   ) : (
                     <>
                       <FaSortAlphaUp /> Z-A
+                    </>
+                  )}
+                </button>
+
+                <button
+                  className="marks-sort-btn"
+                  onClick={() => toggleSort("score")}
+                  title={
+                    sortConfig.key === "score" && sortConfig.order === "asc"
+                      ? "Sort High to Low"
+                      : "Sort Low to High"
+                  }
+                >
+                  {sortConfig.key === "score" && sortConfig.order === "asc" ? (
+                    <>
+                      <FaSortNumericDown /> Low-High
+                    </>
+                  ) : (
+                    <>
+                      <FaSortNumericUp /> High-Low
                     </>
                   )}
                 </button>
@@ -1875,6 +2174,14 @@ export const MarksUploadPage = () => {
               {searchTerm && !selectedStudentId && (
                 <span className="marks-search-info">
                   Filtered by: "{searchTerm}"
+                </span>
+              )}
+              {markFilter !== "all" && (
+                <span className="marks-filter-info">
+                  Showing:{" "}
+                  {markFilter === "with-marks"
+                    ? "Students with marks"
+                    : "Students without marks"}
                 </span>
               )}
             </div>
@@ -1975,6 +2282,10 @@ export const MarksUploadPage = () => {
                         <td colSpan={4} className="no-data-cell">
                           {searchTerm || selectedStudentId
                             ? `No students found matching your search`
+                            : markFilter === "with-marks"
+                            ? "No students with marks found"
+                            : markFilter === "without-marks"
+                            ? "All students have marks!"
                             : "No students found"}
                         </td>
                       </tr>
@@ -2056,6 +2367,20 @@ export const MarksUploadPage = () => {
             onComplete={handleMatchingComplete}
             onCancel={handleMatchingCancel}
             totalImported={totalImportedCount}
+          />
+        )}
+
+        {showMissingMarksModal && (
+          <MissingMarksModal
+            missingStudents={missingMarksStudents}
+            onAssignZero={handleMissingMarksAssignZero}
+            onCancel={handleMissingMarksCancel}
+          />
+        )}
+
+        {saving && (
+          <SavingModal
+            marksCount={students.filter((s) => s.id !== "none").length}
           />
         )}
 
