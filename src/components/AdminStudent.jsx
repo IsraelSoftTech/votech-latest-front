@@ -1044,7 +1044,7 @@ export default function AdminStudent() {
         </div>
       )}
       
-      {/* Success/Error Messages */}
+      {/* Success/Error Messages show*/}
       {success && <SuccessMessage message={success} type="success" onClose={() => setSuccess("")} />}
       {error && <SuccessMessage message={error} type="error" onClose={() => setError("")} />}
       
