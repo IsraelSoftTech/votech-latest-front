@@ -1037,14 +1037,14 @@ export default function AdminStudent() {
                   zIndex: 2,
                 }}
               >
-                {isDownloadingClassList ? "Downloading..." : "Download"}
+                {isDownloadingClassList ? "Downloading...." : "Download"}
               </span>
             </button>
           </div>
         </div>
       )}
       
-      {/* Success/Error Messages */}
+      {/* Success/Error Messages show*/}
       {success && <SuccessMessage message={success} type="success" onClose={() => setSuccess("")} />}
       {error && <SuccessMessage message={error} type="error" onClose={() => setError("")} />}
       
