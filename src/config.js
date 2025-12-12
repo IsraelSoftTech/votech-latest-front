@@ -1,25 +1,40 @@
-const LOCAL_IP = "192.168.56.1"; // Default desktop IP
+// =========================
+// CONFIG.JS (CLEAN + FIXED)
+// =========================
 
+// Default desktop LAN IP
+const LOCAL_IP = "192.168.56.1";
+
+// Browser hostname
 const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+
+// Environment variable from .env file
 const envFromVar = process.env.REACT_APP_NODE_ENV;
 
-// Production domains - if hostname matches these, force production mode
+// Real production domains
 const PRODUCTION_DOMAINS = [
   "votechs7academygroup.com",
   "www.votechs7academygroup.com",
+  "api.votechs7academygroup.com",
 ];
 
 // Detect if current hostname is a production domain
-const isProductionDomain = PRODUCTION_DOMAINS.some(domain =>
-  hostname === domain || hostname.endsWith(`.${domain}`)
+const isProductionDomain = PRODUCTION_DOMAINS.some(
+  (domain) =>
+    hostname === domain ||
+    hostname.endsWith(`.${domain}`)
 );
 
-// Determine environment
+// ----------------------------
+// DETERMINE ENVIRONMENT
+// ----------------------------
+
+// Force production when on live domain
 const env = isProductionDomain
-  ? "production"      // Force production mode on real domain
+  ? "production"
   : envFromVar || "production";
 
-// Mode checks
+// Mode logic
 const isDevelopment =
   !isProductionDomain &&
   (env === "development" ||
@@ -32,26 +47,32 @@ const isDesktop =
     hostname === LOCAL_IP ||
     hostname.includes("192.168"));
 
-// API URL configuration (FORCE PRODUCTION URL)
+// ----------------------------
+// BACKEND URL CONFIG
+// ----------------------------
 const apiBase = isDevelopment
   ? process.env.REACT_APP_API_URL_DEV || "http://localhost:5000"
   : isDesktop
   ? process.env.REACT_APP_API_URL_DESKTOP || `http://${LOCAL_IP}:5000`
-  : "https://api.votechs7academygroup.com"; // 🔥 forced backend URL
+  : process.env.REACT_APP_API_URL_PROD ||
+    "https://api.votechs7academygroup.com";
 
-// FRONTEND URL
+// ----------------------------
+// FRONTEND URL CONFIG
+// ----------------------------
 const FRONTEND_URL = isDevelopment
   ? "http://localhost:3000"
   : isDesktop
   ? `http://${LOCAL_IP}:3000`
   : "https://votechs7academygroup.com";
 
-// Construct API URL - ensure no double slashes
+// Clean API URL to avoid double slashes
 const constructApiUrl = (base) => {
   const cleanBase = base.replace(/\/+$/, "");
   return `${cleanBase}/api`;
 };
 
+// Final config object
 const config = {
   API_URL: constructApiUrl(apiBase),
   FRONTEND_URL,
@@ -63,16 +84,20 @@ const config = {
   IS_DESKTOP: isDesktop,
 };
 
-// Debug Logging
+// Debug logs
 if (isDevelopment || isDesktop || isProductionDomain) {
   console.log("🔧 Configuration Loaded:");
-  console.log("  Environment:", env);
-  console.log("  Hostname:", hostname);
-  console.log("  Mode:", isDevelopment ? "Development" : isDesktop ? "Desktop" : "Production");
-  console.log("  API URL:", config.API_URL);
-  console.log("  Frontend URL:", config.FRONTEND_URL);
+  console.log(" Environment:", env);
+  console.log(" Hostname:", hostname);
+  console.log(
+    " Mode:",
+    isDevelopment ? "Development" : isDesktop ? "Desktop/LAN" : "Production"
+  );
+  console.log(" API URL:", config.API_URL);
+  console.log(" Frontend URL:", config.FRONTEND_URL);
+
   if (isProductionDomain) {
-    console.log("  ✅ Production domain detected - using production API");
+    console.log(" ✅ Production domain detected — using production API");
   }
 }
 
