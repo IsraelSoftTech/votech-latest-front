@@ -9,32 +9,37 @@ const PRODUCTION_DOMAINS = [
   "www.votechs7academygroup.com",
 ];
 
-// Determine environment: prioritize hostname detection over env variable
-// This prevents production sites from accidentally using development config
-const isProductionDomain = PRODUCTION_DOMAINS.some(domain => 
+// Detect if current hostname is a production domain
+const isProductionDomain = PRODUCTION_DOMAINS.some(domain =>
   hostname === domain || hostname.endsWith(`.${domain}`)
 );
 
-const env = isProductionDomain 
-  ? "production"  // Force production if on production domain
+// Determine environment
+const env = isProductionDomain
+  ? "production"      // Force production mode on real domain
   : envFromVar || "production";
 
+// Mode checks
 const isDevelopment =
-  !isProductionDomain && (env === "development" || hostname === "localhost" || hostname === "127.0.0.1");
-const isDesktop = !isProductionDomain && (env === "desktop" || hostname === LOCAL_IP || hostname.includes("192.168"));
+  !isProductionDomain &&
+  (env === "development" ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1");
 
-// API URL configuration with fallbacks
-// Production backend can be at:
-// - https://votechs7academygroup.com/api (same domain - current default)
-// - https://api.votechs7academygroup.com/api (subdomain - set REACT_APP_API_URL_PROD)
-// - https://backend.votechs7academygroup.com/api (subdomain - set REACT_APP_API_URL_PROD)
-// Override with REACT_APP_API_URL_PROD environment variable if backend is on subdomain
+const isDesktop =
+  !isProductionDomain &&
+  (env === "desktop" ||
+    hostname === LOCAL_IP ||
+    hostname.includes("192.168"));
+
+// API URL configuration (FORCE PRODUCTION URL)
 const apiBase = isDevelopment
   ? process.env.REACT_APP_API_URL_DEV || "http://localhost:5000"
   : isDesktop
   ? process.env.REACT_APP_API_URL_DESKTOP || `http://${LOCAL_IP}:5000`
-  : process.env.REACT_APP_API_URL_PROD || "https://api.votechs7academygroup.com";
+  : "https://api.votechs7academygroup.com"; // 🔥 forced backend URL
 
+// FRONTEND URL
 const FRONTEND_URL = isDevelopment
   ? "http://localhost:3000"
   : isDesktop
@@ -43,7 +48,7 @@ const FRONTEND_URL = isDevelopment
 
 // Construct API URL - ensure no double slashes
 const constructApiUrl = (base) => {
-  const cleanBase = base.replace(/\/+$/, ""); // Remove trailing slashes
+  const cleanBase = base.replace(/\/+$/, "");
   return `${cleanBase}/api`;
 };
 
@@ -52,15 +57,13 @@ const config = {
   FRONTEND_URL,
   FTP_URL: "https://st60307.ispot.cc/votechs7academygroup",
   API_TIMEOUT: 10000,
-  // Environment info for debugging
   ENV: env,
   HOSTNAME: hostname,
   IS_DEVELOPMENT: isDevelopment,
   IS_DESKTOP: isDesktop,
 };
 
-// Enhanced logging for debugging
-// Always log in development/desktop, but also log in production for verification
+// Debug Logging
 if (isDevelopment || isDesktop || isProductionDomain) {
   console.log("🔧 Configuration Loaded:");
   console.log("  Environment:", env);
