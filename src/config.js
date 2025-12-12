@@ -1,11 +1,27 @@
 const LOCAL_IP = "192.168.56.1"; // Default desktop IP
 
-const env = process.env.REACT_APP_NODE_ENV || "production";
 const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+const envFromVar = process.env.REACT_APP_NODE_ENV;
+
+// Production domains - if hostname matches these, force production mode
+const PRODUCTION_DOMAINS = [
+  "votechs7academygroup.com",
+  "www.votechs7academygroup.com",
+];
+
+// Determine environment: prioritize hostname detection over env variable
+// This prevents production sites from accidentally using development config
+const isProductionDomain = PRODUCTION_DOMAINS.some(domain => 
+  hostname === domain || hostname.endsWith(`.${domain}`)
+);
+
+const env = isProductionDomain 
+  ? "production"  // Force production if on production domain
+  : envFromVar || "production";
 
 const isDevelopment =
-  env === "development" || hostname === "localhost" || hostname === "127.0.0.1";
-const isDesktop = env === "desktop" || hostname === LOCAL_IP || hostname.includes("192.168");
+  !isProductionDomain && (env === "development" || hostname === "localhost" || hostname === "127.0.0.1");
+const isDesktop = !isProductionDomain && (env === "desktop" || hostname === LOCAL_IP || hostname.includes("192.168"));
 
 // API URL configuration with fallbacks
 // Production backend can be at:
@@ -44,13 +60,17 @@ const config = {
 };
 
 // Enhanced logging for debugging
-if (process.env.NODE_ENV !== "production" || isDevelopment || isDesktop) {
+// Always log in development/desktop, but also log in production for verification
+if (isDevelopment || isDesktop || isProductionDomain) {
   console.log("🔧 Configuration Loaded:");
   console.log("  Environment:", env);
   console.log("  Hostname:", hostname);
   console.log("  Mode:", isDevelopment ? "Development" : isDesktop ? "Desktop" : "Production");
   console.log("  API URL:", config.API_URL);
   console.log("  Frontend URL:", config.FRONTEND_URL);
+  if (isProductionDomain) {
+    console.log("  ✅ Production domain detected - using production API");
+  }
 }
 
 export default config;
