@@ -1,55 +1,43 @@
 import axios from "axios";
 
+const LOCAL_IP = "192.168.56.1"; // hostname only
+
 const env = process.env.REACT_APP_NODE_ENV || "production";
 const hostname = typeof window !== "undefined" ? window.location.hostname : "";
 
-// Detect environment based on hostname first (most reliable), then env variable
 const isDevelopment =
-  hostname === "localhost" ||
-  hostname === "127.0.0.1" ||
-  hostname.startsWith("192.168.") ||
-  hostname.startsWith("10.") ||
-  hostname.startsWith("172.") ||
-  env === "development";
+  env === "development" || hostname === "localhost" || hostname === "127.0.0.1";
 
-// Check if we're on production domain
-const isProduction = hostname === "votechs7academygroup.com" || 
-                     hostname === "www.votechs7academygroup.com" ||
-                     hostname.includes("votechs7academygroup.com");
+const isDesktop =
+  env === "desktop" || hostname === LOCAL_IP || hostname.includes("192.168");
 
-const apiBase =
-  isDevelopment
-    ? process.env.REACT_APP_API_URL_DEV
-    : env === "desktop"
-    ? process.env.REACT_APP_API_URL_DESKTOP
-    : process.env.REACT_APP_API_URL_PROD;
+const apiBase = isDevelopment
+  ? process.env.REACT_APP_API_URL_DEV
+  : isDesktop
+  ? process.env.REACT_APP_API_URL_DESKTOP
+  : process.env.REACT_APP_API_URL_PROD;
 
-// Ensure apiBase has a fallback value
-// Use production API only if we're actually on production domain
-const safeApiBase = apiBase || (isDevelopment ? "http://localhost:5000" : (isProduction ? "https://api.votechs7academygroup.com" : "http://localhost:5000"));
+// Build base URLs exactly like config
+export const API_URL = apiBase.endsWith("/")
+  ? `${apiBase}api`
+  : `${apiBase}/api`;
 
-export const baseURL = `${safeApiBase}/api/v1/`;
-export const subBaseURL = `${safeApiBase}/api`;
+export const baseURL = `${API_URL}/v1/`;
+export const subBaseURL = API_URL;
 
-console.log("Marks Module API loaded:", {
-  env,
-  hostname,
-  isDevelopment,
-  isProduction,
-  apiBase: apiBase || "not set (using fallback)",
-  safeApiBase,
-  baseURL,
-  subBaseURL,
-});
+// extra endpoints
+export const FTP_URL = "https://st60307.ispot.cc/votechs7academygroup";
 
+// axios instance
 const api = axios.create({
   baseURL,
-  timeout: 300000,
+  timeout: 10000, // mirrors config.API_TIMEOUT
   headers: {
     "Content-Type": "application/json",
   },
 });
 
+// simple auth header helper
 export const headers = () => {
   const token = sessionStorage.getItem("token");
   return {
@@ -58,27 +46,15 @@ export const headers = () => {
   };
 };
 
-api.interceptors.request.use(
-  (config) => {
-    const token = sessionStorage.getItem("token");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    else delete config.headers.Authorization;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// token injector (only thing needed)
+api.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.code === "ECONNABORTED" && error.message.includes("timeout")) {
-      if (!error.config._retry) {
-        error.config._retry = true;
-        return api(error.config);
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
+// no retry logic, no extra handlers
 export default api;
+
+// Debugging (just like your config)
+console.log("API URL:", API_URL, env);
