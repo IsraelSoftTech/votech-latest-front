@@ -7,11 +7,12 @@ const isDevelopment =
   env === "development" || hostname === "localhost" || hostname === "127.0.0.1";
 const isDesktop = env === "desktop" || hostname === LOCAL_IP || hostname.includes("192.168");
 
+// API URL configuration with fallbacks
 const apiBase = isDevelopment
-  ? process.env.REACT_APP_API_URL_DEV
+  ? process.env.REACT_APP_API_URL_DEV || "http://localhost:5000"
   : isDesktop
-  ? process.env.REACT_APP_API_URL_DESKTOP
-  : process.env.REACT_APP_API_URL_PROD;
+  ? process.env.REACT_APP_API_URL_DESKTOP || `http://${LOCAL_IP}:5000`
+  : process.env.REACT_APP_API_URL_PROD || "https://votechs7academygroup.com";
 
 const FRONTEND_URL = isDevelopment
   ? "http://localhost:3000"
@@ -28,5 +29,6 @@ const config = {
 };
 
 console.log("API URL:", config.API_URL, env);
+console.log("Environment:", env, "Hostname:", hostname, "IsDevelopment:", isDevelopment, "IsDesktop:", isDesktop);
 
 export default config;
