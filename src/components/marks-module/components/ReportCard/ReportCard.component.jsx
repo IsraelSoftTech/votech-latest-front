@@ -84,16 +84,16 @@ const sampleData = {
       coef: 3,
       teacher: "CHIEF EXAMINER",
       scores: {
-        seq1: 0,
+        seq1: 14,
         seq2: 15,
-        seq3: 8,
-        seq4: 2,
-        seq5: 9,
-        seq6: 12,
-        term1Avg: 9.5,
-        term2Avg: 10.5,
-        term3Avg: 9.5,
-        finalAvg: 2.5,
+        seq3: 13,
+        seq4: 14,
+        seq5: 15,
+        seq6: 16,
+        term1Avg: 14.5,
+        term2Avg: 13.5,
+        term3Avg: 15.5,
+        finalAvg: 14.5,
       },
     },
     {
@@ -120,7 +120,7 @@ const sampleData = {
     {
       code: "MED",
       title: "MECHANICAL DRAWING",
-      coef: 8,
+      coef: 6,
       teacher: "ENG. TABI",
       scores: {
         seq1: 15,
@@ -138,7 +138,7 @@ const sampleData = {
     {
       code: "ELT",
       title: "ELECTRICAL TECHNOLOGY",
-      coef: 6,
+      coef: 5,
       teacher: "TECH. MBAH",
       scores: {
         seq1: 14,
@@ -156,7 +156,7 @@ const sampleData = {
     {
       code: "WRP",
       title: "WORKSHOP PRACTICE",
-      coef: 7,
+      coef: 5,
       teacher: "TECH. FOMBA",
       scores: {
         seq1: 16,
@@ -174,7 +174,7 @@ const sampleData = {
     {
       code: "SHW",
       title: "SHEET METAL WORKS",
-      coef: 5,
+      coef: 4,
       teacher: "TECH. GRACE",
       scores: {
         seq1: 13,
@@ -192,7 +192,7 @@ const sampleData = {
     {
       code: "ENS",
       title: "ENGINEERING SCIENCE",
-      coef: 6,
+      coef: 5,
       teacher: "ENG. PAUL",
       scores: {
         seq1: 15,
@@ -210,7 +210,7 @@ const sampleData = {
     {
       code: "ICT",
       title: "INFORMATION TECHNOLOGY",
-      coef: 4,
+      coef: 3,
       teacher: "TECH. MARIE",
       scores: {
         seq1: 17,
@@ -226,10 +226,85 @@ const sampleData = {
       },
     },
     {
-      code: "PRT",
-      title: "PRACTICALS",
-      coef: 10,
-      teacher: "WORKSHOP TEAM",
+      code: "MTL",
+      title: "MATERIAL TECHNOLOGY",
+      coef: 4,
+      teacher: "ENG. NJEMA",
+      scores: {
+        seq1: 14,
+        seq2: 15,
+        seq3: 13,
+        seq4: 14,
+        seq5: 16,
+        seq6: 15,
+        term1Avg: 14.5,
+        term2Avg: 13.5,
+        term3Avg: 15.5,
+        finalAvg: 14.5,
+      },
+    },
+    {
+      code: "TDR",
+      title: "TECHNICAL DRAWING",
+      coef: 5,
+      teacher: "TECH. TABI",
+      scores: {
+        seq1: 16,
+        seq2: 17,
+        seq3: 15,
+        seq4: 16,
+        seq5: 18,
+        seq6: 17,
+        term1Avg: 16.5,
+        term2Avg: 15.5,
+        term3Avg: 17.5,
+        finalAvg: 16.5,
+      },
+    },
+    {
+      code: "AUT",
+      title: "AUTOMATION",
+      coef: 4,
+      teacher: "ENG. MBAH",
+      scores: {
+        seq1: 15,
+        seq2: 16,
+        seq3: 14,
+        seq4: 15,
+        seq5: 17,
+        seq6: 16,
+        term1Avg: 15.5,
+        term2Avg: 14.5,
+        term3Avg: 16.5,
+        finalAvg: 15.5,
+      },
+    },
+    {
+      code: "QCT",
+      title: "QUALITY CONTROL",
+      coef: 3,
+      teacher: "TECH. GRACE",
+      scores: {
+        seq1: 14,
+        seq2: 15,
+        seq3: 13,
+        seq4: 14,
+        seq5: 16,
+        seq6: 15,
+        term1Avg: 14.5,
+        term2Avg: 13.5,
+        term3Avg: 15.5,
+        finalAvg: 14.5,
+      },
+    },
+  ],
+
+  practicalSubjects: [
+    {
+      code: "WLD",
+      title: "WELDING PRACTICE",
+      coef: 6,
+      teacher: "WORKSHOP TEAM A",
       scores: {
         seq1: 18,
         seq2: 19,
@@ -241,6 +316,78 @@ const sampleData = {
         term2Avg: 17.5,
         term3Avg: 18.5,
         finalAvg: 18.2,
+      },
+    },
+    {
+      code: "MCH",
+      title: "MACHINING PRACTICE",
+      coef: 7,
+      teacher: "WORKSHOP TEAM B",
+      scores: {
+        seq1: 17,
+        seq2: 18,
+        seq3: 16,
+        seq4: 17,
+        seq5: 18,
+        seq6: 17,
+        term1Avg: 17.5,
+        term2Avg: 16.5,
+        term3Avg: 17.5,
+        finalAvg: 17.2,
+      },
+    },
+    {
+      code: "FTG",
+      title: "FITTING PRACTICE",
+      coef: 6,
+      teacher: "WORKSHOP TEAM C",
+      scores: {
+        seq1: 16,
+        seq2: 17,
+        seq3: 15,
+        seq4: 16,
+        seq5: 17,
+        seq6: 16,
+        term1Avg: 16.5,
+        term2Avg: 15.5,
+        term3Avg: 16.5,
+        finalAvg: 16.2,
+      },
+    },
+    {
+      code: "ASB",
+      title: "ASSEMBLY PRACTICE",
+      coef: 5,
+      teacher: "WORKSHOP TEAM D",
+      scores: {
+        seq1: 17,
+        seq2: 18,
+        seq3: 16,
+        seq4: 17,
+        seq5: 18,
+        seq6: 17,
+        term1Avg: 17.5,
+        term2Avg: 16.5,
+        term3Avg: 17.5,
+        finalAvg: 17.2,
+      },
+    },
+    {
+      code: "MNT",
+      title: "MAINTENANCE PRACTICE",
+      coef: 6,
+      teacher: "WORKSHOP TEAM E",
+      scores: {
+        seq1: 16,
+        seq2: 17,
+        seq3: 15,
+        seq4: 16,
+        seq5: 17,
+        seq6: 16,
+        term1Avg: 16.5,
+        term2Avg: 15.5,
+        term3Avg: 16.5,
+        finalAvg: 16.2,
       },
     },
   ],
@@ -480,7 +627,7 @@ export default function ReportCard({
       // Reset scale first to get natural dimensions
       document.documentElement.style.setProperty("--print-scale", "1");
 
-      const marginMm = 10; // MUST match --page-margin-mm and @page margin
+      const marginMm = 8; // MUST match --page-margin-mm and @page margin
       const printableHeightPx = mmToPx(297 - marginMm * 2); // A4 height minus margins
 
       // Multiple measurement attempts for accuracy
@@ -498,15 +645,23 @@ export default function ReportCard({
         let scale = printableHeightPx / naturalHeight;
         if (!isFinite(scale) || scale <= 0) scale = 1;
 
-        // Add small buffer to ensure content fits
-        scale = Math.min(0.98, scale); // Max 98% to ensure fit with small buffer
+        // More aggressive scaling - reduce buffer to allow tighter fit
+        scale = Math.min(0.96, scale); // Max 96% to ensure fit
 
         // Minimum scale to maintain readability
-        scale = Math.max(0.4, scale);
+        scale = Math.max(0.35, scale);
 
         document.documentElement.style.setProperty(
           "--print-scale",
           String(scale)
+        );
+
+        console.log(
+          `Report Card Scaling: Natural height: ${naturalHeight.toFixed(
+            1
+          )}px, Printable: ${printableHeightPx.toFixed(
+            1
+          )}px, Scale: ${scale.toFixed(3)}`
         );
       };
 
@@ -516,11 +671,13 @@ export default function ReportCard({
           setTimeout(measure, 10);
           setTimeout(measure, 50);
           setTimeout(measure, 100);
+          setTimeout(measure, 200);
         });
       } else {
         setTimeout(measure, 10);
         setTimeout(measure, 50);
         setTimeout(measure, 100);
+        setTimeout(measure, 200);
       }
     };
 
@@ -528,6 +685,7 @@ export default function ReportCard({
       // Multiple scaling attempts for reliability
       setScale();
       setTimeout(setScale, 10);
+      setTimeout(setScale, 50);
     };
 
     const afterPrint = () => {
@@ -556,6 +714,7 @@ export default function ReportCard({
 
     // Initial scaling on component mount
     setTimeout(setScale, 100);
+    setTimeout(setScale, 300);
 
     return () => {
       window.removeEventListener("beforeprint", beforePrint);
@@ -776,6 +935,75 @@ export default function ReportCard({
             </tbody>
           </table>
         </div>
+
+        {/* Practical Subjects */}
+        {data.practicalSubjects && data.practicalSubjects.length > 0 && (
+          <div className="subjects-section">
+            <div className="section-header">
+              <h3>PRACTICAL SUBJECTS</h3>
+            </div>
+            <table className="subjects-table">
+              <thead>
+                <tr>
+                  <th>CODE</th>
+                  <th>SUBJECT TITLE</th>
+                  {termData.columnHeaders.map((header, index) => (
+                    <th key={index}>{header}</th>
+                  ))}
+                  <th>COEF</th>
+                  <th>TOTAL</th>
+                  <th>REMARK</th>
+                  <th>TEACHER</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.practicalSubjects.map((subject, index) =>
+                  renderSubjectRow(subject, index)
+                )}
+                {/* Practical Subjects Subtotal */}
+                <tr className="subtotal-row">
+                  <td
+                    colSpan={termData.columnHeaders.length + 3}
+                    className="subtotal-label"
+                  >
+                    SUB TOTAL:
+                  </td>
+                  {(() => {
+                    const { totalWeighted, totalCoef } =
+                      data.practicalSubjects.reduce(
+                        (acc, subject) => {
+                          const avg = parseFloat(
+                            termData.calculateTermAvg(subject)
+                          );
+                          acc.totalWeighted += avg * subject.coef;
+                          acc.totalCoef += subject.coef;
+                          return acc;
+                        },
+                        { totalWeighted: 0, totalCoef: 0 }
+                      );
+
+                    const avg = totalWeighted / totalCoef;
+                    const remark = getRemark(avg);
+
+                    return (
+                      <>
+                        <td className="subtotal-value">
+                          {totalWeighted.toFixed(0)}
+                        </td>
+                        <td className="subtotal-remark">
+                          <span className={getRemarkClass(remark)}>
+                            {remark}
+                          </span>
+                        </td>
+                        <td></td>
+                      </>
+                    );
+                  })()}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Performance Summary */}
         <div className="performance-summary">
