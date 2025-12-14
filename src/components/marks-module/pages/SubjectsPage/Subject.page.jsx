@@ -536,7 +536,9 @@ export const SubjectPage = () => {
     <SideTop>
       <div className="subject-page-container">
         <h2 className="page-title">
-          {user.role === "Admin3" ? "All Subjects To Mr Vitalis" : "Subjects Assigned to You"}
+          {user.role === "Admin3"
+            ? "All Subjects To Mr Vitalis"
+            : "Subjects Assigned to You"}
         </h2>
         {user.role === "Admin3" && <Stats data={data} />}
         {user.role === "Admin3" && (
@@ -611,7 +613,7 @@ export const SubjectPage = () => {
             label="Category"
             value={form.category}
             required
-            options={["general", "professional"]}
+            options={["general", "professional", "practical"]}
             name="category"
             onClear={() => handleUpdateForm("category", "")}
             onChange={handleUpdateForm}
