@@ -119,7 +119,6 @@
   box-shadow: 0 0 0 1px #204080;
 }
 
-/* FIXED: Disabled state with muted blue */
 .report-react-select .report-select__control--is-disabled {
   background-color: rgba(32, 64, 128, 0.05);
   border-color: rgba(32, 64, 128, 0.2);
@@ -148,7 +147,6 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* FIXED: Disabled state with muted blue */
 .report-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -180,7 +178,6 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* FIXED: Specific disabled state for download button */
 .report-btn-download:disabled {
   background: rgba(16, 185, 129, 0.3) !important;
 }
@@ -245,7 +242,6 @@
   border-radius: 6px;
 }
 
-/* FIXED: Disabled select in table */
 .report-table-select .report-select__control--is-disabled {
   background-color: rgba(32, 64, 128, 0.05);
   border-color: rgba(32, 64, 128, 0.2);
@@ -263,18 +259,20 @@
   font-size: 15px;
 }
 
-/* PDF Progress Overlay */
-.pdf-progress-overlay {
+/* ============================================= */
+/* PROFESSIONAL MODAL STYLES */
+/* ============================================= */
+
+.professional-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(17, 24, 39, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
-  animation: fadeIn 0.3s ease;
+  z-index: 99999;
+  animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
@@ -286,17 +284,16 @@
   }
 }
 
-.pdf-progress-card {
-  width: min(560px, 92vw);
+.professional-modal-card {
+  width: min(480px, 92vw);
   background: #ffffff;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-  text-align: center;
-  animation: slideUp 0.3s ease;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease;
 }
 
-@keyframes slideUp {
+@keyframes slideIn {
   from {
     transform: translateY(20px);
     opacity: 0;
@@ -307,60 +304,602 @@
   }
 }
 
-.pdf-progress-emoji {
-  font-size: 48px;
-  margin-bottom: 16px;
-  animation: bounce 2s infinite;
+/* Status Icon */
+.modal-status-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
 }
 
-@keyframes bounce {
+.spinner-container {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #204080;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Checkmark SVG */
+.checkmark {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 2;
+  stroke: #10b981;
+  stroke-miterlimit: 10;
+  box-shadow: inset 0 0 0 #10b981;
+  animation: fill 0.4s ease-in-out 0.4s forwards,
+    scale 0.3s ease-in-out 0.9s both;
+}
+
+.checkmark-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 2;
+  stroke-miterlimit: 10;
+  stroke: #10b981;
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes scale {
   0%,
   100% {
-    transform: translateY(0);
+    transform: none;
   }
   50% {
-    transform: translateY(-10px);
+    transform: scale3d(1.1, 1.1, 1);
   }
 }
 
-.pdf-progress-card h3 {
-  margin: 0 0 12px 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: #111827;
+@keyframes fill {
+  100% {
+    box-shadow: inset 0 0 0 30px #10b981;
+  }
 }
 
-.pdf-progress-card p {
-  margin: 0 0 24px 0;
+/* Title & Message */
+.modal-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.modal-message {
+  font-size: 14px;
   color: #6b7280;
+  text-align: center;
+  margin: 0 0 28px 0;
+  line-height: 1.5;
+}
+
+/* Progress Bar */
+.modal-progress-container {
+  margin-bottom: 24px;
+}
+
+.modal-progress-bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.modal-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #204080, #3b82f6);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.modal-progress-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.progress-text {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.progress-percentage {
+  color: #204080;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Info Box */
+.modal-info-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.info-value {
   font-size: 15px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Success Box */
+.modal-success-box {
+  padding: 16px;
+  background: #f0fdf4;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.success-text {
+  font-size: 14px;
+  color: #065f46;
+  margin: 0;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Warning Box */
+.modal-warning-box {
+  padding: 12px 16px;
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  border-radius: 6px;
+}
+
+.warning-text {
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 500;
+  display: block;
+  text-align: center;
+}
+
+/* Instruction Box */
+.modal-instruction-box {
+  padding: 12px 16px;
+  background: #dbeafe;
+  border-left: 3px solid #3b82f6;
+  border-radius: 6px;
+}
+
+.instruction-text {
+  font-size: 13px;
+  color: #1e40af;
+  font-weight: 500;
+  display: block;
+  text-align: center;
+}
+
+/* Monitoring Box */
+.modal-monitoring-box {
+  padding: 12px 16px;
+  background: #f3e8ff;
+  border-left: 3px solid #a855f7;
+  border-radius: 6px;
+}
+
+.monitoring-text {
+  font-size: 13px;
+  color: #6b21a8;
+  font-weight: 500;
+  display: block;
+  text-align: center;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .professional-modal-card {
+    padding: 32px 24px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .modal-message {
+    font-size: 13px;
+  }
+
+  .modal-info-box {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+  }
+
+  .checkmark {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .professional-modal-overlay,
+  .professional-modal-card,
+  .modal-progress-fill,
+  .spinner,
+  .checkmark,
+  .checkmark-circle,
+  .checkmark-check {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================= */
+/* EXPLANATION MODAL - MATCHES PROFESSIONAL MODAL */
+/* ============================================= */
+
+.explanation-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99998;
+  animation: fadeIn 0.2s ease;
+}
+
+.explanation-modal-card {
+  width: min(800px, 92vw);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Header Icon */
+.explanation-status-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.explanation-info-icon {
+  width: 56px;
+  height: 56px;
+  background: #dbeafe;
+  color: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+/* Title & Subtitle */
+.explanation-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.explanation-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+  margin: 0 0 28px 0;
+  line-height: 1.5;
+}
+
+.explanation-subtitle strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Process Steps */
+.explanation-steps {
+  margin-bottom: 24px;
+}
+
+.explanation-step {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.explanation-step:last-child {
+  margin-bottom: 0;
+}
+
+.step-number {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: #204080;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.step-text {
+  flex: 1;
+  padding-top: 4px;
+}
+
+.step-text h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.step-text p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.step-text strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Important Box */
+.explanation-important {
+  padding: 16px;
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.important-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.important-icon {
+  color: #f59e0b;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.important-header h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0;
+}
+
+.important-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #78350f;
+}
+
+.important-list li {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.important-list li:last-child {
+  margin-bottom: 0;
+}
+
+.important-list strong {
+  color: #92400e;
+  font-weight: 600;
+}
+
+/* Info Box */
+.explanation-info-box {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.info-box-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.info-box-text {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
   line-height: 1.6;
 }
 
-.pdf-progress-bar {
-  width: 100%;
-  height: 12px;
-  border-radius: 999px;
+/* Tip Box */
+.explanation-tip-box {
+  padding: 16px;
+  background: #dbeafe;
+  border-left: 3px solid #3b82f6;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.tip-box-content {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.tip-box-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tip-box-text {
+  font-size: 13px;
+  color: #1e40af;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.tip-box-text strong {
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.explanation-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.explanation-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.explanation-btn-cancel {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.explanation-btn-cancel:hover {
   background: #e5e7eb;
-  overflow: hidden;
-  position: relative;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.pdf-progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #c9a96e, #204080);
-  box-shadow: 0 0 8px rgba(32, 64, 128, 0.4);
-  transition: width 500ms ease;
-  border-radius: 999px;
+.explanation-btn-proceed {
+  background: #204080;
+  color: white;
 }
 
-.pdf-progress-percent {
-  margin-top: 12px;
-  font-weight: 700;
-  font-size: 18px;
-  color: #204080;
+.explanation-btn-proceed:hover {
+  background: #163060;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(32, 64, 128, 0.2);
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .explanation-modal-card {
+    padding: 32px 24px;
+    max-height: 95vh;
+  }
+
+  .explanation-title {
+    font-size: 20px;
+  }
+
+  .explanation-subtitle {
+    font-size: 13px;
+  }
+
+  .explanation-info-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+
+  .step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .step-text h4 {
+    font-size: 14px;
+  }
+
+  .step-text p {
+    font-size: 13px;
+  }
+
+  .explanation-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .explanation-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .explanation-modal-overlay,
+  .explanation-modal-card {
+    animation: none !important;
+  }
 }
 
 /* ============================================= */
@@ -370,10 +909,8 @@
 @media (max-width: 768px) {
   .report-card-home-page {
     padding: 12px;
-    background: #f9fafb;
   }
 
-  /* Header */
   .report-card-header {
     flex-direction: column;
     align-items: flex-start;
@@ -398,7 +935,6 @@
     padding: 0.4rem 0.8rem;
   }
 
-  /* Filters Section */
   .report-filters-section {
     padding: 16px;
     margin-bottom: 16px;
@@ -423,7 +959,6 @@
     font-size: 16px;
   }
 
-  /* Actions Section */
   .report-actions-section {
     flex-direction: column;
     gap: 10px;
@@ -437,7 +972,6 @@
     font-size: 15px;
   }
 
-  /* Students Section */
   .report-students-section {
     padding: 16px;
   }
@@ -479,33 +1013,67 @@
     font-size: 14px;
   }
 
-  /* PDF Progress */
-  .pdf-progress-card {
+  /* Premium Modal Mobile */
+  .premium-print-modal {
+    width: 95vw;
+    max-height: 85vh;
+    border-radius: 16px;
+  }
+
+  .premium-modal-header {
+    padding: 24px;
+    gap: 16px;
+  }
+
+  .premium-header-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+
+  .premium-modal-title {
+    font-size: 18px;
+  }
+
+  .premium-modal-subtitle {
+    font-size: 13px;
+  }
+
+  .premium-modal-body {
     padding: 24px;
   }
 
-  .pdf-progress-emoji {
-    font-size: 40px;
-    margin-bottom: 12px;
+  .rendering-animation,
+  .success-animation {
+    width: 100px;
+    height: 100px;
   }
 
-  .pdf-progress-card h3 {
-    font-size: 20px;
-    margin-bottom: 10px;
+  .stage-icon-large {
+    font-size: 48px;
   }
 
-  .pdf-progress-card p {
-    font-size: 14px;
-    margin-bottom: 20px;
+  .success-icon {
+    font-size: 56px;
   }
 
-  .pdf-progress-bar {
-    height: 10px;
-  }
-
-  .pdf-progress-percent {
+  .rendering-text h4,
+  .ready-text h4 {
     font-size: 16px;
-    margin-top: 10px;
+  }
+
+  .rendering-text p,
+  .ready-text p {
+    font-size: 13px;
+  }
+
+  .tip-item {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .tip-icon {
+    font-size: 18px;
   }
 }
 
@@ -554,77 +1122,32 @@
     font-size: 12px;
   }
 
-  .pdf-progress-card {
+  .premium-modal-header {
     padding: 20px;
   }
 
-  .pdf-progress-emoji {
-    font-size: 36px;
+  .premium-header-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
   }
 
-  .pdf-progress-card h3 {
-    font-size: 18px;
+  .premium-modal-title {
+    font-size: 16px;
   }
 
-  .pdf-progress-card p {
-    font-size: 13px;
-  }
-}
-
-/* ============================================= */
-/* VERY SMALL DEVICES - 320px */
-/* ============================================= */
-
-@media (max-width: 320px) {
-  .report-card-home-page {
-    padding: 8px;
+  .premium-modal-body {
+    padding: 20px;
   }
 
-  .report-card-title {
-    font-size: 18px;
+  .rendering-animation,
+  .success-animation {
+    width: 90px;
+    height: 90px;
   }
 
-  .report-filters-section {
-    padding: 12px;
-  }
-
-  .report-filters-title {
-    font-size: 14px;
-  }
-
-  .report-students-section {
-    padding: 12px;
-  }
-
-  .report-students-title {
-    font-size: 14px;
-  }
-
-  .report-students-table th,
-  .report-students-table td {
-    padding: 6px 8px;
-    font-size: 11px;
-  }
-
-  .report-btn {
-    padding: 12px 16px;
-    font-size: 14px;
-  }
-
-  .pdf-progress-card {
-    padding: 18px;
-  }
-
-  .pdf-progress-emoji {
-    font-size: 32px;
-  }
-
-  .pdf-progress-card h3 {
-    font-size: 17px;
-  }
-
-  .pdf-progress-card p {
-    font-size: 12px;
+  .stage-icon-large {
+    font-size: 42px;
   }
 }
 
@@ -633,9 +1156,14 @@
 /* ============================================= */
 
 @media (prefers-reduced-motion: reduce) {
-  .pdf-progress-overlay,
-  .pdf-progress-card,
-  .pdf-progress-emoji {
+  .premium-print-modal-overlay,
+  .premium-print-modal,
+  .premium-progress-bar,
+  .premium-progress-shine,
+  .pulse-ring,
+  .stage-icon-large,
+  .success-icon,
+  .particle {
     animation: none !important;
     transition: none !important;
   }
@@ -653,7 +1181,6 @@
   }
 }
 
-/* Touch-friendly */
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -664,344 +1191,10 @@ select {
   touch-action: manipulation;
 }
 
-/* Ensure react-select dropdowns are visible */
 .report-react-select .report-select__menu {
   z-index: 1000;
 }
 
 .report-table-select .report-select__menu {
   z-index: 1001;
-}
-/* ============================================================================
-   PRINT MODAL STYLES - USING APP COLORS
-   Replace the existing print modal styles with this
-   ============================================================================ */
-
-/* Modal content inside existing Modal component */
-.print-modal-content {
-  width: 100%;
-  max-width: 480px;
-}
-.btn-cancel:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #95a5a6;
-}
-
-.btn-cancel:disabled:hover {
-  background-color: #95a5a6;
-  transform: none;
-}
-
-.instruction-warning {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  background-color: #fff3cd;
-  border-left: 4px solid #ffc107;
-  border-radius: 4px;
-  margin-top: 12px;
-  font-weight: 500;
-  color: #856404;
-}
-
-.warning-icon {
-  color: #ffc107;
-  font-size: 1.1em;
-  flex-shrink: 0;
-}
-/* Header */
-.print-modal-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #f0f0f0;
-}
-
-.print-modal-header-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  background: var(--primary-blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: white;
-  flex-shrink: 0;
-}
-
-.print-modal-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin: 0;
-  line-height: 1.4;
-}
-
-/* Body */
-.print-modal-body {
-  margin-bottom: 20px;
-}
-
-/* Progress Container */
-.print-progress-container {
-  margin-bottom: 20px;
-}
-
-.print-progress-bar {
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-
-.print-progress-fill {
-  height: 100%;
-  background: var(--primary-blue);
-  border-radius: 4px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.print-progress-fill::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.print-progress-stats {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-}
-
-.print-progress-count {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.print-progress-percent {
-  color: var(--primary-blue);
-  font-weight: 600;
-}
-
-/* Status Message */
-.print-status-message {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: var(--background);
-  border-radius: 8px;
-  margin-bottom: 16px;
-}
-
-.print-status-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  color: var(--primary-blue);
-}
-
-.print-status-icon .icon-spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.print-status-icon .icon-success {
-  color: #10b981;
-}
-
-.print-status-message p {
-  margin: 0;
-  color: var(--text-main);
-  font-size: 14px;
-  line-height: 1.5;
-  font-weight: 500;
-}
-
-/* Instructions */
-.print-instructions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.print-instructions.success {
-  background: #ecfdf5;
-  padding: 16px;
-  border-radius: 8px;
-  border-left: 4px solid #10b981;
-}
-
-.instruction-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 0;
-  color: #4b5563;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.instruction-icon {
-  font-size: 16px;
-  color: var(--primary-blue);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.print-instructions.success .instruction-icon {
-  color: #10b981;
-}
-
-.instruction-warning {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  padding: 12px;
-  background: #fef3c7;
-  border-radius: 6px;
-  color: #92400e;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.warning-icon {
-  font-size: 16px;
-  color: var(--link);
-  flex-shrink: 0;
-}
-
-/* Footer */
-.print-modal-footer {
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.btn-cancel {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: white;
-  border: 1px solid var(--input-border);
-  border-radius: 6px;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background: var(--background);
-  border-color: var(--text-secondary);
-  color: var(--text-main);
-}
-
-.btn-cancel:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-  .print-modal-header {
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-  }
-
-  .print-modal-header-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-  }
-
-  .print-modal-title {
-    font-size: 16px;
-  }
-
-  .print-progress-stats {
-    font-size: 13px;
-  }
-
-  .print-status-message {
-    padding: 14px;
-  }
-
-  .instruction-item {
-    font-size: 12px;
-  }
-}
-.download-pdf-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 15px 30px;
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  font-size: 1.1em;
-  font-weight: 600;
-  margin: 20px 0;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-}
-
-.download-pdf-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
-}
-
-.success-detail {
-  color: #4caf50;
-  font-weight: 600;
-  font-size: 1.05em;
-}
-
-.instruction-note {
-  font-size: 0.9em;
-  color: #666;
-  font-style: italic;
-  margin-top: 15px;
 }

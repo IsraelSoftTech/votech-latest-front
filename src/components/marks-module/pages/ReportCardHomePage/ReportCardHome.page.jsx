@@ -69,6 +69,7 @@ const ReportCardHomePage = () => {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showExplanationModal, setShowExplanationModal] = useState(false);
 
   // Sort state
   const [sortConfig, setSortConfig] = useState({ key: "name", order: "asc" });
@@ -95,52 +96,18 @@ const ReportCardHomePage = () => {
     }
   });
 
-  // --- PDF PROGRESS OVERLAY STATE ---
-  const [loadingReportCardPdfs, setLoadingReportCardPdfs] = useState(false);
-  const [pdfProgress, setPdfProgress] = useState(0);
-  const pdfTimersRef = useRef([]);
-
-  const clearPdfTimers = () => {
-    pdfTimersRef.current.forEach(clearTimeout);
-    pdfTimersRef.current = [];
-  };
-
-  const startPdfSimProgress = () => {
-    setPdfProgress(0);
-    setLoadingReportCardPdfs(true);
-    clearPdfTimers();
-
-    pdfTimersRef.current.push(
-      setTimeout(() => setPdfProgress(30), 600),
-      setTimeout(() => setPdfProgress(50), 1300),
-      setTimeout(() => setPdfProgress(70), 2300)
-    );
-  };
-
-  const finishPdfSimProgress = () => {
-    clearPdfTimers();
-    setPdfProgress(100);
-    pdfTimersRef.current.push(
-      setTimeout(() => {
-        setLoadingReportCardPdfs(false);
-        setPdfProgress(0);
-      }, 900)
-    );
-  };
-
-  const failPdfSimProgress = () => {
-    clearPdfTimers();
-    setTimeout(() => {
-      setLoadingReportCardPdfs(false);
-      setPdfProgress(0);
-    }, 500);
-  };
-
-  useEffect(() => {
-    return () => {
-      clearPdfTimers();
-    };
-  }, []);
+  // --- BULK PRINT STATE ---
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printProgress, setPrintProgress] = useState({
+    stage: "idle", // idle, preparing, fetching, rendering, printing, monitoring, ready
+    current: 0,
+    total: 0,
+    message: "",
+    percentage: 0,
+    estimatedSeconds: 0,
+  });
+  const iframeRef = useRef(null);
+  const renderCheckIntervalRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem("reportCardFilters", JSON.stringify(filters));
@@ -185,6 +152,25 @@ const ReportCardHomePage = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, sortConfig, studentsPerPage, selectedStudentId]);
+
+  // Block tab close during rendering and monitoring
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (
+        printProgress.stage === "rendering" ||
+        printProgress.stage === "fetching" ||
+        printProgress.stage === "monitoring"
+      ) {
+        e.preventDefault();
+        e.returnValue =
+          "Report cards are still being processed. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [printProgress.stage]);
 
   // --- FETCH FUNCTIONS ---
   const fetchDropdowns = async () => {
@@ -244,7 +230,7 @@ const ReportCardHomePage = () => {
     }
   }, [filters]);
 
-  // --- NAVIGATE TO REPORT CARD PAGE (FIXED) ---
+  // --- NAVIGATE TO REPORT CARD PAGE ---
   const handleGoToReportCard = (student, termObj) => {
     const academicYear =
       academicYears.find((y) => y.id === filters.academic_year_id) || null;
@@ -262,19 +248,14 @@ const ReportCardHomePage = () => {
       return;
     }
 
-    console.log("Navigating with term:", termObj); // Debug log
-
     navigate(`/academics/report-card/${student.id}`, {
       state: {
-        // full objects (preferred)
         academicYear,
         department,
         class: klass,
         student,
         term: termObj,
         sequence: null,
-
-        // keep ids too (optional/back-compat)
         academic_year_id: academicYear.id,
         department_id: department.id,
         class_id: klass.id,
@@ -319,39 +300,56 @@ const ReportCardHomePage = () => {
     });
   };
 
-  // Add new state for print modal
+  // --- BULK PRINT WITH FILE WRITE MONITORING ---
+  // Add these functions after handleGoToMasterSheet function (around line 300)
 
-  const [showPrintModal, setShowPrintModal] = useState(false);
-  const [printProgress, setPrintProgress] = useState({
-    stage: "idle",
+  // --- SHOW EXPLANATION MODAL ---
+  const handleBulkPrintClick = () => {
+    if (
+      !filters.academic_year_id ||
+      !filters.department_id ||
+      !filters.class_id
+    ) {
+      toast.error("Please select Academic Year, Department, and Class.");
+      return;
+    }
+    setShowExplanationModal(true);
+  };
 
-    current: 0,
-    total: 0,
-    message: "",
-  });
-  const iframeRef = useRef(null);
+  const handleProceedWithPrint = () => {
+    setShowExplanationModal(false);
+    handleBulkPrintNative();
+  };
 
+  // --- BULK PRINT WITH CLEAR PROCESS ---
   const handleBulkPrintNative = async () => {
     try {
-      if (
-        !filters.academic_year_id ||
-        !filters.department_id ||
-        !filters.class_id
-      ) {
-        toast.error("Please select Academic Year, Department, and Class.");
-        return;
-      }
-
       const studentCount = students.length;
-      const estimatedMinutes = Math.ceil((studentCount * 0.2) / 60); // 200ms per student
+      const estimatedMB = Math.ceil(studentCount * 0.3);
+      const estimatedMinutes = Math.ceil(studentCount * 0.1);
+      const estimatedSeconds = Math.ceil(studentCount * 1.2);
 
+      // Show modal and start
       setShowPrintModal(true);
       setPrintProgress({
         stage: "preparing",
         current: 0,
         total: studentCount,
-        message: "Preparing to generate report cards...",
-        estimatedMinutes: estimatedMinutes,
+        message: "Initializing generation",
+        percentage: 0,
+        estimatedSeconds,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      // Update to fetching stage
+      setPrintProgress({
+        stage: "fetching",
+        current: 0,
+        total: studentCount,
+        message: "Retrieving data from server",
+        percentage: 5,
+        estimatedSeconds,
       });
 
       const termParam = filters.bulk_term || "annual";
@@ -362,101 +360,271 @@ const ReportCardHomePage = () => {
         term: termParam,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      setPrintProgress({
-        stage: "generating",
-        current: 0,
-        total: studentCount,
-        message: "Generating report cards on server...",
-        estimatedMinutes: estimatedMinutes,
-      });
-
-      const progressInterval = setInterval(() => {
+      // Simulate fetch progress
+      const fetchInterval = setInterval(() => {
         setPrintProgress((prev) => {
-          if (prev.current >= prev.total * 0.8) {
-            clearInterval(progressInterval);
+          if (prev.stage !== "fetching") {
+            clearInterval(fetchInterval);
             return prev;
           }
-          const increment = Math.min(
-            Math.floor(Math.random() * 3) + 1,
-            Math.floor(prev.total * 0.8) - prev.current
-          );
+          const newPercentage = Math.min(prev.percentage + 2, 25);
           return {
             ...prev,
-            current: Math.min(
-              prev.current + increment,
-              Math.floor(prev.total * 0.8)
-            ),
+            percentage: newPercentage,
           };
         });
-      }, 400);
+      }, 200);
 
       const response = await api.get(`/report-cards/bulk-html?${params}`, {
         responseType: "blob",
         timeout: 180000,
       });
 
-      clearInterval(progressInterval);
+      clearInterval(fetchInterval);
 
-      // Close modal and show important instructions
-      setShowPrintModal(false);
-
-      // Show critical user guidance modal BEFORE opening print
-      const userConfirmed = window.confirm(
-        `IMPORTANT INSTRUCTIONS:\n\n` +
-          `When the print dialog opens:\n\n` +
-          `1. The file will show "0 KB" initially - THIS IS NORMAL\n` +
-          `2. DO NOT close the print dialog\n` +
-          `3. Wait ${estimatedMinutes}-${
-            estimatedMinutes + 2
-          } minutes for the file to fully render\n` +
-          `4. The file size will gradually increase to ~${Math.ceil(
-            studentCount * 0.5
-          )}MB\n` +
-          `5. Only click "Save" when you see the full file size\n\n` +
-          `The more students, the longer it takes. Please be patient.\n\n` +
-          `Click OK to open the print dialog now.`
-      );
-
-      if (!userConfirmed) {
-        toast.info("Print cancelled");
-        return;
-      }
-
-      // Create blob and iframe
+      // Create blob URL
       const htmlBlob = new Blob([response.data], { type: "text/html" });
       const blobUrl = URL.createObjectURL(htmlBlob);
 
+      // Update to rendering stage
+      setPrintProgress({
+        stage: "rendering",
+        current: 0,
+        total: studentCount,
+        message: "Rendering documents in browser",
+        percentage: 30,
+        estimatedSeconds,
+      });
+
+      // Create hidden iframe
       const iframe = document.createElement("iframe");
       iframe.style.position = "absolute";
       iframe.style.width = "0";
       iframe.style.height = "0";
       iframe.style.border = "none";
       iframe.style.opacity = "0";
+      iframe.style.pointerEvents = "none";
 
       iframeRef.current = iframe;
 
-      iframe.onload = () => {
-        // Open print dialog immediately
-        // User has been warned about the 0KB delay
-        iframe.contentWindow.print();
+      // Promise-based iframe loading with comprehensive checks
+      const waitForIframeReady = () => {
+        return new Promise((resolve, reject) => {
+          let checksCompleted = 0;
+          const totalChecks = 3;
 
-        // Show reminder toast
-        toast.info(
-          `⏳ The PDF is rendering... File will show 0KB initially. Wait ${estimatedMinutes}-${
-            estimatedMinutes + 2
-          } minutes before saving!`,
-          { autoClose: 10000 }
-        );
-      };
+          const updateProgress = () => {
+            checksCompleted++;
+            const progressPerCheck = 55 / totalChecks;
+            setPrintProgress((prev) => ({
+              ...prev,
+              percentage: Math.min(30 + checksCompleted * progressPerCheck, 85),
+              current: Math.floor(
+                (checksCompleted / totalChecks) * studentCount
+              ),
+            }));
+          };
 
-      iframe.onerror = () => {
-        toast.error("Failed to load report cards.");
+          iframe.onload = async () => {
+            try {
+              const iframeDoc =
+                iframe.contentDocument || iframe.contentWindow.document;
+
+              const waitForReadyState = () => {
+                return new Promise((res) => {
+                  if (iframeDoc.readyState === "complete") {
+                    updateProgress();
+                    res();
+                  } else {
+                    iframeDoc.addEventListener(
+                      "readystatechange",
+                      function handler() {
+                        if (iframeDoc.readyState === "complete") {
+                          iframeDoc.removeEventListener(
+                            "readystatechange",
+                            handler
+                          );
+                          updateProgress();
+                          res();
+                        }
+                      }
+                    );
+                  }
+                });
+              };
+
+              await waitForReadyState();
+
+              const waitForImages = () => {
+                return new Promise((res) => {
+                  const images = Array.from(iframeDoc.images);
+                  if (images.length === 0) {
+                    updateProgress();
+                    res();
+                    return;
+                  }
+
+                  let loadedImages = 0;
+                  const checkAllLoaded = () => {
+                    loadedImages++;
+                    if (loadedImages === images.length) {
+                      updateProgress();
+                      res();
+                    }
+                  };
+
+                  images.forEach((img) => {
+                    if (img.complete) {
+                      checkAllLoaded();
+                    } else {
+                      img.addEventListener("load", checkAllLoaded);
+                      img.addEventListener("error", checkAllLoaded);
+                    }
+                  });
+                });
+              };
+
+              await waitForImages();
+
+              const waitForStability = () => {
+                return new Promise((res) => {
+                  let lastHeight = iframeDoc.body.scrollHeight;
+                  let stableCount = 0;
+                  const requiredStableChecks = 5;
+
+                  const checkStability = () => {
+                    const currentHeight = iframeDoc.body.scrollHeight;
+                    if (currentHeight === lastHeight) {
+                      stableCount++;
+                      if (stableCount >= requiredStableChecks) {
+                        updateProgress();
+                        res();
+                        return;
+                      }
+                    } else {
+                      stableCount = 0;
+                      lastHeight = currentHeight;
+                    }
+                    setTimeout(checkStability, 600);
+                  };
+
+                  checkStability();
+                });
+              };
+
+              await waitForStability();
+              await new Promise((res) => setTimeout(res, 3000));
+
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          };
+
+          iframe.onerror = () => {
+            reject(new Error("Failed to load report cards"));
+          };
+
+          setTimeout(() => {
+            reject(new Error("Rendering timeout"));
+          }, 300000);
+        });
       };
 
       iframe.src = blobUrl;
       document.body.appendChild(iframe);
+      await waitForIframeReady();
+
+      setPrintProgress({
+        stage: "printing",
+        current: studentCount,
+        total: studentCount,
+        message: "Opening print dialog - please save when ready",
+        percentage: 90,
+        estimatedSeconds,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      const academicYear = academicYears.find(
+        (y) => y.id === filters.academic_year_id
+      );
+      const department = departments.find(
+        (d) => d.id === filters.department_id
+      );
+      const classObj = classes.find((c) => c.id === filters.class_id);
+      const termLabel =
+        filters.bulk_term === "annual"
+          ? "Annual"
+          : `Term-${filters.bulk_term.replace("t", "")}`;
+
+      const expectedFileName = `ReportCards_${
+        classObj?.name || "Class"
+      }_${termLabel}_${academicYear?.name || "Year"}`;
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const originalTitle = iframeDoc.title;
+      iframeDoc.title = expectedFileName;
+
+      iframe.contentWindow.print();
+
+      // Show helpful toast with file write guidance
+      toast.info(
+        `⏳ After saving, the PDF will show 0 KB initially. Wait ${estimatedMinutes} minutes for the file to finish writing (final size ~${estimatedMB} MB).`,
+        { autoClose: 15000 }
+      );
+
+      // Simple completion after print dialog
+      let dialogClosed = false;
+
+      const handleWindowFocus = () => {
+        if (!dialogClosed) {
+          dialogClosed = true;
+          setTimeout(() => {
+            setPrintProgress({
+              stage: "ready",
+              current: studentCount,
+              total: studentCount,
+              message: "Print dialog closed",
+              percentage: 100,
+              estimatedSeconds,
+            });
+
+            setTimeout(() => {
+              setShowPrintModal(false);
+              toast.success(
+                `PDF generation started. The file will finish writing in ${estimatedMinutes} minutes.`,
+                { autoClose: 8000 }
+              );
+              cleanupPrint();
+              URL.revokeObjectURL(blobUrl);
+            }, 1500);
+          }, 1000);
+        }
+      };
+
+      window.addEventListener("focus", handleWindowFocus, { once: true });
+
+      setTimeout(() => {
+        if (!dialogClosed) {
+          dialogClosed = true;
+          window.removeEventListener("focus", handleWindowFocus);
+          setPrintProgress({
+            stage: "ready",
+            current: studentCount,
+            total: studentCount,
+            message: "Timeout reached",
+            percentage: 100,
+            estimatedSeconds,
+          });
+
+          setTimeout(() => {
+            setShowPrintModal(false);
+            cleanupPrint();
+            URL.revokeObjectURL(blobUrl);
+          }, 1500);
+        }
+      }, 300000);
     } catch (error) {
       console.error("Bulk print error:", error);
       toast.error(error.message || "Failed to generate report cards");
@@ -468,12 +636,19 @@ const ReportCardHomePage = () => {
    * Cleanup function for print resources
    */
   const cleanupPrint = () => {
+    // Clear any intervals
+    if (renderCheckIntervalRef.current) {
+      clearInterval(renderCheckIntervalRef.current);
+      renderCheckIntervalRef.current = null;
+    }
+
     setShowPrintModal(false);
     setPrintProgress({
       stage: "idle",
       current: 0,
       total: 0,
       message: "",
+      percentage: 0,
     });
 
     // Remove iframe if exists
@@ -672,36 +847,6 @@ const ReportCardHomePage = () => {
   // --- RENDER ---
   return (
     <SideTop>
-      {loadingReportCardPdfs && (
-        <div className="pdf-progress-overlay" role="alert" aria-live="polite">
-          <div className="pdf-progress-card">
-            <div className="pdf-progress-emoji" aria-hidden>
-              ☕
-            </div>
-            <h3>Generating report cards…</h3>
-            <p>
-              We are generating the report cards. This may take some time —
-              please grab a coffee while we work.
-            </p>
-
-            <div
-              className="pdf-progress-bar"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={pdfProgress}
-              aria-label="Report card generation progress"
-            >
-              <div
-                className="pdf-progress-fill"
-                style={{ width: `${pdfProgress}%` }}
-              />
-            </div>
-            <div className="pdf-progress-percent">{pdfProgress}%</div>
-          </div>
-        </div>
-      )}
-
       <div className="report-card-home-page">
         <div className="report-card-header">
           <button className="report-back-btn" onClick={() => navigate(-1)}>
@@ -747,7 +892,7 @@ const ReportCardHomePage = () => {
                         bulk_term: "annual",
                       }))
                     }
-                    isDisabled={loadingReportCardPdfs}
+                    isDisabled={showPrintModal}
                     isClearable
                     className="report-react-select"
                     classNamePrefix="report-select"
@@ -779,7 +924,7 @@ const ReportCardHomePage = () => {
                         class_id: null,
                       }))
                     }
-                    isDisabled={loadingReportCardPdfs}
+                    isDisabled={showPrintModal}
                     isClearable
                     className="report-react-select"
                     classNamePrefix="report-select"
@@ -810,7 +955,7 @@ const ReportCardHomePage = () => {
                         class_id: opt?.value || null,
                       }))
                     }
-                    isDisabled={loadingReportCardPdfs}
+                    isDisabled={showPrintModal}
                     isClearable
                     className="report-react-select"
                     classNamePrefix="report-select"
@@ -833,7 +978,7 @@ const ReportCardHomePage = () => {
                         bulk_term: opt?.value || "annual",
                       }))
                     }
-                    isDisabled={loadingReportCardPdfs}
+                    isDisabled={showPrintModal}
                     isClearable
                     className="report-react-select"
                     classNamePrefix="report-select"
@@ -983,9 +1128,9 @@ const ReportCardHomePage = () => {
               {!isReadOnly && (
                 <button
                   className="report-btn report-btn-download"
-                  disabled={!isMasterSheetReady || loadingReportCardPdfs}
-                  aria-disabled={!isMasterSheetReady || loadingReportCardPdfs}
-                  onClick={handleBulkPrintNative}
+                  disabled={!isMasterSheetReady || showPrintModal}
+                  aria-disabled={!isMasterSheetReady || showPrintModal}
+                  onClick={handleBulkPrintClick}
                 >
                   <FaDownload />
                   <span>Print All Report Cards</span>
@@ -1043,7 +1188,6 @@ const ReportCardHomePage = () => {
                                     const selectedTerm = filteredTerms.find(
                                       (t) => t.id === opt.value
                                     );
-                                    console.log("Selected term:", selectedTerm);
                                     handleGoToReportCard(s, selectedTerm);
                                   }}
                                   menuPortalTarget={document.body}
@@ -1053,7 +1197,7 @@ const ReportCardHomePage = () => {
                                       zIndex: 9999,
                                     }),
                                   }}
-                                  isDisabled={loadingReportCardPdfs}
+                                  isDisabled={showPrintModal}
                                   className="report-table-select"
                                   classNamePrefix="report-select"
                                 />
@@ -1128,236 +1272,269 @@ const ReportCardHomePage = () => {
           </>
         )}
 
-        <Modal isOpen={showPrintModal} onClose={cleanupPrint}>
-          {/* Header */}
-          <div className="print-modal-header">
-            <div className="print-modal-header-icon">
-              {printProgress.stage === "ready" ? (
-                <FaCheckCircle className="icon-success-static" />
-              ) : printProgress.stage === "rendering" ||
-                printProgress.stage === "finalizing" ? (
-                <FaCoffee className="icon-coffee-pulse" />
-              ) : (
-                <FaFileAlt />
+        {/* PROFESSIONAL MODAL */}
+        {showPrintModal && (
+          <div className="professional-modal-overlay">
+            <div className="professional-modal-card">
+              {/* Status Icon */}
+              <div className="modal-status-icon">
+                {printProgress.stage === "ready" ? (
+                  <svg className="checkmark" viewBox="0 0 52 52">
+                    <circle
+                      className="checkmark-circle"
+                      cx="26"
+                      cy="26"
+                      r="25"
+                      fill="none"
+                    />
+                    <path
+                      className="checkmark-check"
+                      fill="none"
+                      d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                    />
+                  </svg>
+                ) : (
+                  <div className="spinner-container">
+                    <div className="spinner"></div>
+                  </div>
+                )}
+              </div>
+
+              {/* Title */}
+              <h2 className="modal-title">
+                {printProgress.stage === "preparing" && "Initializing"}
+                {printProgress.stage === "fetching" && "Retrieving Data"}
+                {printProgress.stage === "rendering" && "Processing Documents"}
+                {printProgress.stage === "printing" && "Print Dialog Ready"}
+                {printProgress.stage === "monitoring" && "Saving PDF File"}
+                {printProgress.stage === "ready" && "Complete"}
+              </h2>
+
+              {/* Message */}
+              <p className="modal-message">{printProgress.message}</p>
+
+              {/* Progress Bar */}
+              <div className="modal-progress-container">
+                <div className="modal-progress-bar">
+                  <div
+                    className="modal-progress-fill"
+                    style={{ width: `${printProgress.percentage}%` }}
+                  />
+                </div>
+                <div className="modal-progress-stats">
+                  <span className="progress-text">
+                    {printProgress.current} of {printProgress.total} students
+                  </span>
+                  <span className="progress-percentage">
+                    {Math.round(printProgress.percentage)}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Status Info */}
+              {printProgress.stage !== "ready" && (
+                <div className="modal-info-box">
+                  <div className="info-item">
+                    <span className="info-label">Status</span>
+                    <span className="info-value">
+                      {printProgress.stage === "preparing" && "Setting up"}
+                      {printProgress.stage === "fetching" && "Loading data"}
+                      {printProgress.stage === "rendering" &&
+                        "Rendering in browser"}
+                      {printProgress.stage === "printing" && "Ready to save"}
+                      {printProgress.stage === "monitoring" &&
+                        "Writing to disk"}
+                    </span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">
+                      {printProgress.stage === "printing" ||
+                      printProgress.stage === "monitoring"
+                        ? "Action Required"
+                        : "Estimated time"}
+                    </span>
+                    <span className="info-value">
+                      {printProgress.stage === "printing" ||
+                      printProgress.stage === "monitoring"
+                        ? "Please save PDF"
+                        : `${Math.ceil(
+                            printProgress.estimatedSeconds / 60
+                          )} min`}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Ready State */}
+              {printProgress.stage === "ready" && (
+                <div className="modal-success-box">
+                  <p className="success-text">
+                    All {printProgress.total} report cards have been fully
+                    rendered. Download starting automatically.
+                  </p>
+                </div>
+              )}
+
+              {/* Warning (only during critical stages) */}
+              {(printProgress.stage === "rendering" ||
+                printProgress.stage === "fetching") && (
+                <div className="modal-warning-box">
+                  <span className="warning-text">
+                    Please do not close this window
+                  </span>
+                </div>
+              )}
+
+              {/* Print instruction */}
+              {printProgress.stage === "printing" && (
+                <div className="modal-instruction-box">
+                  <span className="instruction-text">
+                    The print dialog has opened. Please click "Save" to save the
+                    PDF file.
+                  </span>
+                </div>
+              )}
+
+              {/* Monitoring instruction */}
+              {printProgress.stage === "monitoring" && (
+                <div className="modal-monitoring-box">
+                  <span className="monitoring-text">
+                    Writing PDF file to disk. Please wait while the file is
+                    being finalized.
+                  </span>
+                </div>
               )}
             </div>
-            <h3 className="print-modal-title">
-              {printProgress.stage === "preparing" && "Preparing Report Cards"}
-              {printProgress.stage === "generating" &&
-                "Generating Report Cards"}
-              {printProgress.stage === "rendering" && "Rendering Documents"}
-              {printProgress.stage === "finalizing" &&
-                "Finalizing - Almost Ready"}
-              {printProgress.stage === "creating-download" &&
-                "Creating Download"}
-              {printProgress.stage === "ready" && "Report Cards Ready!"}
-            </h3>
           </div>
+        )}
 
-          {/* Progress Body */}
-          <div className="print-modal-body">
-            {/* Progress Bar */}
-            <div className="print-progress-container">
-              <div className="print-progress-bar">
-                <div
-                  className="print-progress-fill"
-                  style={{
-                    width: `${
-                      printProgress.total > 0
-                        ? (printProgress.current / printProgress.total) * 100
-                        : 0
-                    }%`,
-                  }}
-                />
+        {/* EXPLANATION MODAL */}
+        {showExplanationModal && (
+          <div className="explanation-modal-overlay">
+            <div className="explanation-modal-card">
+              {/* Icon */}
+              <div className="explanation-status-icon">
+                <div className="explanation-info-icon">
+                  <FaInfoCircle />
+                </div>
               </div>
-              <div className="print-progress-stats">
-                <span className="print-progress-count">
-                  {printProgress.current} / {printProgress.total} students
-                </span>
-                <span className="print-progress-percent">
-                  {printProgress.total > 0
-                    ? Math.round(
-                        (printProgress.current / printProgress.total) * 100
-                      )
-                    : 0}
-                  %
-                </span>
-              </div>
-            </div>
 
-            {/* Status Message */}
-            <div className="print-status-message">
-              <div className="print-status-icon">
-                {printProgress.stage === "preparing" && (
-                  <FaCog className="icon-spinning" />
-                )}
-                {printProgress.stage === "generating" && (
-                  <FaSpinner className="icon-spinning" />
-                )}
-                {(printProgress.stage === "rendering" ||
-                  printProgress.stage === "finalizing" ||
-                  printProgress.stage === "creating-download") && (
-                  <FaCog className="icon-spinning" />
-                )}
-                {printProgress.stage === "ready" && (
-                  <FaCheckCircle className="icon-success" />
-                )}
-              </div>
-              <p>{printProgress.message}</p>
-            </div>
+              {/* Title */}
+              <h2 className="explanation-title">Bulk PDF Generation Process</h2>
+              <p className="explanation-subtitle">
+                Generating <strong>{students.length} report cards</strong> (~
+                {Math.ceil(students.length * 0.3)} MB). This will take about{" "}
+                <strong>{Math.ceil(students.length * 0.1)} minutes</strong>.
+              </p>
 
-            {/* Stage-specific Instructions */}
-            {printProgress.stage === "preparing" && (
-              <div className="print-instructions">
-                <p className="instruction-item">
-                  <FaInfoCircle className="instruction-icon" />
-                  Connecting to server and retrieving student data...
-                </p>
-              </div>
-            )}
-
-            {printProgress.stage === "generating" && (
-              <div className="print-instructions">
-                <p className="instruction-item">
-                  <FaInfoCircle className="instruction-icon" />
-                  Server is generating report cards with all calculations...
-                </p>
-                <p className="instruction-warning">
-                  <FaExclamationTriangle className="warning-icon" />
-                  Please do not close this window
-                </p>
-              </div>
-            )}
-
-            {(printProgress.stage === "rendering" ||
-              printProgress.stage === "finalizing") && (
-              <div className="print-instructions critical-phase">
-                <div className="coffee-break-banner">
-                  <FaCoffee className="coffee-icon-large" />
-                  <div className="coffee-break-text">
-                    <h4>This may take some time...</h4>
+              {/* Steps */}
+              <div className="explanation-steps">
+                <div className="explanation-step">
+                  <div className="step-number">1</div>
+                  <div className="step-text">
+                    <h4>Save the PDF</h4>
                     <p>
-                      Typically {printProgress.estimatedMinutes} to{" "}
-                      {printProgress.estimatedMinutes + 1} minute
-                      {printProgress.estimatedMinutes !== 1 ? "s" : ""} for{" "}
-                      {printProgress.total} students
+                      Print dialog opens → Select "Save as PDF" → Choose
+                      location
                     </p>
                   </div>
                 </div>
 
-                <p className="instruction-item-large">
-                  <FaInfoCircle className="instruction-icon" />
-                  We're ensuring the file is <strong>100% written</strong> to
-                  prevent the 0KB file issue.
-                </p>
-
-                <div className="critical-warning-box">
-                  <FaExclamationTriangle className="warning-icon-large" />
-                  <div>
-                    <strong>
-                      IMPORTANT: Please do not close this tab or window!
-                    </strong>
+                <div className="explanation-step">
+                  <div className="step-number">2</div>
+                  <div className="step-text">
+                    <h4>File starts at 0 KB</h4>
                     <p>
-                      Feel free to grab a coffee ☕ or work on something else
-                      while we process. You'll get a download link when ready.
+                      PDF appears in Downloads showing <strong>0 KB</strong>.
+                      This is normal browser behavior.
                     </p>
                   </div>
                 </div>
 
-                <div className="helpful-tips">
-                  <p className="tip-item">
-                    💡 The browser is rendering all {printProgress.total} report
-                    cards
-                  </p>
-                  <p className="tip-item">
-                    💡 This ensures your file will be instantly ready when
-                    downloaded
-                  </p>
-                  <p className="tip-item">
-                    💡 Larger classes take longer - this is normal and expected
+                <div className="explanation-step">
+                  <div className="step-number">3</div>
+                  <div className="step-text">
+                    <h4>File grows gradually</h4>
+                    <p>
+                      Size increases from 0 KB to ~
+                      {Math.ceil(students.length * 0.3)} MB over{" "}
+                      {Math.ceil(students.length * 0.1)} minutes.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="explanation-step">
+                  <div className="step-number">4</div>
+                  <div className="step-text">
+                    <h4>Ready when full size</h4>
+                    <p>
+                      Wait until file reaches {Math.ceil(students.length * 0.3)}{" "}
+                      MB before opening.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Important */}
+              <div className="explanation-important">
+                <div className="important-header">
+                  <FaExclamationTriangle className="important-icon" />
+                  <h4>Important:</h4>
+                </div>
+                <ul className="important-list">
+                  <li>
+                    <strong>Wait for full size</strong> before opening (
+                    {Math.ceil(students.length * 0.3)} MB)
+                  </li>
+                  <li>
+                    <strong>Continue working</strong> - file writes in
+                    background
+                  </li>
+                  <li>
+                    <strong>Check Downloads folder</strong> to monitor progress
+                  </li>
+                </ul>
+              </div>
+
+              {/* Why This Happens */}
+              <div className="explanation-info-box">
+                <h4 className="info-box-title">Why does this happen?</h4>
+                <p className="info-box-text">
+                  Chrome writes large PDFs gradually to prevent browser
+                  freezing. All browsers work this way for files over 10 MB.
+                </p>
+              </div>
+
+              {/* Tip */}
+              <div className="explanation-tip-box">
+                <div className="tip-box-content">
+                  <div className="tip-box-icon">💡</div>
+                  <p className="tip-box-text">
+                    <strong>Recommended:</strong> Start generation, then work on
+                    other tasks. Return in {Math.ceil(students.length * 0.1)}{" "}
+                    minutes when PDF is ready.
                   </p>
                 </div>
               </div>
-            )}
 
-            {printProgress.stage === "creating-download" && (
-              <div className="print-instructions">
-                <p className="instruction-item">
-                  <FaCog className="icon-spinning instruction-icon" />
-                  Creating download package...
-                </p>
-              </div>
-            )}
-
-            {printProgress.stage === "ready" && (
-              <div className="print-instructions success">
-                <p className="instruction-item success-header">
-                  <FaCheckCircle className="instruction-icon" />
-                  All {printProgress.total} report cards rendered successfully!
-                </p>
-                <p className="instruction-item success-detail">
-                  ✅ File is 100% written - NO 0KB issue!
-                </p>
-
-                <a
-                  href={printProgress.downloadUrl}
-                  download={printProgress.fileName}
-                  className="download-pdf-button"
-                  onClick={() => {
-                    setTimeout(() => cleanupPrint(), 1000);
-                  }}
+              {/* Actions */}
+              <div className="explanation-actions">
+                <button
+                  className="explanation-btn explanation-btn-cancel"
+                  onClick={() => setShowExplanationModal(false)}
                 >
-                  <FaDownload />
-                  Download Fully-Rendered Report Cards
-                </a>
-
-                <div className="instruction-note">
-                  <FaInfoCircle className="instruction-icon-small" />
-                  <p>
-                    After downloading, open the HTML file in your browser and
-                    use <strong>Ctrl+P</strong> (or <strong>Cmd+P</strong> on
-                    Mac) to save as PDF. The file will be instantly ready since
-                    it's already fully rendered.
-                  </p>
-                </div>
+                  Cancel
+                </button>
+                <button
+                  className="explanation-btn explanation-btn-proceed"
+                  onClick={handleProceedWithPrint}
+                >
+                  Proceed
+                </button>
               </div>
-            )}
+            </div>
           </div>
-
-          {/* Footer */}
-          <div className="print-modal-footer">
-            {printProgress.stage === "ready" ? (
-              <button className="btn-close-success" onClick={cleanupPrint}>
-                <FaCheckCircle />
-                Close
-              </button>
-            ) : (
-              <button
-                className="btn-cancel"
-                onClick={cleanupPrint}
-                disabled={
-                  printProgress.stage === "rendering" ||
-                  printProgress.stage === "finalizing" ||
-                  printProgress.stage === "creating-download"
-                }
-                title={
-                  printProgress.stage === "rendering" ||
-                  printProgress.stage === "finalizing" ||
-                  printProgress.stage === "creating-download"
-                    ? "Cannot cancel during rendering - file is being written"
-                    : "Cancel operation"
-                }
-              >
-                <FaTimes />
-                {printProgress.stage === "rendering" ||
-                printProgress.stage === "finalizing" ||
-                printProgress.stage === "creating-download"
-                  ? "Please Wait - File Writing..."
-                  : "Cancel"}
-              </button>
-            )}
-          </div>
-        </Modal>
+        )}
       </div>
     </SideTop>
   );
