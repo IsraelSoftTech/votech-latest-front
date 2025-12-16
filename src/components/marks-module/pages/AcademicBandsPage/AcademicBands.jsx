@@ -1,628 +1,599 @@
-import "./AcademicBands.styles.css";
-import React, { useState, useEffect, useRef } from "react";
-import SideTop from "../../../SideTop";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import api, { headers, subBaseURL } from "../../utils/api";
+import { FaLock, FaPlus, FaCopy, FaEdit } from "react-icons/fa";
 import Select from "react-select";
+import SideTop from "../../../SideTop";
+import api, { headers, subBaseURL } from "../../utils/api";
+import DataTable from "../../components/DataTable/DataTable.component";
+import Modal from "../../components/Modal/Modal.component";
 import { CustomInput, SubmitBtn } from "../../components/Inputs/CustumInputs";
-import { FaLock, FaPlus, FaTimes } from "react-icons/fa";
-
-// Custom hook to detect mobile
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  return isMobile;
-};
-
-// Academic Bands Modal Component (Desktop & Mobile)
-const AcademicBandsModal = ({ isOpen, onClose, title, children }) => {
-  const isMobile = useIsMobile();
-  const modalRef = useRef(null);
-  const [startY, setStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      document.body.style.top = `-${window.scrollY}px`;
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  // Touch handlers for mobile swipe to dismiss
-  const handleTouchStart = (e) => {
-    if (!isMobile) return;
-    setStartY(e.touches[0].clientY);
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isMobile || !isDragging) return;
-    const touchY = e.touches[0].clientY;
-    const diff = touchY - startY;
-
-    if (diff > 0) {
-      setCurrentY(diff);
-      if (modalRef.current) {
-        modalRef.current.style.transform = `translateY(${diff}px)`;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isMobile) return;
-    setIsDragging(false);
-
-    if (currentY > 150) {
-      onClose();
-    }
-
-    if (modalRef.current) {
-      modalRef.current.style.transform = "";
-    }
-    setCurrentY(0);
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className={`bands-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        className={`bands-modal-container ${isMobile ? "mobile" : "desktop"}`}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Drag handle - mobile only */}
-        {isMobile && (
-          <div className="bands-modal-drag-handle">
-            <div className="bands-drag-bar"></div>
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="bands-modal-header">
-          <h2 className="bands-modal-title">{title}</h2>
-          <button
-            className="bands-modal-close"
-            onClick={onClose}
-            type="button"
-            aria-label="Close modal"
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="bands-modal-body">{children}</div>
-      </div>
-    </div>
-  );
-};
+import "./AcademicBands.styles.css";
 
 export const AcademicBandsPage = () => {
   const isReadOnly =
     JSON.parse(sessionStorage.getItem("authUser") || "{}").role === "Admin1";
 
-  const [data, setData] = useState([]);
+  // Data states
   const [academicYears, setAcademicYears] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [bandsData, setBandsData] = useState([]);
+
+  // Filter states
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
+
+  // Loading states
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
 
+  // Modal states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create"); // 'create' or 'edit' or 'copy'
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedClassDetails, setSelectedClassDetails] = useState(null);
+
+  // Form state
   const [form, setForm] = useState({
     academic_year_id: null,
     department_id: null,
     class_id: null,
-    bands: [],
+    bands: [{ band_min: "", band_max: "", comment: "" }],
   });
 
-  const [filters, setFilters] = useState({
-    academic_year_id: null,
-    department_id: null,
-    class_id: null,
-    search: "",
-  });
+  // Fetch initial data
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
-  const fetchDepartments = async () => {
-    try {
-      const res = await fetch(`${subBaseURL}/specialties`, {
-        headers: headers(),
-      });
-      const data = await res.json();
-      setDepartments(data);
-    } catch (err) {
-      toast.error("Error fetching departments.");
-      console.log(err);
-    }
-  };
-
-  const fetchData = async () => {
+  const fetchInitialData = async () => {
     setIsLoading(true);
     try {
-      const [bandsRes, yearsRes, classesRes] = await Promise.all([
-        api.get("/academic-bands"),
+      const [yearsRes, deptRes, classesRes, bandsRes] = await Promise.all([
         api.get("/academic-years"),
+        fetch(`${subBaseURL}/specialties`, { headers: headers() }),
         api.get("/classes"),
+        api.get("/academic-bands"),
       ]);
-      if (fetchDepartments) await fetchDepartments();
 
       setAcademicYears(yearsRes?.data?.data || []);
+      setDepartments(await deptRes.json());
       setClasses(classesRes?.data?.data || []);
-      setData(groupBands(bandsRes?.data?.data || []));
+      setBandsData(bandsRes?.data?.data || []);
     } catch (err) {
       console.error("Error fetching data:", err);
-      toast.error("Failed to load data.");
+      toast.error("Failed to load data");
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Filter classes by selected year and department
+  const filteredClasses = classes.filter((cls) => {
+    if (selectedDepartment && cls.department_id !== selectedDepartment) {
+      return false;
+    }
+    return true;
+  });
 
-  function groupBands(bands) {
-    const grouped = {};
+  // Get bands for a specific class
+  const getBandsForClass = (classId) => {
+    return bandsData.filter(
+      (band) =>
+        band.class_id === classId &&
+        (!selectedYear || band.academic_year_id === selectedYear)
+    );
+  };
 
-    bands.forEach((b) => {
-      const yearId = b.academic_year_id;
-      const deptId = b.class.department_id;
-      const classId = b.class_id;
+  // Prepare table data
+  const tableData = filteredClasses.map((cls) => {
+    const classBands = getBandsForClass(cls.id);
+    const department = departments.find((d) => d.id === cls.department_id);
 
-      if (!grouped[yearId])
-        grouped[yearId] = { year: b.academic_year, departments: {} };
-      if (!grouped[yearId].departments[deptId])
-        grouped[yearId].departments[deptId] = {
-          department: b.class.department,
-          classes: {},
-        };
-      if (!grouped[yearId].departments[deptId].classes[classId])
-        grouped[yearId].departments[deptId].classes[classId] = {
-          class: b.class,
-          bands: [],
-        };
+    return {
+      id: cls.id,
+      name: cls.name,
+      department: department?.name || "N/A",
+      bandsCount: classBands.length,
+      hasBands: classBands.length > 0,
+      bands: classBands,
+    };
+  });
 
-      grouped[yearId].departments[deptId].classes[classId].bands.push({
-        id: b.id,
+  const tableColumns = [
+    { label: "Class Name", accessor: "name" },
+    { label: "Department", accessor: "department" },
+    {
+      label: "Academic Bands",
+      accessor: "bandsCount",
+      render: (row) =>
+        row.hasBands ? `${row.bandsCount} band(s)` : "No bands configured",
+    },
+  ];
+
+  // Handle row click - show bands details modal
+  const handleRowClick = (row) => {
+    setSelectedClassDetails(row);
+    setDetailsModalOpen(true);
+  };
+
+  // Close details modal
+  const closeDetailsModal = () => {
+    setDetailsModalOpen(false);
+    setSelectedClassDetails(null);
+  };
+
+  // Create bands from details modal
+  const handleCreateFromDetails = () => {
+    if (!selectedClassDetails) return;
+
+    const classData = classes.find((c) => c.id === selectedClassDetails.id);
+
+    setModalMode("create");
+    setForm({
+      academic_year_id: selectedYear,
+      department_id: classData.department_id,
+      class_id: selectedClassDetails.id,
+      bands: [{ band_min: "", band_max: "", comment: "" }],
+    });
+
+    closeDetailsModal();
+    setModalOpen(true);
+  };
+
+  // Handle edit button
+  const handleEdit = (row) => {
+    if (!selectedYear) {
+      toast.error("Please select an academic year first");
+      return;
+    }
+
+    const classData = classes.find((c) => c.id === row.id);
+    const existingBands = getBandsForClass(row.id);
+
+    setModalMode("edit");
+    setForm({
+      academic_year_id: selectedYear,
+      department_id: classData.department_id,
+      class_id: row.id,
+      bands:
+        existingBands.length > 0
+          ? existingBands.map((b) => ({
+              id: b.id,
+              band_min: b.band_min,
+              band_max: b.band_max,
+              comment: b.comment,
+            }))
+          : [{ band_min: "", band_max: "", comment: "" }],
+    });
+    setModalOpen(true);
+  };
+
+  // Handle copy bands
+  const handleCopy = (row) => {
+    if (!selectedYear) {
+      toast.error("Please select an academic year first");
+      return;
+    }
+
+    const existingBands = getBandsForClass(row.id);
+
+    if (existingBands.length === 0) {
+      toast.error("No bands to copy from this class");
+      return;
+    }
+
+    setModalMode("copy");
+    setForm({
+      academic_year_id: selectedYear,
+      department_id: null, // User must select
+      class_id: null, // User must select
+      bands: existingBands.map((b) => ({
         band_min: b.band_min,
         band_max: b.band_max,
         comment: b.comment,
-      });
-    });
-
-    return Object.values(grouped).map((y) => ({
-      academic_year_id: y?.year?.id,
-      year: y.year,
-      departments: Object.values(y.departments).map((d) => ({
-        id: d.department.id,
-        department: d.department,
-        classes: Object.values(d.classes).map((c) => ({
-          id: c.class.id,
-          class: c.class,
-          bands: c.bands,
-        })),
       })),
-    }));
-  }
+    });
+    setModalOpen(true);
+    toast.info("Bands copied! Now select the department and class to apply to");
+  };
 
+  // Handle create new
+  const handleCreateNew = () => {
+    if (!selectedYear) {
+      toast.error("Please select an academic year first to create bands");
+      return;
+    }
+
+    setModalMode("create");
+    setForm({
+      academic_year_id: selectedYear,
+      department_id: selectedDepartment || null,
+      class_id: null,
+      bands: [{ band_min: "", band_max: "", comment: "" }],
+    });
+    setModalOpen(true);
+    toast.info("Select department and class, then configure the bands");
+  };
+
+  // Close modal
+  const closeModal = () => {
+    setModalOpen(false);
+    setForm({
+      academic_year_id: null,
+      department_id: null,
+      class_id: null,
+      bands: [{ band_min: "", band_max: "", comment: "" }],
+    });
+  };
+
+  // Handle band field change
   const handleBandChange = (index, key, value) => {
     setForm((prev) => {
       const newBands = [...prev.bands];
-      newBands[index][key] = key === "comment" ? value : Number(value);
+      if (key === "comment") {
+        newBands[index][key] = value;
+      } else {
+        newBands[index][key] =
+          value === "" || value === null || value === undefined
+            ? ""
+            : Number(value);
+      }
       return { ...prev, bands: newBands };
     });
   };
 
-  const addBandRow = () =>
+  // Add band row
+  const addBandRow = () => {
     setForm((prev) => ({
       ...prev,
       bands: [...prev.bands, { band_min: "", band_max: "", comment: "" }],
     }));
+  };
 
-  const removeBandRow = (index) =>
+  // Remove band row
+  const removeBandRow = (index) => {
+    if (form.bands.length === 1) {
+      toast.error("At least one band is required");
+      return;
+    }
     setForm((prev) => {
       const newBands = [...prev.bands];
       newBands.splice(index, 1);
       return { ...prev, bands: newBands };
     });
+  };
 
+  // Validate form
   const validateForm = () => {
-    const errors = [];
-    if (!form.academic_year_id || !form.department_id || !form.class_id)
-      errors.push("Select academic year, department, and class.");
-
-    form.bands.forEach((b, i) => {
-      if (b.band_min === "" || b.band_max === "")
-        errors.push(`Band ${i + 1} min/max required`);
-      if (!b.comment) errors.push(`Band ${i + 1} comment required`);
-      if (b.band_max < b.band_min)
-        errors.push(`Band ${i + 1} max may not be less than min`);
-    });
-
-    if (errors.length) {
-      toast.error(errors[0]);
+    if (!form.academic_year_id) {
+      toast.error("Academic year is required");
       return false;
     }
+    if (!form.department_id) {
+      toast.error("Please select a department");
+      return false;
+    }
+    if (!form.class_id) {
+      toast.error("Please select a class");
+      return false;
+    }
+
+    for (let i = 0; i < form.bands.length; i++) {
+      const band = form.bands[i];
+      if (band.band_min === "" || band.band_min === null) {
+        toast.error(`Band ${i + 1}: Minimum value is required`);
+        return false;
+      }
+      if (band.band_max === "" || band.band_max === null) {
+        toast.error(`Band ${i + 1}: Maximum value is required`);
+        return false;
+      }
+      if (!band.comment || band.comment.trim() === "") {
+        toast.error(`Band ${i + 1}: Comment is required`);
+        return false;
+      }
+      if (Number(band.band_max) < Number(band.band_min)) {
+        toast.error(`Band ${i + 1}: Maximum cannot be less than minimum`);
+        return false;
+      }
+    }
+
     return true;
   };
 
+  // Save bands
   const handleSave = async () => {
     if (!validateForm()) return;
+
     try {
       setSaving(true);
       await api.post("/academic-bands/save", form);
-      toast.success("Bands saved successfully");
-      setCreateModalOpen(false);
-      fetchData();
+      toast.success(
+        `Academic bands ${
+          modalMode === "edit" ? "updated" : "created"
+        } successfully`
+      );
+      closeModal();
+      fetchInitialData();
     } catch (err) {
-      console.log(err);
+      console.error(err);
       toast.error(
         err.response?.data?.details?.message ||
           err.response?.data?.details ||
           err.response?.data?.message ||
-          "Something went wrong."
+          "Failed to save bands"
       );
     } finally {
       setSaving(false);
     }
   };
 
-  useEffect(() => {
-    if (!form.academic_year_id || !form.department_id || !form.class_id) return;
-
-    const existing = data
-      .find((y) => y.academic_year_id === form.academic_year_id)
-      ?.departments.find((d) => d.id === form.department_id)
-      ?.classes.find((c) => c.id === form.class_id)?.bands;
-
-    if (existing && existing.length) {
-      setForm((prev) => ({ ...prev, bands: existing.map((b) => ({ ...b })) }));
-    } else {
-      setForm((prev) => ({
-        ...prev,
-        bands: [{ band_min: "", band_max: "", comment: "" }],
-      }));
-    }
-  }, [form.academic_year_id, form.department_id, form.class_id, data]);
-
-  const filteredClasses = form.department_id
+  // Get form-available classes
+  const formAvailableClasses = form.department_id
     ? classes.filter((c) => c.department_id === form.department_id)
     : [];
 
-  const filteredData = data
-    .filter(
-      (y) =>
-        !filters.academic_year_id ||
-        y.academic_year_id === filters.academic_year_id
-    )
-    .map((y) => ({
-      ...y,
-      departments: y.departments
-        .filter((d) => !filters.department_id || d.id === filters.department_id)
-        .map((d) => ({
-          ...d,
-          classes: d.classes
-            .filter((c) => !filters.class_id || c.id === filters.class_id)
-            .map((c) => ({
-              ...c,
-              bands: c.bands.filter((b) => {
-                const search = filters.search.trim().toLowerCase();
-                if (!search) return true;
-                return (
-                  b.band_min.toString().includes(search) ||
-                  b.band_max.toString().includes(search) ||
-                  b.comment.toLowerCase().includes(search)
-                );
-              }),
-            }))
-            .filter((c) => c.bands.length > 0),
-        }))
-        .filter((d) => d.classes.length > 0),
-    }))
-    .filter((y) => y.departments.length > 0);
-
-  const openCreateModal = () => {
-    setCreateModalOpen(true);
-  };
-
-  const closeCreateModal = () => {
-    setCreateModalOpen(false);
-  };
-
   return (
     <SideTop>
-      <div className="academic-bands-page">
-        <div className="bands-page-header">
-          <h2 className="bands-page-title">
-            Academic Bands
+      <div className="academic-bands-refactored">
+        {/* Header */}
+        <div className="bands-header">
+          <div className="bands-header-left">
+            <h1 className="bands-title">Academic Performance Bands</h1>
             {isReadOnly && (
-              <span className="bands-read-only-badge">
+              <span className="bands-readonly-badge">
                 <FaLock /> Read Only
               </span>
             )}
-          </h2>
+          </div>
           {!isReadOnly && (
             <button
-              className="bands-btn-create bands-btn-desktop"
-              onClick={openCreateModal}
+              className="bands-create-btn bands-create-desktop"
+              onClick={handleCreateNew}
+              disabled={!selectedYear}
             >
               <FaPlus />
-              <span>Add / Edit Bands</span>
+              <span>Create Bands</span>
             </button>
           )}
         </div>
 
+        {/* Info Card */}
+        <div className="bands-info-card">
+          <p>
+            Academic performance bands define grade ranges and their
+            corresponding performance levels for each class. Select an academic
+            year to view and manage bands.
+          </p>
+        </div>
+
+        {/* Filters */}
+        <div className="bands-filters">
+          <div className="bands-filter-group">
+            <label className="bands-filter-label">
+              Academic Year <span className="required">*</span>
+            </label>
+            <Select
+              placeholder="Select Academic Year"
+              options={academicYears.map((y) => ({
+                value: y.id,
+                label: y.name,
+              }))}
+              value={
+                selectedYear
+                  ? {
+                      value: selectedYear,
+                      label: academicYears.find((y) => y.id === selectedYear)
+                        ?.name,
+                    }
+                  : null
+              }
+              onChange={(opt) => setSelectedYear(opt?.value || null)}
+              isClearable
+              className="bands-select"
+              classNamePrefix="select"
+            />
+          </div>
+
+          <div className="bands-filter-group">
+            <label className="bands-filter-label">Filter by Department</label>
+            <Select
+              placeholder="All Departments"
+              options={departments.map((d) => ({
+                value: d.id,
+                label: d.name,
+              }))}
+              value={
+                selectedDepartment
+                  ? {
+                      value: selectedDepartment,
+                      label: departments.find(
+                        (d) => d.id === selectedDepartment
+                      )?.name,
+                    }
+                  : null
+              }
+              onChange={(opt) => setSelectedDepartment(opt?.value || null)}
+              isClearable
+              className="bands-select"
+              classNamePrefix="select"
+            />
+          </div>
+        </div>
+
+        {/* Instructions */}
+        {!selectedYear && (
+          <div className="bands-empty-state">
+            <div className="empty-state-icon">
+              <FaCopy color="#20408" className="facopy-2" />
+            </div>
+            <h3>Get Started</h3>
+            <p>Select an academic year above to view and manage bands</p>
+          </div>
+        )}
+
+        {/* Table */}
+        {selectedYear && (
+          <div className="bands-table-container">
+            <DataTable
+              columns={tableColumns}
+              data={tableData}
+              onRowClick={handleRowClick}
+              onEdit={handleEdit}
+              onDelete={() => {}} // No delete functionality
+              loading={isLoading}
+              limit={10}
+              editRoles={isReadOnly ? [] : ["Admin", "Admin2"]}
+              deleteRoles={[]} // Hide delete button
+              extraActions={
+                isReadOnly
+                  ? []
+                  : [
+                      {
+                        icon: <FaCopy color="#20408" className="facopy-2" />,
+                        title: "Copy Bands",
+                        onClick: handleCopy,
+                      },
+                    ]
+              }
+            />
+          </div>
+        )}
+
         {/* Mobile FAB */}
-        {!isReadOnly && (
+        {!isReadOnly && selectedYear && (
           <button
-            className="bands-btn-create bands-btn-mobile-fab"
-            onClick={openCreateModal}
-            aria-label="Add / Edit Academic Bands"
+            className="bands-create-btn bands-create-mobile-fab"
+            onClick={handleCreateNew}
+            aria-label="Create Academic Bands"
           >
             <FaPlus />
           </button>
         )}
 
-        {isLoading ? (
-          <div className="skeleton-container">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="skeleton-year-block">
-                <div
-                  className="skeleton skeleton-text"
-                  style={{ width: "200px", height: "24px" }}
-                />
-                {[1, 2].map((j) => (
-                  <div key={j} className="skeleton-department-block">
-                    <div
-                      className="skeleton skeleton-text"
-                      style={{ width: "150px", height: "20px" }}
-                    />
-                    {[1, 2].map((k) => (
-                      <div key={k} className="skeleton-class-block">
+        {/* Details Modal */}
+        <Modal
+          isOpen={detailsModalOpen}
+          onClose={closeDetailsModal}
+          title={
+            selectedClassDetails
+              ? `Academic Bands - ${selectedClassDetails.name}`
+              : "Academic Bands"
+          }
+        >
+          {selectedClassDetails && (
+            <div className="bands-details-modal">
+              <div className="bands-details-info">
+                <div className="bands-detail-item">
+                  <span className="bands-detail-label">Class:</span>
+                  <span className="bands-detail-value">
+                    {selectedClassDetails.name}
+                  </span>
+                </div>
+                <div className="bands-detail-item">
+                  <span className="bands-detail-label">Department:</span>
+                  <span className="bands-detail-value">
+                    {selectedClassDetails.department}
+                  </span>
+                </div>
+                <div className="bands-detail-item">
+                  <span className="bands-detail-label">Academic Year:</span>
+                  <span className="bands-detail-value">
+                    {academicYears.find((y) => y.id === selectedYear)?.name ||
+                      "N/A"}
+                  </span>
+                </div>
+              </div>
+
+              {selectedClassDetails.hasBands ? (
+                <div className="bands-details-table-wrapper">
+                  <h4 className="bands-details-subtitle">Performance Bands</h4>
+                  <div className="bands-details-table">
+                    <div className="bands-details-table-header">
+                      <div className="bands-details-col">Min</div>
+                      <div className="bands-details-col">Max</div>
+                      <div className="bands-details-col-wide">
+                        Performance Level
+                      </div>
+                    </div>
+                    {selectedClassDetails.bands.map((band, idx) => (
+                      <div key={idx} className="bands-details-table-row">
+                        <div className="bands-details-col" data-label="Min:">
+                          {band.band_min}
+                        </div>
+                        <div className="bands-details-col" data-label="Max:">
+                          {band.band_max}
+                        </div>
                         <div
-                          className="skeleton skeleton-text"
-                          style={{ width: "180px", height: "18px" }}
-                        />
-                        <div className="skeleton-table">
-                          {[1, 2, 3].map((r) => (
-                            <div key={r} className="skeleton-row">
-                              <div
-                                className="skeleton"
-                                style={{ width: "50px", height: "16px" }}
-                              />
-                              <div
-                                className="skeleton"
-                                style={{ width: "50px", height: "16px" }}
-                              />
-                              <div
-                                className="skeleton"
-                                style={{ width: "120px", height: "16px" }}
-                              />
-                            </div>
-                          ))}
+                          className="bands-details-col-wide"
+                          data-label="Performance Level:"
+                        >
+                          {band.comment}
                         </div>
                       </div>
                     ))}
                   </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="filters-row">
-              <div className="bands-form-select">
-                <Select
-                  placeholder="Filter Academic Year"
-                  options={academicYears.map((y) => ({
-                    value: y.id,
-                    label: y.name,
-                  }))}
-                  value={
-                    filters.academic_year_id
-                      ? {
-                          value: filters.academic_year_id,
-                          label: academicYears.find(
-                            (y) => y.id === filters.academic_year_id
-                          )?.name,
-                        }
-                      : null
-                  }
-                  onChange={(opt) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      academic_year_id: opt?.value || null,
-                    }))
-                  }
-                  isClearable
-                  className="bands-react-select"
-                  classNamePrefix="bands-select"
-                />
-              </div>
 
-              <div className="bands-form-select">
-                <Select
-                  placeholder="Filter Department"
-                  options={departments.map((d) => ({
-                    value: d.id,
-                    label: d.name,
-                  }))}
-                  value={
-                    departments.find((d) => d.id === filters.department_id) && {
-                      value: filters.department_id,
-                      label: departments.find(
-                        (d) => d.id === filters.department_id
-                      )?.name,
-                    }
-                  }
-                  onChange={(opt) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      department_id: opt?.value || null,
-                    }))
-                  }
-                  isClearable
-                  className="bands-react-select"
-                  classNamePrefix="bands-select"
-                />
-              </div>
-
-              <div className="bands-form-select">
-                <Select
-                  placeholder="Filter Class"
-                  options={classes.map((c) => ({
-                    value: c.id,
-                    label: `${c.department?.name || "No Dept"} - ${c.name}`,
-                  }))}
-                  value={
-                    classes.find((c) => c.id === filters.class_id) && {
-                      value: filters.class_id,
-                      label: `${
-                        classes.find((c) => c.id === filters.class_id)
-                          ?.department?.name || "No Dept"
-                      } - ${
-                        classes.find((c) => c.id === filters.class_id)?.name
-                      }`,
-                    }
-                  }
-                  onChange={(opt) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      class_id: opt?.value || null,
-                    }))
-                  }
-                  isClearable
-                  className="bands-react-select"
-                  classNamePrefix="bands-select"
-                />
-              </div>
-
-              <CustomInput
-                label="Search Bands"
-                type="text"
-                placeholder="Search min, max, or comment"
-                value={filters.search}
-                onChange={(_, val) =>
-                  setFilters((prev) => ({ ...prev, search: val }))
-                }
-              />
-
-              <button
-                className="bands-btn-secondary"
-                onClick={() =>
-                  setFilters({
-                    academic_year_id: null,
-                    department_id: null,
-                    class_id: null,
-                    search: "",
-                  })
-                }
-              >
-                Clear Filters
-              </button>
-            </div>
-
-            <div className="bands-table-wrapper">
-              {filteredData.map((yearData) => {
-                if (!yearData.year?.name) return null;
-                return (
-                  <div key={yearData.academic_year_id} className="year-block">
-                    <h3>{yearData.year.name}</h3>
-                    {yearData.departments.map((dept) => {
-                      if (!dept.department) return null;
-                      return (
-                        <div key={dept.id} className="department-block">
-                          <h4>{dept.department.name}</h4>
-                          {dept.classes.map((cls) => {
-                            if (!cls.class) return null;
-                            return (
-                              <div key={cls.id} className="class-block">
-                                <h5>{`${cls.class.name} (${dept.department.name})`}</h5>
-                                <div className="bands-table-scroll">
-                                  <table className="bands-table">
-                                    <thead>
-                                      <tr>
-                                        <th>Min</th>
-                                        <th>Max</th>
-                                        <th>Comment</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {cls.bands.map((b, idx) => (
-                                        <tr key={idx}>
-                                          <td>{b.band_min}</td>
-                                          <td>{b.band_max}</td>
-                                          <td>{b.comment}</td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
+                  {!isReadOnly && (
+                    <div className="bands-details-actions">
+                      <button
+                        className="bands-details-btn bands-details-btn-edit"
+                        onClick={() => {
+                          handleEdit(selectedClassDetails);
+                          closeDetailsModal();
+                        }}
+                      >
+                        <FaEdit /> Edit Bands
+                      </button>
+                      <button
+                        className="bands-details-btn bands-details-btn-copy"
+                        onClick={() => {
+                          handleCopy(selectedClassDetails);
+                          closeDetailsModal();
+                        }}
+                      >
+                        <FaCopy color="#20408" /> Copy to Another Class
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bands-details-empty">
+                  <div className="bands-details-empty-icon">
+                    {" "}
+                    <FaCopy color="#20408" className="facopy-2" />
                   </div>
-                );
-              })}
+                  <h4>No Academic Bands Available</h4>
+                  <p>
+                    This class doesn't have any performance bands configured
+                    yet.
+                  </p>
+                  {!isReadOnly && (
+                    <button
+                      className="bands-details-btn bands-details-btn-create"
+                      onClick={handleCreateFromDetails}
+                    >
+                      <FaPlus /> Create Bands
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-          </>
-        )}
+          )}
+        </Modal>
 
-        {/* Create/Edit Modal */}
-        <AcademicBandsModal
-          isOpen={createModalOpen}
-          onClose={closeCreateModal}
-          title="Add / Edit Academic Bands"
+        {/* Form Modal */}
+        <Modal
+          isOpen={modalOpen}
+          onClose={closeModal}
+          title={
+            modalMode === "copy"
+              ? "Copy Bands to Another Class"
+              : modalMode === "edit"
+              ? "Edit Academic Bands"
+              : "Create Academic Bands"
+          }
         >
           <form
             onSubmit={(e) => {
@@ -631,35 +602,27 @@ export const AcademicBandsPage = () => {
             }}
             className="bands-modal-form"
           >
-            <div className="bands-form-select">
-              <label className="bands-form-label">Academic Year</label>
-              <Select
-                placeholder="Select Academic Year"
-                options={academicYears.map((y) => ({
-                  value: y.id,
-                  label: y.name,
-                }))}
+            {/* Academic Year - Read only */}
+            <div className="bands-form-group">
+              <label className="bands-form-label">
+                Academic Year <span className="required">*</span>
+              </label>
+              <input
+                type="text"
+                className="bands-readonly-input"
                 value={
-                  academicYears.find((y) => y.id === form.academic_year_id) && {
-                    value: form.academic_year_id,
-                    label: academicYears.find(
-                      (y) => y.id === form.academic_year_id
-                    )?.name,
-                  }
+                  academicYears.find((y) => y.id === form.academic_year_id)
+                    ?.name || ""
                 }
-                onChange={(opt) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    academic_year_id: opt?.value || null,
-                  }))
-                }
-                className="bands-react-select"
-                classNamePrefix="bands-select"
+                readOnly
               />
             </div>
 
-            <div className="bands-form-select">
-              <label className="bands-form-label">Department</label>
+            {/* Department */}
+            <div className="bands-form-group">
+              <label className="bands-form-label">
+                Department <span className="required">*</span>
+              </label>
               <Select
                 placeholder="Select Department"
                 options={departments.map((d) => ({
@@ -667,97 +630,130 @@ export const AcademicBandsPage = () => {
                   label: d.name,
                 }))}
                 value={
-                  departments.find((d) => d.id === form.department_id) && {
-                    value: form.department_id,
-                    label: departments.find((d) => d.id === form.department_id)
-                      ?.name,
-                  }
+                  form.department_id
+                    ? {
+                        value: form.department_id,
+                        label: departments.find(
+                          (d) => d.id === form.department_id
+                        )?.name,
+                      }
+                    : null
                 }
                 onChange={(opt) =>
                   setForm((prev) => ({
                     ...prev,
                     department_id: opt?.value || null,
-                    class_id: null,
+                    class_id: null, // Reset class when department changes
                   }))
                 }
-                className="bands-react-select"
-                classNamePrefix="bands-select"
+                className="bands-select"
+                classNamePrefix="select"
+                isDisabled={modalMode === "edit"}
               />
             </div>
 
-            <div className="bands-form-select">
-              <label className="bands-form-label">Class</label>
+            {/* Class */}
+            <div className="bands-form-group">
+              <label className="bands-form-label">
+                Class <span className="required">*</span>
+              </label>
               <Select
                 placeholder="Select Class"
-                options={filteredClasses.map((c) => ({
+                options={formAvailableClasses.map((c) => ({
                   value: c.id,
-                  label: `${c.name} (${
-                    departments.find((d) => d.id === c.department_id)?.name
-                  })`,
+                  label: c.name,
                 }))}
                 value={
-                  filteredClasses.find((c) => c.id === form.class_id) && {
-                    value: form.class_id,
-                    label: `${
-                      filteredClasses.find((c) => c.id === form.class_id)?.name
-                    } (${
-                      departments.find((d) => d.id === form.department_id)?.name
-                    })`,
-                  }
+                  form.class_id
+                    ? {
+                        value: form.class_id,
+                        label: classes.find((c) => c.id === form.class_id)
+                          ?.name,
+                      }
+                    : null
                 }
                 onChange={(opt) =>
-                  setForm((prev) => ({ ...prev, class_id: opt?.value || null }))
+                  setForm((prev) => ({
+                    ...prev,
+                    class_id: opt?.value || null,
+                  }))
                 }
-                className="bands-react-select"
-                classNamePrefix="bands-select"
+                className="bands-select"
+                classNamePrefix="select"
+                isDisabled={
+                  !form.department_id ||
+                  formAvailableClasses.length === 0 ||
+                  modalMode === "edit"
+                }
               />
             </div>
 
+            {/* Bands */}
             <div className="bands-section">
-              <h4 className="bands-section-title">Band Ranges</h4>
-              {form.bands.map((b, idx) => (
+              <div className="bands-section-header">
+                <h4>Performance Bands</h4>
+                <button
+                  type="button"
+                  className="bands-add-btn"
+                  onClick={addBandRow}
+                >
+                  <FaPlus /> Add Band
+                </button>
+              </div>
+
+              {form.bands.map((band, idx) => (
                 <div key={idx} className="band-row">
-                  <CustomInput
-                    label="Min"
-                    type="number"
-                    value={b.band_min}
-                    onChange={(_, val) =>
-                      handleBandChange(idx, "band_min", val)
-                    }
-                  />
-                  <CustomInput
-                    label="Max"
-                    type="number"
-                    value={b.band_max}
-                    onChange={(_, val) =>
-                      handleBandChange(idx, "band_max", val)
-                    }
-                  />
-                  <CustomInput
-                    label="Comment"
-                    type="text"
-                    value={b.comment}
-                    onChange={(_, val) => handleBandChange(idx, "comment", val)}
-                  />
-                  {form.bands.length > 1 && (
-                    <button
-                      type="button"
-                      className="bands-btn-delete"
-                      onClick={() => removeBandRow(idx)}
-                    >
-                      Remove
-                    </button>
-                  )}
+                  <div className="band-row-header">
+                    <span className="band-number">Band {idx + 1}</span>
+                    {form.bands.length > 1 && (
+                      <button
+                        type="button"
+                        className="band-remove-btn"
+                        onClick={() => removeBandRow(idx)}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="band-fields">
+                    <CustomInput
+                      label="Min"
+                      type="number"
+                      step="0.1"
+                      value={band.band_min}
+                      onChange={(_, val) =>
+                        handleBandChange(idx, "band_min", val)
+                      }
+                      placeholder="0.0"
+                      name={`band_min_${idx}`}
+                    />
+
+                    <CustomInput
+                      label="Max"
+                      type="number"
+                      step="0.1"
+                      value={band.band_max}
+                      onChange={(_, val) =>
+                        handleBandChange(idx, "band_max", val)
+                      }
+                      placeholder="10.0"
+                      name={`band_max_${idx}`}
+                    />
+
+                    <CustomInput
+                      label="Performance Level"
+                      type="text"
+                      value={band.comment}
+                      onChange={(_, val) =>
+                        handleBandChange(idx, "comment", val)
+                      }
+                      placeholder="e.g., Excellent, Good, Fair"
+                      name={`comment_${idx}`}
+                    />
+                  </div>
                 </div>
               ))}
-
-              <button
-                type="button"
-                className="bands-btn-add"
-                onClick={addBandRow}
-              >
-                <FaPlus /> Add Band Row
-              </button>
             </div>
 
             <SubmitBtn
@@ -765,7 +761,7 @@ export const AcademicBandsPage = () => {
               disabled={saving}
             />
           </form>
-        </AcademicBandsModal>
+        </Modal>
       </div>
     </SideTop>
   );

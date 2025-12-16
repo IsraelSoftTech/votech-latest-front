@@ -44,7 +44,7 @@ import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subjec
 import { ClassPage } from "./components/marks-module/pages/ClassPage/Class.page";
 import { AcademicBandsPage } from "./components/marks-module/pages/AcademicBandsPage/AcademicBands";
 import { MarksUploadPage } from "./components/marks-module/pages/MarkPage/MarkPage.page";
-import { ReportCardHomePage } from "./components/marks-module/pages/ReportCardHomePage/ReportCardHome.page";
+import ReportCardHome from "./components/marks-module/pages/ReportCardHomePage/ReportCardHome.page";
 import { ReportCardPage } from "./components/marks-module/pages/ReportCardPage/ReportCard.page";
 
 // Discipline / Attendance / Counseling
@@ -333,10 +333,7 @@ function App() {
           path="/academics/mark-upload/:id"
           element={<MarksUploadPage />}
         />
-        <Route
-          path="/academics/report-cards"
-          element={<ReportCardHomePage />}
-        />
+        <Route path="/academics/report-cards" element={<ReportCardHome />} />
         <Route path="/academics/report-card/:id" element={<ReportCardPage />} />
         <Route path="/academics/master-sheets" element={<MasterSheetPage />} />
         <Route path="/test/report/card" element={<ReportCard />} />
@@ -346,8 +343,6 @@ function App() {
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-
-      <ToastContainer position="bottom-right" autoClose={8000} />
     </>
   );
 }

@@ -392,12 +392,37 @@ const sampleData = {
     },
   ],
 
-  // Calculated totals and averages
+  // CORRECTED CALCULATIONS - Calculated totals and averages
   termTotals: {
-    term1: { total: 892, average: 15.2, rank: 2, outOf: 25 },
-    term2: { total: 856, average: 14.6, rank: 3, outOf: 25 },
-    term3: { total: 924, average: 15.8, rank: 1, outOf: 25 },
-    annual: { total: 891, average: 15.2, rank: 2, outOf: 25 },
+    // TERM 1 CALCULATIONS
+    // General: (17.0*5 + 15.5*5 + 12.5*4 + 14.5*3 + 13.5*3) / (5+5+4+3+3) = 286 / 20 = 14.3
+    // Professional: (15.5*6 + 14.5*5 + 16.5*5 + 13.5*4 + 15.5*5 + 17.5*3 + 14.5*4 + 16.5*5 + 15.5*4 + 14.5*3) / (6+5+5+4+5+3+4+5+4+3) = 658.5 / 44 = 14.966 ≈ 15.0
+    // Practical: (18.5*6 + 17.5*7 + 16.5*6 + 17.5*5 + 16.5*6) / (6+7+6+5+6) = 521.5 / 30 = 17.383 ≈ 17.4
+    // Total Weighted: 286 + 658.5 + 521.5 = 1466
+    // Total Coef: 20 + 44 + 30 = 94
+    // Average: 1466 / 94 = 15.595 ≈ 15.6
+    term1: { total: 1466.0, average: 15.6, rank: 2, outOf: 25 },
+
+    // TERM 2 CALCULATIONS
+    // General: (16.0*5 + 14.5*5 + 11.5*4 + 13.5*3 + 12.5*3) / 20 = 268.5 / 20 = 13.425 ≈ 13.4
+    // Professional: (14.5*6 + 13.5*5 + 15.5*5 + 12.5*4 + 14.5*5 + 16.5*3 + 13.5*4 + 15.5*5 + 14.5*4 + 13.5*3) / 44 = 617 / 44 = 14.023 ≈ 14.0
+    // Practical: (17.5*6 + 16.5*7 + 15.5*6 + 16.5*5 + 15.5*6) / 30 = 488 / 30 = 16.267 ≈ 16.3
+    // Total Weighted: 268.5 + 617 + 488 = 1373.5
+    // Average: 1373.5 / 94 = 14.612 ≈ 14.6
+    term2: { total: 1373.5, average: 14.6, rank: 3, outOf: 25 },
+
+    // TERM 3 CALCULATIONS
+    // General: (17.5*5 + 16.5*5 + 13.5*4 + 15.5*3 + 14.5*3) / 20 = 294 / 20 = 14.7
+    // Professional: (16.5*6 + 15.5*5 + 17.5*5 + 14.5*4 + 16.5*5 + 18.5*3 + 15.5*4 + 17.5*5 + 16.5*4 + 15.5*3) / 44 = 695 / 44 = 15.795 ≈ 15.8
+    // Practical: (18.5*6 + 17.5*7 + 16.5*6 + 17.5*5 + 16.5*6) / 30 = 521.5 / 30 = 17.383 ≈ 17.4
+    // Total Weighted: 294 + 695 + 521.5 = 1510.5
+    // Average: 1510.5 / 94 = 16.068 ≈ 16.1
+    term3: { total: 1510.5, average: 16.1, rank: 1, outOf: 25 },
+
+    // ANNUAL CALCULATIONS
+    // Annual Average = (15.6 + 14.6 + 16.1) / 3 = 46.3 / 3 = 15.433 ≈ 15.4
+    // Annual Total = 1466 + 1373.5 + 1510.5 = 4350
+    annual: { total: 4350.0, average: 15.4, rank: 2, outOf: 25 },
   },
 
   classStatistics: {
@@ -418,6 +443,7 @@ const sampleData = {
     principal: "Dr. ACADEMIC DIRECTOR",
     nextTermStarts: "September 2024",
     decision: "PROMOTED",
+    parents: "MR. AND MRS. NKONGHO",
   },
 };
 
@@ -426,7 +452,6 @@ export default function ReportCard({
   grading,
   disableAutoScale = false,
 }) {
-  // Default grading (fallback)
   const defaultGrading = [
     { band_min: 18, band_max: 20, comment: "Excellent" },
     { band_min: 16, band_max: 17.99, comment: "V.Good" },
@@ -436,7 +461,6 @@ export default function ReportCard({
     { band_min: 0, band_max: 9.99, comment: "Weak" },
   ];
 
-  // Normalize comments to map to color classes more flexibly
   const getRemarkClass = (remark) => {
     const norm = String(remark || "")
       .toLowerCase()
@@ -457,7 +481,6 @@ export default function ReportCard({
     return map[norm] || "";
   };
 
-  // Grading to render in the scale (prop or default), sorted high→low
   const gradingScale = (
     Array.isArray(grading) && grading.length ? grading : defaultGrading
   )
@@ -467,9 +490,7 @@ export default function ReportCard({
   const formatNum = (n) => (Number.isInteger(n) ? n : Number(n).toFixed(1));
   const formatRange = (min, max) => `${formatNum(min)}-${formatNum(max)}`;
 
-  // Helper function to get remark based on average
   const getRemark = (average) => {
-    // if grading is provided & not empty, use it
     if (grading && Array.isArray(grading) && grading.length > 0) {
       const band = grading.find(
         (g) => average >= g.band_min && average <= g.band_max
@@ -477,7 +498,6 @@ export default function ReportCard({
       return band ? band.comment : "No Remark";
     }
 
-    // --- fallback default grading ---
     if (average >= 18) return "Excellent";
     if (average >= 16) return "V.Good";
     if (average >= 14) return "Good";
@@ -486,7 +506,7 @@ export default function ReportCard({
     return "Weak";
   };
 
-  // Calculate what to show based on current term
+  // FIXED: Use backend's pre-calculated averages instead of recalculating
   const getCurrentTermData = () => {
     const term = data.student.term;
 
@@ -494,17 +514,22 @@ export default function ReportCard({
       return {
         showColumns: ["seq1", "seq2", "termAvg"],
         columnHeaders: ["SEQ 1", "SEQ 2", "TERM AVG"],
-        calculateTermAvg: (subject) =>
-          (subject.scores.seq1 + subject.scores.seq2) / 2,
+        // FIXED: Use pre-calculated term1Avg from backend
+        getTermAvg: (subject) => subject.scores.term1Avg,
       };
     } else if (term === "SECOND TERM") {
       return {
         showColumns: ["seq3", "seq4", "termAvg", "term1Avg", "yearAvg"],
         columnHeaders: ["SEQ 3", "SEQ 4", "TERM AVG", "T1 AVG", "TOTAL AVG"],
-        calculateTermAvg: (subject) =>
-          (subject.scores.seq3 + subject.scores.seq4) / 2,
-        calculateYearAvg: (subject) =>
-          (subject.scores.term1Avg + subject.scores.term2Avg) / 2,
+        // FIXED: Use pre-calculated term2Avg from backend
+        getTermAvg: (subject) => subject.scores.term2Avg,
+        // FIXED: Calculate year average from pre-calculated term averages
+        calculateYearAvg: (subject) => {
+          const t1 = subject.scores.term1Avg;
+          const t2 = subject.scores.term2Avg;
+          if (t1 == null || t2 == null) return null;
+          return (t1 + t2) / 2;
+        },
       };
     } else {
       // THIRD TERM
@@ -525,21 +550,16 @@ export default function ReportCard({
           "T2 AVG",
           "FINAL AVG",
         ],
-        calculateTermAvg: (subject) =>
-          (subject.scores.seq5 + subject.scores.seq6) / 2,
-        calculateYearAvg: (subject) =>
-          (subject.scores.term1Avg +
-            subject.scores.term2Avg +
-            subject.scores.term3Avg) /
-          3,
-        calculateFinalAvg: (subject) => subject.scores.finalAvg,
+        // FIXED: Use pre-calculated term3Avg from backend
+        getTermAvg: (subject) => subject.scores.term3Avg,
+        // FIXED: Use pre-calculated finalAvg from backend
+        getFinalAvg: (subject) => subject.scores.finalAvg,
       };
     }
   };
 
   const termData = getCurrentTermData();
 
-  // Cumulative average (to date): T1 only in term 1, T1+T2 in term 2, T1+T2+T3 in term 3
   const getCumulativeAverageToDate = () => {
     const term = data.student.term;
     const t1 = data.termTotals?.term1?.average;
@@ -556,17 +576,27 @@ export default function ReportCard({
       return Number((avgs.reduce((a, b) => a + b, 0) / avgs.length).toFixed(1));
     }
 
-    // THIRD TERM
     const avgs = [t1, t2, t3].filter((v) => typeof v === "number");
     if (!avgs.length) return null;
     return Number((avgs.reduce((a, b) => a + b, 0) / avgs.length).toFixed(1));
   };
 
   const renderSubjectRow = (subject, index) => {
-    const termAvg = termData.calculateTermAvg(subject);
-    const remark = getRemark(termAvg);
+    // FIXED: Use backend's pre-calculated term average
+    const termAvg = termData.getTermAvg(subject);
+
+    // FIXED: Handle null gracefully but still render the row
+    const remark = termAvg != null ? getRemark(termAvg) : "N/A";
 
     const renderNumCell = (value, type, key) => {
+      if (value == null || value === undefined || isNaN(Number(value))) {
+        return (
+          <td key={key} className={type === "avg" ? "avg-cell" : "score-cell"}>
+            -
+          </td>
+        );
+      }
+
       const num = Number(value);
       const formatted = type === "avg" ? num.toFixed(1) : num;
       const baseClass = type === "avg" ? "avg-cell" : "score-cell";
@@ -591,9 +621,9 @@ export default function ReportCard({
               "avg",
               colIndex
             );
-          } else if (col === "finalAvg" && termData.calculateFinalAvg) {
+          } else if (col === "finalAvg" && termData.getFinalAvg) {
             return renderNumCell(
-              termData.calculateFinalAvg(subject),
+              termData.getFinalAvg(subject),
               "avg",
               colIndex
             );
@@ -606,9 +636,15 @@ export default function ReportCard({
         })}
 
         <td className="coef-cell">{subject.coef}</td>
-        <td className="total-cell">{(termAvg * subject.coef).toFixed(1)}</td>
+        <td className="total-cell">
+          {termAvg != null && !isNaN(Number(termAvg))
+            ? (termAvg * subject.coef).toFixed(1)
+            : "-"}
+        </td>
         <td className="remark-cell">
-          <span className={getRemarkClass(remark)}>{remark}</span>
+          <span className={termAvg != null ? getRemarkClass(remark) : ""}>
+            {remark}
+          </span>
         </td>
         <td className="teacher-cell">{subject.teacher}</td>
       </tr>
@@ -730,7 +766,6 @@ export default function ReportCard({
   return (
     <div className="report-card-container">
       <div className="report-card" id="reportCard">
-        {/* Header */}
         <div className="document-header">
           <div className="header-content">
             <div className="left-section">
@@ -780,7 +815,6 @@ export default function ReportCard({
           </div>
         </div>
 
-        {/* Student Information */}
         <div className="student-info">
           <table className="info-table">
             <tbody>
@@ -829,7 +863,6 @@ export default function ReportCard({
               {data.generalSubjects.map((subject, index) =>
                 renderSubjectRow(subject, index)
               )}
-              {/* General Subjects Subtotal */}
               <tr className="subtotal-row">
                 <td
                   colSpan={termData.columnHeaders.length + 3}
@@ -841,17 +874,18 @@ export default function ReportCard({
                   const { totalWeighted, totalCoef } =
                     data.generalSubjects.reduce(
                       (acc, subject) => {
-                        const avg = parseFloat(
-                          termData.calculateTermAvg(subject)
-                        );
-                        acc.totalWeighted += avg * subject.coef;
-                        acc.totalCoef += subject.coef;
+                        // FIXED: Use backend's pre-calculated average
+                        const avg = termData.getTermAvg(subject);
+                        if (avg != null) {
+                          acc.totalWeighted += avg * subject.coef;
+                          acc.totalCoef += subject.coef;
+                        }
                         return acc;
                       },
                       { totalWeighted: 0, totalCoef: 0 }
                     );
 
-                  const avg = totalWeighted / totalCoef; // subtotal average
+                  const avg = totalCoef > 0 ? totalWeighted / totalCoef : 0;
                   const remark = getRemark(avg);
 
                   return (
@@ -872,69 +906,72 @@ export default function ReportCard({
         </div>
 
         {/* Professional Subjects */}
-        <div className="subjects-section">
-          <div className="section-header">
-            <h3>PROFESSIONAL SUBJECTS</h3>
-          </div>
-          <table className="subjects-table">
-            <thead>
-              <tr>
-                <th>CODE</th>
-                <th>SUBJECT TITLE</th>
-                {termData.columnHeaders.map((header, index) => (
-                  <th key={index}>{header}</th>
-                ))}
-                <th>COEF</th>
-                <th>TOTAL</th>
-                <th>REMARK</th>
-                <th>TEACHER</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.professionalSubjects.map((subject, index) =>
-                renderSubjectRow(subject, index)
-              )}
-              {/* Professional Subjects Subtotal */}
-              <tr className="subtotal-row">
-                <td
-                  colSpan={termData.columnHeaders.length + 3}
-                  className="subtotal-label"
-                >
-                  SUB TOTAL:
-                </td>
-                {(() => {
-                  const { totalWeighted, totalCoef } =
-                    data.professionalSubjects.reduce(
-                      (acc, subject) => {
-                        const avg = parseFloat(
-                          termData.calculateTermAvg(subject)
-                        );
-                        acc.totalWeighted += avg * subject.coef;
-                        acc.totalCoef += subject.coef;
-                        return acc;
-                      },
-                      { totalWeighted: 0, totalCoef: 0 }
+        {data.professionalSubjects && data.professionalSubjects.length > 0 && (
+          <div className="subjects-section">
+            <div className="section-header">
+              <h3>PROFESSIONAL SUBJECTS</h3>
+            </div>
+            <table className="subjects-table">
+              <thead>
+                <tr>
+                  <th>CODE</th>
+                  <th>SUBJECT TITLE</th>
+                  {termData.columnHeaders.map((header, index) => (
+                    <th key={index}>{header}</th>
+                  ))}
+                  <th>COEF</th>
+                  <th>TOTAL</th>
+                  <th>REMARK</th>
+                  <th>TEACHER</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.professionalSubjects.map((subject, index) =>
+                  renderSubjectRow(subject, index)
+                )}
+                <tr className="subtotal-row">
+                  <td
+                    colSpan={termData.columnHeaders.length + 3}
+                    className="subtotal-label"
+                  >
+                    SUB TOTAL:
+                  </td>
+                  {(() => {
+                    const { totalWeighted, totalCoef } =
+                      data.professionalSubjects.reduce(
+                        (acc, subject) => {
+                          const avg = termData.getTermAvg(subject);
+                          if (avg != null) {
+                            acc.totalWeighted += avg * subject.coef;
+                            acc.totalCoef += subject.coef;
+                          }
+                          return acc;
+                        },
+                        { totalWeighted: 0, totalCoef: 0 }
+                      );
+
+                    const avg = totalCoef > 0 ? totalWeighted / totalCoef : 0;
+                    const remark = getRemark(avg);
+
+                    return (
+                      <>
+                        <td className="subtotal-value">
+                          {totalWeighted.toFixed(0)}
+                        </td>
+                        <td className="subtotal-remark">
+                          <span className={getRemarkClass(remark)}>
+                            {remark}
+                          </span>
+                        </td>
+                        <td></td>
+                      </>
                     );
-
-                  const avg = totalWeighted / totalCoef;
-                  const remark = getRemark(avg);
-
-                  return (
-                    <>
-                      <td className="subtotal-value">
-                        {totalWeighted.toFixed(0)}
-                      </td>
-                      <td className="subtotal-remark">
-                        <span className={getRemarkClass(remark)}>{remark}</span>
-                      </td>
-                      <td></td>
-                    </>
-                  );
-                })()}
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                  })()}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Practical Subjects */}
         {data.practicalSubjects && data.practicalSubjects.length > 0 && (
@@ -960,7 +997,6 @@ export default function ReportCard({
                 {data.practicalSubjects.map((subject, index) =>
                   renderSubjectRow(subject, index)
                 )}
-                {/* Practical Subjects Subtotal */}
                 <tr className="subtotal-row">
                   <td
                     colSpan={termData.columnHeaders.length + 3}
@@ -972,17 +1008,17 @@ export default function ReportCard({
                     const { totalWeighted, totalCoef } =
                       data.practicalSubjects.reduce(
                         (acc, subject) => {
-                          const avg = parseFloat(
-                            termData.calculateTermAvg(subject)
-                          );
-                          acc.totalWeighted += avg * subject.coef;
-                          acc.totalCoef += subject.coef;
+                          const avg = termData.getTermAvg(subject);
+                          if (avg != null) {
+                            acc.totalWeighted += avg * subject.coef;
+                            acc.totalCoef += subject.coef;
+                          }
                           return acc;
                         },
                         { totalWeighted: 0, totalCoef: 0 }
                       );
 
-                    const avg = totalWeighted / totalCoef;
+                    const avg = totalCoef > 0 ? totalWeighted / totalCoef : 0;
                     const remark = getRemark(avg);
 
                     return (
@@ -1005,7 +1041,6 @@ export default function ReportCard({
           </div>
         )}
 
-        {/* Performance Summary */}
         <div className="performance-summary">
           {(() => {
             const termKey =
@@ -1059,7 +1094,6 @@ export default function ReportCard({
           })()}
         </div>
 
-        {/* Bottom Section */}
         <div className="bottom-section">
           <div className="left-column">
             <div className="conduct-section">
@@ -1132,7 +1166,6 @@ export default function ReportCard({
           </div>
         </div>
 
-        {/* Signatures */}
         <div className="signature-section">
           <div className="signature-box">
             <div className="signature-title">CLASS MASTER</div>

@@ -547,11 +547,12 @@
     margin: 0 !important;
     padding: 0 !important;
     width: 100vw !important;
+    padding: 2mm !important;
   }
 
   .footer-text {
     display: flex !important;
-    bottom: 8mm;
+    bottom: 2mm;
     position: fixed;
   }
 

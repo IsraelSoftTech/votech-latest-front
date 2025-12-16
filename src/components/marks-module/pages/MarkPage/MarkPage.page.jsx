@@ -21,6 +21,8 @@ import {
   FaCheckCircle,
   FaTimesCircle,
   FaFilter,
+  FaUserSlash,
+  FaTrash,
 } from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import Modal from "../../components/Modal/Modal.component";
@@ -87,6 +89,54 @@ const SimpleModal = ({ type, title, message, onClose }) => {
   );
 };
 
+// Simple Confirmation Modal Component
+const SimpleConfirmModal = ({ title, message, onConfirm, onCancel }) => {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onCancel]);
+
+  return (
+    <div className="simple-modal-overlay" onClick={onCancel}>
+      <div
+        className="simple-modal confirm-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="simple-modal-close" onClick={onCancel}>
+          <FaTimes />
+        </button>
+
+        <div className="simple-modal-icon warning">
+          <FaExclamationTriangle />
+        </div>
+
+        <h3 className="simple-modal-title">{title}</h3>
+        <p className="simple-modal-message">{message}</p>
+
+        <div className="simple-modal-actions">
+          <button
+            className="simple-modal-button secondary"
+            onClick={onCancel}
+            style={{ marginBottom: "1rem" }}
+          >
+            Cancel
+          </button>
+
+          <button
+            className="simple-modal-button primary btn delete-mark-btn"
+            onClick={onConfirm}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Saving Modal Component with Upload Animation
 const SavingModal = ({ marksCount = 0 }) => {
   return (
@@ -130,61 +180,270 @@ const SavingModal = ({ marksCount = 0 }) => {
   );
 };
 
-// Missing Marks Confirmation Modal
-const MissingMarksModal = ({ missingStudents, onAssignZero, onCancel }) => {
+// NEW: Exclude Students Modal
+const ExcludeStudentsModal = ({ studentsToExclude, onConfirm, onCancel }) => {
   const displayLimit = 10;
-  const hasMore = missingStudents.length > displayLimit;
+  const hasMore = studentsToExclude.length > displayLimit;
 
   return (
-    <Modal isOpen={true} onClose={onCancel} title="Missing Marks Detected">
-      <div className="missing-marks-modal">
-        <div className="missing-marks-icon">
-          <FaExclamationTriangle />
+    <Modal isOpen={true} onClose={onCancel} title="Exclude Students">
+      <div className="exclude-students-modal">
+        <div className="exclude-icon">
+          <FaUserSlash />
         </div>
 
-        <p className="missing-marks-message">
-          <strong>{missingStudents.length}</strong> student
-          {missingStudents.length !== 1 ? "s" : ""}{" "}
-          {missingStudents.length !== 1 ? "do" : "does"} not have marks
-          assigned.
+        <p className="exclude-message">
+          You're about to exclude <strong>{studentsToExclude.length}</strong>{" "}
+          student
+          {studentsToExclude.length !== 1 ? "s" : ""} who{" "}
+          {studentsToExclude.length !== 1 ? "don't" : "doesn't"} take this
+          subject.
         </p>
 
-        <div className="missing-students-list">
-          {missingStudents.slice(0, displayLimit).map((student, index) => (
-            <div key={student.id} className="missing-student-item">
+        <div className="excluded-students-list">
+          {studentsToExclude.slice(0, displayLimit).map((student, index) => (
+            <div key={student.id} className="excluded-student-item">
               <span className="student-number">{index + 1}.</span>
               <span className="student-name">{student.full_name}</span>
               <span className="student-id">({student.student_id})</span>
             </div>
           ))}
           {hasMore && (
-            <div className="missing-students-more">
-              ... and {missingStudents.length - displayLimit} more student
-              {missingStudents.length - displayLimit !== 1 ? "s" : ""}
+            <div className="excluded-students-more">
+              ... and {studentsToExclude.length - displayLimit} more student
+              {studentsToExclude.length - displayLimit !== 1 ? "s" : ""}
             </div>
           )}
         </div>
 
-        <p className="missing-marks-question">
-          Would you like to assign <strong>0</strong> to these students, or fill
-          in their marks manually?
+        <p className="exclude-info">
+          These students will be marked as "Not Taking Subject" and won't appear
+          in the marks table.
         </p>
 
-        <div className="missing-marks-actions">
+        <div className="exclude-actions">
           <button className="btn-secondary" onClick={onCancel}>
             <FaTimes /> Cancel
           </button>
-          <button className="btn-outline" onClick={() => onCancel(true)}>
-            <FaFilter /> Filter & Fill Manually
-          </button>
-          <button className="btn-primary" onClick={onAssignZero}>
-            <FaCheck /> Assign Zero
+          <button className="btn-primary" onClick={onConfirm}>
+            <FaCheck /> Confirm Exclusion
           </button>
         </div>
       </div>
     </Modal>
   );
 };
+
+// Missing Marks Modal - SIMPLIFIED
+const MissingMarksModal = ({ missingStudents, onConfirm, onCancel }) => {
+  const [studentActions, setStudentActions] = useState({});
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  // Initialize all students with no action
+  useEffect(() => {
+    const initial = {};
+    missingStudents.forEach((s) => {
+      initial[s.id] = null; // null, 'zero', or 'exclude'
+    });
+    setStudentActions(initial);
+  }, [missingStudents]);
+
+  const setActionForStudent = (studentId, action) => {
+    setStudentActions((prev) => ({
+      ...prev,
+      [studentId]: prev[studentId] === action ? null : action, // Toggle off if clicking same action
+    }));
+  };
+
+  const setActionForAll = (action) => {
+    const updated = {};
+    missingStudents.forEach((s) => {
+      updated[s.id] = action;
+    });
+    setStudentActions(updated);
+  };
+
+  const getActionCounts = () => {
+    const counts = { zero: 0, exclude: 0, none: 0 };
+
+    Object.values(studentActions).forEach((action) => {
+      if (action === "zero") counts.zero++;
+      else if (action === "exclude") counts.exclude++;
+      else counts.none++;
+    });
+
+    return counts;
+  };
+
+  const handleProceed = () => {
+    const counts = getActionCounts();
+
+    if (counts.none > 0) {
+      alert(
+        `Please choose an action for all students.\n\n${counts.none} student(s) still need an action.`
+      );
+      return;
+    }
+
+    setShowConfirmation(true);
+  };
+
+  const handleConfirm = () => {
+    const studentsToZero = missingStudents.filter(
+      (s) => studentActions[s.id] === "zero"
+    );
+    const studentsToExclude = missingStudents.filter(
+      (s) => studentActions[s.id] === "exclude"
+    );
+
+    onConfirm({ zero: studentsToZero, exclude: studentsToExclude });
+  };
+
+  const counts = getActionCounts();
+
+  if (showConfirmation) {
+    return (
+      <Modal
+        isOpen={true}
+        onClose={() => setShowConfirmation(false)}
+        title="Confirm & Save"
+      >
+        <div className="confirmation-modal">
+          <div className="confirmation-icon">
+            <FaCheckCircle />
+          </div>
+
+          {counts.zero > 0 && (
+            <div className="summary-item zero">
+              <div className="summary-count">{counts.zero}</div>
+              <div className="summary-text">
+                Student{counts.zero !== 1 ? "s" : ""} will get{" "}
+                <strong>0 marks</strong>
+              </div>
+            </div>
+          )}
+
+          {counts.exclude > 0 && (
+            <div className="summary-item exclude">
+              <div className="summary-count">{counts.exclude}</div>
+              <div className="summary-text">
+                Student{counts.exclude !== 1 ? "s" : ""} marked as{" "}
+                <strong>Not Taking Subject</strong>
+              </div>
+            </div>
+          )}
+
+          <div className="confirmation-actions">
+            <button
+              className="btn-secondary"
+              onClick={() => setShowConfirmation(false)}
+            >
+              <FaArrowLeft /> Back
+            </button>
+            <button className="btn-primary" onClick={handleConfirm}>
+              <FaCheck /> Save
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal
+      isOpen={true}
+      onClose={onCancel}
+      title={`${missingStudents.length} Students Without Marks`}
+    >
+      <div className="missing-marks-modal simple">
+        {/* Bulk Actions */}
+        <div className="bulk-actions">
+          <button
+            className="bulk-btn zero"
+            onClick={() => setActionForAll("zero")}
+          >
+            All Get Zero
+          </button>
+          <button
+            className="bulk-btn exclude"
+            onClick={() => setActionForAll("exclude")}
+          >
+            All Excluded
+          </button>
+        </div>
+
+        {/* Students List */}
+        <div className="students-action-list">
+          {missingStudents.map((student) => {
+            const action = studentActions[student.id];
+
+            return (
+              <div
+                key={student.id}
+                className={`student-row ${action || "none"}`}
+              >
+                <div className="student-info">
+                  <span className="student-name">{student.full_name}</span>
+                  <span className="student-id">{student.student_id}</span>
+                </div>
+
+                <div className="action-btns">
+                  <button
+                    className={`act-btn zero ${
+                      action === "zero" ? "active" : ""
+                    }`}
+                    onClick={() => setActionForStudent(student.id, "zero")}
+                  >
+                    0
+                  </button>
+                  <button
+                    className={`act-btn exclude ${
+                      action === "exclude" ? "active" : ""
+                    }`}
+                    onClick={() => setActionForStudent(student.id, "exclude")}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Status */}
+        {counts.none > 0 && (
+          <div className="status-bar pending">
+            {counts.none} student{counts.none !== 1 ? "s" : ""} need an action
+          </div>
+        )}
+
+        {counts.none === 0 && (
+          <div className="status-bar ready">
+            ✓ Ready: {counts.zero} zero, {counts.exclude} excluded
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="btn-outline" onClick={() => onCancel(true)}>
+            Fill Manually
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleProceed}
+            disabled={counts.none > 0}
+          >
+            Proceed ({counts.zero + counts.exclude})
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+//#1e3a8a
 
 // Name Matching Modal Component (unchanged from original)
 const NameMatchingModal = ({
@@ -487,17 +746,19 @@ export const MarksUploadPage = () => {
   const [marks, setMarks] = useState([]);
   const [saving, setSaving] = useState(false);
 
+  // NEW: Excluded students state
+  const [excludedStudents, setExcludedStudents] = useState([]);
+
   // Sorting, Search, and Pagination states
-  const [sortConfig, setSortConfig] = useState({ key: "name", order: "asc" }); // Changed from sortOrder
+  const [sortConfig, setSortConfig] = useState({ key: "name", order: "asc" });
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [studentsPerPage, setStudentsPerPage] = useState(10);
 
-  // NEW: Mark filter state
-  const [markFilter, setMarkFilter] = useState("all"); // 'all', 'with-marks', 'without-marks'
+  // Mark filter state - UPDATED with new option
+  const [markFilter, setMarkFilter] = useState("all"); // 'all', 'with-marks', 'without-marks', 'excluded'
 
-  // NEW: Frozen filter state - captures students when filter is first applied
-  // This prevents students from disappearing as you type marks
+  // Frozen filter state
   const [frozenFilterStudents, setFrozenFilterStudents] = useState(null);
 
   // Search states
@@ -517,9 +778,17 @@ export const MarksUploadPage = () => {
   // Simple modal state
   const [simpleModal, setSimpleModal] = useState(null);
 
-  // NEW: Missing marks modal state
+  // Missing marks modal state
   const [showMissingMarksModal, setShowMissingMarksModal] = useState(false);
   const [missingMarksStudents, setMissingMarksStudents] = useState([]);
+
+  // NEW: Exclude modal state
+  const [showExcludeModal, setShowExcludeModal] = useState(false);
+  const [studentsToExclude, setStudentsToExclude] = useState([]);
+
+  // NEW: Delete confirmation modal state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { studentId, markId, studentName }
 
   const showModal = (type, title, message) => {
     setSimpleModal({ type, title, message });
@@ -734,6 +1003,7 @@ export const MarksUploadPage = () => {
       if (isMountedRef.current) {
         setStudents([]);
         setMarks([]);
+        setExcludedStudents([]);
         setLoadingTable(false);
       }
       return;
@@ -762,6 +1032,7 @@ export const MarksUploadPage = () => {
             },
           ]);
           setMarks([]);
+          setExcludedStudents([]);
           setLoadingTable(false);
         }
         return;
@@ -778,6 +1049,7 @@ export const MarksUploadPage = () => {
       if (!Array.isArray(studentsList) || studentsList.length === 0) {
         setStudents([]);
         setMarks([]);
+        setExcludedStudents([]);
         setLoadingTable(false);
         return;
       }
@@ -787,9 +1059,16 @@ export const MarksUploadPage = () => {
           `/marks?subject_id=${subject.id}&academic_year_id=${academic_year_id}&class_id=${class_id}&term_id=${term_id}&sequence_id=${sequence_id}`
         );
         if (isMountedRef.current) {
-          setMarks(
-            Array.isArray(marksRes?.data?.data) ? marksRes.data.data : []
-          );
+          const fetchedMarks = Array.isArray(marksRes?.data?.data)
+            ? marksRes.data.data
+            : [];
+          setMarks(fetchedMarks);
+
+          // NEW: Load excluded students (marks with score = null)
+          const excluded = fetchedMarks
+            .filter((m) => m.score === null)
+            .map((m) => m.student_id);
+          setExcludedStudents(excluded);
         }
       } catch (marksErr) {
         console.error("Failed to fetch marks:", marksErr);
@@ -800,6 +1079,7 @@ export const MarksUploadPage = () => {
             "Could not load existing marks. Try again."
           );
           setMarks([]);
+          setExcludedStudents([]);
         }
       }
     } catch (err) {
@@ -814,6 +1094,7 @@ export const MarksUploadPage = () => {
         );
         setStudents([]);
         setMarks([]);
+        setExcludedStudents([]);
       }
     } finally {
       if (isMountedRef.current) {
@@ -872,14 +1153,10 @@ export const MarksUploadPage = () => {
       return;
     }
 
-    // Allow typing in progress - don't validate until value is complete
-    // This prevents filtering students away while they're still typing
     if (value !== "" && value !== null && value !== undefined) {
       const numValue = Number(value);
-      // Only validate if it's a complete number entry
       if (!isNaN(numValue)) {
         if (numValue < 0 || numValue > 20) {
-          // Don't show error immediately, just prevent the value
           return;
         }
       }
@@ -907,10 +1184,109 @@ export const MarksUploadPage = () => {
     });
   };
 
+  // NEW: Delete mark function
+  const handleDeleteMark = (studentId, markId) => {
+    if (!markId) {
+      showModal("error", "Cannot Delete", "No saved mark found to delete.");
+      return;
+    }
+
+    const student = students.find((s) => s.id === studentId);
+    const studentName = student?.full_name || "this student";
+
+    // Show confirmation modal
+    setDeleteTarget({ studentId, markId, studentName });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteMark = async () => {
+    if (!deleteTarget) return;
+
+    const { markId, studentName } = deleteTarget;
+
+    try {
+      await api.delete(`/marks/${markId}`);
+
+      // Remove from local marks state
+      setMarks((prev) => prev.filter((m) => m.id !== markId));
+
+      // Close confirmation modal
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+
+      showModal(
+        "success",
+        "Mark Deleted",
+        `Successfully deleted the mark for ${studentName}.`
+      );
+
+      // Reload to get fresh data
+      await loadStudentsMarks();
+    } catch (err) {
+      console.error("Delete mark error:", err);
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+      showModal(
+        "error",
+        "Delete Failed",
+        err.response?.data?.message ||
+          "Failed to delete mark. Please try again."
+      );
+    }
+  };
+
+  const cancelDeleteMark = () => {
+    setShowDeleteConfirm(false);
+    setDeleteTarget(null);
+  };
+
+  // NEW: Toggle exclude student
+  const handleToggleExclude = (studentId) => {
+    setExcludedStudents((prev) => {
+      if (prev.includes(studentId)) {
+        // Un-exclude
+        return prev.filter((id) => id !== studentId);
+      } else {
+        // Exclude
+        return [...prev, studentId];
+      }
+    });
+
+    // Remove mark if excluding
+    if (!excludedStudents.includes(studentId)) {
+      setMarks((prev) => prev.filter((m) => m.student_id !== studentId));
+    }
+  };
+
+  // NEW: Bulk exclude from missing marks modal
+  const handleBulkExclude = () => {
+    setShowMissingMarksModal(false);
+    setStudentsToExclude(missingMarksStudents);
+    setShowExcludeModal(true);
+  };
+
+  // NEW: Confirm bulk exclusion
+  const handleConfirmExclusion = () => {
+    const studentIds = studentsToExclude.map((s) => s.id);
+    setExcludedStudents((prev) => [...new Set([...prev, ...studentIds])]);
+
+    // Remove marks for excluded students
+    setMarks((prev) => prev.filter((m) => !studentIds.includes(m.student_id)));
+
+    setShowExcludeModal(false);
+    setStudentsToExclude([]);
+    setMissingMarksStudents([]);
+
+    showModal(
+      "success",
+      "Students Excluded",
+      `${studentIds.length} student(s) marked as not taking this subject.`
+    );
+  };
+
   const handleSave = async () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
 
-    // Validation
     if (!academic_year_id || !class_id || !term_id || !sequence_id) {
       showModal(
         "error",
@@ -950,10 +1326,28 @@ export const MarksUploadPage = () => {
       return;
     }
 
-    // Check for missing marks
-    const missingMarks = validStudents.filter((s) => {
+    // Filter out excluded students - these will NOT be sent to backend
+    const activeStudents = validStudents.filter(
+      (s) => !excludedStudents.includes(s.id)
+    );
+
+    if (activeStudents.length === 0) {
+      showModal(
+        "error",
+        "No Active Students",
+        "All students are excluded. Please include at least one student."
+      );
+      return;
+    }
+
+    // Check for missing marks (only for non-excluded students)
+    const missingMarks = activeStudents.filter((s) => {
       const mark = marks.find((m) => m.student_id === s.id);
-      return mark?.score == null || mark.score === "";
+      // A mark is "missing" if it's null, undefined, or empty string
+      // Note: 0 is a VALID mark, not missing!
+      return (
+        mark?.score === null || mark?.score === undefined || mark?.score === ""
+      );
     });
 
     if (missingMarks.length > 0) {
@@ -962,41 +1356,71 @@ export const MarksUploadPage = () => {
       return;
     }
 
-    // Proceed with save
-    await performSave(validStudents);
+    await performSave(activeStudents);
   };
 
-  const handleMissingMarksAssignZero = async () => {
+  const handleMissingMarksConfirm = async (actions) => {
     setShowMissingMarksModal(false);
 
-    // Assign 0 to all missing students
-    setMarks((prev) => {
-      const updated = [...prev];
-      missingMarksStudents.forEach((student) => {
-        const existingIndex = updated.findIndex(
-          (m) => m.student_id === student.id
-        );
-        if (existingIndex >= 0) {
-          updated[existingIndex] = { ...updated[existingIndex], score: 0 };
-        } else {
-          updated.push({ student_id: student.id, score: 0 });
-        }
-      });
-      return updated;
-    });
+    const { zero, exclude } = actions;
 
-    // Wait for state to update, then save
+    // Update marks - assign 0 to zero group
+    if (zero.length > 0) {
+      setMarks((prev) => {
+        const updated = [...prev];
+        zero.forEach((student) => {
+          const existingIndex = updated.findIndex(
+            (m) => m.student_id === student.id
+          );
+          if (existingIndex >= 0) {
+            updated[existingIndex] = { ...updated[existingIndex], score: 0 };
+          } else {
+            updated.push({ student_id: student.id, score: 0 });
+          }
+        });
+        return updated;
+      });
+    }
+
+    // Update excluded students - exclude group
+    if (exclude.length > 0) {
+      const excludeIds = exclude.map((s) => s.id);
+      setExcludedStudents((prev) => [...new Set([...prev, ...excludeIds])]);
+
+      // Remove marks for excluded students
+      setMarks((prev) =>
+        prev.filter((m) => !excludeIds.includes(m.student_id))
+      );
+    }
+
+    // Show summary
+    const messages = [];
+    if (zero.length > 0) {
+      messages.push(`${zero.length} student(s) assigned 0 marks`);
+    }
+    if (exclude.length > 0) {
+      messages.push(
+        `${exclude.length} student(s) excluded (not taking subject)`
+      );
+    }
+
+    showModal("success", "Actions Applied", messages.join("\n"));
+
+    // Wait a bit then save
     setTimeout(async () => {
-      const validStudents = students.filter((s) => s.id !== "none" && s.id);
+      const validStudents = students.filter(
+        (s) => s.id !== "none" && s.id && !excludedStudents.includes(s.id)
+      );
       await performSave(validStudents);
     }, 100);
+
+    setMissingMarksStudents([]);
   };
 
   const handleMissingMarksCancel = (filterToMissing = false) => {
     setShowMissingMarksModal(false);
 
     if (filterToMissing) {
-      // Filter to show only students without marks
       setMarkFilter("without-marks");
       showModal(
         "error",
@@ -1012,24 +1436,40 @@ export const MarksUploadPage = () => {
     try {
       setSaving(true);
 
-      // Prepare marks with ALL required fields
-      const marksToSave = validStudents.map((s) => {
-        const m = marks.find((mk) => mk.student_id === s.id);
-        const score = m?.score == null || m.score === "" ? 0 : Number(m.score);
+      // Prepare marks for active students ONLY (excluded students are NOT sent)
+      const marksToSave = students
+        .filter((s) => !excludedStudents.includes(s.id)) // Double-check exclusion
+        .map((s) => {
+          const m = marks.find((mk) => mk.student_id === s.id);
 
-        // Extra validation
-        if (isNaN(score) || score < 0 || score > 20) {
-          throw new Error(`Invalid score for ${s.full_name}: ${m?.score}`);
-        }
+          let score;
 
-        return {
-          student_id: s.id,
-          score: score,
-        };
-      });
+          // Explicit zero is valid
+          if (m?.score === 0 || m?.score === "0") {
+            score = 0;
+          }
+          // Empty or null → skip this student
+          else if (m?.score == null || m?.score === "") {
+            return null; // 👈 THIS is the "skip"
+          }
+          // Normal number
+          else {
+            score = Number(m.score);
+          }
+
+          if (isNaN(score) || score < 0 || score > 20) {
+            throw new Error(`Invalid score for ${s.full_name}: ${m?.score}`);
+          }
+
+          return {
+            student_id: s.id,
+            score,
+          };
+        })
+        .filter(Boolean); // 👈 removes all null entries
 
       if (marksToSave.length === 0) {
-        throw new Error("No marks to save.");
+        throw new Error("No marks to save. All students may be excluded.");
       }
 
       const payload = {
@@ -1039,10 +1479,13 @@ export const MarksUploadPage = () => {
         term_id: filters.term_id,
         sequence_id: filters.sequence_id,
         uploaded_by: user.id,
-        marks: marksToSave,
+        marks: marksToSave, // Only active students with scores (including 0)
       };
 
       console.log("Saving marks payload:", payload);
+      console.log(
+        `Sending ${marksToSave.length} marks (${excludedStudents.length} students excluded)`
+      );
 
       const response = await api.post("/marks/save", payload);
 
@@ -1054,7 +1497,6 @@ export const MarksUploadPage = () => {
         (response.data?.saveErrors?.length || 0) > 0;
 
       if (hasErrors) {
-        // Partial success
         const errorMessages = [];
         if (response.data?.validationErrors?.length > 0) {
           errorMessages.push(
@@ -1082,21 +1524,19 @@ export const MarksUploadPage = () => {
           saveErrors: response.data?.saveErrors,
         });
       } else {
-        // Complete success
-        showModal(
-          "success",
-          "Success",
-          `All ${
-            summary.successful || marksToSave.length
-          } marks saved successfully! ${
-            summary.created
-              ? `(${summary.created} new, ${summary.updated} updated)`
-              : ""
-          }`
-        );
+        const excludedCount = excludedStudents.length;
+        const message =
+          excludedCount > 0
+            ? `Successfully saved ${
+                summary.successful || marksToSave.length
+              } marks! (${excludedCount} student(s) excluded - not sent to server)`
+            : `Successfully saved ${
+                summary.successful || marksToSave.length
+              } marks!`;
+
+        showModal("success", "Success", message);
       }
 
-      // Reload marks to get fresh data
       await loadStudentsMarks();
     } catch (err) {
       console.error("Save error:", err);
@@ -1168,8 +1608,9 @@ export const MarksUploadPage = () => {
           }`,
         ],
         [],
-        ["Student Name", "Student ID", "Score"],
+        ["Student Name", "Student ID", "Score", "Excluded"],
         [
+          "",
           "",
           "",
           "",
@@ -1182,10 +1623,12 @@ export const MarksUploadPage = () => {
         ],
         ...students.map((s) => {
           const m = marks.find((mk) => mk.student_id === s.id);
+          const isExcluded = excludedStudents.includes(s.id);
           return [
             s.full_name ?? s.name,
             s.student_id,
-            m?.score ?? "",
+            isExcluded ? "N/A" : m?.score ?? "",
+            isExcluded ? "YES" : "NO",
             filters.department_id,
             filters.academic_year_id,
             filters.class_id,
@@ -1201,6 +1644,7 @@ export const MarksUploadPage = () => {
       ws["!cols"] = [
         { wch: 25 },
         { wch: 15 },
+        { wch: 10 },
         { wch: 10 },
         { hidden: true },
         { hidden: true },
@@ -1352,13 +1796,14 @@ export const MarksUploadPage = () => {
       }
 
       const firstRow = rows[0];
-      if (!Array.isArray(firstRow) || firstRow.length < 9) {
+      if (!Array.isArray(firstRow) || firstRow.length < 10) {
         throw new Error(
           "Excel file is missing required metadata. Please use the exported template."
         );
       }
 
       const [
+        ,
         ,
         ,
         ,
@@ -1440,12 +1885,13 @@ export const MarksUploadPage = () => {
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        if (!Array.isArray(row) || row.length < 3) continue;
+        if (!Array.isArray(row) || row.length < 4) continue;
 
-        const [fullName, studentId, score] = row;
+        const [fullName, studentId, score, excludedFlag] = row;
 
         const nameStr = String(fullName || "").trim();
         const idStr = String(studentId || "").trim();
+        const isExcluded = String(excludedFlag || "").toUpperCase() === "YES";
 
         if (!nameStr || !idStr || nameStr === "" || idStr === "") continue;
 
@@ -1457,7 +1903,12 @@ export const MarksUploadPage = () => {
         );
 
         if (student) {
-          if (score !== "" && score !== null && score !== undefined) {
+          if (isExcluded) {
+            // Mark as excluded (no score)
+            if (!excludedStudents.includes(student.id)) {
+              setExcludedStudents((prev) => [...prev, student.id]);
+            }
+          } else if (score !== "" && score !== null && score !== undefined) {
             const numScore = Number(score);
             if (isNaN(numScore)) {
               errors.push(
@@ -1598,19 +2049,16 @@ export const MarksUploadPage = () => {
     if (!Array.isArray(students) || students.length === 0) return [];
 
     try {
-      // START WITH: Either frozen students (if mark filter active) or all students
       let filtered;
 
       if (markFilter !== "all" && frozenFilterStudents !== null) {
-        // Use frozen snapshot - students won't disappear while typing
         filtered = frozenFilterStudents.filter((s) => s && s.id);
       } else if (markFilter !== "all") {
-        // First time applying filter - create snapshot and freeze it
         filtered = students.filter((s) => s && s.id);
 
-        // Apply mark filter ONCE to create initial snapshot
         if (markFilter === "with-marks") {
           filtered = filtered.filter((s) => {
+            if (excludedStudents.includes(s.id)) return false;
             const mark = marks.find((m) => m.student_id === s.id);
             const score = mark?.score;
             return (
@@ -1622,6 +2070,7 @@ export const MarksUploadPage = () => {
           });
         } else if (markFilter === "without-marks") {
           filtered = filtered.filter((s) => {
+            if (excludedStudents.includes(s.id)) return false;
             const mark = marks.find((m) => m.student_id === s.id);
             const score = mark?.score;
             return (
@@ -1631,19 +2080,25 @@ export const MarksUploadPage = () => {
               isNaN(Number(score))
             );
           });
+        } else if (markFilter === "with-zero") {
+          // NEW: Filter to show only students with zero marks
+          filtered = filtered.filter((s) => {
+            const mark = marks.find((m) => m.student_id === s.id);
+            return mark?.score === 0;
+          });
+        } else if (markFilter === "excluded") {
+          // Filter to show only excluded students
+          filtered = filtered.filter((s) => excludedStudents.includes(s.id));
         }
 
-        // Freeze this snapshot so students don't disappear while typing
         setFrozenFilterStudents(filtered);
       } else {
-        // No mark filter active - use all students and clear frozen state
         filtered = students.filter((s) => s && s.id);
         if (frozenFilterStudents !== null) {
           setFrozenFilterStudents(null);
         }
       }
 
-      // Apply search filter (if any)
       if (selectedStudentId) {
         filtered = filtered.filter((s) => s.id === selectedStudentId);
       } else if (searchTerm && searchTerm.trim()) {
@@ -1655,7 +2110,6 @@ export const MarksUploadPage = () => {
         );
       }
 
-      // Apply sorting
       filtered.sort((a, b) => {
         if (sortConfig.key === "name") {
           const nameA = (a.full_name || "").toLowerCase();
@@ -1669,7 +2123,6 @@ export const MarksUploadPage = () => {
           const markA = marks.find((m) => m.student_id === a.id);
           const markB = marks.find((m) => m.student_id === b.id);
 
-          // Handle in-progress typing - treat as -1 for sorting
           const scoreA =
             markA?.score == null ||
             markA?.score === "" ||
@@ -1740,7 +2193,6 @@ export const MarksUploadPage = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-    // Reset frozen filter when mark filter changes
     if (markFilter === "all") {
       setFrozenFilterStudents(null);
     }
@@ -2079,13 +2531,14 @@ export const MarksUploadPage = () => {
               </div>
 
               <div className="marks-controls-right">
-                {/* NEW: Mark Filter Dropdown */}
                 <Select
                   className="marks-filter-dropdown"
                   options={[
                     { value: "all", label: "All Students" },
                     { value: "with-marks", label: "With Marks" },
                     { value: "without-marks", label: "Without Marks" },
+                    { value: "with-zero", label: "With Zero Marks" },
+                    { value: "excluded", label: "Excluded (Don't Take)" },
                   ]}
                   value={{
                     value: markFilter,
@@ -2094,7 +2547,11 @@ export const MarksUploadPage = () => {
                         ? "All Students"
                         : markFilter === "with-marks"
                         ? "With Marks"
-                        : "Without Marks",
+                        : markFilter === "without-marks"
+                        ? "Without Marks"
+                        : markFilter === "with-zero"
+                        ? "With Zero Marks"
+                        : "Excluded (Don't Take)",
                   }}
                   onChange={(opt) => setMarkFilter(opt.value)}
                   isSearchable={false}
@@ -2178,10 +2635,18 @@ export const MarksUploadPage = () => {
               )}
               {markFilter !== "all" && (
                 <span className="marks-filter-info">
-                  Showing:{" "}
                   {markFilter === "with-marks"
                     ? "Students with marks"
-                    : "Students without marks"}
+                    : markFilter === "without-marks"
+                    ? "Students without marks"
+                    : markFilter === "with-zero"
+                    ? "Students with zero marks"
+                    : "Excluded students"}
+                </span>
+              )}
+              {excludedStudents.length > 0 && markFilter === "all" && (
+                <span className="marks-excluded-info">
+                  {excludedStudents.length} student(s) excluded
                 </span>
               )}
             </div>
@@ -2197,6 +2662,7 @@ export const MarksUploadPage = () => {
                       <th>Student ID</th>
                       <th>Student Name</th>
                       <th>Mark</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2206,14 +2672,28 @@ export const MarksUploadPage = () => {
                           studentsPerPage === "all"
                             ? index
                             : (currentPage - 1) * studentsPerPage + index;
+                        const isExcluded = excludedStudents.includes(s.id);
+
                         return (
-                          <tr key={s.id} className="marks-table-row">
+                          <tr
+                            key={s.id}
+                            className={`marks-table-row ${
+                              isExcluded ? "excluded-row" : ""
+                            }`}
+                          >
                             <td className="desktop-cell">{globalIndex + 1}</td>
                             <td className="desktop-cell">{s.student_id}</td>
-                            <td className="desktop-cell">{s.full_name}</td>
                             <td className="desktop-cell">
-                              {s.id === "none" ? (
-                                "-"
+                              {s.full_name}
+                              {isExcluded && (
+                                <span className="excluded-badge">
+                                  Not Taking Subject
+                                </span>
+                              )}
+                            </td>
+                            <td className="desktop-cell">
+                              {s.id === "none" || isExcluded ? (
+                                <span className="not-applicable">N/A</span>
                               ) : (
                                 <CustomInput
                                   type="number"
@@ -2225,11 +2705,37 @@ export const MarksUploadPage = () => {
                                     handleMarkChange(s.id, val)
                                   }
                                   onClear={() => handleMarkChange(s.id, "")}
+                                  disabled={isExcluded}
                                 />
                               )}
                             </td>
+                            <td className="desktop-cell">
+                              {s.id !== "none" && (
+                                <>
+                                  {/* Show delete button if student has a saved mark (regardless of score) */}
+                                  {marks.find(
+                                    (m) => m.student_id === s.id && m.id
+                                  ) && (
+                                    <button
+                                      className="delete-mark-btn"
+                                      onClick={() =>
+                                        handleDeleteMark(
+                                          s.id,
+                                          marks.find(
+                                            (m) => m.student_id === s.id
+                                          )?.id
+                                        )
+                                      }
+                                      title="Delete mark"
+                                    >
+                                      <FaTrash />
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </td>
 
-                            <td className="mobile-marks-cell" colSpan={4}>
+                            <td className="mobile-marks-cell" colSpan={5}>
                               <div className="mobile-marks-card">
                                 <div className="marks-card-header">
                                   <span className="student-number">
@@ -2245,14 +2751,21 @@ export const MarksUploadPage = () => {
                                     <span className="student-name">
                                       {s.full_name}
                                     </span>
+                                    {isExcluded && (
+                                      <span className="excluded-badge-mobile">
+                                        Not Taking Subject
+                                      </span>
+                                    )}
                                   </div>
 
                                   <div className="marks-input-section">
                                     <label className="marks-input-label">
                                       Enter Mark (0-20)
                                     </label>
-                                    {s.id === "none" ? (
-                                      <div className="marks-placeholder">-</div>
+                                    {s.id === "none" || isExcluded ? (
+                                      <div className="marks-placeholder">
+                                        N/A
+                                      </div>
                                     ) : (
                                       <CustomInput
                                         type="number"
@@ -2268,9 +2781,33 @@ export const MarksUploadPage = () => {
                                           handleMarkChange(s.id, "")
                                         }
                                         placeholder="0-20"
+                                        disabled={isExcluded}
                                       />
                                     )}
                                   </div>
+
+                                  {s.id !== "none" && (
+                                    <>
+                                      {/* Show delete button if student has a saved mark */}
+                                      {marks.find(
+                                        (m) => m.student_id === s.id && m.id
+                                      ) && (
+                                        <button
+                                          className="delete-mark-btn-mobile"
+                                          onClick={() =>
+                                            handleDeleteMark(
+                                              s.id,
+                                              marks.find(
+                                                (m) => m.student_id === s.id
+                                              )?.id
+                                            )
+                                          }
+                                        >
+                                          <FaTrash /> Delete Mark
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -2279,13 +2816,17 @@ export const MarksUploadPage = () => {
                       })
                     ) : (
                       <tr className="no-data-row">
-                        <td colSpan={4} className="no-data-cell">
+                        <td colSpan={5} className="no-data-cell">
                           {searchTerm || selectedStudentId
                             ? `No students found matching your search`
                             : markFilter === "with-marks"
                             ? "No students with marks found"
                             : markFilter === "without-marks"
                             ? "All students have marks!"
+                            : markFilter === "with-zero"
+                            ? "No students with zero marks"
+                            : markFilter === "excluded"
+                            ? "No excluded students"
                             : "No students found"}
                         </td>
                       </tr>
@@ -2373,14 +2914,29 @@ export const MarksUploadPage = () => {
         {showMissingMarksModal && (
           <MissingMarksModal
             missingStudents={missingMarksStudents}
-            onAssignZero={handleMissingMarksAssignZero}
+            onConfirm={handleMissingMarksConfirm}
             onCancel={handleMissingMarksCancel}
+          />
+        )}
+
+        {showExcludeModal && (
+          <ExcludeStudentsModal
+            studentsToExclude={studentsToExclude}
+            onConfirm={handleConfirmExclusion}
+            onCancel={() => {
+              setShowExcludeModal(false);
+              setStudentsToExclude([]);
+            }}
           />
         )}
 
         {saving && (
           <SavingModal
-            marksCount={students.filter((s) => s.id !== "none").length}
+            marksCount={
+              students.filter(
+                (s) => s.id !== "none" && !excludedStudents.includes(s.id)
+              ).length
+            }
           />
         )}
 
@@ -2392,7 +2948,18 @@ export const MarksUploadPage = () => {
             onClose={() => setSimpleModal(null)}
           />
         )}
+
+        {showDeleteConfirm && deleteTarget && (
+          <SimpleConfirmModal
+            title="Delete Mark"
+            message={`Are you sure you want to delete the mark for ${deleteTarget.studentName}? This will remove the mark from the database.`}
+            onConfirm={confirmDeleteMark}
+            onCancel={cancelDeleteMark}
+          />
+        )}
       </div>
     </SideTop>
   );
 };
+
+export default MarksUploadPage;
