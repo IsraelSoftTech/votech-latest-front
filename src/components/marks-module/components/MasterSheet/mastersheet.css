@@ -1,0 +1,712 @@
+/* ========== Theme ========== */
+:root {
+  --brand-blue: #204080;
+  --brand-blue-600: #1b376f;
+  --brand-gold: #c9a96e;
+
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-150: #f2f2f2;
+  --gray-200: #eaeaea;
+  --gray-300: #d9d9d9;
+  --gray-400: #cfcfcf;
+  --gray-500: #9a9a9a;
+
+  --text: #000000;
+  --paper: #ffffff;
+}
+
+/* ========== Base Layout ========== */
+.ms-wrapper {
+  padding: 16px;
+  background: var(--paper);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.ms-card {
+  background: var(--paper);
+  border: 1px solid var(--gray-400);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+/* Controls */
+.ms-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.ms-controls-left {
+  flex: 1;
+}
+
+.ms-controls-title {
+  font-size: 16px;
+  color: var(--brand-blue);
+}
+
+.ms-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ms-pdf-status {
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.ms-btn {
+  background: var(--brand-blue);
+  color: #fff;
+  border: 1px solid var(--brand-blue);
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ms-btn:hover {
+  background: var(--brand-blue-600);
+}
+
+.ms-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Header */
+.ms-header {
+  border-bottom: 2px solid var(--brand-blue);
+  padding-bottom: 8px;
+}
+
+.ms-header h1 {
+  margin: 0 0 6px 0;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--brand-blue);
+}
+
+.ms-meta {
+  font-size: 13px;
+}
+
+.ms-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+}
+
+.ms-meta-row span:nth-child(2),
+.ms-meta-row span:nth-child(3) {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--brand-blue);
+}
+
+/* ========== Desktop Table ========== */
+.ms-table-wrapper {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.ms-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+  background: var(--paper);
+}
+
+.ms-table thead th {
+  background: #f1f4fb;
+  color: var(--text);
+  border: 1px solid var(--gray-500);
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 6px;
+  white-space: nowrap;
+  vertical-align: middle;
+  border-bottom: 2px solid var(--brand-blue);
+}
+
+.ms-group {
+  background: #eaf0fb;
+  border-top: 3px solid var(--brand-blue);
+}
+
+.ms-subject,
+.ms-subcol {
+  background: var(--gray-150);
+}
+
+.ms-subcol.ms-coef,
+.ms-cell.ms-coef {
+  background: #fbf6ea;
+  font-weight: 700;
+  border-color: var(--brand-gold);
+}
+
+.ms-table td {
+  border: 1px solid var(--gray-400);
+  padding: 6px 6px;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.ms-table tbody tr:nth-child(even) td {
+  background: #fbfcff;
+}
+
+.ms-name {
+  text-align: left;
+}
+
+.ms-sticky-col {
+  position: static !important;
+  left: auto !important;
+  background: inherit !important;
+  z-index: auto !important;
+}
+
+.ms-block-end {
+  border-right: 2px solid var(--brand-gold);
+}
+
+/* Footer */
+.ms-footer {
+  margin-top: 12px;
+}
+
+.ms-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  border: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.ms-signatures {
+  margin-top: 12px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  max-width: 600px;
+}
+
+.ms-sign {
+  text-align: center;
+}
+
+.ms-sign-role {
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: var(--brand-blue);
+}
+
+.ms-sign-name {
+  border-top: 1px solid var(--brand-blue);
+  padding-top: 6px;
+  min-width: 200px;
+  font-weight: 600;
+}
+
+.master-sheet-btns {
+  display: flex;
+  width: 100%;
+  gap: 2rem;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1rem 0rem;
+}
+
+/* Hide mobile by default */
+.ms-mobile-container {
+  display: none;
+}
+
+/* ========== Mobile Styles ========== */
+@media (max-width: 768px) {
+  .ms-wrapper {
+    padding: 12px;
+  }
+
+  .ms-card {
+    padding: 10px;
+  }
+
+  /* Controls */
+  .ms-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .ms-controls-title {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .ms-controls-right {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ms-pdf-status {
+    text-align: center;
+    font-size: 12px;
+  }
+
+  .ms-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+
+  .ms-btn-text {
+    display: inline;
+  }
+
+  /* Header */
+  .ms-header h1 {
+    font-size: 18px;
+  }
+
+  .ms-meta {
+    font-size: 12px;
+  }
+
+  .ms-meta-row {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .ms-meta-row span {
+    display: block;
+  }
+
+  .ms-meta-row span:nth-child(2),
+  .ms-meta-row span:nth-child(3) {
+    font-size: 14px;
+  }
+
+  /* Hide desktop table on mobile */
+  .ms-table-wrapper {
+    display: none !important;
+  }
+
+  /* Show mobile cards */
+  .ms-mobile-container {
+    display: block;
+    margin-top: 16px;
+  }
+
+  .ms-mobile-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--gray-300);
+  }
+
+  .ms-mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-300);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .ms-mobile-card-header:active {
+    background: var(--gray-100);
+  }
+
+  .ms-mobile-student-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex: 1;
+  }
+
+  .ms-mobile-sn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--brand-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .ms-mobile-student-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ms-mobile-student-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ms-mobile-student-id {
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+
+  .ms-mobile-expand-btn {
+    background: none;
+    border: none;
+    color: var(--brand-blue);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Quick stats */
+  .ms-mobile-quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    padding: 12px 14px;
+    background: white;
+  }
+
+  .ms-mobile-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    background: var(--gray-50);
+    border-radius: 8px;
+    border: 1px solid var(--gray-300);
+  }
+
+  .ms-mobile-stat-label {
+    font-size: 11px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .ms-mobile-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--brand-blue);
+  }
+
+  /* Expandable body */
+  .ms-mobile-card-body {
+    padding: 14px;
+    background: white;
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .ms-mobile-subject-group {
+    margin-bottom: 16px;
+  }
+
+  .ms-mobile-subject-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .ms-mobile-group-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--brand-blue);
+    margin: 0 0 10px 0;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--brand-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .ms-mobile-subject-card {
+    background: var(--gray-50);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid var(--gray-300);
+  }
+
+  .ms-mobile-subject-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .ms-mobile-subject-header {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--gray-300);
+  }
+
+  .ms-mobile-subject-scores {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .ms-mobile-score-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid var(--gray-300);
+  }
+
+  .ms-mobile-score-item.coef {
+    background: #fbf6ea;
+    border-color: var(--brand-gold);
+  }
+
+  .ms-mobile-score-label {
+    font-size: 10px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .ms-mobile-score-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .ms-mobile-score-item.coef .ms-mobile-score-value {
+    color: var(--brand-blue);
+  }
+
+  /* Footer adjustments */
+  .ms-stats {
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .ms-signatures {
+    flex-direction: column;
+    gap: 12px;
+    max-width: 100%;
+  }
+
+  .ms-sign-name {
+    min-width: auto;
+  }
+}
+
+/* ========== Small Mobile - 480px ========== */
+@media (max-width: 480px) {
+  .ms-controls-title {
+    font-size: 16px;
+  }
+
+  .ms-header h1 {
+    font-size: 16px;
+  }
+
+  .ms-mobile-card {
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .ms-mobile-card-header {
+    padding: 12px;
+  }
+
+  .ms-mobile-sn {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+
+  .ms-mobile-student-name {
+    font-size: 14px;
+  }
+
+  .ms-mobile-student-id {
+    font-size: 11px;
+  }
+
+  .ms-mobile-quick-stats {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .ms-mobile-stat {
+    padding: 6px;
+  }
+
+  .ms-mobile-stat-label {
+    font-size: 10px;
+  }
+
+  .ms-mobile-stat-value {
+    font-size: 15px;
+  }
+
+  .ms-mobile-card-body {
+    padding: 12px;
+  }
+
+  .ms-mobile-group-title {
+    font-size: 13px;
+  }
+
+  .ms-mobile-subject-card {
+    padding: 8px;
+  }
+
+  .ms-mobile-subject-header {
+    font-size: 12px;
+  }
+
+  .ms-mobile-subject-scores {
+    gap: 6px;
+  }
+
+  .ms-mobile-score-item {
+    padding: 5px 6px;
+  }
+
+  .ms-mobile-score-label {
+    font-size: 9px;
+  }
+
+  .ms-mobile-score-value {
+    font-size: 13px;
+  }
+}
+
+/* ========== Very Small Devices - 320px ========== */
+@media (max-width: 320px) {
+  .ms-wrapper {
+    padding: 8px;
+  }
+
+  .ms-card {
+    padding: 8px;
+  }
+
+  .ms-controls-title {
+    font-size: 15px;
+  }
+
+  .ms-btn {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .ms-header h1 {
+    font-size: 15px;
+  }
+
+  .ms-mobile-quick-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .ms-mobile-subject-scores {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========== Print ========== */
+@media print {
+  .ms-controls {
+    display: none !important;
+  }
+
+  .ms-wrapper {
+    padding: 0;
+    background: #fff !important;
+  }
+
+  .ms-card {
+    border: none;
+    padding: 0;
+  }
+
+  .ms-mobile-container {
+    display: none !important;
+  }
+
+  .ms-table-wrapper {
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .ms-table thead th,
+  .ms-table td {
+    border: 1px solid #000 !important;
+    background: #fff !important;
+    color: #000 !important;
+    padding: 4px 4px !important;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr,
+  td,
+  th {
+    page-break-inside: avoid;
+  }
+}
+
+@media (max-width: 400px) {
+  .master-sheet-btns {
+    flex-direction: column;
+    align-items: start;
+    gap: 1rem;
+  }
+}

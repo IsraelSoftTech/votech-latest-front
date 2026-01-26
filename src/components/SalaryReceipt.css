@@ -1,0 +1,541 @@
+/* Salary Receipt Component Styles */
+.salary-receipt-container {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  line-height: 1.4;
+  /* Ensure single page print */
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Header */
+.salary-receipt-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid #0056b3;
+}
+
+.salary-receipt-title-group h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0056b3;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.salary-receipt-title-group h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.salary-receipt-title-group h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.salary-receipt-meta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.salary-receipt-meta p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Sections */
+.salary-receipt-section {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #0056b3;
+  /* Prevent page breaks */
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.salary-receipt-section-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0056b3;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Employee Information */
+.salary-receipt-employee-info {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.salary-receipt-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.salary-receipt-info-row:last-child {
+  border-bottom: none;
+}
+
+.salary-receipt-info-label {
+  font-weight: 600;
+  color: #495057;
+  min-width: 120px;
+  font-size: 0.85rem;
+}
+
+.salary-receipt-info-value {
+  font-weight: 500;
+  color: #333;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+/* Payment Details */
+.salary-receipt-payment-details {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.salary-receipt-payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.salary-receipt-payment-row:last-child {
+  border-bottom: none;
+}
+
+.salary-receipt-payment-label {
+  font-weight: 600;
+  color: #495057;
+  min-width: 120px;
+  font-size: 0.85rem;
+}
+
+.salary-receipt-payment-amount {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #28a745;
+  text-align: right;
+}
+
+.salary-receipt-payment-value {
+  font-weight: 500;
+  color: #333;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.salary-receipt-payment-status {
+  font-weight: 700;
+  color: #28a745;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+}
+
+/* Summary */
+.salary-receipt-summary {
+  background: #e3f2fd;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 2px solid #2196f3;
+}
+
+.salary-receipt-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.salary-receipt-summary-label {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1976d2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.salary-receipt-summary-amount {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #28a745;
+  text-align: right;
+}
+
+/* Footer */
+.salary-receipt-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin: 1.5rem 0 1rem 0;
+  padding-top: 1rem;
+  border-top: 2px solid #e9ecef;
+  /* Prevent page breaks */
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.salary-receipt-signature-section {
+  flex: 1;
+  text-align: center;
+}
+
+.salary-receipt-signature-line {
+  width: 150px;
+  height: 2px;
+  background: #333;
+  margin: 0 auto 0.375rem auto;
+}
+
+.salary-receipt-signature-label {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.salary-receipt-stamp-section {
+  flex: 1;
+  text-align: center;
+}
+
+.salary-receipt-stamp {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #28a745;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  background: #28a745;
+  transform: rotate(-15deg);
+}
+
+.salary-receipt-stamp-text {
+  color: white;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transform: rotate(15deg);
+}
+
+/* Notes */
+.salary-receipt-notes {
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  background: #fff3cd;
+  border-radius: 6px;
+  border-left: 3px solid #ffc107;
+  /* Prevent page breaks */
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.salary-receipt-note {
+  margin: 0 0 0.375rem 0;
+  font-size: 0.8rem;
+  color: #856404;
+  line-height: 1.4;
+}
+
+.salary-receipt-note:last-child {
+  margin-bottom: 0;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .salary-receipt-container {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+
+  .salary-receipt-title-group h1 {
+    font-size: 1.75rem;
+  }
+
+  .salary-receipt-title-group h2 {
+    font-size: 1.1rem;
+  }
+
+  .salary-receipt-title-group h3 {
+    font-size: 0.9rem;
+  }
+
+  .salary-receipt-meta {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .salary-receipt-section {
+    padding: 0.75rem;
+  }
+
+  .salary-receipt-info-row,
+  .salary-receipt-payment-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .salary-receipt-info-label,
+  .salary-receipt-payment-label {
+    min-width: auto;
+  }
+
+  .salary-receipt-info-value,
+  .salary-receipt-payment-amount,
+  .salary-receipt-payment-value,
+  .salary-receipt-payment-status {
+    text-align: left;
+  }
+
+  .salary-receipt-footer {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .salary-receipt-signature-line {
+    width: 120px;
+  }
+
+  .salary-receipt-stamp {
+    width: 50px;
+    height: 50px;
+  }
+
+  .salary-receipt-stamp-text {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .salary-receipt-container {
+    padding: 0.75rem;
+    margin: 0.25rem;
+  }
+
+  .salary-receipt-title-group h1 {
+    font-size: 1.5rem;
+  }
+
+  .salary-receipt-title-group h2 {
+    font-size: 1rem;
+  }
+
+  .salary-receipt-title-group h3 {
+    font-size: 0.85rem;
+  }
+
+  .salary-receipt-section {
+    padding: 0.5rem;
+  }
+
+  .salary-receipt-section-title {
+    font-size: 0.9rem;
+  }
+
+  .salary-receipt-payment-amount {
+    font-size: 1rem;
+  }
+
+  .salary-receipt-summary-amount {
+    font-size: 1.1rem;
+  }
+
+  .salary-receipt-signature-line {
+    width: 100px;
+  }
+
+  .salary-receipt-stamp {
+    width: 45px;
+    height: 45px;
+  }
+
+  .salary-receipt-stamp-text {
+    font-size: 0.55rem;
+  }
+}
+
+/* Print Styles - Optimized for Single Page */
+@media print {
+  .salary-receipt-container {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    padding: 1rem;
+    margin: 0;
+    /* Force single page */
+    page-break-after: avoid;
+    page-break-before: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    /* Ensure it fits on one page */
+    max-height: 100vh;
+    overflow: hidden;
+  }
+
+  .salary-receipt-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .salary-receipt-title-group h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .salary-receipt-title-group h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .salary-receipt-title-group h3 {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .salary-receipt-meta {
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .salary-receipt-meta p {
+    font-size: 0.75rem;
+  }
+
+  .salary-receipt-section {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    /* Prevent page breaks */
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .salary-receipt-section-title {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .salary-receipt-employee-info {
+    gap: 0.375rem;
+  }
+
+  .salary-receipt-info-row {
+    padding: 0.25rem 0;
+  }
+
+  .salary-receipt-info-label,
+  .salary-receipt-info-value {
+    font-size: 0.8rem;
+  }
+
+  .salary-receipt-payment-details {
+    gap: 0.375rem;
+  }
+
+  .salary-receipt-payment-row {
+    padding: 0.375rem 0;
+  }
+
+  .salary-receipt-payment-label,
+  .salary-receipt-payment-value,
+  .salary-receipt-payment-status {
+    font-size: 0.8rem;
+  }
+
+  .salary-receipt-payment-amount {
+    font-size: 1rem;
+  }
+
+  .salary-receipt-summary {
+    padding: 0.5rem;
+  }
+
+  .salary-receipt-summary-label {
+    font-size: 0.9rem;
+  }
+
+  .salary-receipt-summary-amount {
+    font-size: 1.1rem;
+  }
+
+  .salary-receipt-footer {
+    margin: 1rem 0 0.75rem 0;
+    padding-top: 0.75rem;
+    /* Prevent page breaks */
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .salary-receipt-signature-line {
+    width: 120px;
+    margin-bottom: 0.25rem;
+  }
+
+  .salary-receipt-signature-label {
+    font-size: 0.75rem;
+  }
+
+  .salary-receipt-stamp {
+    width: 50px;
+    height: 50px;
+  }
+
+  .salary-receipt-stamp-text {
+    font-size: 0.65rem;
+  }
+
+  .salary-receipt-notes {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    /* Prevent page breaks */
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .salary-receipt-note {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Ensure no page breaks anywhere */
+  * {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+} 

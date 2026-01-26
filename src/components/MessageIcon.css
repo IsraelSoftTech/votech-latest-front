@@ -1,0 +1,167 @@
+.custom-message-icon {
+  position: relative;
+  display: inline-block;
+  transition: transform 0.2s ease;
+  margin-right: 6px;
+  /* Touch-friendly optimization for mobile */
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-message-icon:hover {
+  transform: scale(1.05);
+}
+
+.message-background {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  background: #007bff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.message-icon {
+  width: 18px;
+  height: 18px;
+  color: white;
+  fill: white;
+}
+
+.message-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background: #007bff;
+  border: 2px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.badge-number {
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 1;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Mobile responsive styles - optimized for perfect fit */
+@media (max-width: 768px) {
+  .custom-message-icon {
+    margin-right: 4px;
+  }
+  
+  .message-background {
+    width: 26px;
+    height: 26px;
+  }
+  
+  .message-icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .message-badge {
+    width: 13px;
+    height: 13px;
+    top: -1px;
+    right: -1px;
+    border-width: 1.5px;
+  }
+  
+  .badge-number {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .custom-message-icon {
+    margin-right: 3px;
+  }
+  
+  .message-background {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .message-icon {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .message-badge {
+    width: 11px;
+    height: 11px;
+    top: -1px;
+    right: -1px;
+    border-width: 1px;
+  }
+  
+  .badge-number {
+    font-size: 7px;
+  }
+}
+
+@media (max-width: 360px) {
+  .custom-message-icon {
+    margin-right: 2px;
+  }
+  
+  .message-background {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .message-icon {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .message-badge {
+    width: 10px;
+    height: 10px;
+    top: -1px;
+    right: -1px;
+    border-width: 1px;
+  }
+  
+  .badge-number {
+    font-size: 6px;
+  }
+} 
+
+/* Mobile touch optimization */
+@media (max-width: 768px) {
+  .custom-message-icon {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .custom-message-icon {
+    min-height: 36px;
+    min-width: 36px;
+  }
+}
+
+@media (max-width: 360px) {
+  .custom-message-icon {
+    min-height: 32px;
+    min-width: 32px;
+  }
+} 

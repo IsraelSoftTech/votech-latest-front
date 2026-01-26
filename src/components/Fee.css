@@ -1,0 +1,105 @@
+.fee-main-content {
+  padding: 32px 18px 18px 18px;
+  box-sizing: border-box;
+}
+.fee-header {
+  margin-bottom: 24px;
+}
+
+.fee-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.read-only-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+}
+.fee-cards-row {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.fee-card {
+  flex: 1;
+  min-width: 220px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(32,64,128,0.07);
+  padding: 28px 24px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.fee-card-title {
+  font-size: 1.1rem;
+  color: #888;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.fee-card-value {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #204080;
+}
+.fee-card.paid {
+  border-left: 7px solid #2ecc71;
+  background: linear-gradient(90deg, #eafbe7 0%, #f7f8fa 100%);
+}
+.fee-card.owed {
+  border-left: 7px solid #e53e3e;
+  background: linear-gradient(90deg, #fff0f0 0%, #f7f8fa 100%);
+}
+.student-search-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+.student-search-result {
+  background: none;
+  border: none;
+  color: #204080;
+  font-weight: 600;
+  font-size: 1.08rem;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+  transition: color 0.15s;
+}
+.student-search-result:hover {
+  color: #388e3c;
+  background: none;
+}
+@media (max-width: 700px) {
+  .fee-cards-row {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .fee-card {
+    min-width: 0;
+    width: 100%;
+    padding: 18px 10px 14px 14px;
+  }
+  .fee-header {
+    margin-bottom: 14px;
+  }
+  .fee-main-content {
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
+  }
+} 

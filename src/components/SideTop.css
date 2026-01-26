@@ -1,0 +1,566 @@
+/* Provided sidebar and topbar styles for SideTop.jsx */
+.admin-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+
+.sidebar {
+  width: 240px; /* FIX: was 2200px; aligns with .main-content margin-left */
+  background: #204080;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  height: 100vh;
+  min-height: 0;
+}
+.sidebar-header {
+  flex-shrink: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 0.68rem;
+  font-weight: bold;
+  background: #f7f8fa;
+  color: #204080;
+  letter-spacing: 0.5px;
+  gap: 4px;
+}
+.sidebar-logo {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  margin-right: 2px;
+}
+.logo-text {
+  font-size: 0.68rem;
+  font-weight: bold;
+  color: #204080;
+}
+.sidebar .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 0;
+  scroll-behavior: smooth;
+}
+
+/* WebKit browsers */
+.menu::-webkit-scrollbar {
+  width: 8px;
+}
+.menu::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 2px; /* FIX: add unit */
+}
+.menu::-webkit-scrollbar-thumb {
+  background: #204080;
+  border-radius: 4px;
+}
+.menu::-webkit-scrollbar-thumb:hover {
+  background: #102040;
+}
+/* hide arrows */
+.menu::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox */
+.menu {
+  scrollbar-width: thin;
+  scrollbar-color: #204080 #f0f0f0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  margin: 1px 6px;
+  font-size: 0.58rem;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.2s;
+  position: relative; /* for badges */
+}
+.menu-item.active,
+.menu-item:hover {
+  background: #4669b3;
+}
+.menu-item .icon {
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+.menu-item .menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Prevent breaking layout on long text */
+  white-space: nowrap; /* Keep to one line */
+}
+.menu-item:focus-visible {
+  outline: 2px solid #cbd5e1;
+  outline-offset: 2px;
+}
+
+/* Chevron for items with submenu */
+.menu-item.has-submenu .chevron {
+  margin-left: 6px;
+  color: #ffffffcc;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.menu-item.has-submenu.expanded .chevron {
+  transform: rotate(180deg);
+}
+
+/* Submenu container: smooth expand/collapse */
+.submenu {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.25s ease;
+  margin-left: 14px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+.submenu.expanded {
+  max-height: 600px; /* sufficiently large to show items */
+}
+
+/* Submenu items */
+.submenu-item {
+  color: white;
+  background: none !important;
+  font-size: 0.95rem;
+  border-radius: 5px !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px !important;
+  margin: 4px 6px 4px 8px;
+  cursor: pointer;
+  transition: color 0.16s, background 0.16s;
+}
+.submenu-item .icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+.submenu-item .menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis; /* ellipsis for long submenu labels */
+  white-space: nowrap;
+}
+.submenu-item.active,
+.submenu-item:hover {
+  color: #204080 !important;
+  background: #fff !important;
+  border-radius: 5px !important;
+  box-shadow: 0 1px 4px rgba(32, 64, 128, 0.04);
+}
+
+.see-more-btn {
+  background: none !important;
+  color: #f59e0b !important;
+  font-size: 0.77rem !important;
+  padding: 7px 0 !important;
+  margin: 8px 6px !important;
+  border-radius: 5px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.see-more-btn:hover,
+.see-more-btn:active,
+.see-more-btn:focus {
+  background: none !important;
+  color: #d97706 !important;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 0 24px 24px 24px;
+  width: 100%;
+}
+
+.admin-header {
+  height: 64px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  color: #204080;
+  cursor: pointer;
+}
+.year-select {
+  background: #f7f8fa;
+  border-radius: 6px;
+  padding: 6px 18px;
+  font-size: 1.1rem;
+  color: #204080;
+  border: 1px solid #e5e7eb;
+  outline: none;
+  transition: border 0.2s;
+  min-width: 150px;
+  max-width: 180px;
+  font-weight: 500;
+  appearance: none;
+  cursor: pointer;
+}
+.year-select:focus {
+  border: 1.5px solid #204080;
+}
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.admin-actions .icon {
+  position: relative;
+  font-size: 1.3rem;
+  color: #204080;
+  cursor: pointer;
+}
+.admin-actions .badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  background: #e53e3e;
+  color: #fff;
+  font-size: 0.7rem;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-weight: bold;
+}
+.admin-actions .badge.orange {
+  background: #f6ad55;
+  color: #fff;
+}
+.admin-name {
+  font-weight: 500;
+  color: #204080;
+  margin-left: 8px;
+}
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.18);
+  z-index: 999;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 900px) {
+  .dashboard-section {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .dashboard-cards {
+    flex-direction: column;
+    gap: 18px;
+  }
+}
+@media (min-width: 701px) {
+  .admin-header {
+    padding-left: 240px;
+    padding-right: 24px;
+  }
+}
+@media (max-width: 700px) {
+  .sidebar {
+    transform: translateX(-100%);
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    box-shadow: 2px 0 8px rgba(32, 64, 128, 0.08);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .menu-toggle {
+    display: block;
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 0 8px 12px 8px;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .admin-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    padding: 8px 4px 0 4px;
+    min-width: 0;
+  }
+  .admin-header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .year-select {
+    width: auto;
+    min-width: 0;
+    max-width: 100px;
+    font-size: 0.98rem;
+    margin: 0;
+  }
+  .admin-actions {
+    width: auto;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  .admin-name {
+    font-size: 0.98rem;
+    margin-left: 4px;
+  }
+  .admin-header {
+    padding-left: 8px;
+    padding-right: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-actions {
+    gap: 6px;
+  }
+  .admin-header-left {
+    gap: 4px;
+  }
+  .admin-header {
+    padding: 6px 2px 0 2px;
+  }
+  /* Optimize logo and text for mobile */
+  .admin-header-left img {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .admin-header-left span {
+    font-size: 1.2rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-actions {
+    gap: 4px;
+  }
+  .admin-header-left {
+    gap: 3px;
+  }
+  .admin-header {
+    padding: 4px 1px 0 1px;
+  }
+  /* Further optimize logo and text for very small screens */
+  .admin-header-left img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .admin-header-left span {
+    font-size: 1.1rem !important;
+  }
+}
+
+/* Optional: if you keep this, keep it consistent with our .submenu */
+.submenu-list {
+  margin-left: 32px;
+}
+
+/* --- Teacher sidebar/topbar styles (from deleted TeacherSideTop.css) --- */
+.teacher-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+.teacher-sidebar {
+  width: 220px;
+  background: #204080;
+  color: #fff;
+  min-height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  transition: width 0.2s;
+}
+.teacher-sidebar.open {
+  width: 220px;
+}
+.teacher-sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 24px 18px 12px 18px;
+}
+.teacher-sidebar-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  margin-right: 8px;
+}
+.teacher-logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #fff;
+}
+.teacher-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+}
+.teacher-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 1.08rem;
+  font-weight: 500;
+  transition: background 0.13s;
+  position: relative;
+}
+.teacher-menu-item.active,
+.teacher-menu-item:hover {
+  background: #fff;
+  color: #204080;
+}
+.teacher-menu-item .icon {
+  font-size: 1.2em;
+}
+.teacher-main {
+  flex: 1;
+  margin-left: 220px;
+  min-height: 100vh;
+  background: #f7f8fa;
+  transition: margin-left 0.2s;
+}
+.teacher-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(32, 64, 128, 0.06);
+  padding: 18px 32px 18px 18px;
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  border-bottom: 1px solid #e5e7eb;
+}
+.teacher-header-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.teacher-menu-toggle {
+  background: none;
+  border: none;
+  color: #204080;
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-right: 8px;
+}
+.teacher-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.teacher-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(32, 64, 128, 0.13);
+  z-index: 999;
+}
+
+/* Responsive adjustments for teacher sidebar/topbar */
+@media (max-width: 900px) {
+  .teacher-main {
+    margin-left: 0;
+  }
+  .teacher-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    box-shadow: 2px 0 8px rgba(32, 64, 128, 0.08);
+  }
+  .teacher-sidebar.open {
+    transform: translateX(0);
+  }
+  .teacher-menu-toggle {
+    display: block;
+  }
+}
+@media (max-width: 700px) {
+  .teacher-main {
+    margin-left: 0;
+    padding: 0 8px 12px 8px;
+  }
+  .teacher-header {
+    padding: 8px 4px 0 4px;
+  }
+  .teacher-header-left {
+    gap: 6px;
+  }
+}
+/* --- End teacher sidebar/topbar styles --- */

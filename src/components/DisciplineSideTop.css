@@ -1,0 +1,554 @@
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  width: 100vw;
+  position: relative;
+}
+
+.ds-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+.ds-sidebar {
+  width: 220px;
+  background: #204080;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  height: 100vh;
+  min-height: 0;
+}
+.ds-logo {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #204080;
+  background: #f7f8fa;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  letter-spacing: 1px;
+  margin: 0;
+}
+.ds-logo-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #204080;
+}
+.ds-menu {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 0;
+}
+.ds-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-size: 1.05rem;
+  cursor: pointer;
+  border-radius: 6px;
+  margin: 2px 12px;
+  transition: background 0.2s;
+  color: #fff;
+}
+.ds-menu-item.active, .ds-menu-item:hover {
+  background: #4669b3;
+  color: #fff;
+}
+.ds-menu-item .icon {
+  font-size: 1.2rem;
+}
+.ds-main {
+  flex: 1;
+  margin-left: 220px;
+  padding: 48px 40px;
+  background: #f7f8fa;
+  margin-top: 64px;
+}
+.ds-header {
+  height: 64px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: visible;
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.ds-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: visible;
+}
+.ds-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  color: #204080;
+  cursor: pointer;
+}
+.ds-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: visible;
+}
+
+/* Notification Bell Styles */
+.notification-bell {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  margin-right: 8px;
+}
+
+.notification-bell:hover {
+  background-color: #eaf3ff;
+  transform: scale(1.05);
+}
+
+.notification-bell svg {
+  font-size: 1.3rem !important;
+  color: #204080 !important;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #e53e3e;
+  color: #fff;
+  font-size: 0.6rem;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  font-weight: bold;
+  box-shadow: 0 1px 3px rgba(229, 62, 62, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 1px solid #fff;
+  padding: 0;
+  text-align: center;
+}
+.ds-sidebar-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 999;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.ds-dashboard-cards {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  align-items: stretch;
+}
+.ds-card {
+  flex: 1;
+  min-width: 0;
+  min-height: 140px;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(32,64,128,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ds-card .ds-icon {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  color: #204080;
+}
+.ds-card-students {
+  background: #4eaaff;
+  color: #fff;
+}
+.ds-card-students .ds-icon {
+  color: #fff;
+}
+.ds-desc {
+  font-size: 1.05rem;
+  opacity: 0.95;
+}
+.ds-dashboard-section {
+  display: flex;
+  gap: 24px;
+  flex-wrap: nowrap;
+}
+.ds-dashboard-section > div {
+  flex: 1;
+  min-width: 0;
+  flex-shrink: 0;
+  overflow: visible;
+  width: 100%;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(32,64,128,0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+}
+.ds-table-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
+.ds-table-scroll table {
+  display: table;
+  width: 100%;
+  min-width: 800px;
+  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.ds-table-scroll thead tr {
+  background: #f7f8fa;
+  font-weight: 600;
+  color: #204080;
+}
+.ds-table-scroll th, .ds-table-scroll td {
+  padding: 12px 10px;
+  font-size: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+}
+.ds-table-scroll tbody tr:nth-child(even) {
+  background: #f7f8fa;
+}
+
+.discipline-container, .discipline-main, .admin-header, .dashboard-cards, .dashboard-section {
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ds-container,
+.ds-main,
+.ds-dashboard-cards,
+.ds-dashboard-section,
+.ds-card,
+.ds-table-scroll {
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  width: 100vw;
+  min-width: 0;
+}
+
+.ds-menu .ds-menu-item:first-child {
+  margin-top: 10px;
+}
+
+.ds-main, .ds-dashboard-cards, .ds-dashboard-section {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+.ds-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.ds-table-scroll {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(32,64,128,0.04);
+  padding: 0 4px;
+  margin-bottom: 18px;
+}
+.ds-table-scroll::-webkit-scrollbar {
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 8px;
+}
+.ds-table-scroll::-webkit-scrollbar-thumb {
+  background: #e0e7ef;
+  border-radius: 8px;
+}
+.ds-table-scroll table {
+  display: table;
+  width: 100%;
+  min-width: 600px;
+  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.ds-table-scroll th, .ds-table-scroll td {
+  padding: 10px 8px;
+  font-size: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  color: #222;
+  background: #fff;
+}
+.ds-table-scroll th {
+  color: #204080;
+  font-weight: 600;
+  background: #f7f8fa;
+}
+@media (max-width: 700px) {
+  .ds-table-scroll {
+    padding: 0 2px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    max-width: 100vw;
+  }
+  .ds-table-scroll table {
+    min-width: 400px !important;
+    width: max-content !important;
+    display: block;
+  }
+  .ds-table-scroll th, .ds-table-scroll td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.98rem;
+    padding: 8px 6px;
+  }
+}
+
+.ds-actions button {
+  max-width: 180px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .ds-dashboard-section {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .ds-dashboard-cards {
+    flex-direction: column;
+    gap: 18px;
+  }
+}
+@media (max-width: 700px) {
+  .ds-sidebar {
+    transform: translateX(-100%);
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    box-shadow: 2px 0 8px rgba(32,64,128,0.08);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+  }
+  .ds-sidebar.open {
+    transform: translateX(0);
+  }
+  .ds-menu-toggle {
+    display: block;
+  }
+  .ds-main {
+    margin-left: 0;
+    padding: 0 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box;
+    margin-top: 48px;
+    background: #f7f8fa;
+    overflow-x: hidden;
+  }
+  .ds-dashboard-cards {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 18px 0 0 0 !important;
+    padding: 0 12px !important;
+    box-sizing: border-box;
+    flex-direction: column !important;
+    gap: 0 !important;
+    background: transparent;
+  }
+  .ds-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 0 18px 0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 8px rgba(32,64,128,0.08) !important;
+    box-sizing: border-box;
+    background: inherit;
+  }
+  .ds-dashboard-section {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+    gap: 0 !important;
+    overflow-x: auto !important;
+  }
+  .ds-table-scroll {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    background: #fff;
+    border-radius: 6px;
+    margin-bottom: 2px;
+    max-width: 100vw;
+  }
+  .ds-table-scroll table {
+    min-width: 600px !important;
+    width: max-content !important;
+    box-sizing: border-box;
+    display: block;
+  }
+  .ds-table-scroll th, .ds-table-scroll td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ds-header {
+    flex-wrap: wrap;
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    padding: 0 8px !important;
+    overflow-x: hidden !important;
+    gap: 4px !important;
+    margin-bottom: 10px !important;
+  }
+  .ds-header-left {
+    min-width: 0 !important;
+    flex-shrink: 1;
+    gap: 8px !important;
+  }
+  .ds-actions {
+    min-width: 0 !important;
+    flex-shrink: 1;
+    gap: 8px !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Mobile responsive styles for notification bell */
+  .notification-bell {
+    width: 28px;
+    height: 28px;
+    margin-right: 4px;
+  }
+  
+  .notification-bell svg {
+    font-size: 0.9rem !important;
+  }
+  
+  .notification-badge {
+    font-size: 0.5rem;
+    width: 12px;
+    height: 12px;
+    top: -1px;
+    right: -1px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border: 1px solid #fff;
+    padding: 0;
+    text-align: center;
+  }
+  
+  .ds-menu .ds-menu-item:first-child {
+    margin-top: 10px !important;
+  }
+}
+
+/* Mobile-specific optimizations for MessageIcon and NotificationBell */
+@media (max-width: 480px) {
+  .ds-actions {
+    gap: 6px !important;
+  }
+  
+  .ds-header-left {
+    gap: 4px !important;
+  }
+  
+  .ds-header {
+    padding: 0 4px !important;
+  }
+  
+  /* Optimize logo and text for mobile */
+  .ds-header-left img {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .ds-header-left span {
+    font-size: 1.2rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .ds-actions {
+    gap: 4px !important;
+  }
+  
+  .ds-header-left {
+    gap: 3px !important;
+  }
+  
+  .ds-header {
+    padding: 0 2px !important;
+  }
+  
+  /* Further optimize logo and text for very small screens */
+  .ds-header-left img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  .ds-header-left span {
+    font-size: 1.1rem !important;
+  }
+} 

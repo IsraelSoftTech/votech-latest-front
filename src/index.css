@@ -1,0 +1,76 @@
+:root {
+  --primary-blue: #1e3a8a;
+  --link: #f59e0b;
+  --accent-blue: #1e3a8a;
+  --background: #f7f8fa;
+  --card-bg: #fff;
+  --text-main: #1e3a8a;
+  --text-secondary: #888888;
+  --input-border: #b0b0b0;
+  --button-bg: #1e3a8a;
+  --button-text: #fff;
+
+  --link-hover: #081435;
+  --shadow: 0 2px 12px rgba(34, 60, 108, 0.08);
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+/* Base global toast styling */
+.Toastify__toast {
+  font-size: 16px;
+  padding: 12px 16px;
+  max-width: 350px;
+  z-index: 99999;
+}
+
+.Toastify__toast-container {
+  z-index: 99999 !important;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .Toastify__toast {
+    font-size: 14px !important;
+    /* padding: 10px 14px !important; */
+    max-width: 260px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .Toastify__toast {
+    font-size: 12px !important;
+    /* padding: 8px 12px !important; */
+    max-width: 240px !important;
+  }
+}
+
+.back-btn {
+  background-color: var(--button-bg);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 20px;
+  /* height: fit-content !important; */
+}
+
+.btn-primary {
+  background-color: #1e3a8a !important;
+}

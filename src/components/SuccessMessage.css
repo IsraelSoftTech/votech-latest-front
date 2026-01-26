@@ -1,0 +1,93 @@
+.success-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10001;
+  min-width: 300px;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  animation: slideInRight 0.3s ease-in-out;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.success-message:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+}
+
+.success-message.success {
+  background: #ffffff;
+}
+
+.success-message.error {
+  background: #ffffff;
+}
+
+.success-message.warning {
+  background: #ffffff;
+}
+
+.success-message.info {
+  background: #ffffff;
+}
+
+.message-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.message-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333333;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.message-close {
+  background: #e0e0e0;
+  border: none;
+  color: #ff8c00;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+}
+
+.message-close:hover {
+  background: #d0d0d0;
+  transform: scale(1.05);
+}
+
+/* Animations */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+} 

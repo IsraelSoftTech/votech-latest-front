@@ -1,0 +1,275 @@
+.template-wrapper { 
+  background: #fff; 
+  color: #000; 
+  padding: 16px; 
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 300px; /* Ensure minimum width for mobile */
+}
+
+/* Special class for PDF generation on mobile */
+.template-wrapper.pdf-generation-mobile {
+  width: 400px !important;
+  max-width: 400px !important;
+  min-width: 400px !important;
+  padding: 12px !important;
+  font-size: 10px !important;
+  overflow: hidden !important;
+}
+
+.template-wrapper.pdf-generation-mobile .template-table {
+  width: 100% !important;
+  table-layout: fixed !important;
+  font-size: 9px !important;
+}
+
+.template-wrapper.pdf-generation-mobile .template-table th,
+.template-wrapper.pdf-generation-mobile .template-table td {
+  padding: 3px 2px !important;
+  font-size: 8px !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.2 !important;
+}
+
+.template-wrapper.pdf-generation-mobile .col-sn { width: 8% !important; }
+.template-wrapper.pdf-generation-mobile .col-heading { width: 38% !important; }
+.template-wrapper.pdf-generation-mobile .col-credit { width: 16% !important; }
+.template-wrapper.pdf-generation-mobile .col-debit { width: 16% !important; }
+.template-wrapper.pdf-generation-mobile .col-percent { width: 8% !important; }
+.template-wrapper.pdf-generation-mobile .col-remark { width: 14% !important; }
+.template-header { margin-bottom: 10px; }
+.template-brand {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+.template-brand-left { display: flex; align-items: center; gap: 10px; }
+.template-logo { width: 36px; height: 36px; object-fit: contain; }
+.template-brand-title { font-weight: 800; font-size: 16px; letter-spacing: 0.5px; }
+.template-brand-sub { font-size: 10px; color: #333; }
+.template-row { font-size: 12px; margin: 2px 0; }
+.template-label { display: inline-block; min-width: 170px; font-weight: 700; }
+.template-value { display: inline-block; }
+.template-bold { font-weight: 700; font-style: italic; }
+
+.template-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.template-table th, .template-table td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
+
+.col-sn { width: 50px; }
+.col-heading { width: auto; }
+.col-credit { width: 120px; }
+.col-debit { width: 120px; }
+.col-percent { width: 60px; }
+.col-remark { width: 180px; }
+
+.cell.number { text-align: right; }
+.cell.text { text-align: left; }
+.cell.sn { text-align: center; }
+.row-section .heading { font-weight: 700; }
+.row-subtotal td { font-weight: 700; }
+.row-total td { font-weight: 700; }
+.row-net td { font-size: 13px; }
+
+/* Mobile responsive styles for payslip template */
+@media (max-width: 768px) {
+	.template-wrapper { 
+		padding: 12px; 
+		font-size: 11px;
+		max-width: 100%;
+		overflow-x: hidden;
+		width: 100% !important;
+		box-sizing: border-box;
+	}
+	
+	.template-brand-left { 
+		gap: 8px; 
+	}
+	
+	.template-logo { 
+		width: 28px; 
+		height: 28px; 
+	}
+	
+	.template-brand-title { 
+		font-size: 14px; 
+		letter-spacing: 0.3px; 
+	}
+	
+	.template-brand-sub { 
+		font-size: 9px; 
+	}
+	
+	.template-row { 
+		font-size: 10px; 
+		margin: 1px 0;
+	}
+	
+	.template-label { 
+		min-width: 120px; 
+		font-size: 10px;
+	}
+	
+	.template-table { 
+		font-size: 10px;
+		width: 100% !important;
+		table-layout: fixed;
+		border-collapse: collapse;
+	}
+	
+	.template-table th, 
+	.template-table td { 
+		padding: 4px 3px; 
+		font-size: 9px;
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+		border: 1px solid #000;
+		vertical-align: top;
+		line-height: 1.2;
+	}
+	
+	/* Balanced column width adjustments for mobile */
+	.col-sn { width: 8% !important; }
+	.col-heading { width: 36% !important; }
+	.col-credit { width: 17% !important; }
+	.col-debit { width: 17% !important; }
+	.col-percent { width: 8% !important; }
+	.col-remark { width: 14% !important; }
+	
+	.cell.text {
+		font-size: 8px;
+		line-height: 1.2;
+		word-break: break-word;
+	}
+	
+	.cell.number {
+		font-size: 9px;
+		text-align: right;
+	}
+	
+	.cell.sn {
+		font-size: 9px;
+		text-align: center;
+	}
+	
+	.row-section .heading {
+		font-size: 9px;
+		font-weight: 700;
+		word-break: break-word;
+	}
+	
+	.row-subtotal td,
+	.row-total td {
+		font-size: 9px;
+		font-weight: 700;
+	}
+	
+	.row-net td {
+		font-size: 10px;
+		font-weight: 700;
+	}
+}
+
+@media (max-width: 480px) {
+	.template-wrapper { 
+		padding: 10px; 
+		font-size: 10px;
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+	
+	.template-brand-title { 
+		font-size: 12px; 
+	}
+	
+	.template-brand-sub { 
+		font-size: 8px; 
+	}
+	
+	.template-row { 
+		font-size: 9px; 
+	}
+	
+	.template-label { 
+		min-width: 100px; 
+		font-size: 9px;
+	}
+	
+	.template-table { 
+		font-size: 9px;
+		width: 100% !important;
+	}
+	
+	.template-table th, 
+	.template-table td { 
+		padding: 3px 2px; 
+		font-size: 8px;
+		border: 1px solid #000;
+		line-height: 1.2;
+	}
+	
+	/* Compact but readable column widths for small screens */
+	.col-sn { width: 8% !important; }
+	.col-heading { width: 38% !important; }
+	.col-credit { width: 16% !important; }
+	.col-debit { width: 16% !important; }
+	.col-percent { width: 8% !important; }
+	.col-remark { width: 14% !important; }
+	
+	.cell.text {
+		font-size: 7px;
+		line-height: 1.2;
+		word-break: break-word;
+	}
+	
+	.cell.number {
+		font-size: 8px;
+	}
+	
+	.cell.sn {
+		font-size: 8px;
+	}
+	
+	.row-section .heading {
+		font-size: 8px;
+		word-break: break-word;
+	}
+	
+	.row-subtotal td,
+	.row-total td {
+		font-size: 8px;
+	}
+	
+	.row-net td {
+		font-size: 9px;
+	}
+}
+
+@media print {
+	.template-wrapper { padding: 0; }
+	.template-table th, .template-table td { padding: 4px 6px; }
+	/* Avoid breaking inside important blocks */
+	.template-header,
+	.template-brand,
+	.template-table,
+	.template-table thead,
+	.template-table tbody,
+	.template-table tr,
+	.row-section,
+	.row-subtotal,
+	.row-total,
+	.row-net {
+		page-break-inside: avoid !important;
+		break-inside: avoid !important;
+	}
+
+	/* Ensure long tables can paginate between rows, repeat headers */
+	.template-table { page-break-after: auto; }
+	.template-table tr { page-break-after: auto; page-break-before: auto; }
+	.template-table thead { display: table-header-group; }
+	.template-table tfoot { display: table-footer-group; }
+
+	/* Prevent duplicate trailing totals across pages */
+	.row-total, .row-net { page-break-inside: avoid; break-inside: avoid; }
+} 

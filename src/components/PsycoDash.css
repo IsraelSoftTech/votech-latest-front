@@ -1,0 +1,569 @@
+/* Psycho Dashboard Styles */
+.psycho-dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+  margin-top: 20px;
+}
+
+.psycho-card {
+  background: #204080;
+  border-radius: 15px;
+  padding: 25px;
+  color: white;
+  box-shadow: 0 8px 25px rgba(32, 64, 128, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.psycho-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  pointer-events: none;
+}
+
+.psycho-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(32, 64, 128, 0.25);
+}
+
+.psycho-card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  opacity: 0.9;
+}
+
+.psycho-card-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.psycho-card-desc {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* Remove specific card variations - all cards now use the same blue background */
+.psycho-card-cases,
+.psycho-card-students,
+.psycho-card-sessions,
+.psycho-card-progress {
+  background: #204080;
+}
+
+/* Main dashboard content */
+.psycho-dashboard-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.psycho-section-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Schedule section */
+.psycho-schedule {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.psycho-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.psycho-schedule-item {
+  padding: 15px;
+  background: #f7fafc;
+  border-radius: 10px;
+  border-left: 4px solid #204080;
+  transition: all 0.3s ease;
+}
+
+.psycho-schedule-item:hover {
+  background: #edf2f7;
+  transform: translateX(5px);
+}
+
+.psycho-schedule-task {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 5px;
+  font-size: 0.95rem;
+}
+
+.psycho-schedule-meta {
+  font-size: 0.85rem;
+  color: #718096;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.psycho-schedule-meta span {
+  background: #204080;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Statistics section */
+.psycho-stats {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.psycho-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.psycho-stats-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.psycho-stats-category {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 0.9rem;
+}
+
+.psycho-stats-category span {
+  color: #204080;
+  font-weight: 600;
+}
+
+.psycho-stats-progress {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.psycho-stats-bar {
+  height: 100%;
+  background: #204080;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+}
+
+/* Content sections for different tabs */
+.psycho-content-section {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+/* Cases section */
+.psycho-cases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.psycho-case-card {
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.psycho-case-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.psycho-case-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.psycho-case-header h3 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 1.1rem;
+}
+
+.psycho-case-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.psycho-case-status.active {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.psycho-case-status.resolved {
+  background: #bee3f8;
+  color: #2a4365;
+}
+
+.psycho-case-status.pending {
+  background: #fed7d7;
+  color: #742a2a;
+}
+
+.psycho-case-details {
+  margin-bottom: 15px;
+}
+
+.psycho-case-details p {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.psycho-case-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Lesson Plans section */
+.psycho-lesson-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.psycho-lesson-plan-card {
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.psycho-lesson-plan-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.psycho-lesson-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.psycho-lesson-plan-header h3 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 1.1rem;
+}
+
+.psycho-lesson-plan-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.psycho-lesson-plan-status.approved {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.psycho-lesson-plan-status.pending {
+  background: #fed7d7;
+  color: #742a2a;
+}
+
+.psycho-lesson-plan-details {
+  margin-bottom: 15px;
+}
+
+.psycho-lesson-plan-details p {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.psycho-lesson-plan-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Reports section */
+.psycho-reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.psycho-report-card {
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 25px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.psycho-report-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.psycho-report-icon {
+  font-size: 3rem;
+  color: #204080;
+  margin-bottom: 15px;
+}
+
+.psycho-report-card h3 {
+  margin: 0 0 10px 0;
+  color: #2d3748;
+  font-size: 1.1rem;
+}
+
+.psycho-report-card p {
+  margin: 0 0 20px 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Messages section */
+.psycho-messages-container {
+  max-width: 600px;
+}
+
+.psycho-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.psycho-message-item {
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  background: #f7fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.psycho-message-item:hover {
+  background: #edf2f7;
+  transform: translateX(5px);
+}
+
+.psycho-message-avatar {
+  width: 40px;
+  height: 40px;
+  background: #204080;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.psycho-message-content {
+  flex: 1;
+}
+
+.psycho-message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.psycho-message-header h4 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.psycho-message-time {
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.psycho-message-content p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Buttons */
+.psycho-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.psycho-btn-primary {
+  background: #204080;
+  color: white;
+}
+
+.psycho-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(32, 64, 128, 0.3);
+}
+
+.psycho-btn-secondary {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.psycho-btn-secondary:hover {
+  background: #cbd5e0;
+  transform: translateY(-1px);
+}
+
+.psycho-cases-redirect {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(32,64,128,0.06);
+}
+
+.psycho-cases-redirect p {
+  font-size: 18px;
+  color: #4a5568;
+  margin-bottom: 24px;
+}
+
+.psycho-cases-redirect .psycho-btn {
+  font-size: 16px;
+  padding: 12px 32px;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .psycho-dashboard-main {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .psycho-dashboard-cards {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+  }
+  
+  .psycho-cases-grid,
+  .psycho-lesson-plans,
+  .psycho-reports-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .psycho-dashboard-cards {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .psycho-card {
+    padding: 20px;
+  }
+  
+  .psycho-card-title {
+    font-size: 2rem;
+  }
+  
+  .psycho-section-title {
+    font-size: 1.2rem;
+  }
+  
+  .psycho-schedule,
+  .psycho-stats,
+  .psycho-content-section {
+    padding: 20px;
+  }
+  
+  .psycho-case-actions,
+  .psycho-lesson-plan-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .psycho-dashboard-cards {
+    gap: 12px;
+  }
+  
+  .psycho-card {
+    padding: 18px;
+  }
+  
+  .psycho-card-icon {
+    font-size: 2rem;
+  }
+  
+  .psycho-card-title {
+    font-size: 1.8rem;
+  }
+  
+  .psycho-schedule,
+  .psycho-stats,
+  .psycho-content-section {
+    padding: 15px;
+  }
+  
+  .psycho-message-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .psycho-message-avatar {
+    align-self: center;
+  }
+} 

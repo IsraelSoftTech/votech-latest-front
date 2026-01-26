@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="School management illustration">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#9CC0FF" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#1F6FFF" stop-opacity="0.25"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="#F7F9FC"/>
+  <rect x="420" y="90" rx="16" ry="16" width="320" height="220" fill="#E9F1FF" stroke="#DBE7FF"/>
+  <rect x="440" y="120" rx="10" ry="10" width="280" height="30" fill="#FFFFFF" stroke="#E6EDF7"/>
+  <rect x="440" y="160" rx="8" ry="8" width="280" height="20" fill="#EEF3FF"/>
+  <rect x="440" y="186" rx="8" ry="8" width="280" height="20" fill="#EEF3FF"/>
+  <rect x="440" y="212" rx="8" ry="8" width="180" height="20" fill="#EEF3FF"/>
+  <rect x="440" y="242" rx="8" ry="8" width="140" height="28" fill="#1F6FFF"/>
+  <rect x="440" y="276" rx="8" ry="8" width="280" height="24" fill="#F3F7FF"/>
+
+  <g transform="translate(120,320)">
+    <circle cx="20" cy="-180" r="12" fill="#9CC0FF" stroke="#FFFFFF" stroke-width="4"/>
+    <circle cx="20" cy="-140" r="12" fill="#9CC0FF" stroke="#FFFFFF" stroke-width="4"/>
+    <circle cx="20" cy="-100" r="12" fill="#9CC0FF" stroke="#FFFFFF" stroke-width="4"/>
+    <circle cx="20" cy="-60" r="12" fill="#9CC0FF" stroke="#FFFFFF" stroke-width="4"/>
+  </g>
+
+  <rect x="60" y="360" width="680" height="150" rx="20" fill="url(#g1)"/>
+
+  <g transform="translate(160,360)">
+    <circle cx="64" cy="70" r="54" fill="#1F6FFF"/>
+    <rect x="120" y="28" width="120" height="16" rx="8" fill="#1F6FFF"/>
+    <rect x="120" y="52" width="160" height="16" rx="8" fill="#9CC0FF"/>
+    <rect x="120" y="76" width="100" height="16" rx="8" fill="#9CC0FF"/>
+  </g>
+
+  <g transform="translate(520,372)">
+    <circle cx="0" cy="60" r="10" fill="#1F6FFF"/>
+    <circle cx="28" cy="60" r="10" fill="#1F6FFF"/>
+    <circle cx="56" cy="60" r="10" fill="#1F6FFF"/>
+  </g>
+</svg>
+
