@@ -11,6 +11,7 @@
   left: 0;
   z-index: 9999;
 }
+
 .loader-spinner {
   position: relative;
   width: 60px;
@@ -20,38 +21,26 @@
   justify-content: center;
   margin-bottom: 18px;
 }
-.spinner-ring {
-  position: absolute;
+
+.spinner-line {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 3px solid transparent;
-  border-top-color: currentColor;
-  animation: spin 1.2s cubic-bezier(0.4,0,0.2,1) infinite;
+  border: 4px solid;
+  border-color: #1a3c6c #87ceeb #ff9800 transparent; /* Blue, Sky blue, Orange, Transparent */
+  animation: spin 1s linear infinite;
   will-change: transform;
 }
-.ring-blue {
-  color: #22b6f4;
-  animation-delay: 0s;
-}
-.ring-darkblue {
-  color: #1a3c6c;
-  animation-delay: 0.15s;
-  width: 85%;
-  height: 85%;
-  border-width: 2.5px;
-}
-.ring-orange {
-  color: #ff9800;
-  animation-delay: 0.3s;
-  width: 70%;
-  height: 70%;
-  border-width: 2px;
-}
+
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% { 
+    transform: rotate(0deg);
+  }
+  100% { 
+    transform: rotate(360deg);
+  }
 }
+
 .loader-powered-by {
   text-align: center;
   font-size: 1.08rem;
@@ -62,29 +51,27 @@
   opacity: 0;
   animation: fadeInText 1.2s 0.5s forwards;
 }
+
 .loader-powered-by--visible {
   opacity: 1;
 }
+
 @keyframes fadeInText {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
 @media (max-width: 600px) {
   .loader-spinner {
     width: 48px;
     height: 48px;
     margin-bottom: 12px;
   }
-  .ring-darkblue {
-    width: 85%;
-    height: 85%;
-    border-width: 2px;
+  
+  .spinner-line {
+    border-width: 3px;
   }
-  .ring-orange {
-    width: 70%;
-    height: 70%;
-    border-width: 1.5px;
-  }
+  
   .loader-powered-by {
     font-size: 0.92rem;
     margin-top: 10px;

@@ -85,8 +85,6 @@ class ApiService {
 
   async login(username, password) {
     try {
-      console.log("Attempting login to:", `${API_URL}/login`);
-      
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
@@ -94,8 +92,6 @@ class ApiService {
         },
         body: JSON.stringify({ username, password }),
       });
-
-      console.log("Login response status:", response.status, response.statusText);
 
       const data = await this.handleResponse(response);
       console.log("Auth data: ", data);
@@ -113,16 +109,7 @@ class ApiService {
     } catch (error) {
       console.error("Login failed:", error);
       this.clearToken();
-      
-      // Provide more helpful error messages
-      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
-        throw new Error("Network error: Unable to connect to server. Please check your internet connection.");
-      } else if (error.message.includes("CORS")) {
-        throw new Error("Connection error: Please contact support if this persists.");
-      } else {
-        // Re-throw the original error with its message
-        throw error;
-      }
+      throw error;
     }
   }
 
