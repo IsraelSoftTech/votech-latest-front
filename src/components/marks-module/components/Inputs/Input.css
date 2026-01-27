@@ -66,8 +66,8 @@
 .ci-field.focused .ci-select {
   border-color: var(--focus-ring);
   background: #ffffff;
-  box-shadow: 0 0 0 4px var(--focus-ring-offset),
-    0 4px 12px rgba(37, 99, 235, 0.1);
+  /* box-shadow: 0 0 0 4px var(--focus-ring-offset),
+    0 4px 12px rgba(37, 99, 235, 0.1); */
   transform: translateY(-1px);
 }
 

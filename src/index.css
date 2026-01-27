@@ -33,6 +33,11 @@ code {
   font-size: 16px;
   padding: 12px 16px;
   max-width: 350px;
+  z-index: 99999;
+}
+
+.Toastify__toast-container {
+  z-index: 99999 !important;
 }
 
 /* Mobile */
@@ -64,4 +69,8 @@ code {
   justify-content: center;
   margin-bottom: 20px;
   /* height: fit-content !important; */
+}
+
+.btn-primary {
+  background-color: #1e3a8a !important;
 }

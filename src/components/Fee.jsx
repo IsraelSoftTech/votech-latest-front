@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import SideTop from './SideTop';
 import './Fee.css';
 import './FeeReceipt.css';
@@ -81,9 +81,13 @@ export default function Fee() {
   const [studentFeeDetails, setStudentFeeDetails] = useState({});
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [selectedClassFilter, setSelectedClassFilter] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
-  // Function to fetch students and their fee details
-  const fetchStudentsAndFees = async () => {
+  // Function to fetch students (without fee details - fast)
+  const fetchStudents = async () => {
     try {
       setStudentsLoading(true);
       const studentsData = await api.getStudents();
@@ -92,36 +96,48 @@ export default function Fee() {
       setStudents(studentsData);
       setClasses(classesData);
       setFilteredStudents(studentsData);
-    
-      // Fetch fee details for all students
-      const feeDetailsPromises = studentsData.map(async (student) => {
-        try {
-          const feeStats = await api.getStudentFeeStats(student.id);
-          return { studentId: student.id, feeStats };
-        } catch (error) {
-          console.error(`Error fetching fee stats for student ${student.id}:`, error);
-          return { studentId: student.id, feeStats: null };
-        }
-      });
-      
-      const feeDetailsResults = await Promise.all(feeDetailsPromises);
-      const feeDetailsMap = {};
-      feeDetailsResults.forEach(({ studentId, feeStats }) => {
-        feeDetailsMap[studentId] = feeStats;
-      });
-      
-      setStudentFeeDetails(feeDetailsMap);
 
-      // Also update the totals
+      // Also update the totals (this might be slow but needed for summary)
       await updateTotals(studentsData, classesData);
     } catch (error) {
-      console.error('Error fetching students and fees:', error);
+      console.error('Error fetching students:', error);
       setStudents([]);
       setFilteredStudents([]);
     } finally {
       setStudentsLoading(false);
     }
   };
+
+  // Function to fetch fee details only for specific students (lazy loading)
+  const fetchFeeDetailsForStudents = useCallback(async (studentIds) => {
+    setStudentFeeDetails(prev => {
+      const studentsToFetch = studentIds.filter(id => !prev[id]);
+      if (studentsToFetch.length === 0) return prev;
+
+      // Fetch in the background
+      Promise.all(studentsToFetch.map(async (studentId) => {
+        try {
+          const feeStats = await api.getStudentFeeStats(studentId);
+          return { studentId, feeStats };
+        } catch (error) {
+          console.error(`Error fetching fee stats for student ${studentId}:`, error);
+          return { studentId, feeStats: null };
+        }
+      })).then(feeDetailsResults => {
+        setStudentFeeDetails(prevState => {
+          const updated = { ...prevState };
+          feeDetailsResults.forEach(({ studentId, feeStats }) => {
+            if (feeStats) updated[studentId] = feeStats;
+          });
+          return updated;
+        });
+      }).catch(error => {
+        console.error('Error fetching fee details:', error);
+      });
+
+      return prev;
+    });
+  }, []); // Stable function - uses functional updates for state
 
   // Persist discount configs whenever they change
   useEffect(() => {
@@ -144,7 +160,7 @@ export default function Fee() {
     return { ...base, totalExpected: discountedExpected, totalBalance: discountedBalance };
   };
 
-  // Function to update totals
+  // Function to update totals (optimized to use cached data when available)
   const updateTotals = async (studentsData, classesData) => {
     setLoadingTotals(true);
     try {
@@ -153,18 +169,43 @@ export default function Fee() {
       classesData.forEach(cls => {
         classMap[cls.id] = parseFloat(cls.total_fee) || 0;
       });
+      
+      // Use a callback to get latest fee details state
+      let allFeeDetails = {};
+      setStudentFeeDetails(prev => {
+        allFeeDetails = prev;
+        return prev;
+      });
+      
+      // Fetch fee stats only for students we don't have cached
+      const studentsToFetch = studentsData.filter(s => !allFeeDetails[s.id]);
+      if (studentsToFetch.length > 0) {
+        const feeStatsPromises = studentsToFetch.map(async student => {
+          try {
+            const stats = await api.getStudentFeeStats(student.id);
+            return { studentId: student.id, stats };
+          } catch (e) {
+            return { studentId: student.id, stats: null };
+          }
+        });
+        
+        // Wait for new fetches and update cache
+        const newFeeStats = await Promise.all(feeStatsPromises);
+        setStudentFeeDetails(prev => {
+          const updated = { ...prev };
+          newFeeStats.forEach(({ studentId, stats }) => {
+            if (stats) updated[studentId] = stats;
+          });
+          allFeeDetails = updated; // Update local reference
+          return updated;
+        });
+      }
+      
+      // Calculate totals using all fee details
       let paidSum = 0;
       let overallFee = 0;
-      // Fetch all student fee stats in parallel
-      const feeStatsArr = await Promise.all(studentsData.map(async student => {
-        try {
-          const stats = await api.getStudentFeeStats(student.id);
-          return { student, stats };
-        } catch (e) {
-          return { student, stats: null };
-        }
-      }));
-      for (const { student, stats } of feeStatsArr) {
+      for (const student of studentsData) {
+        const stats = allFeeDetails[student.id];
         const classTotalFee = classMap[student.class_id] || 0;
         overallFee += classTotalFee;
         let paid = 0;
@@ -184,11 +225,29 @@ export default function Fee() {
     setLoadingTotals(false);
   };
 
-  // Fetch students and their fee details on mount
-  // Auto-load data once when page opens
+  // Fetch students on mount (without fee details - fast)
   useEffect(() => {
-    fetchStudentsAndFees();
+    fetchStudents();
   }, []);
+
+  // Memoize student IDs on current page for stable dependency
+  const currentPageStudentIds = useMemo(() => {
+    if (filteredStudents.length === 0) return '';
+    const startIdx = (currentPage - 1) * pageSize;
+    const endIdx = startIdx + pageSize;
+    const currentPageStudents = filteredStudents.slice(startIdx, endIdx);
+    return currentPageStudents.map(s => s.id).sort().join(',');
+  }, [currentPage, pageSize, filteredStudents]);
+
+  // Fetch fee details only for students on the current page (lazy loading)
+  useEffect(() => {
+    if (currentPageStudentIds && typeof currentPageStudentIds === 'string') {
+      const studentIds = currentPageStudentIds.split(',').filter(id => id);
+      if (studentIds.length > 0) {
+        fetchFeeDetailsForStudents(studentIds);
+      }
+    }
+  }, [currentPageStudentIds, fetchFeeDetailsForStudents]);
 
   // Keep static; no auto-refresh on focus/visibility
 
@@ -216,7 +275,22 @@ export default function Fee() {
     }
     
     setFilteredStudents(filtered);
+    // Reset to first page when filters change
+    setCurrentPage(1);
   }, [students, searchQuery, selectedClassFilter]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredStudents.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
+  // Reset to first page if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
   // Calculate student fee statistics
   const getStudentFeeStats = (studentId) => {
@@ -711,7 +785,7 @@ export default function Fee() {
             </span>
           )}
           <button
-            onClick={fetchStudentsAndFees}
+            onClick={fetchStudents}
             disabled={studentsLoading}
             style={{
               background: studentsLoading ? '#ccc' : '#28a745',
@@ -761,9 +835,42 @@ export default function Fee() {
         
         {/* Fee Management Table */}
         <div style={{ marginTop: 32 }}>
-          <h3 style={{ color: '#204080', marginBottom: 16, fontSize: '1.2rem' }}>
-            Student Fee Management ({filteredStudents.length} students)
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 16 }}>
+            <h3 style={{ color: '#204080', fontSize: '1.2rem', margin: 0 }}>
+              Student Fee Management ({filteredStudents.length} students)
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <label style={{ fontSize: '14px', color: '#666', fontWeight: 500 }}>
+                Show:
+              </label>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1.5px solid #1976d2',
+                  fontSize: '14px',
+                  background: '#fff',
+                  cursor: 'pointer',
+                  color: '#204080',
+                  fontWeight: 500
+                }}
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+                <option value={500}>500</option>
+              </select>
+              <span style={{ fontSize: '14px', color: '#666' }}>
+                per page
+              </span>
+            </div>
+          </div>
           
           {studentsLoading ? (
             <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
@@ -799,7 +906,7 @@ export default function Fee() {
                 </tr>
               </thead>
               <tbody>
-                    {filteredStudents.map((student, index) => {
+                    {paginatedStudents.map((student, index) => {
                       const baseStats = getStudentFeeStats(student.id);
                       const feeStats = getDiscountedTotals(student.id) || baseStats;
                       const status = (() => {
@@ -971,6 +1078,211 @@ export default function Fee() {
               </tbody>
             </table>
               </div>
+              {/* Pagination Controls */}
+              {totalPages > 0 && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px 24px',
+                  borderTop: '1px solid #e5e7eb',
+                  background: '#f9fafb',
+                  flexWrap: 'wrap',
+                  gap: 12
+                }}>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    Showing {startIndex + 1} to {Math.min(endIndex, filteredStudents.length)} of {filteredStudents.length} students
+                    {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+                  </div>
+                  {totalPages > 1 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          border: '1px solid #1976d2',
+                          background: currentPage === 1 ? '#e5e7eb' : '#fff',
+                          color: currentPage === 1 ? '#999' : '#1976d2',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        title="First page"
+                      >
+                        ««
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          border: '1px solid #1976d2',
+                          background: currentPage === 1 ? '#e5e7eb' : '#fff',
+                          color: currentPage === 1 ? '#999' : '#1976d2',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        Previous
+                      </button>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {(() => {
+                          const pages = [];
+                          const maxVisible = 7;
+                          let startPage, endPage;
+
+                          if (totalPages <= maxVisible) {
+                            // Show all pages if total is less than max
+                            startPage = 1;
+                            endPage = totalPages;
+                          } else {
+                            // Calculate which pages to show
+                            if (currentPage <= 3) {
+                              startPage = 1;
+                              endPage = maxVisible;
+                            } else if (currentPage >= totalPages - 2) {
+                              startPage = totalPages - maxVisible + 1;
+                              endPage = totalPages;
+                            } else {
+                              startPage = currentPage - 3;
+                              endPage = currentPage + 3;
+                            }
+                          }
+
+                          // Add first page and ellipsis if needed
+                          if (startPage > 1) {
+                            pages.push(
+                              <button
+                                key={1}
+                                onClick={() => setCurrentPage(1)}
+                                style={{
+                                  padding: '8px 12px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #1976d2',
+                                  background: '#fff',
+                                  color: '#1976d2',
+                                  fontSize: '14px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  minWidth: '40px',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                1
+                              </button>
+                            );
+                            if (startPage > 2) {
+                              pages.push(
+                                <span key="ellipsis1" style={{ padding: '8px 4px', color: '#666' }}>
+                                  ...
+                                </span>
+                              );
+                            }
+                          }
+
+                          // Add visible page numbers
+                          for (let i = startPage; i <= endPage; i++) {
+                            pages.push(
+                              <button
+                                key={i}
+                                onClick={() => setCurrentPage(i)}
+                                style={{
+                                  padding: '8px 12px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #1976d2',
+                                  background: currentPage === i ? '#1976d2' : '#fff',
+                                  color: currentPage === i ? '#fff' : '#1976d2',
+                                  fontSize: '14px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  minWidth: '40px',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                {i}
+                              </button>
+                            );
+                          }
+
+                          // Add last page and ellipsis if needed
+                          if (endPage < totalPages) {
+                            if (endPage < totalPages - 1) {
+                              pages.push(
+                                <span key="ellipsis2" style={{ padding: '8px 4px', color: '#666' }}>
+                                  ...
+                                </span>
+                              );
+                            }
+                            pages.push(
+                              <button
+                                key={totalPages}
+                                onClick={() => setCurrentPage(totalPages)}
+                                style={{
+                                  padding: '8px 12px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #1976d2',
+                                  background: '#fff',
+                                  color: '#1976d2',
+                                  fontSize: '14px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  minWidth: '40px',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                {totalPages}
+                              </button>
+                            );
+                          }
+
+                          return pages;
+                        })()}
+                      </div>
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          border: '1px solid #1976d2',
+                          background: currentPage === totalPages ? '#e5e7eb' : '#fff',
+                          color: currentPage === totalPages ? '#999' : '#1976d2',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        Next
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          border: '1px solid #1976d2',
+                          background: currentPage === totalPages ? '#e5e7eb' : '#fff',
+                          color: currentPage === totalPages ? '#999' : '#1976d2',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        title="Last page"
+                      >
+                        »»
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

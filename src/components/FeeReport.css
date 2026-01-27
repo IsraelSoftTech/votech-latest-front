@@ -160,6 +160,17 @@
   background-color: #e9ecef;
 }
 
+/* Prevent page breaks from cutting rows */
+.report-table-row {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+.report-table tbody tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
 .status-badge {
   display: inline-block;
   padding: 4px 8px;
@@ -454,6 +465,19 @@
 
   .report-table td {
     border: 1px solid #000 !important;
+  }
+
+  /* Prevent page breaks from cutting rows when printing */
+  .report-table tbody tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-region-break-inside: avoid !important;
+  }
+
+  .report-table-row {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-region-break-inside: avoid !important;
   }
 
   .stat-item {

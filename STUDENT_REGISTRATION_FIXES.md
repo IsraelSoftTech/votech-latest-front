@@ -190,7 +190,7 @@ curl http://localhost:5000/api/students/1/picture
 - CDN integration for photo storage
 - Real-time updates with WebSockets
 - Progressive Web App features
-
+2
 ## Troubleshooting
 
 ### Common Issues
