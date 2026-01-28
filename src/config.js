@@ -6,11 +6,16 @@ const isDevelopment = ENV === "development";
 const isDesktop = ENV === "desktop";
 const isProduction = ENV === "production";
 
+// Default API URLs if environment variables are not set
+const DEFAULT_API_URL_DEV = "http://localhost:5000";
+const DEFAULT_API_URL_DESKTOP = `http://${LOCAL_IP}:5000`;
+const DEFAULT_API_URL_PROD = "https://api.votechs7academygroup.com";
+
 const apiBase = isDevelopment
-  ? process.env.REACT_APP_API_URL_DEV
+  ? process.env.REACT_APP_API_URL_DEV || DEFAULT_API_URL_DEV
   : isDesktop
-  ? process.env.REACT_APP_API_URL_DESKTOP
-  : process.env.REACT_APP_API_URL_PROD;
+  ? process.env.REACT_APP_API_URL_DESKTOP || DEFAULT_API_URL_DESKTOP
+  : process.env.REACT_APP_API_URL_PROD || DEFAULT_API_URL_PROD;
 
 const API_URL = apiBase?.endsWith("/") ? `${apiBase}api` : `${apiBase}/api`;
 
