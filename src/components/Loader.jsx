@@ -4,9 +4,7 @@ import './Loader.css';
 const Loader = ({ poweredBy }) => (
   <div className="loader-root">
     <div className="loader-spinner">
-      <div className="spinner-ring ring-blue"></div>
-      <div className="spinner-ring ring-darkblue"></div>
-      <div className="spinner-ring ring-orange"></div>
+      <div className="spinner-line"></div>
     </div>
     <div className={`loader-powered-by${poweredBy ? ' loader-powered-by--visible' : ''}`}>Powered By Izzy Tech Team</div>
   </div>

@@ -51,12 +51,9 @@ const Signin = () => {
     
     try {
       const response = await api.login(form.username, form.password);
-      console.log('Login response:', response);
-      
       // Support both response.data.user and response.user
       const user = response.data?.user || response.user;
-      
-      if (user && response.token) {
+      if (user) {
         setSuccess('Sign in successful! Redirecting...');
         setSuccessType('success');
         setShowSuccess(true);
@@ -80,18 +77,14 @@ const Signin = () => {
           }
         }, 3000);
       } else {
-        const errorMsg = response.error || 'Invalid username or password.';
-        setError(errorMsg);
+        setError('Invalid username or password.');
         setSuccess('Sign in failed. Please try again.');
         setSuccessType('error');
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2500);
       }
     } catch (err) {
-      console.error('Login error:', err);
-      // Show the actual error message if available
-      const errorMsg = err.message || err.error || 'Signin failed. Please check your connection and try again.';
-      setError(errorMsg);
+      setError('Signin failed. Try again.');
       setSuccess('Sign in failed. Please try again.');
       setSuccessType('error');
       setShowSuccess(true);
