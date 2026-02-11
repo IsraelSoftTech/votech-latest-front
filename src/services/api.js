@@ -2,9 +2,16 @@ import config from "../config";
 
 // For local development, use the local backend API:
 // const API_URL = 'http://localhost:5000/api';
-// For production, use the production backend API:
-const API_URL = config.API_URL;
-// console.log('API URL:', API_URL);
+// For production, use the production backend API.
+// Fallback so we never request undefined/login (e.g. when env vars are missing in production build).
+const PRODUCTION_API_URL = "https://api.votechs7academygroup.com/api";
+const isValidApiUrl = (url) =>
+  url && typeof url === "string" && url.length > 0 && !url.includes("undefined");
+const API_URL = isValidApiUrl(config.API_URL)
+  ? config.API_URL
+  : typeof window !== "undefined" && window.location?.hostname === "votechs7academygroup.com"
+  ? PRODUCTION_API_URL
+  : "http://localhost:5000/api";
 
 class ApiService {
   constructor() {
