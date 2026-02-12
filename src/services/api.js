@@ -4,7 +4,7 @@ import config from "../config";
 // const API_URL = 'http://localhost:5000/api';
 // For production, use the production backend API.
 // Fallback so we never request undefined/login (e.g. when env vars are missing in production build).
-const PRODUCTION_API_URL = "https://api.votechs7academygroup.com/api";
+const PRODUCTION_API_URL = "https://api.votechs7academygroup.com";
 const isValidApiUrl = (url) =>
   url && typeof url === "string" && url.length > 0 && !url.includes("undefined");
 const API_URL = isValidApiUrl(config.API_URL)

@@ -29,17 +29,13 @@ if (!apiBase || typeof apiBase !== "string" || apiBase.includes("undefined")) {
   apiBase = DEFAULT_API_BASE_URL_PROD;
 }
 
-// Ensure API_URL includes /api
-let API_URL = apiBase.endsWith("/api")
-  ? apiBase
-  : apiBase.endsWith("/")
-  ? `${apiBase}api`
-  : `${apiBase}/api`;
+// API base URL (no /api suffix - use as-is)
+let API_URL = apiBase.replace(/\/+$/, "");
 
-// Runtime fallback: if we're on production domain and API_URL is invalid, use known production API
+// Runtime fallback: if we're on production domain and API_URL is invalid, use known production base
 if (typeof window !== "undefined" && window.location?.hostname === "votechs7academygroup.com") {
   if (!API_URL || API_URL.includes("undefined")) {
-    API_URL = "https://api.votechs7academygroup.com/api";
+    API_URL = "https://api.votechs7academygroup.com";
   }
 }
 
