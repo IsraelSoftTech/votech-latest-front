@@ -19,6 +19,8 @@ const HEADER_BG1 = "#eaf0fb";
 const HEADER_BG2 = "#f1f4fb";
 const COEF_BG = "#fbf6ea";
 const ZEBRA_BG = "#fbfcff";
+const PASS_COLOR = "#166534";
+const FAIL_COLOR = "#b91c1c";
 
 // Mobile detection hook
 const useIsMobile = () => {
@@ -42,6 +44,7 @@ export default function MasterSheet({ data = [], term = "annual" }) {
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
   const [expandedStudent, setExpandedStudent] = useState(null);
+  const [pdfFormat, setPdfFormat] = useState("wall"); // "wall" or "a4"
 
   const prepared = useMemo(() => prepare(data, term), [data, term]);
 
@@ -79,7 +82,11 @@ export default function MasterSheet({ data = [], term = "annual" }) {
       : "Annual";
 
   const allSubjects = useMemo(
-    () => [...subjects.general, ...subjects.professional],
+    () => [
+      ...subjects.general,
+      ...subjects.professional,
+      ...subjects.practical,
+    ],
     [subjects]
   );
 
@@ -88,15 +95,27 @@ export default function MasterSheet({ data = [], term = "annual" }) {
       setPdfGenerating(true);
       setPdfProgress({ current: 0, total: students.length });
 
-      const docDefinition = await buildDocDefinitionSequentialLandscapeNoRepeat(
-        prepared,
-        term,
-        computedStats,
-        (curr, total) => setPdfProgress({ current: curr, total })
-      );
+      let docDefinition;
+
+      if (pdfFormat === "a4") {
+        docDefinition = await buildA4CompactPDF(
+          prepared,
+          term,
+          computedStats,
+          (curr, total) => setPdfProgress({ current: curr, total })
+        );
+      } else {
+        docDefinition = await buildDocDefinitionSequentialLandscapeNoRepeat(
+          prepared,
+          term,
+          computedStats,
+          (curr, total) => setPdfProgress({ current: curr, total })
+        );
+      }
 
       const fileName = [
         "Master-Sheet",
+        pdfFormat === "a4" ? "A4" : "Wall",
         prepared.metadata?.departmentName || "Dept",
         prepared.metadata?.className || "Class",
         prepared.metadata?.academicYear || "Year",
@@ -140,6 +159,15 @@ export default function MasterSheet({ data = [], term = "annual" }) {
               grab a coffee ☕
             </div>
           )}
+          <select
+            className="ms-select"
+            value={pdfFormat}
+            onChange={(e) => setPdfFormat(e.target.value)}
+            disabled={pdfGenerating}
+          >
+            <option value="wall">Wall Poster (Landscape)</option>
+            <option value="a4">A4 Meeting Format</option>
+          </select>
           <button
             className="ms-btn"
             onClick={handleDownloadPDF}
@@ -196,6 +224,16 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                       Professional Subjects
                     </th>
                   )}
+                  {subjects.practical.length > 0 && (
+                    <th
+                      className="ms-group"
+                      colSpan={
+                        subjects.practical.length * subjectSubcolumns.length
+                      }
+                    >
+                      Practical Subjects
+                    </th>
+                  )}
                   {totalsColumns.length > 0 && (
                     <th className="ms-group" colSpan={totalsColumns.length}>
                       Totals
@@ -220,6 +258,15 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                   {subjects.professional.map((s) => (
                     <th
                       key={`p-${s.code}`}
+                      className="ms-subject"
+                      colSpan={subjectSubcolumns.length}
+                    >
+                      {s.code} — {s.title}
+                    </th>
+                  ))}
+                  {subjects.practical.map((s) => (
+                    <th
+                      key={`pr-${s.code}`}
                       className="ms-subject"
                       colSpan={subjectSubcolumns.length}
                     >
@@ -306,7 +353,6 @@ export default function MasterSheet({ data = [], term = "annual" }) {
               const isExpanded = expandedStudent === st.studentId;
               return (
                 <div key={st.studentId || rowIdx} className="ms-mobile-card">
-                  {/* Card header - always visible */}
                   <div
                     className="ms-mobile-card-header"
                     onClick={() => toggleStudent(st.studentId)}
@@ -325,7 +371,6 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                     </button>
                   </div>
 
-                  {/* Quick stats - always visible */}
                   <div className="ms-mobile-quick-stats">
                     {totalsColumns.map((c) => (
                       <div key={c.key} className="ms-mobile-stat">
@@ -337,10 +382,8 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                     ))}
                   </div>
 
-                  {/* Expandable subject details */}
                   {isExpanded && (
                     <div className="ms-mobile-card-body">
-                      {/* General Subjects */}
                       {subjects.general.length > 0 && (
                         <div className="ms-mobile-subject-group">
                           <h4 className="ms-mobile-group-title">
@@ -381,13 +424,52 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                         </div>
                       )}
 
-                      {/* Professional Subjects */}
                       {subjects.professional.length > 0 && (
                         <div className="ms-mobile-subject-group">
                           <h4 className="ms-mobile-group-title">
                             Professional Subjects
                           </h4>
                           {subjects.professional.map((s) => {
+                            const subjScores = st.subjects[s.code] || null;
+                            return (
+                              <div
+                                key={s.code}
+                                className="ms-mobile-subject-card"
+                              >
+                                <div className="ms-mobile-subject-header">
+                                  {s.code} — {s.title}
+                                </div>
+                                <div className="ms-mobile-subject-scores">
+                                  {subjectSubcolumns.map((sub) => (
+                                    <div
+                                      key={sub.key}
+                                      className={`ms-mobile-score-item ${
+                                        sub.key === "coef" ? "coef" : ""
+                                      }`}
+                                    >
+                                      <span className="ms-mobile-score-label">
+                                        {sub.label}
+                                      </span>
+                                      <span className="ms-mobile-score-value">
+                                        {fmt(
+                                          getSubjectValue(subjScores, sub.key)
+                                        )}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {subjects.practical.length > 0 && (
+                        <div className="ms-mobile-subject-group">
+                          <h4 className="ms-mobile-group-title">
+                            Practical Subjects
+                          </h4>
+                          {subjects.practical.map((s) => {
                             const subjScores = st.subjects[s.code] || null;
                             return (
                               <div
@@ -462,7 +544,404 @@ export default function MasterSheet({ data = [], term = "annual" }) {
   );
 }
 
-/* ===================== All the PDF and helper functions remain the same ===================== */
+/* ===================== A4 COMPACT PDF FORMAT ===================== */
+
+async function buildA4CompactPDF(prepared, selectedTerm, stats, onProgress) {
+  const {
+    metadata,
+    subjects,
+    students,
+    subjectSubcolumns,
+    totalsColumns,
+    administration,
+  } = prepared;
+
+  const termLabel =
+    selectedTerm === "term1"
+      ? "First Term"
+      : selectedTerm === "term2"
+      ? "Second Term"
+      : selectedTerm === "term3"
+      ? "Third Term"
+      : "Annual";
+
+  const content = [];
+
+  // ============================================================
+  // PAGE 1: CLASS OVERVIEW
+  // ============================================================
+
+  // Header
+  content.push({
+    text: metadata.schoolName,
+    alignment: "center",
+    bold: true,
+    fontSize: 14,
+    color: BRAND_BLUE,
+    margin: [0, 0, 0, 2],
+  });
+
+  content.push({
+    text: `Master Sheet — ${termLabel}`,
+    alignment: "center",
+    bold: true,
+    fontSize: 12,
+    margin: [0, 0, 0, 8],
+  });
+
+  content.push({
+    columns: [
+      { text: `Department: ${metadata.departmentName}`, fontSize: 9 },
+      {
+        text: `Class: ${metadata.className}`,
+        fontSize: 9,
+        alignment: "center",
+      },
+      {
+        text: `Year: ${metadata.academicYear}`,
+        fontSize: 9,
+        alignment: "right",
+      },
+    ],
+    margin: [0, 0, 0, 10],
+  });
+
+  // Class Overview Table
+  const overviewHeaders = [
+    { text: "Rank", style: "thCenter", fillColor: HEADER_BG1 },
+    { text: "Student Name", style: "thCenter", fillColor: HEADER_BG1 },
+    { text: "Student ID", style: "thCenter", fillColor: HEADER_BG1 },
+  ];
+
+  // Add term average columns based on selected term
+  if (selectedTerm === "annual") {
+    overviewHeaders.push(
+      { text: "T1 Avg", style: "thCenter", fillColor: HEADER_BG1 },
+      { text: "T2 Avg", style: "thCenter", fillColor: HEADER_BG1 },
+      { text: "T3 Avg", style: "thCenter", fillColor: HEADER_BG1 },
+      { text: "Annual", style: "thCenter", fillColor: HEADER_BG1 }
+    );
+  } else {
+    const termAvgLabel =
+      selectedTerm === "term1"
+        ? "T1 Avg"
+        : selectedTerm === "term2"
+        ? "T2 Avg"
+        : "T3 Avg";
+    overviewHeaders.push({
+      text: termAvgLabel,
+      style: "thCenter",
+      fillColor: HEADER_BG1,
+    });
+  }
+
+  overviewHeaders.push({
+    text: "Status",
+    style: "thCenter",
+    fillColor: HEADER_BG1,
+  });
+
+  // Sort students by rank
+  const sortedStudents = [...students].sort((a, b) => {
+    const rankA = getRankValue(a, selectedTerm);
+    const rankB = getRankValue(b, selectedTerm);
+    return rankA - rankB;
+  });
+
+  const overviewBody = [overviewHeaders];
+
+  sortedStudents.forEach((st, idx) => {
+    onProgress?.(idx + 1, students.length);
+
+    const row = [];
+    const rank = getRankValue(st, selectedTerm);
+    const avg = getTermAverage(st, selectedTerm);
+    const passed = parseFloat(avg) >= 10;
+
+    row.push({ text: String(rank || idx + 1), alignment: "center" });
+    row.push({ text: st.name, alignment: "left" });
+    row.push({ text: st.studentId, alignment: "center" });
+
+    if (selectedTerm === "annual") {
+      row.push({
+        text: fmt(st.termTotals?.term1?.average),
+        alignment: "center",
+        color: valueColor("avg", st.termTotals?.term1?.average),
+      });
+      row.push({
+        text: fmt(st.termTotals?.term2?.average),
+        alignment: "center",
+        color: valueColor("avg", st.termTotals?.term2?.average),
+      });
+      row.push({
+        text: fmt(st.termTotals?.term3?.average),
+        alignment: "center",
+        color: valueColor("avg", st.termTotals?.term3?.average),
+      });
+      row.push({
+        text: fmt(st.termTotals?.annual?.average),
+        alignment: "center",
+        bold: true,
+        color: valueColor("avg", st.termTotals?.annual?.average),
+      });
+    } else {
+      row.push({
+        text: fmt(avg),
+        alignment: "center",
+        bold: true,
+        color: valueColor("avg", avg),
+      });
+    }
+
+    row.push({
+      text: passed ? "PASS" : "FAIL",
+      alignment: "center",
+      bold: true,
+      color: passed ? PASS_COLOR : FAIL_COLOR,
+    });
+
+    overviewBody.push(row);
+  });
+
+  // Calculate widths for overview table
+  const overviewWidths =
+    selectedTerm === "annual"
+      ? ["auto", "*", "auto", "auto", "auto", "auto", "auto", "auto"]
+      : ["auto", "*", "auto", "auto", "auto"];
+
+  content.push({
+    table: {
+      headerRows: 1,
+      widths: overviewWidths,
+      body: overviewBody,
+    },
+    layout: {
+      fillColor: (rowIndex) =>
+        rowIndex > 0 && rowIndex % 2 === 0 ? ZEBRA_BG : null,
+      hLineWidth: () => 0.5,
+      vLineWidth: () => 0.5,
+      hLineColor: () => "#999",
+      vLineColor: () => "#999",
+      paddingTop: () => 3,
+      paddingBottom: () => 3,
+      paddingLeft: () => 4,
+      paddingRight: () => 4,
+    },
+  });
+
+  // Class Statistics
+  if (stats) {
+    content.push({
+      margin: [0, 10, 0, 0],
+      table: {
+        widths: ["*", "*", "*", "*"],
+        body: [
+          [
+            {
+              text: `Students: ${stats.count}`,
+              alignment: "center",
+              fontSize: 9,
+            },
+            {
+              text: `Class Avg: ${fmt(stats.classAverage)}`,
+              alignment: "center",
+              fontSize: 9,
+              bold: true,
+            },
+            {
+              text: `Highest: ${fmt(stats.highestAverage)}`,
+              alignment: "center",
+              fontSize: 9,
+              color: PASS_COLOR,
+            },
+            {
+              text: `Lowest: ${fmt(stats.lowestAverage)}`,
+              alignment: "center",
+              fontSize: 9,
+              color: FAIL_COLOR,
+            },
+          ],
+        ],
+      },
+      layout: {
+        hLineWidth: () => 0.5,
+        vLineWidth: () => 0.5,
+        hLineColor: () => BRAND_GOLD,
+        vLineColor: () => BRAND_GOLD,
+      },
+    });
+  }
+
+  // ============================================================
+  // SUBJECT BREAKDOWN PAGES
+  // ============================================================
+
+  const allSubjects = [
+    ...subjects.general.map((s) => ({ ...s, _type: "General" })),
+    ...subjects.professional.map((s) => ({ ...s, _type: "Professional" })),
+    ...subjects.practical.map((s) => ({ ...s, _type: "Practical" })),
+  ];
+
+  // Group subjects for pages (2-3 subjects per page depending on columns)
+  const subjectsPerPage = selectedTerm === "annual" ? 2 : 3;
+
+  for (let i = 0; i < allSubjects.length; i += subjectsPerPage) {
+    const pageSubjects = allSubjects.slice(i, i + subjectsPerPage);
+
+    content.push({ text: "", pageBreak: "before" });
+
+    // Page header
+    content.push({
+      text: `${metadata.className} — Subject Details — ${termLabel}`,
+      alignment: "center",
+      bold: true,
+      fontSize: 11,
+      color: BRAND_BLUE,
+      margin: [0, 0, 0, 10],
+    });
+
+    pageSubjects.forEach((subj, subjIdx) => {
+      if (subjIdx > 0) {
+        content.push({ text: "", margin: [0, 10, 0, 0] });
+      }
+
+      // Subject header
+      content.push({
+        text: `${subj._type}: ${subj.code} — ${subj.title} (Coef: ${
+          subj.coef || "-"
+        })`,
+        bold: true,
+        fontSize: 10,
+        color: BRAND_BLUE,
+        margin: [0, 0, 0, 4],
+      });
+
+      // Subject table header
+      const subjHeaders = [
+        { text: "S/N", style: "thSmall", fillColor: HEADER_BG1 },
+        { text: "Student Name", style: "thSmall", fillColor: HEADER_BG1 },
+      ];
+
+      // Add columns based on term
+      subjectSubcolumns.forEach((col) => {
+        if (col.key !== "coef") {
+          subjHeaders.push({
+            text: col.label,
+            style: "thSmall",
+            fillColor: HEADER_BG1,
+          });
+        }
+      });
+
+      const subjBody = [subjHeaders];
+
+      sortedStudents.forEach((st, idx) => {
+        const scores = st.subjects[subj.code] || {};
+        const row = [
+          { text: String(idx + 1), alignment: "center", fontSize: 8 },
+          { text: st.name, alignment: "left", fontSize: 8 },
+        ];
+
+        subjectSubcolumns.forEach((col) => {
+          if (col.key !== "coef") {
+            const val = getSubjectValue(scores, col.key);
+            row.push({
+              text: fmt(val),
+              alignment: "center",
+              fontSize: 8,
+              color: valueColor(col.key, val),
+            });
+          }
+        });
+
+        subjBody.push(row);
+      });
+
+      // Calculate widths
+      const numCols = subjHeaders.length;
+      const subjWidths = ["auto", "*", ...Array(numCols - 2).fill("auto")];
+
+      content.push({
+        table: {
+          headerRows: 1,
+          widths: subjWidths,
+          body: subjBody,
+        },
+        layout: {
+          fillColor: (rowIndex) =>
+            rowIndex > 0 && rowIndex % 2 === 0 ? ZEBRA_BG : null,
+          hLineWidth: () => 0.3,
+          vLineWidth: () => 0.3,
+          hLineColor: () => "#bbb",
+          vLineColor: () => "#bbb",
+          paddingTop: () => 2,
+          paddingBottom: () => 2,
+          paddingLeft: () => 3,
+          paddingRight: () => 3,
+        },
+      });
+    });
+  }
+
+  // ============================================================
+  // SIGNATURES PAGE (if needed)
+  // ============================================================
+
+  if (administration) {
+    content.push({
+      margin: [0, 30, 0, 0],
+      table: {
+        widths: ["*", "*"],
+        body: [
+          [
+            {
+              text: "Class Master",
+              bold: true,
+              alignment: "center",
+              color: BRAND_BLUE,
+            },
+            {
+              text: "Principal",
+              bold: true,
+              alignment: "center",
+              color: BRAND_BLUE,
+            },
+          ],
+          [
+            {
+              text: administration.classMaster?.toUpperCase() || "—",
+              margin: [0, 20, 0, 0],
+              alignment: "center",
+              decoration: "overline",
+            },
+            {
+              text: administration.principal?.toUpperCase() || "—",
+              margin: [0, 20, 0, 0],
+              alignment: "center",
+              decoration: "overline",
+            },
+          ],
+        ],
+      },
+      layout: { hLineWidth: () => 0, vLineWidth: () => 0 },
+    });
+  }
+
+  return {
+    compress: true,
+    pageSize: "A4",
+    pageOrientation: "portrait",
+    pageMargins: [20, 20, 20, 20],
+    defaultStyle: { fontSize: 9, lineHeight: 1.1 },
+    content,
+    styles: {
+      thCenter: { bold: true, alignment: "center", fontSize: 9 },
+      thSmall: { bold: true, fontSize: 8, alignment: "center" },
+    },
+  };
+}
+
+/* ===================== WALL POSTER PDF (Original) ===================== */
 
 function buildDocDefinitionSequentialLandscapeNoRepeat(
   prepared,
@@ -486,6 +965,7 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
         ...s,
         _type: "professional",
       })),
+      ...(subjects.practical || []).map((s) => ({ ...s, _type: "practical" })),
     ];
 
     const flatCols = [];
@@ -824,6 +1304,7 @@ function buildHeaderRowsForSlice(
   const leftCount = includeLeft ? 3 : 0;
   const genSpan = chunkCols.filter((c) => c.type === "general").length;
   const proSpan = chunkCols.filter((c) => c.type === "professional").length;
+  const praSpan = chunkCols.filter((c) => c.type === "practical").length;
   const totSpan = includeTotals ? totalsColumns?.length || 0 : 0;
 
   const pushGroup = (text, span) => {
@@ -840,6 +1321,7 @@ function buildHeaderRowsForSlice(
   if (leftCount > 0) pushGroup("Student Info", leftCount);
   if (genSpan > 0) pushGroup("General Subjects", genSpan);
   if (proSpan > 0) pushGroup("Professional Courses", proSpan);
+  if (praSpan > 0) pushGroup("Practical Subjects", praSpan);
   if (totSpan > 0) pushGroup("Totals", totSpan);
 
   if (includeLeft) {
@@ -901,9 +1383,12 @@ function buildHeaderRowsForSlice(
   return [row0, row1, row2];
 }
 
+/* ===================== HELPER FUNCTIONS ===================== */
+
 function getSubjectValue(subjScores, key) {
   return getSubjectRaw(subjScores, key);
 }
+
 function getTotalsValue(student, key, term) {
   return getTotalsRaw(student, key, term);
 }
@@ -945,6 +1430,22 @@ function getTotalsRaw(st, key, term) {
   return "";
 }
 
+function getRankValue(st, term) {
+  if (!st.termTotals) return 999;
+  if (term === "term1") return parseInt(st.termTotals.term1?.rank) || 999;
+  if (term === "term2") return parseInt(st.termTotals.term2?.rank) || 999;
+  if (term === "term3") return parseInt(st.termTotals.term3?.rank) || 999;
+  return parseInt(st.termTotals.annual?.rank) || 999;
+}
+
+function getTermAverage(st, term) {
+  if (!st.termTotals) return "";
+  if (term === "term1") return st.termTotals.term1?.average ?? "";
+  if (term === "term2") return st.termTotals.term2?.average ?? "";
+  if (term === "term3") return st.termTotals.term3?.average ?? "";
+  return st.termTotals.annual?.average ?? "";
+}
+
 function valueColor(key, raw) {
   const k = (key || "").toLowerCase();
   const isMarkOrAvg =
@@ -967,10 +1468,12 @@ function averageOf(values = []) {
   const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
   return Math.round(avg * 10) / 10;
 }
+
 function isNum(n) {
   const v = typeof n === "number" ? n : parseFloat(n);
   return !isNaN(v);
 }
+
 function fmt(v) {
   if (v == null || v === "") return "";
   const n = typeof v === "number" ? v : parseFloat(v);
@@ -1006,6 +1509,7 @@ function computeClassStats(students = [], term = "annual") {
 
 function prepare(payload, term) {
   if (!Array.isArray(payload) || payload.length === 0) return null;
+  console.log(payload);
 
   const firstRC = payload[0] || {};
   const studentMeta = firstRC.student || {};
@@ -1019,6 +1523,7 @@ function prepare(payload, term) {
   const toDef = (s) => ({ code: s.code, title: s.title, coef: s.coef });
   const generalDefs = (firstRC.generalSubjects || []).map(toDef);
   const professionalDefs = (firstRC.professionalSubjects || []).map(toDef);
+  const practicalDefs = (firstRC.practicalSubjects || []).map(toDef);
 
   const students = payload.map((rc) => {
     const subjMap = {};
@@ -1026,6 +1531,9 @@ function prepare(payload, term) {
       subjMap[s.code] = { ...(s.scores || {}), coef: s.coef, title: s.title };
     });
     (rc.professionalSubjects || []).forEach((s) => {
+      subjMap[s.code] = { ...(s.scores || {}), coef: s.coef, title: s.title };
+    });
+    (rc.practicalSubjects || []).forEach((s) => {
       subjMap[s.code] = { ...(s.scores || {}), coef: s.coef, title: s.title };
     });
     const tt = rc.termTotals || {};
@@ -1060,7 +1568,11 @@ function prepare(payload, term) {
 
   return {
     metadata: { schoolName, departmentName, className, academicYear },
-    subjects: { general: generalDefs, professional: professionalDefs },
+    subjects: {
+      general: generalDefs,
+      professional: professionalDefs,
+      practical: practicalDefs,
+    },
     students,
     subjectSubcolumns,
     totalsColumns,
