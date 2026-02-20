@@ -90,20 +90,22 @@ export default function Fee() {
   const fetchStudents = async () => {
     try {
       setStudentsLoading(true);
-      const studentsData = await api.getStudents();
-      const classesData = await api.getClasses();
+      const [studentsData, classesData] = await Promise.all([
+        api.getStudents(),
+        api.getClasses()
+      ]);
     
       setStudents(studentsData);
       setClasses(classesData);
       setFilteredStudents(studentsData);
+      setStudentsLoading(false);
 
-      // Also update the totals (this might be slow but needed for summary)
-      await updateTotals(studentsData, classesData);
+      // Update totals in background - don't block table display
+      updateTotals(studentsData, classesData).catch(() => {});
     } catch (error) {
       console.error('Error fetching students:', error);
       setStudents([]);
       setFilteredStudents([]);
-    } finally {
       setStudentsLoading(false);
     }
   };
@@ -387,7 +389,7 @@ export default function Fee() {
       try {
         await api.clearStudentFees(student.id);
         // Refresh the students and their fee details
-        await fetchStudentsAndFees();
+        await fetchStudents();
         alert('Student fees cleared successfully!');
       } catch (error) {
         console.error('Error clearing student fees:', error);
@@ -462,22 +464,7 @@ export default function Fee() {
     }, 300);
   };
 
-  // Fetch and aggregate total paid/owed on mount
-  useEffect(() => {
-    const fetchInitialTotals = async () => {
-      try {
-        const students = await api.getStudents();
-        const classes = await api.getClasses();
-        await updateTotals(students, classes);
-      } catch (error) {
-        console.error('Error fetching initial totals:', error);
-        setTotalPaid(0);
-        setTotalOwed(0);
-        setLoadingTotals(false);
-      }
-    };
-    fetchInitialTotals();
-  }, []);
+  // Totals are updated by fetchStudents (runs on mount and refresh)
 
   // Fetch classes on mount for modal
   useEffect(() => {
@@ -497,20 +484,26 @@ export default function Fee() {
           const inClass = students.filter(s => (s.class_name || s.class || '') === selectedClassName);
           // fetch missing details for students in class
           const missing = inClass.filter(s => !studentFeeDetails[s.id]);
+          let detailsMap = { ...studentFeeDetails };
           if (missing.length) {
             try {
               const results = await Promise.all(missing.map(async m => {
                 try { return { id: m.id, details: await api.getStudentFeeStats(m.id) }; } catch { return { id: m.id, details: null }; }
               }));
               const updates = {};
-              results.forEach(r => { if (r.details) updates[r.id] = r.details; });
+              results.forEach(r => {
+                if (r.details) {
+                  detailsMap[r.id] = r.details;
+                  updates[r.id] = r.details;
+                }
+              });
               if (Object.keys(updates).length) {
                 setStudentFeeDetails(prev => ({ ...prev, ...updates }));
               }
             } catch {}
           }
-          // map rows using latest details
-          const currentDetails = (sid) => (studentFeeDetails[sid] || {});
+          // map rows using latest details (detailsMap has freshly fetched data)
+          const currentDetails = (sid) => (detailsMap[sid] || {});
           const mapped = inClass.map(s => {
             const details = currentDetails(s.id);
             const row = {
@@ -539,6 +532,13 @@ export default function Fee() {
             row.Status = totalBalance === 0 && totalPaid > 0 ? 'Paid' : totalPaid > 0 ? 'Partial' : 'Unpaid';
             return row;
           });
+          // Sort alphabetically by name (trim + case-insensitive) for consistent display and print
+          const sortByName = (a, b) => {
+            const nameA = String(a?.name || a?.full_name || '').trim().toLowerCase();
+            const nameB = String(b?.name || b?.full_name || '').trim().toLowerCase();
+            return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+          };
+          mapped.sort(sortByName);
           setClassStats(mapped);
           setClassStatsLoading(false);
           setDebugInfo(d => ({ ...d, className: selectedClassName, classId: '', backendResponse: mapped }));
@@ -567,8 +567,13 @@ export default function Fee() {
     const totalOwed = classStats.reduce((sum, s) => sum + (s.Balance || 0), 0);
     const paymentRate = totalExpected > 0 ? totalPaid / totalExpected : 0;
 
-    // Process students data
-    const students = classStats.map(s => {
+    // Process students data - sort alphabetically by full name for consistent print/report
+    const sortedStats = [...classStats].sort((a, b) => {
+      const nameA = String(a?.name || a?.full_name || '').trim().toLowerCase();
+      const nameB = String(b?.name || b?.full_name || '').trim().toLowerCase();
+      return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+    });
+    const students = sortedStats.map(s => {
       const expectedFees = s.Expected || 0;
       const paidFees = s.Total || 0;
       const owedFees = s.Balance || 0;
@@ -860,6 +865,7 @@ export default function Fee() {
                   fontWeight: 500
                 }}
               >
+                <option value={5}>5</option>
                 <option value={25}>25</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
@@ -1379,9 +1385,12 @@ export default function Fee() {
                           </tr>
                         </thead>
                         <tbody>
-                          {(classStats || [])
-                            .slice()
-                            .sort((a,b)=> (a?.name || '').localeCompare(b?.name || ''))
+                          {[...(classStats || [])]
+                            .sort((a, b) => {
+                              const nameA = String(a?.name || a?.full_name || '').trim().toLowerCase();
+                              const nameB = String(b?.name || b?.full_name || '').trim().toLowerCase();
+                              return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+                            })
                             .map((s,idx)=>{
                               return (
                                 <tr key={s.name+idx}>
