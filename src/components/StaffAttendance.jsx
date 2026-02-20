@@ -20,8 +20,9 @@ export default function StaffAttendance() {
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [users, setUsers] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState('');
-  const [selectedYear, setSelectedYear] = useState('');
+  const currentDateInit = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDateInit.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(currentDateInit.getFullYear());
   const [activeTab, setActiveTab] = useState('records'); // 'records' or 'employment'
   const [employmentStatus, setEmploymentStatus] = useState([]);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -69,17 +70,17 @@ export default function StaffAttendance() {
   const canManageEmployment = ['Admin3', 'Admin1'].includes(userRole);
   const canManageSettings = canManageEmployment;
 
-  // Generate month options for the last 12 months
+  // Generate month options for the last 12 months (plus "All Months" for records view)
   const generateMonthOptions = () => {
-    const months = [];
+    const months = [{ value: 'all', label: 'All Months', month: null, year: null }];
     const currentDate = new Date();
-    
+
     for (let i = 0; i < 12; i++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
       const month = date.getMonth() + 1;
       const year = date.getFullYear();
       const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      
+
       months.push({
         value: `${month}-${year}`,
         label: monthName,
@@ -87,7 +88,7 @@ export default function StaffAttendance() {
         year: year
       });
     }
-    
+
     return months;
   };
 
@@ -95,17 +96,16 @@ export default function StaffAttendance() {
 
   useEffect(() => {
     loadStats();
-    loadRecords();
     loadUsers();
     loadClasses();
     loadEmploymentStatus();
     loadSettings();
-    
-    // Set default selected month to current month
-    const currentDate = new Date();
-    setSelectedMonth(currentDate.getMonth() + 1);
-    setSelectedYear(currentDate.getFullYear());
   }, []);
+
+  // Load records when month/year filter or active tab changes
+  useEffect(() => {
+    loadRecords();
+  }, [selectedMonth, selectedYear, activeTab]);
 
   const loadStats = async () => {
     try {
@@ -118,7 +118,12 @@ export default function StaffAttendance() {
 
   const loadRecords = async () => {
     try {
-      const data = await api.getStaffAttendanceRecords({ limit: 100 });
+      const params = { limit: 500 };
+      if (selectedMonth && selectedYear && `${selectedMonth}-${selectedYear}` !== 'all') {
+        params.month = String(selectedMonth);
+        params.year = String(selectedYear);
+      }
+      const data = await api.getStaffAttendanceRecords(params);
       setRecords(data);
     } catch (error) {
       console.error('Error loading records:', error);
@@ -252,11 +257,31 @@ export default function StaffAttendance() {
 
       if (isCreatingNew) {
         // Create new record
-        await api.createStaffAttendanceRecord(recordToSave);
+        const created = await api.createStaffAttendanceRecord(recordToSave);
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
         setEditingRecord(null);
         setIsCreatingNew(false);
+        // Optimistic update: show new record immediately in table (avoids "disappeared" perception)
+        const recordDate = new Date(recordToSave.date);
+        const recordMonth = recordDate.getMonth() + 1;
+        const recordYear = recordDate.getFullYear();
+        const inCurrentView =
+          (!selectedMonth && !selectedYear) ||
+          (recordMonth === selectedMonth && recordYear === selectedYear);
+        if (inCurrentView && created) {
+          const withClasses = {
+            ...created,
+            classes_taught: Array.isArray(created.classes_taught)
+              ? created.classes_taught
+              : created.classes_taught || ''
+          };
+          setRecords((prev) =>
+            [withClasses, ...prev].sort(
+              (a, b) => new Date(b.date) - new Date(a.date)
+            )
+          );
+        }
       } else {
         // Update existing record
         await api.updateStaffAttendanceRecord(editingRecord.id, recordToSave);
@@ -631,14 +656,20 @@ export default function StaffAttendance() {
           </button>
         )}
         
-        {/* Month Selection for Report */}
+        {/* Month Selection for Records filter & Report */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <select
-            value={`${selectedMonth}-${selectedYear}`}
+            value={selectedMonth && selectedYear ? `${selectedMonth}-${selectedYear}` : 'all'}
             onChange={(e) => {
-              const [month, year] = e.target.value.split('-');
-              setSelectedMonth(parseInt(month));
-              setSelectedYear(parseInt(year));
+              const val = e.target.value;
+              if (val === 'all') {
+                setSelectedMonth('');
+                setSelectedYear('');
+              } else {
+                const [month, year] = val.split('-');
+                setSelectedMonth(parseInt(month));
+                setSelectedYear(parseInt(year));
+              }
             }}
             style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc' }}
           >
@@ -735,7 +766,17 @@ export default function StaffAttendance() {
       {/* Records Table */}
       {activeTab === 'records' && (
         <div className="att-sessions-table">
-          <h3>Staff Attendance Records</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+            <h3 style={{ margin: 0 }}>Staff Attendance Records</h3>
+            {selectedMonth && selectedYear && (
+              <span style={{ fontSize: '13px', color: '#6b7280' }}>
+                Showing {monthOptions.find(o => o.month === selectedMonth && o.year === selectedYear)?.label || `${selectedMonth}/${selectedYear}`}
+              </span>
+            )}
+            {(!selectedMonth || !selectedYear) && (
+              <span style={{ fontSize: '13px', color: '#6b7280' }}>Showing all months (most recent 500)</span>
+            )}
+          </div>
         <div className="att-table-wrapper">
           <table className="att-table">
             <thead>

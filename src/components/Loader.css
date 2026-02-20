@@ -1,7 +1,9 @@
+/* Loader: 5-block snake moving through L-shaped path (like snake game) */
+
 .loader-root {
   min-height: 100vh;
   width: 100vw;
-  background: #fff;
+  background: #2d3748;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,39 +14,78 @@
   z-index: 9999;
 }
 
-.loader-spinner {
+/* Track: L-shape path - [1] then [2][3][4][5] */
+.loader-blocks {
+  --block-size: 16px;
+  --gap: 6px;
+  --step: calc(var(--block-size) + var(--gap));
   position: relative;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: calc(var(--step) * 4);
+  height: calc(var(--step) * 2);
   margin-bottom: 18px;
 }
 
-.spinner-line {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 4px solid;
-  border-color: #1a3c6c #87ceeb #ff9800 transparent; /* Blue, Sky blue, Orange, Transparent */
-  animation: spin 1s linear infinite;
-  will-change: transform;
+.loader-block {
+  position: absolute;
+  width: var(--block-size);
+  height: var(--block-size);
+  border-radius: 5px;
+  animation: loader-snake 1.6s linear infinite;
+  /* Start at P1; negative delay = phase offset for snake follow */
 }
 
-@keyframes spin {
-  0% { 
-    transform: rotate(0deg);
+/* Path: P1(0,0) → P2(0,↓) → P3(→,same) → P4(→) → P5(→) → loop to P1 */
+@keyframes loader-snake {
+  0% {
+    transform: translate(0, 0);
   }
-  100% { 
-    transform: rotate(360deg);
+  20% {
+    transform: translate(0, var(--step));
   }
+  40% {
+    transform: translate(var(--step), var(--step));
+  }
+  60% {
+    transform: translate(calc(var(--step) * 2), var(--step));
+  }
+  80% {
+    transform: translate(calc(var(--step) * 3), var(--step));
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* Gradient: orange → reddish-orange → red → pink/magenta */
+.loader-block--1 {
+  background: #ff9800;
+  animation-delay: 0s;
+}
+
+.loader-block--2 {
+  background: #ff9800;
+  animation-delay: -0.32s;
+}
+
+.loader-block--3 {
+  background: #ff6b35;
+  animation-delay: -0.64s;
+}
+
+.loader-block--4 {
+  background: #ff4757;
+  animation-delay: -0.96s;
+}
+
+.loader-block--5 {
+  background: #e91e63;
+  animation-delay: -1.28s;
 }
 
 .loader-powered-by {
   text-align: center;
   font-size: 1.08rem;
-  color: #1a3c6c;
+  color: rgba(255, 255, 255, 0.85);
   margin-top: 18px;
   font-weight: 500;
   letter-spacing: 0.2px;
@@ -57,23 +98,27 @@
 }
 
 @keyframes fadeInText {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 600px) {
-  .loader-spinner {
-    width: 48px;
-    height: 48px;
+  .loader-blocks {
+    --block-size: 14px;
+    --gap: 5px;
     margin-bottom: 12px;
   }
-  
-  .spinner-line {
-    border-width: 3px;
+
+  .loader-block {
+    border-radius: 4px;
   }
-  
+
   .loader-powered-by {
     font-size: 0.92rem;
     margin-top: 10px;
   }
-} 
+}

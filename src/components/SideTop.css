@@ -49,6 +49,31 @@
   gap: 8px;
 }
 
+/* Username at bottom of sidebar with Settings/Logout submenu - mobile only */
+.sidebar-username-section {
+  display: none;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+.sidebar-username-section .sidebar-username {
+  margin: 1px 6px;
+  padding: 7px 12px;
+}
+.sidebar-username-section .sidebar-user-submenu {
+  margin-left: 14px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+.sidebar-username-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .menu {
   flex: 1 1 auto;
   display: flex;
@@ -205,12 +230,12 @@
 
 .admin-header {
   height: 64px;
-  background: #fff;
+  background: #e0f2fe;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(32, 64, 128, 0.08);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -252,6 +277,16 @@
   display: flex;
   align-items: center;
   gap: 18px;
+}
+.header-logo-mobile {
+  display: none;
+}
+.header-votech-when-open {
+  display: none;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #204080;
 }
 .admin-actions .icon {
   position: relative;
@@ -329,6 +364,10 @@
   .sidebar.open {
     transform: translateX(0);
   }
+  .sidebar-username-section {
+    display: flex;
+    flex-direction: column;
+  }
   .menu-toggle {
     display: block;
   }
@@ -352,6 +391,24 @@
     gap: 6px;
     min-width: 0;
   }
+  .header-logo-desktop {
+    display: none !important;
+  }
+  .header-votech-when-open {
+    display: inline-block;
+  }
+  .header-logo-mobile {
+    display: flex;
+    align-items: center;
+  }
+  .header-logo-mobile-img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+  }
+  .admin-username-btn {
+    display: none !important;
+  }
   .year-select {
     width: auto;
     min-width: 0;
@@ -362,7 +419,7 @@
   .admin-actions {
     width: auto;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 4px;
     margin-bottom: 0;
     flex-shrink: 0;
   }
@@ -378,7 +435,7 @@
 
 @media (max-width: 480px) {
   .admin-actions {
-    gap: 6px;
+    gap: 4px;
   }
   .admin-header-left {
     gap: 4px;
@@ -386,19 +443,15 @@
   .admin-header {
     padding: 6px 2px 0 2px;
   }
-  /* Optimize logo and text for mobile */
-  .admin-header-left img {
-    width: 36px !important;
-    height: 36px !important;
-  }
-  .admin-header-left span {
-    font-size: 1.2rem !important;
+  .header-logo-mobile-img {
+    width: 32px !important;
+    height: 32px !important;
   }
 }
 
 @media (max-width: 360px) {
   .admin-actions {
-    gap: 4px;
+    gap: 3px;
   }
   .admin-header-left {
     gap: 3px;
@@ -406,13 +459,9 @@
   .admin-header {
     padding: 4px 1px 0 1px;
   }
-  /* Further optimize logo and text for very small screens */
-  .admin-header-left img {
-    width: 32px !important;
-    height: 32px !important;
-  }
-  .admin-header-left span {
-    font-size: 1.1rem !important;
+  .header-logo-mobile-img {
+    width: 28px !important;
+    height: 28px !important;
   }
 }
 

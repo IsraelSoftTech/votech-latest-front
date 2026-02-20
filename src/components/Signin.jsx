@@ -218,12 +218,7 @@ const Signin = () => {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
             </div>
-            <div className="signin-form-links">
-              <button type="button" className="signin-forgot-link" onClick={() => setShowForgot(true)}>
-                Forgot Password?
-              </button>
-            </div>
-                         {error && <div className="signin-error-message">{error}</div>}
+            {error && <div className="signin-error-message">{error}</div>}
              <button type="submit" className="signin-btn" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
              <div className="signin-form-bottom-text">
                Don't have an account?{" "}

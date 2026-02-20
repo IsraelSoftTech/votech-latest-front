@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import './Users.css';
 import SideTop from './SideTop';
 import api from '../services/api';
-import { FaEdit, FaTrash, FaBan, FaCheckCircle, FaPlus, FaEye, FaEyeSlash } from 'react-icons/fa';
+import SuccessMessage from './SuccessMessage';
+import { FaEdit, FaTrash, FaBan, FaCheckCircle, FaPlus, FaEye, FaEyeSlash, FaSearch } from 'react-icons/fa';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -28,6 +29,9 @@ export default function Users() {
   const [createLoading, setCreateLoading] = useState(false);
   const [createSuccess, setCreateSuccess] = useState('');
   const [createError, setCreateError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editSuccess, setEditSuccess] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
 
   // Get user role
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
@@ -69,12 +73,25 @@ export default function Users() {
 
   async function handleEditSubmit(e) {
     e.preventDefault();
+    setEditLoading(true);
+    setEditSuccess('');
     try {
-      await api.updateUser(editUser.id, editForm);
+      // Only send password when user wants to change it (non-empty)
+      const payload = { ...editForm };
+      if (!payload.password || !String(payload.password).trim()) {
+        delete payload.password;
+      }
+      await api.updateUser(editUser.id, payload);
       setModalOpen(false);
-      fetchUsers();
+      setEditUser(null);
+      await fetchUsers();
+      setEditSuccess(`User "${editForm.name || editForm.username}" updated successfully!`);
+      setTimeout(() => setEditSuccess(''), 4000);
     } catch (err) {
-      alert('Failed to update user.');
+      setEditSuccess('');
+      alert(err?.message || 'Failed to update user. Please try again.');
+    } finally {
+      setEditLoading(false);
     }
   }
 
@@ -177,6 +194,19 @@ export default function Users() {
   const totalUsers = users.length;
   const suspendedUsers = users.filter(u => u.suspended).length;
 
+  // Filter users by search (name, username, contact, role)
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm.trim()) return users;
+    const term = searchTerm.toLowerCase().trim();
+    return users.filter(
+      (u) =>
+        (typeof u.name === 'string' && u.name.toLowerCase().includes(term)) ||
+        (u.username && u.username.toLowerCase().includes(term)) ||
+        (u.contact && String(u.contact).toLowerCase().includes(term)) ||
+        (u.role && u.role.toLowerCase().includes(term))
+    );
+  }, [users, searchTerm]);
+
   return (
     <SideTop>
       <div className="users-main-content">
@@ -191,34 +221,41 @@ export default function Users() {
           </div>
         </div>
         <div className="users-table-container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          {editSuccess && <SuccessMessage message={editSuccess} type="success" onClose={() => setEditSuccess('')} />}
+          <div className="users-table-header">
             <h2>All Users</h2>
-            {isAdmin3 && (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  className="users-create-btn" 
-                  onClick={openCreateUserModal}
-                  style={{
-                    backgroundColor: '#204080',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '14px',
-                    fontWeight: '500'
-                  }}
-                >
+            <div className="users-header-actions">
+              <div className="users-search-wrapper">
+                <FaSearch className="users-search-icon" />
+                <input
+                  type="text"
+                  className="users-search-input"
+                  placeholder="Search by name, username, phone, or role..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Search users"
+                />
+                {searchTerm && (
+                  <span className="users-search-count">
+                    {filteredUsers.length} of {users.length}
+                  </span>
+                )}
+              </div>
+              {isAdmin3 && (
+                <button className="users-create-btn" onClick={openCreateUserModal}>
                   <FaPlus />
                   Create Users
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-          {loading ? <div>Loading...</div> : error ? <div className="error-message">{error}</div> : (
+          {loading ? <div>Loading...</div> : error ? <div className="error-message">{error}</div> : filteredUsers.length === 0 ? (
+            <div className="users-no-results">
+              <FaSearch className="users-no-results-icon" />
+              <p>{searchTerm ? `No users match "${searchTerm}"` : 'No users found'}</p>
+              {searchTerm && <button type="button" className="users-clear-search" onClick={() => setSearchTerm('')}>Clear search</button>}
+            </div>
+          ) : (
             <table className="users-table">
               <thead>
                 <tr>
@@ -231,7 +268,7 @@ export default function Users() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user, idx) => (
+                {filteredUsers.map((user, idx) => (
                   <tr key={user.id} className={user.suspended ? 'suspended' : ''}>
                     <td>{typeof user.name === 'string' ? user.name : 'Unknown User'}</td>
                     <td>{user.username}</td>
@@ -297,7 +334,7 @@ export default function Users() {
           )}
         </div>
         {modalOpen && (
-          <div className="users-modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="users-modal-overlay" onClick={() => !editLoading && setModalOpen(false)}>
             <div className="users-modal" onClick={e => e.stopPropagation()}>
               <h3>Edit User</h3>
               <form onSubmit={handleEditSubmit} className="users-edit-form">
@@ -307,13 +344,23 @@ export default function Users() {
                 <input name="username" value={editForm.username} onChange={handleEditChange} />
                 <label>Phone</label>
                 <input name="contact" value={editForm.contact} onChange={handleEditChange} />
-                <label>Password</label>
-                <input name="password" value={editForm.password} onChange={handleEditChange} type="password" />
+                <label>Password <span className="users-edit-hint">(leave blank to keep current)</span></label>
+                <input name="password" value={editForm.password} onChange={handleEditChange} type="password" placeholder="Optional" />
                 <label>Account Type</label>
-                <input name="role" value={editForm.role} onChange={handleEditChange} />
+                <select name="role" value={editForm.role} onChange={handleEditChange} className="users-edit-select">
+                  <option value="Admin1">Admin1</option>
+                  <option value="Admin2">Admin2</option>
+                  <option value="Admin3">Admin3</option>
+                  <option value="Admin4">Admin4</option>
+                  <option value="Teacher">Teacher</option>
+                  <option value="Discipline">Discipline</option>
+                  <option value="Psychosocialist">Psychosocialist</option>
+                </select>
                 <div className="users-edit-actions">
-                  <button type="submit" className="users-action-btn" disabled={isAdmin1} style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}>{isAdmin1 ? 'Not allowed for Admin1' : 'Save'}</button>
-                  <button type="button" className="users-action-btn" onClick={() => setModalOpen(false)}>Cancel</button>
+                  <button type="submit" className="users-action-btn users-save-btn" disabled={isAdmin1 || editLoading} style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}>
+                    {editLoading ? 'Saving...' : (isAdmin1 ? 'Not allowed for Admin1' : 'Save Changes')}
+                  </button>
+                  <button type="button" className="users-action-btn" onClick={() => setModalOpen(false)} disabled={editLoading}>Cancel</button>
                 </div>
               </form>
             </div>

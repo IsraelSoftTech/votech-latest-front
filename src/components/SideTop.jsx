@@ -904,6 +904,50 @@ export default function SideTop({ children }) {
             );
           })}
         </nav>
+        {/* Username at bottom of sidebar with Settings/Logout submenu (mobile only) */}
+        <div className="sidebar-username-section">
+          <div
+            className={`sidebar-username menu-item has-submenu${expandedMenu === "__sidebar_user__" ? " expanded" : ""}`}
+            onClick={() => setExpandedMenu((prev) => (prev === "__sidebar_user__" ? null : "__sidebar_user__"))}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setExpandedMenu((prev) => (prev === "__sidebar_user__" ? null : "__sidebar_user__"));
+              }
+            }}
+          >
+            <span className="icon"><FaUser /></span>
+            <span className="menu-label sidebar-username-text">{username}</span>
+            <span className="chevron" aria-hidden="true">
+              <FaChevronCircleDown />
+            </span>
+          </div>
+          <div className={`submenu sidebar-user-submenu ${expandedMenu === "__sidebar_user__" ? "expanded" : ""}`}>
+            <div
+              className="submenu-item"
+              onClick={() => {
+                openProfileModal();
+                setSidebarOpen(false);
+              }}
+            >
+              <span className="icon"><FaCog /></span>
+              <span className="menu-label">Settings</span>
+            </div>
+            <div
+              className="submenu-item"
+              onClick={() => {
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("authUser");
+                window.location.href = "/signin";
+              }}
+            >
+              <span className="icon"><FaSignOutAlt /></span>
+              <span className="menu-label">Logout</span>
+            </div>
+          </div>
+        </div>
       </aside>
 
       <div
@@ -938,7 +982,12 @@ export default function SideTop({ children }) {
             >
               <FaBars />
             </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {sidebarOpen && (
+              <span className="header-votech-when-open">
+                VOTECH
+              </span>
+            )}
+            <div className="header-logo-desktop" style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <img
                 src={logo}
                 alt="logo"
@@ -965,7 +1014,11 @@ export default function SideTop({ children }) {
               count={upcomingEventsCount}
               onClick={handleBellClick}
             />
+            <div className="header-logo-mobile">
+              <img src={logo} alt="logo" className="header-logo-mobile-img" />
+            </div>
             <button
+              className="admin-username-btn"
               style={{
                 background: "none",
                 border: "none",
