@@ -1,23 +1,23 @@
 {
   "files": {
-    "main.css": "/static/css/main.38772743.css",
-    "main.js": "/static/js/main.54c6f226.js",
-    "static/js/977.a47a31b6.chunk.js": "/static/js/977.a47a31b6.chunk.js",
-    "static/js/455.8f0a8a1a.chunk.js": "/static/js/455.8f0a8a1a.chunk.js",
-    "static/js/488.475386aa.chunk.js": "/static/js/488.475386aa.chunk.js",
+    "main.css": "/static/css/main.88d582e1.css",
+    "main.js": "/static/js/main.668bd946.js",
+    "static/js/977.dc08da06.chunk.js": "/static/js/977.dc08da06.chunk.js",
+    "static/js/455.24c1d0a8.chunk.js": "/static/js/455.24c1d0a8.chunk.js",
+    "static/js/488.8a3c3699.chunk.js": "/static/js/488.8a3c3699.chunk.js",
     "static/media/stamp.png": "/static/media/stamp.65f3377d81b5979f0e3a.png",
     "static/media/logo.png": "/static/media/logo.90a047b404fc5d9de3b4.png",
     "static/media/home.jpg": "/static/media/home.12eae72e144ba17f4b5f.jpg",
     "index.html": "/index.html",
     "static/media/student_import_template.xlsx": "/static/media/student_import_template.31d6cfe0d16ae931b73c.xlsx",
-    "main.38772743.css.map": "/static/css/main.38772743.css.map",
-    "main.54c6f226.js.map": "/static/js/main.54c6f226.js.map",
-    "977.a47a31b6.chunk.js.map": "/static/js/977.a47a31b6.chunk.js.map",
-    "455.8f0a8a1a.chunk.js.map": "/static/js/455.8f0a8a1a.chunk.js.map",
-    "488.475386aa.chunk.js.map": "/static/js/488.475386aa.chunk.js.map"
+    "main.88d582e1.css.map": "/static/css/main.88d582e1.css.map",
+    "main.668bd946.js.map": "/static/js/main.668bd946.js.map",
+    "977.dc08da06.chunk.js.map": "/static/js/977.dc08da06.chunk.js.map",
+    "455.24c1d0a8.chunk.js.map": "/static/js/455.24c1d0a8.chunk.js.map",
+    "488.8a3c3699.chunk.js.map": "/static/js/488.8a3c3699.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.38772743.css",
-    "static/js/main.54c6f226.js"
+    "static/css/main.88d582e1.css",
+    "static/js/main.668bd946.js"
   ]
 }
