@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './Signin.css';
 import logo from '../assets/logo.png';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaArrowLeft, FaCheckCircle, FaKey } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import api from '../services/api';
 import Loader from './Loader';
 import SuccessMessage from './SuccessMessage';
 
+const STEPS = [
+  { id: 1, title: 'Username', label: 'Enter Username' },
+  { id: 2, title: 'Email', label: 'Enter Email' },
+  { id: 3, title: 'New Password', label: 'Enter new password' },
+  { id: 4, title: 'Confirm', label: 'Confirm password' },
+];
+
 const Signin = () => {
-  
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -21,23 +27,18 @@ const Signin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showLoader, setShowLoader] = useState(false);
-  const [showForgot, setShowForgot] = useState(false);
-  const [resetUsername, setResetUsername] = useState('');
-  const [resetPassword, setResetPassword] = useState('');
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetMessage, setResetMessage] = useState('');
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [forgotStep, setForgotStep] = useState(1); // 1: check, 2: reset
+
+  // Forgot password modal state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1);
   const [forgotUsername, setForgotUsername] = useState('');
-  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
   const [forgotError, setForgotError] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
-  const [reset1Password, setReset1Password] = useState('');
-  const [reset2Password, setReset2Password] = useState('');
-  const [resetError, setResetError] = useState('');
-  const [resetSuccess, setResetSuccess] = useState('');
-
-
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -48,16 +49,14 @@ const Signin = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
       const response = await api.login(form.username, form.password);
-      // Support both response.data.user and response.user
       const user = response.data?.user || response.user;
       if (user) {
         setSuccess('Sign in successful! Redirecting...');
         setSuccessType('success');
         setShowSuccess(true);
-        // Clear success message after 3 seconds
         setTimeout(() => setShowSuccess(false), 3000);
         setShowLoader(true);
         setTimeout(() => {
@@ -93,78 +92,95 @@ const Signin = () => {
     setLoading(false);
   };
 
-
-
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    setResetMessage('');
-    setResetLoading(true);
-    try {
-      await api.resetPassword(resetUsername, resetPassword);
-      setResetMessage('Password reset successful! You can now sign in.');
-      setResetUsername('');
-      setResetPassword('');
-    } catch (err) {
-      setResetMessage('Password reset failed. Please check the username.');
-    }
-    setResetLoading(false);
+  const openForgotModal = () => {
+    setShowForgotModal(true);
+    setForgotStep(1);
+    setForgotUsername('');
+    setForgotEmail('');
+    setForgotNewPassword('');
+    setForgotConfirmPassword('');
+    setForgotError('');
+    setForgotSuccess(false);
   };
 
-  // New forgot password flow
-  const handleCheckAccount = async (e) => {
+  const closeForgotModal = () => {
+    setShowForgotModal(false);
+    setForgotStep(1);
+    setForgotUsername('');
+    setForgotEmail('');
+    setForgotNewPassword('');
+    setForgotConfirmPassword('');
+    setForgotError('');
+    setForgotSuccess(false);
+  };
+
+  const handleForgotNext = async (e) => {
     e.preventDefault();
     setForgotError('');
-    setForgotLoading(true);
-    try {
-      const res = await api.checkUserDetails(forgotUsername, forgotPhone);
-      if (res.exists) {
-        setForgotStep(2);
-      } else {
-        setForgotError('No account found with that username and phone number.');
+
+    if (forgotStep === 1) {
+      if (!forgotUsername.trim()) {
+        setForgotError('Please enter your username.');
+        return;
       }
-    } catch (err) {
-      if (err.message && err.message.includes('Phone number does not match')) {
-        setForgotError('Phone number does not match the username. Please check and try again.');
-      } else if (err.message && err.message.includes('User not found')) {
-        setForgotError('No account found with that username.');
-      } else {
-        setForgotError('Error checking account. Please try again.');
-      }
+      setForgotStep(2);
+      return;
     }
-    setForgotLoading(false);
+
+    if (forgotStep === 2) {
+      if (!forgotEmail.trim()) {
+        setForgotError('Please enter your email.');
+        return;
+      }
+      setForgotLoading(true);
+      try {
+        await api.verifyForgotPasswordAccount(forgotUsername.trim(), forgotEmail.trim());
+        setForgotStep(3);
+      } catch (err) {
+        setForgotError(err.message || 'No account found with that username and email.');
+      }
+      setForgotLoading(false);
+      return;
+    }
+
+    if (forgotStep === 3) {
+      if (!forgotNewPassword || forgotNewPassword.length < 6) {
+        setForgotError('Password must be at least 6 characters.');
+        return;
+      }
+      setForgotStep(4);
+      return;
+    }
+
+    if (forgotStep === 4) {
+      if (forgotNewPassword !== forgotConfirmPassword) {
+        setForgotError('Passwords do not match.');
+        return;
+      }
+      setForgotLoading(true);
+      try {
+        await api.resetPasswordWithEmail(forgotUsername.trim(), forgotEmail.trim(), forgotNewPassword);
+        setForgotSuccess(true);
+        setTimeout(() => {
+          closeForgotModal();
+        }, 2200);
+      } catch (err) {
+        setForgotError(err.message || 'Failed to reset password. Please try again.');
+      }
+      setForgotLoading(false);
+    }
   };
 
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setResetError('');
-    if (!reset1Password || !reset2Password) {
-      setResetError('Please fill both password fields.');
-      return;
-    }
-    if (reset1Password !== reset2Password) {
-      setResetError('Passwords do not match.');
-      return;
-    }
-    setForgotLoading(true);
-    try {
-      await api.resetPassword(forgotUsername, reset1Password);
-      setResetSuccess('success');
-      setTimeout(() => {
-        setShowForgot(false);
-        setForgotStep(1);
-        setForgotUsername('');
-        setForgotPhone('');
-        setReset1Password('');
-        setReset2Password('');
-        setResetSuccess('');
-        setResetError('');
-        setForgotError('');
-        navigate('/signin');
-      }, 1800);
-    } catch (err) {
-      setResetError('Failed to reset password. Please try again.');
-    }
-    setForgotLoading(false);
+  const handleForgotBack = () => {
+    setForgotError('');
+    if (forgotStep > 1) setForgotStep(forgotStep - 1);
+  };
+
+  const getForgotStepLabel = () => {
+    if (forgotStep === 1) return 'Enter Username';
+    if (forgotStep === 2) return 'Enter Email';
+    if (forgotStep === 3) return 'Enter new password';
+    return 'Confirm password';
   };
 
   return (
@@ -195,7 +211,7 @@ const Signin = () => {
         ) : (
           <form className="signin-form" onSubmit={handleSubmit}>
             <div className="signin-form-back-arrow">
-              <button type="button" className="signin-back-arrow" onClick={() => navigate('/') } title="Back">
+              <button type="button" className="signin-back-arrow" onClick={() => navigate('/')} title="Back">
                 <FaArrowLeft />
               </button>
             </div>
@@ -218,51 +234,126 @@ const Signin = () => {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
             </div>
+            <button
+              type="button"
+              className="signin-forgot-link"
+              onClick={openForgotModal}
+              style={{ alignSelf: 'flex-end', marginBottom: 8 }}
+            >
+              Forgot Password?
+            </button>
             {error && <div className="signin-error-message">{error}</div>}
-             <button type="submit" className="signin-btn" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
-             <div className="signin-form-bottom-text">
-               Don't have an account?{" "}
-               <Link to="/signup" className="signin-signup-link">
-                 Sign Up
-               </Link>
-             </div>
+            <button type="submit" className="signin-btn" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
+            <div className="signin-form-bottom-text">
+              Don't have an account?{" "}
+              <Link to="/signup" className="signin-signup-link">
+                Sign Up
+              </Link>
+            </div>
           </form>
         )}
-        {showForgot && (
-          <div className="signin-modal-overlay" onClick={() => { setShowForgot(false); setForgotStep(1); setForgotError(''); setResetError(''); setResetSuccess(''); }}>
-            <div className="signin-modal" onClick={e => e.stopPropagation()}>
-              <div className="signin-modal-header">
-                <h2>{forgotStep === 1 ? 'Check Account' : 'Reset Password'}</h2>
-                <button className="signin-close-button signin-modal-text-btn" type="button" onClick={() => { setShowForgot(false); setForgotStep(1); setForgotError(''); setResetError(''); setResetSuccess(''); }}>&times;</button>
+
+        {/* Forgot Password Modal */}
+        {showForgotModal && (
+          <div className="signin-forgot-overlay" onClick={closeForgotModal}>
+            <div className="signin-forgot-modal" onClick={e => e.stopPropagation()}>
+              <div className="signin-forgot-modal-header">
+                <div className="signin-forgot-modal-title-row">
+                  <FaKey className="signin-forgot-icon" />
+                  <h2>Forgot Password?</h2>
+                </div>
+                <button type="button" className="signin-forgot-close" onClick={closeForgotModal} aria-label="Close">&times;</button>
               </div>
-              {forgotStep === 1 ? (
-                <form onSubmit={handleCheckAccount} className="signin-forgot-form">
-                  <label className="signin-input-label">Username</label>
-                  <input className="signin-input-field" type="text" value={forgotUsername} onChange={e => setForgotUsername(e.target.value)} required />
-                  <label className="signin-input-label">Phone Number</label>
-                  <input className="signin-input-field" type="tel" value={forgotPhone} onChange={e => setForgotPhone(e.target.value)} required />
-                  {forgotError && <div className="signin-error-message">{forgotError}</div>}
-                  <button type="submit" className="signin-modal-text-btn" disabled={forgotLoading}>{forgotLoading ? 'Checking...' : 'Check Account'}</button>
-                </form>
+
+              <div className="signin-forgot-steps">
+                {STEPS.map(s => (
+                  <div key={s.id} className={`signin-forgot-step-dot ${forgotStep >= s.id ? 'active' : ''} ${forgotStep === s.id ? 'current' : ''}`}>
+                    <span>{s.id}</span>
+                  </div>
+                ))}
+              </div>
+
+              {forgotSuccess ? (
+                <div className="signin-forgot-success">
+                  <FaCheckCircle className="signin-forgot-success-icon" />
+                  <h3>Password reset successful!</h3>
+                  <p>You can now sign in with your new password.</p>
+                </div>
               ) : (
-                <form onSubmit={handleResetPassword} className="signin-forgot-form">
-                  <label className="signin-input-label">Enter New Password</label>
-                  <div className="signin-password-field-wrapper">
-                    <input className="signin-input-field" type={showForgotPassword ? 'text' : 'password'} value={reset1Password} onChange={e => setReset1Password(e.target.value)} required />
-                    <span className="signin-eye-icon" onClick={() => setShowForgotPassword(v => !v)}>
-                      {showForgotPassword ? <FaEyeSlash /> : <FaEye />}
-                    </span>
+                <form onSubmit={handleForgotNext} className="signin-forgot-form">
+                  <p className="signin-forgot-step-label">{getForgotStepLabel()}</p>
+
+                  {forgotStep === 1 && (
+                    <input
+                      className="signin-input-field"
+                      type="text"
+                      placeholder="Enter your username"
+                      value={forgotUsername}
+                      onChange={e => setForgotUsername(e.target.value)}
+                      autoFocus
+                    />
+                  )}
+
+                  {forgotStep === 2 && (
+                    <input
+                      className="signin-input-field"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={forgotEmail}
+                      onChange={e => setForgotEmail(e.target.value)}
+                      autoFocus
+                    />
+                  )}
+
+                  {forgotStep === 3 && (
+                    <div className="signin-password-field-wrapper">
+                      <input
+                        className="signin-input-field"
+                        type={showForgotPassword ? 'text' : 'password'}
+                        placeholder="Enter new password (min 6 characters)"
+                        value={forgotNewPassword}
+                        onChange={e => setForgotNewPassword(e.target.value)}
+                        minLength={6}
+                        autoFocus
+                      />
+                      <span className="signin-eye-icon" onClick={() => setShowForgotPassword(v => !v)}>
+                        {showForgotPassword ? <FaEyeSlash /> : <FaEye />}
+                      </span>
+                    </div>
+                  )}
+
+                  {forgotStep === 4 && (
+                    <div className="signin-password-field-wrapper">
+                      <input
+                        className="signin-input-field"
+                        type={showForgotPassword ? 'text' : 'password'}
+                        placeholder="Confirm your new password"
+                        value={forgotConfirmPassword}
+                        onChange={e => setForgotConfirmPassword(e.target.value)}
+                        autoFocus
+                      />
+                      <span className="signin-eye-icon" onClick={() => setShowForgotPassword(v => !v)}>
+                        {showForgotPassword ? <FaEyeSlash /> : <FaEye />}
+                      </span>
+                    </div>
+                  )}
+
+                  {forgotError && <div className="signin-error-message">{forgotError}</div>}
+
+                  <div className="signin-forgot-actions">
+                    {forgotStep > 1 && (
+                      <button type="button" className="signin-forgot-back-btn" onClick={handleForgotBack}>
+                        Back
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      className="signin-forgot-next-btn"
+                      disabled={forgotLoading}
+                    >
+                      {forgotLoading ? 'Verifying...' : forgotStep === 4 ? 'Reset Password' : 'Next'}
+                    </button>
                   </div>
-                  <label className="signin-input-label">Repeat Password</label>
-                  <div className="signin-password-field-wrapper">
-                    <input className="signin-input-field" type={showForgotPassword ? 'text' : 'password'} value={reset2Password} onChange={e => setReset2Password(e.target.value)} required />
-                    <span className="signin-eye-icon" onClick={() => setShowForgotPassword(v => !v)}>
-                      {showForgotPassword ? <FaEyeSlash /> : <FaEye />}
-                    </span>
-                  </div>
-                  {resetError && <div className="signin-error-message">{resetError}</div>}
-                  {resetSuccess && <SuccessMessage message={resetSuccess} />}
-                  <button type="submit" className="signin-modal-text-btn" disabled={forgotLoading}>{forgotLoading ? 'Resetting...' : 'Reset'}</button>
                 </form>
               )}
             </div>
@@ -273,4 +364,4 @@ const Signin = () => {
   );
 };
 
-export default Signin; 
+export default Signin;

@@ -301,7 +301,195 @@
   margin-bottom: 8px;
 }
 
-/* Forgot password modal styles */
+/* Forgot Password modal - cool multi-step */
+.signin-forgot-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(32, 64, 128, 0.25);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.25s ease-out;
+}
+.signin-forgot-modal {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(32, 64, 128, 0.2), 0 0 0 1px rgba(255,255,255,0.8) inset;
+  padding: 32px 36px 36px 36px;
+  min-width: 360px;
+  max-width: 420px;
+  width: 100%;
+  position: relative;
+  animation: forgotModalIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes forgotModalIn {
+  from { opacity: 0; transform: scale(0.92) translateY(-24px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.signin-forgot-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.signin-forgot-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.signin-forgot-icon {
+  font-size: 1.5rem;
+  color: #1976d2;
+}
+.signin-forgot-modal-header h2 {
+  font-size: 1.35rem;
+  color: #1e293b;
+  font-weight: 700;
+  margin: 0;
+}
+.signin-forgot-close {
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 1.5rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.signin-forgot-close:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+.signin-forgot-steps {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.signin-forgot-step-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+.signin-forgot-step-dot.active {
+  background: #1976d2;
+  color: #fff;
+}
+.signin-forgot-step-dot.current {
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.35);
+  transform: scale(1.08);
+}
+.signin-forgot-step-label {
+  font-size: 1.05rem;
+  color: #475569;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+.signin-forgot-form .signin-input-field {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  margin-bottom: 20px;
+  outline: none;
+  transition: all 0.2s;
+  background: #fff;
+  box-sizing: border-box;
+}
+.signin-forgot-form .signin-input-field:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+}
+.signin-forgot-form .signin-password-field-wrapper {
+  margin-bottom: 20px;
+}
+.signin-forgot-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.signin-forgot-back-btn {
+  flex: 1;
+  padding: 14px;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.signin-forgot-back-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+.signin-forgot-next-btn {
+  flex: 2;
+  padding: 14px;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+}
+.signin-forgot-next-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+}
+.signin-forgot-next-btn:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+.signin-forgot-success {
+  text-align: center;
+  padding: 24px 0;
+}
+.signin-forgot-success-icon {
+  font-size: 4rem;
+  color: #22c55e;
+  margin-bottom: 16px;
+  animation: successPulse 0.6s ease-out;
+}
+@keyframes successPulse {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.signin-forgot-success h3 {
+  font-size: 1.25rem;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+.signin-forgot-success p {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Legacy modal (kept for compatibility) */
 .signin-modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -489,6 +677,22 @@
   box-shadow: none;
 }
 @media (max-width: 600px) {
+  .signin-forgot-modal {
+    min-width: 90vw;
+    max-width: 95vw;
+    padding: 24px 20px 28px 20px;
+  }
+  .signin-forgot-modal-header h2 {
+    font-size: 1.15rem;
+  }
+  .signin-forgot-step-dot {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+  }
+  .signin-forgot-success-icon {
+    font-size: 3rem;
+  }
   .signin-modal-overlay {
     padding: 10px;
   }

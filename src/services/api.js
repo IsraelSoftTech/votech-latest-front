@@ -554,6 +554,34 @@ class ApiService {
     }
   }
 
+  async verifyForgotPasswordAccount(username, email) {
+    try {
+      const response = await fetch(`${API_URL}/users/check-user-details`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Verify forgot password account error:", error);
+      throw error;
+    }
+  }
+
+  async resetPasswordWithEmail(username, email, newPassword) {
+    try {
+      const response = await fetch(`${API_URL}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, newPassword }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Reset password error:", error);
+      throw error;
+    }
+  }
+
   // User management for Admin3
   async getAllUsers() {
     const response = await fetch(`${API_URL}/users/all`, {

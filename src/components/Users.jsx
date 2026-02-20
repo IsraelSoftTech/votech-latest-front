@@ -10,7 +10,7 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editUser, setEditUser] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', username: '', contact: '', password: '', role: '' });
+  const [editForm, setEditForm] = useState({ name: '', username: '', email: '', contact: '', gender: '', password: '', role: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [warning, setWarning] = useState({ show: false, type: '', user: null });
   const [createUserModal, setCreateUserModal] = useState(false);
@@ -59,7 +59,9 @@ export default function Users() {
     setEditForm({
       name: user.name || '',
       username: user.username,
-      contact: user.contact,
+      email: user.email || '',
+      contact: user.contact || '',
+      gender: user.gender || '',
       password: '',
       role: user.role
     });
@@ -194,7 +196,7 @@ export default function Users() {
   const totalUsers = users.length;
   const suspendedUsers = users.filter(u => u.suspended).length;
 
-  // Filter users by search (name, username, contact, role)
+  // Filter users by search (name, username, email, contact, role)
   const filteredUsers = useMemo(() => {
     if (!searchTerm.trim()) return users;
     const term = searchTerm.toLowerCase().trim();
@@ -202,6 +204,7 @@ export default function Users() {
       (u) =>
         (typeof u.name === 'string' && u.name.toLowerCase().includes(term)) ||
         (u.username && u.username.toLowerCase().includes(term)) ||
+        (u.email && String(u.email).toLowerCase().includes(term)) ||
         (u.contact && String(u.contact).toLowerCase().includes(term)) ||
         (u.role && u.role.toLowerCase().includes(term))
     );
@@ -230,7 +233,7 @@ export default function Users() {
                 <input
                   type="text"
                   className="users-search-input"
-                  placeholder="Search by name, username, phone, or role..."
+                  placeholder="Search by name, username, email, phone, or role..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   aria-label="Search users"
@@ -261,6 +264,7 @@ export default function Users() {
                 <tr>
                   <th>Name</th>
                   <th>Username</th>
+                  <th>Email</th>
                   <th>Phone</th>
                   <th>Password</th>
                   <th>Account Type</th>
@@ -272,6 +276,7 @@ export default function Users() {
                   <tr key={user.id} className={user.suspended ? 'suspended' : ''}>
                     <td>{typeof user.name === 'string' ? user.name : 'Unknown User'}</td>
                     <td>{user.username}</td>
+                    <td>{user.email || '—'}</td>
                     <td>{user.contact}</td>
                     <td>••••••••</td>
                     <td>{user.role}</td>
@@ -338,12 +343,21 @@ export default function Users() {
             <div className="users-modal" onClick={e => e.stopPropagation()}>
               <h3>Edit User</h3>
               <form onSubmit={handleEditSubmit} className="users-edit-form">
-                <label>Name</label>
-                <input name="name" value={typeof editForm.name === 'string' ? editForm.name : ''} onChange={handleEditChange} />
+                <label>Full Name</label>
+                <input name="name" value={typeof editForm.name === 'string' ? editForm.name : ''} onChange={handleEditChange} placeholder="Enter Full Name" />
                 <label>Username</label>
-                <input name="username" value={editForm.username} onChange={handleEditChange} />
-                <label>Phone</label>
-                <input name="contact" value={editForm.contact} onChange={handleEditChange} />
+                <input name="username" value={editForm.username} onChange={handleEditChange} placeholder="Enter Username" />
+                <label>Email</label>
+                <input name="email" type="email" value={editForm.email} onChange={handleEditChange} placeholder="Enter Email" />
+                <label>Phone Number</label>
+                <input name="contact" type="tel" value={editForm.contact} onChange={handleEditChange} placeholder="Enter Phone Number" />
+                <label>Gender</label>
+                <select name="gender" value={editForm.gender} onChange={handleEditChange} className="users-edit-select">
+                  <option value="">Select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
                 <label>Password <span className="users-edit-hint">(leave blank to keep current)</span></label>
                 <input name="password" value={editForm.password} onChange={handleEditChange} type="password" placeholder="Optional" />
                 <label>Account Type</label>
