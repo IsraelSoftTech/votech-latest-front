@@ -11,11 +11,6 @@ export default function DeanEvent() {
   const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
   const isAdminRole = ['Admin1', 'Admin2', 'Admin3', 'Admin4', 'Discipline'].includes(authUser.role);
 
-  // Debug logging for authUser
-  console.log('DeanEvent - SessionStorage authUser:', sessionStorage.getItem('authUser'));
-  console.log('DeanEvent - Parsed authUser:', authUser);
-  console.log('DeanEvent - Is Admin Role:', isAdminRole);
-
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [events, setEvents] = useState([]);
@@ -63,15 +58,6 @@ export default function DeanEvent() {
     try {
       const eventsData = await api.getEvents();
       setEvents(eventsData);
-      
-      // Debug logging for events
-      if (isAdminRole) {
-        console.log('DeanEvent - Current user:', authUser);
-        console.log('DeanEvent - All events:', eventsData);
-        eventsData.forEach(event => {
-          console.log(`DeanEvent - Event "${event.title}" - created_by: ${event.created_by} (${typeof event.created_by}), current user: ${authUser.id} (${typeof authUser.id})`);
-        });
-      }
     } catch (error) {
       console.error('Error loading events:', error);
     } finally {
@@ -142,17 +128,32 @@ export default function DeanEvent() {
       return;
     }
 
+    if (!selectedDate) {
+      showMessage('Please select a date for the event.', 'error');
+      return;
+    }
+
+    const eventDate = selectedDate.toISOString ? selectedDate.toISOString().slice(0, 10) : (typeof selectedDate === 'string' ? selectedDate : null);
+    if (!eventDate) {
+      showMessage('Invalid date selected. Please try again.', 'error');
+      return;
+    }
+
     try {
       const eventData = {
         event_type: formData.type,
         title: formData.title,
-        description: formData.description,
-        event_date: selectedDate.toISOString().slice(0, 10),
+        description: formData.description || '',
+        event_date: eventDate,
         event_time: formData.time,
         participants: selectedParticipants.map(p => p.username).join(', ')
       };
 
-      await api.createEvent(eventData);
+      const created = await api.createEvent(eventData);
+      if (!created || !created.id) {
+        console.warn('Event created but response missing id:', created);
+      }
+
       setShowModal(false);
       setFormData({
         type: '',
@@ -162,8 +163,9 @@ export default function DeanEvent() {
         participants: ''
       });
       setSelectedParticipants([]);
+      setSelectedDate(null);
       
-      // Reload events and stats
+      // Reload events and stats - ensure fresh data from server
       await loadEvents();
       await loadStats();
       
@@ -173,10 +175,13 @@ export default function DeanEvent() {
       window.dispatchEvent(new CustomEvent('eventCreated'));
     } catch (error) {
       console.error('Error creating event:', error);
-      if (error.message.includes('already exists on this date')) {
+      const msg = error?.message || String(error);
+      if (msg.includes('already exists on this date') || msg.includes('Only one event per day')) {
         showMessage('An event already exists on this date. Please select a different date or modify the existing event.', 'error');
+      } else if (msg.includes('not authorized') || msg.includes('403')) {
+        showMessage('You are not authorized to create events. Please contact an administrator.', 'error');
       } else {
-        showMessage('Failed to create event. Please try again.', 'error');
+        showMessage(msg || 'Failed to create event. Please try again.', 'error');
       }
     }
   };
@@ -350,16 +355,6 @@ export default function DeanEvent() {
                     const eventCreatorId = parseInt(event.created_by);
                     const currentUserId = parseInt(authUser.id);
                     const shouldShow = eventCreatorId === currentUserId;
-                    
-                    // Debug logging for this specific event
-                    console.log(`DeanEvent - Event "${event.title}":`, {
-                      eventCreatorId,
-                      currentUserId,
-                      shouldShow,
-                      eventCreatedBy: event.created_by,
-                      authUserId: authUser.id
-                    });
-                    
                     return shouldShow ? (
                       <div className="event-actions" style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
                         <button

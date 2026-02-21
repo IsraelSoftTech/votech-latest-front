@@ -374,23 +374,8 @@ export default function SideTop({ children }) {
         icon: <FaPenFancy />,
         path: "/psychosocialist-lesson-plans",
       },
+      { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "Messages", icon: <FaEnvelope />, path: "/psycho-messages" },
-    ];
-  } else if (authUser?.role === "Discipline") {
-    menuItems = [
-      { label: "Dashboard", icon: <MdDashboard />, path: "/dsc-dashboard" },
-      { label: "Cases", icon: <FaClipboardList />, path: "/dsc-cases" },
-      {
-        label: "Discipline Cases",
-        icon: <FaExclamationTriangle />,
-        path: "/dsc-discipline-cases",
-      },
-      {
-        label: "Teachers' Cases",
-        icon: <FaExclamationTriangle />,
-        path: "/teacher-cases",
-      },
-      { label: "Messages", icon: <FaEnvelope />, path: "/dsc-messages" },
     ];
   } else if (authUser?.role === "Admin1") {
     // Inject Teachers' Cases into Admin1 menu (view-only page handles RBAC)

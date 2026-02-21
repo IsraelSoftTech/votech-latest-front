@@ -2856,16 +2856,22 @@ class ApiService {
   async createEvent(eventData) {
     const response = await fetch(`${API_URL}/events`, {
       method: "POST",
-      headers: this.getAuthHeaders(),
+      headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify(eventData),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      if (response.status === 409) {
-        throw new Error(`Event creation failed: ${errorData.error}`);
+      let errorMsg = "Failed to create event";
+      try {
+        const errorData = await response.json();
+        errorMsg = errorData.error || errorMsg;
+      } catch (_) {
+        errorMsg = `Server error (${response.status}). Please try again.`;
       }
-      throw new Error(errorData.error || "Failed to create event");
+      if (response.status === 409) {
+        throw new Error(errorMsg);
+      }
+      throw new Error(errorMsg);
     }
 
     return await this.handleResponse(response);

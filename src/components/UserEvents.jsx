@@ -11,11 +11,6 @@ export default function UserEvents({ wrap = true }) {
   const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
   const isAdminRole = ['Admin1', 'Admin2', 'Admin3', 'Admin4', 'Discipline'].includes(authUser.role);
 
-  // Debug logging for authUser
-  console.log('SessionStorage authUser:', sessionStorage.getItem('authUser'));
-  console.log('Parsed authUser:', authUser);
-  console.log('Is Admin Role:', isAdminRole);
-
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -66,15 +61,6 @@ export default function UserEvents({ wrap = true }) {
     try {
       const data = isAdminRole ? await api.getEvents() : await api.getMyEvents();
       setEvents(data);
-      
-      // Debug logging for Admin4 events
-      if (isAdminRole) {
-        console.log('Current user:', authUser);
-        console.log('All events:', data);
-        data.forEach(event => {
-          console.log(`Event "${event.title}" - created_by: ${event.created_by} (${typeof event.created_by}), current user: ${authUser.id} (${typeof authUser.id})`);
-        });
-      }
       
       // Calculate stats
       const now = new Date();
@@ -404,16 +390,6 @@ export default function UserEvents({ wrap = true }) {
                       const eventCreatorId = parseInt(event.created_by);
                       const currentUserId = parseInt(authUser.id);
                       const shouldShow = eventCreatorId === currentUserId;
-                      
-                      // Debug logging for this specific event
-                      console.log(`Event "${event.title}":`, {
-                        eventCreatorId,
-                        currentUserId,
-                        shouldShow,
-                        eventCreatedBy: event.created_by,
-                        authUserId: authUser.id
-                      });
-                      
                       return shouldShow ? (
                         <div className="event-actions" style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
                           <button
@@ -497,16 +473,6 @@ export default function UserEvents({ wrap = true }) {
                       const eventCreatorId = parseInt(event.created_by);
                       const currentUserId = parseInt(authUser.id);
                       const shouldShow = eventCreatorId === currentUserId;
-                      
-                      // Debug logging for this specific event
-                      console.log(`Event "${event.title}":`, {
-                        eventCreatorId,
-                        currentUserId,
-                        shouldShow,
-                        eventCreatedBy: event.created_by,
-                        authUserId: authUser.id
-                      });
-                      
                       return shouldShow ? (
                         <div className="event-actions" style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
                           <button
