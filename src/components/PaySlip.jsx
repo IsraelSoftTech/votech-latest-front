@@ -9,7 +9,7 @@ import './Admin2PaySlip.css';
 import PayslipTemplate from './PayslipTemplate';
 import './PayslipTemplate.css';
 
-export default function PaySlip() {
+export default function PaySlip({ noLayoutWrapper = false }) {
   const [loading, setLoading] = useState(true);
   const [paidSalaries, setPaidSalaries] = useState([]);
   const [salaryDescriptions, setSalaryDescriptions] = useState([]);
@@ -168,9 +168,8 @@ export default function PaySlip() {
     );
   });
 
-  return (
-    <SideTop>
-      <div className="teacher-payslip-container">
+  const content = (
+    <div className="teacher-payslip-container">
         <div className="teacher-payslip-header">
           <div className="teacher-payslip-header-content">
             <div className="teacher-payslip-header-text">
@@ -265,6 +264,7 @@ export default function PaySlip() {
           </div>
         )}
       </div>
-    </SideTop>
   );
+
+  return noLayoutWrapper ? content : <SideTop>{content}</SideTop>;
 } 

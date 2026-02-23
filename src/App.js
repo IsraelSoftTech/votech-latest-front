@@ -80,6 +80,31 @@ import MasterSheetPage from "./components/marks-module/pages/MasterSheetPage/Mas
 import UnauthorizedPage from "./components/Unauthorized.page";
 import ReportCard from "./components/marks-module/components/ReportCard/ReportCard.component";
 
+// Wrappers so Discipline always sees DisciplineSideTop menu on shared routes
+function PayslipWithDisciplineLayout() {
+  const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+  if (authUser?.role === "Discipline") {
+    return (
+      <DisciplineSideTop>
+        <PaySlip noLayoutWrapper />
+      </DisciplineSideTop>
+    );
+  }
+  return <PaySlip />;
+}
+
+function TeacherCasesWithDisciplineLayout() {
+  const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+  if (authUser?.role === "Discipline") {
+    return (
+      <DisciplineSideTop>
+        <TeacherCases noLayoutWrapper />
+      </DisciplineSideTop>
+    );
+  }
+  return <TeacherCases />;
+}
+
 function App() {
   const [showLoader, setShowLoader] = React.useState(true);
   const [showPoweredBy, setShowPoweredBy] = React.useState(false);
@@ -183,7 +208,7 @@ function App() {
           path="/admin2-payslip"
           element={<Admin2PaySlip authUser={authUser} />}
         />
-        <Route path="/payslip" element={<PaySlip />} />
+        <Route path="/payslip" element={<PayslipWithDisciplineLayout />} />
 
         {/* Attendance / Staff */}
         <Route
@@ -265,7 +290,14 @@ function App() {
             </DisciplineSideTop>
           }
         />
-        <Route path="/discipline-lesson-plans" element={<LessonPlan />} />
+        <Route
+          path="/discipline-lesson-plans"
+          element={
+            <DisciplineSideTop>
+              <LessonPlan noLayoutWrapper />
+            </DisciplineSideTop>
+          }
+        />
         <Route
           path="/admin-discipline-cases"
           element={
@@ -321,7 +353,7 @@ function App() {
         />
         <Route path="/psycho-messages" element={<PsychoMessage />} />
         <Route path="/psycho-chat/:userId" element={<PsychoChat />} />
-        <Route path="/teacher-cases" element={<TeacherCases />} />
+        <Route path="/teacher-cases" element={<TeacherCasesWithDisciplineLayout />} />
 
         {/* ----------------------------------------- */}
         {/* Academics - marks-module pages */}

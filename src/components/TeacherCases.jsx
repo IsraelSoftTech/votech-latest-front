@@ -3,7 +3,7 @@ import SideTop from './SideTop';
 import api from '../services/api';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
-export default function TeacherCases() {
+export default function TeacherCases({ noLayoutWrapper = false }) {
   const [users, setUsers] = useState([]);
   const [cases, setCases] = useState([]);
   const [form, setForm] = useState({ teacher_id: '', case_name: '', description: '' });
@@ -105,9 +105,8 @@ export default function TeacherCases() {
     );
   }, [cases, query]);
 
-  return (
-    <SideTop>
-      <div style={{ padding: 16 }}>
+  const content = (
+    <div style={{ padding: 16 }}>
         <style>{`
           .tc-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; }
           .tc-header { padding: 14px 16px; border-bottom: 1px solid #e5e7eb; font-weight: 800; font-size: 18px; }
@@ -229,8 +228,9 @@ export default function TeacherCases() {
           </div>
         </div>
       </div>
-    </SideTop>
   );
+
+  return noLayoutWrapper ? content : <SideTop>{content}</SideTop>;
 }
 
 

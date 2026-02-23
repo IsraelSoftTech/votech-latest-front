@@ -5,7 +5,7 @@ import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
 
 
-export default function LessonPlan() {
+export default function LessonPlan({ noLayoutWrapper = false }) {
   const [lessonPlans, setLessonPlans] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -222,9 +222,8 @@ export default function LessonPlan() {
   const canUpload = !(isAdmin4 || isAdmin1); // Admin1 and Admin4 cannot upload
   const canReview = isAdmin4;
 
-  return (
-    <SideTop>
-      <div className="lesson-plan-container">
+  const content = (
+    <div className="lesson-plan-container">
         {/* Success/Error Messages */}
         {success && <SuccessMessage message={success} />}
         {error && <div className="error-message">{error}</div>}
@@ -588,6 +587,7 @@ export default function LessonPlan() {
           </div>
         )}
       </div>
-    </SideTop>
   );
+
+  return noLayoutWrapper ? content : <SideTop>{content}</SideTop>;
 } 
