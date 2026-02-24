@@ -103,7 +103,20 @@ export default function StudentFeeDetails() {
     // Remove savingReceipt and auto-save logic
   }, [receipt, receiptModalOpen]);
 
-  if (loading) return <SideTop><div className="fee-main-content">Loading...</div></SideTop>;
+  if (loading) return (
+    <SideTop>
+      <div className="fee-main-content">
+        <div className="fee-loading-skeleton" style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ height: 28, background: '#e5e7eb', borderRadius: 6, marginBottom: 16, width: '40%' }} />
+          <div style={{ height: 200, background: '#f3f4f6', borderRadius: 8, marginBottom: 16 }} />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ height: 44, background: '#e5e7eb', borderRadius: 8, width: 120 }} />
+            <div style={{ height: 44, background: '#e5e7eb', borderRadius: 8, width: 120 }} />
+          </div>
+        </div>
+      </div>
+    </SideTop>
+  );
   if (error) return <SideTop><div className="fee-main-content" style={{color:'#e53e3e'}}>{error}</div></SideTop>;
   if (!studentFeeStats || !studentFeeStats.student) return <SideTop><div className="fee-main-content">No data found.</div></SideTop>;
 
@@ -238,18 +251,16 @@ export default function StudentFeeDetails() {
             </div>
           </div>
         )}
-        {/* Receipt Modal */}
+        {/* Receipt Modal - Auto-shown after payment with Print button */}
         {receiptModalOpen && receipt && (
           <div className="fee-receipt-modal-overlay">
             <div className="fee-receipt-modal-content" onClick={e => e.stopPropagation()}>
-              {/* Black (x) close button, always visible, navigates to Fee.jsx */}
-              <button className="text-button close-btn black-x always-visible" onClick={() => { setReceiptModalOpen(false); navigate('/admin-fee'); }} style={{position:'absolute',top:10,right:20,zIndex:10000, color:'#111', background:'none', border:'none'}} aria-label="Close">&#10005;</button>
+              <button className="text-button close-btn black-x always-visible" onClick={() => { setReceiptModalOpen(false); navigate('/admin-fee'); }} style={{position:'absolute',top:10,right:20,zIndex:10000, color:'#111', background:'none', border:'none', fontSize:'24px', cursor:'pointer'}} aria-label="Close">&#10005;</button>
               <div className="print-area" style={{display:'block'}}>
-                <FeeReceipt ref={modalReceiptRef} receipt={receipt} />
+                <FeeReceipt ref={modalReceiptRef} receipt={receipt} showPrintButton={true} />
               </div>
-              {/* Close button below the receipt */}
-              <div style={{textAlign:'center',marginTop:24,display:'flex',justifyContent:'center',alignItems:'center',gap:16}}>
-                <button className="text-button close-btn black-x always-visible" onClick={() => { setReceiptModalOpen(false); navigate('/admin-fee'); }} style={{fontSize:'0.9rem',fontWeight:400,background:'none',border:'none',color:'#111',padding:'12px 18px',cursor:'pointer'}} aria-label="Close">Close</button>
+              <div style={{textAlign:'center',marginTop:16,display:'flex',justifyContent:'center',alignItems:'center',gap:16}}>
+                <button className="text-button close-btn" onClick={() => { setReceiptModalOpen(false); navigate('/admin-fee'); }} style={{fontSize:'0.9rem',fontWeight:400,background:'#f0f0f0',border:'1px solid #ccc',color:'#333',padding:'12px 24px',cursor:'pointer',borderRadius:8}}>Close</button>
               </div>
             </div>
           </div>

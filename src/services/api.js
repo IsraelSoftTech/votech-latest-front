@@ -677,7 +677,9 @@ class ApiService {
   }
 
   async getStudents() {
-    const response = await fetch(`${API_URL}/students`);
+    const response = await fetch(`${API_URL}/students`, {
+      headers: this.getAuthHeaders(),
+    });
     if (!response.ok) throw new Error("Failed to fetch students");
     return await response.json();
   }
@@ -722,6 +724,25 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch student fee stats");
+    return await response.json();
+  }
+
+  async getStudentFeeStatsBatch(studentIds) {
+    if (!studentIds || studentIds.length === 0) return {};
+    const ids = Array.isArray(studentIds) ? studentIds : [studentIds];
+    const idsParam = ids.join(",");
+    const response = await fetch(`${API_URL}/fees/students/batch?ids=${encodeURIComponent(idsParam)}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch batch fee stats");
+    return await response.json();
+  }
+
+  async getFeeTotalsSummary() {
+    const response = await fetch(`${API_URL}/fees/totals/summary`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch fee totals");
     return await response.json();
   }
 

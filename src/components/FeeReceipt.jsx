@@ -1,14 +1,18 @@
 import React from 'react';
 import './FeeReceipt.css';
-import { FaDownload } from 'react-icons/fa';
+import { FaDownload, FaPrint } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logoImage from '../assets/logo.png';
 
-const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) => {
+const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentProp = null, showPrintButton = true }, ref) => {
   if (!receipt) return null;
 
-  const { student, balance, transactions = [], discountApplied = false, discountRate = 0 } = receipt;
+  const { student, balance, transactions = [], discountApplied = false, discountRate = 0, paidAmount, paidType } = receipt;
+  // Support StudentFeeDetails format: paidAmount + paidType when currentPayment not passed
+  const currentPayment = currentPaymentProp || (paidAmount != null && paidType
+    ? { amount: paidAmount, fee_type: paidType, paid_at: new Date().toISOString() }
+    : null);
   const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
   
   // Function to convert number to words
@@ -130,17 +134,17 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
         width: 210mm;
         height: 290mm;
         margin: 0 auto;
-        padding: 3mm;
+        padding: 5mm;
         box-sizing: border-box;
-        font-family: 'Times New Roman', serif;
-        color: black;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #333;
         position: absolute;
         left: -9999px;
         top: -9999px;
         overflow: visible;
         display: flex;
         flex-direction: column;
-        gap: 4mm;
+        gap: 6mm;
       `;
       
       // Clone the receipt content twice
@@ -186,33 +190,20 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
         // Inject optimized style overrides to ensure all content fits
         const style = document.createElement('style');
         style.textContent = `
-          .fee-types-table th, .fee-types-table td { 
-            padding: 0.8mm !important; 
-            font-size: 8pt !important; 
-            line-height: 1.1 !important;
-          }
-          .summary-table th, .summary-table td { 
-            padding: 0.8mm !important; 
-            font-size: 8pt !important; 
-            line-height: 1.1 !important;
-          }
+          .fee-types-table th, .fee-types-table td { padding: 0.8mm !important; font-size: 8pt !important; line-height: 1.1 !important; }
+          .summary-table th, .summary-table td { padding: 0.8mm !important; font-size: 8pt !important; line-height: 1.1 !important; }
           .receipt-header { margin-bottom: 2mm !important; }
           .student-info-section { margin-bottom: 1.5mm !important; }
           .payment-statement { margin-bottom: 1.5mm !important; }
           .fee-types-section { margin-bottom: 1.5mm !important; }
           .amount-summary-section { margin-bottom: 1.5mm !important; }
-          .section-title, .fee-types-title, .summary-title { 
-            font-size: 9pt !important; 
-            margin-bottom: 1mm !important; 
-          }
+          .fee-types-title, .summary-title { font-size: 9pt !important; margin-bottom: 1mm !important; }
           .school-name { font-size: 11pt !important; }
-          .receipt-title { font-size: 15pt !important; }
+          .receipt-title { font-size: 12pt !important; }
           .student-row { margin-bottom: 0.5mm !important; }
           .payment-statement p { margin-bottom: 0.5mm !important; font-size: 8pt !important; }
-          .current-payment-details p { margin-bottom: 0.5mm !important; font-size: 8pt !important; }
           .statement-text { font-size: 9pt !important; }
-          .amount-in-words, .amount-in-figures { font-size: 8pt !important; }
-          .fee-type-paid, .payment-amount, .payment-date { font-size: 8pt !important; }
+          .amount-in-words { font-size: 8pt !important; }
         `;
         tempContainer.appendChild(style);
       }
@@ -237,14 +228,6 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
         windowHeight: tempContainer.scrollHeight,
         logging: false,
         removeContainer: false,
-        onclone: (clonedDoc) => {
-          // Ensure proper spacing in cloned document
-          const clonedContainer = clonedDoc.querySelector('.temp-pdf-container');
-          if (clonedContainer) {
-            clonedContainer.style.padding = '5mm';
-            clonedContainer.style.gap = '6mm';
-          }
-        }
       });
       
       // Remove temporary container
@@ -292,7 +275,7 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
 
   const ReceiptContent = () => (
     <div className="receipt-template">
-      {/* Header Section */}
+      {/* Header Section - logo left, academy name right */}
       <div className="receipt-header">
         <div className="header-with-logo">
           <img src={logoImage} alt="School Logo" className="school-logo" />
@@ -301,14 +284,14 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
           </div>
         </div>
         <div className="receipt-title-section">
-          <h1 className="receipt-title">FEE PAYMENT</h1>
-          <div style={{ fontSize: '10pt', color: '#333' }}>Receipt Ref: <strong>{resolvedReceiptRef}</strong></div>
+          <h1 className="receipt-title">FEE PAYMENT RECEIPT</h1>
+          <div className="receipt-ref">Ref: {resolvedReceiptRef}</div>
         </div>
       </div>
 
-      {/* Student Information */}
+      {/* Student Information - Name left, Student ID right, same row */}
       <div className="student-info-section">
-        <div className="student-details">
+        <div className="student-details student-details-row">
           <div className="student-row">
             <span className="label">Name:</span>
             <span className="value">{student.full_name || student.name}</span>
@@ -320,35 +303,30 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
         </div>
       </div>
 
+      {/* Payment Confirmation - Amount Paid & Pending Balance (prominent) */}
+      {currentPayment && (
+        <div className="receipt-payment-confirmation">
+          <div className="confirmation-row amount-paid">
+            <span className="confirmation-label">Amount Paid (This Transaction)</span>
+            <span className="confirmation-value">{paid.toLocaleString()} XAF</span>
+          </div>
+          <div className="confirmation-row pending-balance">
+            <span className="confirmation-label">Pending Balance</span>
+            <span className="confirmation-value">{left.toLocaleString()} XAF</span>
+          </div>
+        </div>
+      )}
+
       {/* Payment Statement */}
       <div className="payment-statement">
         <p className="statement-text">
-          Fee of <strong>{paid.toLocaleString()}</strong> paid on <strong>{new Date(currentPayment ? currentPayment.paid_at : new Date()).toLocaleDateString()}</strong>
+          Received <strong>{paid.toLocaleString()} XAF</strong> on {new Date(currentPayment ? currentPayment.paid_at : new Date()).toLocaleDateString()}
+          {currentPayment && ` – ${currentPayment.fee_type}`}
         </p>
         {discountApplied && rate > 0 && (
-          <p className="statement-text" style={{ color: '#204080' }}>
-            Discount applied: <strong>{Math.round(rate * 100)}%</strong>
-          </p>
+          <p className="statement-text" style={{ color: '#204080' }}>Discount: {Math.round(rate * 100)}%</p>
         )}
-        <p className="amount-in-words">
-          <strong>Amount in words:</strong> {numberToWords(paid)} XAF
-        </p>
-        <p className="amount-in-figures">
-          <strong>Amount in figures:</strong> {paid.toLocaleString()} XAF
-        </p>
-        {currentPayment && (
-          <div className="current-payment-details">
-            <p className="fee-type-paid">
-              <strong>Fee Type:</strong> {currentPayment.fee_type}
-            </p>
-            <p className="payment-amount">
-              <strong>Amount Paid:</strong> {currentPayment.amount.toLocaleString()} XAF
-            </p>
-            <p className="payment-date">
-              <strong>Payment Date:</strong> {new Date(currentPayment.paid_at).toLocaleDateString()}
-            </p>
-          </div>
-        )}
+        <p className="amount-in-words">Amount in words: {numberToWords(paid)} XAF</p>
       </div>
 
       {/* Fee Breakdown Table - Show all fee types for general receipt, specific fee type for transaction receipt */}
@@ -419,15 +397,15 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
         <table className="summary-table">
           <tbody>
             <tr>
-              <td className="summary-label">Overall Expected</td>
+              <td className="summary-label">OVERALL EXPECTED</td>
               <td className="summary-value">{total.toLocaleString()} XAF</td>
             </tr>
             <tr>
-              <td className="summary-label">Overall Paid</td>
+              <td className="summary-label">OVERALL PAID</td>
               <td className="summary-value">{paid.toLocaleString()} XAF</td>
             </tr>
             <tr>
-              <td className="summary-label">Overall Balance</td>
+              <td className="summary-label">OVERALL BALANCE</td>
               <td className="summary-value">{left.toLocaleString()} XAF</td>
             </tr>
           </tbody>
@@ -469,14 +447,170 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment = null }, ref) =>
     </div>
   );
 
+  const handlePrint = () => {
+    if (!ref.current) return;
+    const logoImg = ref.current.querySelector('.school-logo');
+    const logoSrc = logoImg ? logoImg.src : '';
+
+    // Build receipt HTML with UNIQUE classes (prv- = print receipt view) - no external CSS, zero interference
+    const buildPrintReceipt = () => {
+      const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return `
+    <div class="prv-receipt">
+      <div class="prv-header">
+        <div class="prv-header-row">
+          <img src="" alt="Logo" class="prv-logo" />
+          <div class="prv-school-name">VOTECH(S7) ACADEMY</div>
+        </div>
+        <div class="prv-title-section">
+          <h1 class="prv-title">FEE PAYMENT RECEIPT</h1>
+          <div class="prv-ref">Ref: ${esc(resolvedReceiptRef)}</div>
+        </div>
+      </div>
+      <div class="prv-student-section">
+        <div class="prv-student-row">
+          <span class="prv-label">Name:</span>
+          <span class="prv-value">${esc(student.full_name || student.name)}</span>
+        </div>
+        <div class="prv-student-row">
+          <span class="prv-label">Student ID:</span>
+          <span class="prv-value">${esc(student.student_id)}</span>
+        </div>
+      </div>
+      ${currentPayment ? `
+      <div class="prv-payment-box">
+        <div class="prv-confirm-row">
+          <span class="prv-confirm-label">Amount Paid (This Transaction)</span>
+          <span class="prv-amount-paid">${paid.toLocaleString()} XAF</span>
+        </div>
+        <div class="prv-confirm-row">
+          <span class="prv-confirm-label">Pending Balance</span>
+          <span class="prv-amount-pending">${left.toLocaleString()} XAF</span>
+        </div>
+      </div>
+      ` : ''}
+      <div class="prv-statement">
+        <p class="prv-statement-text">Received <strong>${paid.toLocaleString()} XAF</strong> on ${new Date(currentPayment ? currentPayment.paid_at : new Date()).toLocaleDateString()}${currentPayment ? ` – ${esc(currentPayment.fee_type)}` : ''}</p>
+        <p class="prv-words">Amount in words: ${numberToWords(paid)} XAF</p>
+      </div>
+      ${currentPayment ? `
+      <div class="prv-section">
+        <h3 class="prv-section-title">Payment Details</h3>
+        <table class="prv-table">
+          <thead><tr><th>Fee Type</th><th>Amount Paid (XAF)</th><th>Payment Date</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="prv-td-left">${esc(currentPayment.fee_type)}</td>
+              <td class="prv-td-center">${currentPayment.amount.toLocaleString()}</td>
+              <td class="prv-td-center">${new Date(currentPayment.paid_at).toLocaleDateString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      ` : ''}
+      <div class="prv-section">
+        <h3 class="prv-section-title">Overall Summary</h3>
+        <table class="prv-table">
+          <tbody>
+            <tr><td class="prv-td-left">OVERALL EXPECTED</td><td class="prv-td-right">${total.toLocaleString()} XAF</td></tr>
+            <tr><td class="prv-td-left">OVERALL PAID</td><td class="prv-td-right">${paid.toLocaleString()} XAF</td></tr>
+            <tr><td class="prv-td-left">OVERALL BALANCE</td><td class="prv-td-right">${left.toLocaleString()} XAF</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+    };
+
+    const printDoc = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Fee Receipt - Print</title>
+  <style>
+    /* prv- = print receipt view - unique classes, no interference */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #fff; font-family: Arial, Helvetica, sans-serif; color: #333; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { size: A4 portrait; margin: 4mm; }
+    .prv-page { display: flex; flex-direction: column; justify-content: space-between; gap: 4mm; padding: 4mm; width: 210mm; height: 297mm; border: 1px solid #000; box-sizing: border-box; }
+    .prv-receipt { flex: 1; min-height: 0; padding: 4mm 5mm; border: 1px solid #333; background: #fff; display: flex; flex-direction: column; }
+    .prv-header { margin-bottom: 3mm; padding-bottom: 2mm; border-bottom: 1px solid #333; }
+    .prv-header-row { display: flex; align-items: center; gap: 4mm; margin-bottom: 2mm; }
+    .prv-logo { width: 14mm; height: 14mm; object-fit: contain; flex-shrink: 0; }
+    .prv-school-name { font-size: 11pt; font-weight: bold; color: #333; }
+    .prv-title-section { margin-top: 2mm; text-align: center; }
+    .prv-title { font-size: 12pt; font-weight: bold; color: #1976d2; margin: 0; }
+    .prv-ref { font-size: 8pt; color: #666; margin-top: 1mm; }
+    .prv-student-section { margin-bottom: 3mm; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4mm; }
+    .prv-student-row { display: flex; gap: 2mm; font-size: 9pt; }
+    .prv-label { font-weight: 600; }
+    .prv-payment-box { background: #e3f2fd; border: 1px solid #333; border-radius: 4px; padding: 3mm 4mm; margin-bottom: 3mm; }
+    .prv-confirm-row { display: flex; justify-content: space-between; align-items: center; padding: 2mm 0; }
+    .prv-confirm-label { font-size: 9pt; color: #333; font-weight: 600; }
+    .prv-amount-paid { font-size: 11pt; font-weight: 800; color: #2e7d32; }
+    .prv-amount-pending { font-size: 11pt; font-weight: 700; color: #c62828; }
+    .prv-statement { margin-bottom: 3mm; }
+    .prv-statement-text, .prv-words { font-size: 9pt; color: #333; margin: 0.5mm 0; }
+    .prv-section { margin-bottom: 2mm; }
+    .prv-section-title { font-size: 9pt; font-weight: bold; text-align: center; margin: 0 0 1mm 0; }
+    .prv-table { width: 100%; border-collapse: collapse; border: 1px solid #333; font-size: 8pt; }
+    .prv-table th, .prv-table td { border: 1px solid #333; padding: 1mm 1.5mm; }
+    .prv-table th { background: #e8e8e8; font-weight: bold; text-align: center; }
+    .prv-td-left { text-align: left; }
+    .prv-td-center { text-align: center; }
+    .prv-td-right { text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="prv-page">
+    ${buildPrintReceipt()}
+    ${buildPrintReceipt()}
+  </div>
+  <script>
+    (function() {
+      var src = ${JSON.stringify(logoSrc || '')};
+      var imgs = document.querySelectorAll('.prv-logo');
+      imgs.forEach(function(img) { if (src) img.src = src; });
+      setTimeout(function() {
+        window.print();
+        window.onafterprint = function() { window.close(); };
+        setTimeout(function() { window.close(); }, 1500);
+      }, 200);
+    })();
+  <\/script>
+</body>
+</html>`;
+
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      alert('Please allow pop-ups to print the receipt.');
+      return;
+    }
+    printWin.document.write(printDoc);
+    printWin.document.close();
+  };
+
   return (
     <div className="receipt-container" ref={ref}>
-      {/* Single Receipt for display */}
-      <ReceiptContent />
+      {/* Single receipt for screen display */}
+      <div className="receipt-single-view">
+        <ReceiptContent />
+      </div>
+      {/* Two receipts for print - fits on one A4 page */}
+      <div className="receipt-print-sheet" aria-hidden="true">
+        <ReceiptContent />
+        <ReceiptContent />
+      </div>
       
-      <button className="download-pdf-btn" onClick={downloadPDF}>
-        <FaDownload /> Download PDF
-      </button>
+      <div className="receipt-action-buttons">
+        {showPrintButton && (
+          <button className="receipt-print-btn" onClick={handlePrint} title="Print receipt directly to connected printer">
+            <FaPrint /> Print
+          </button>
+        )}
+        <button className="download-pdf-btn" onClick={downloadPDF}>
+          <FaDownload /> Download PDF
+        </button>
+      </div>
     </div>
   );
 });

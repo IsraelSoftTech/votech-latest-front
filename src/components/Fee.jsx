@@ -100,8 +100,8 @@ export default function Fee() {
       setFilteredStudents(studentsData);
       setStudentsLoading(false);
 
-      // Update totals in background - don't block table display
-      updateTotals(studentsData, classesData).catch(() => {});
+      // Update totals in background - single fast API call
+      updateTotals().catch(() => {});
     } catch (error) {
       console.error('Error fetching students:', error);
       setStudents([]);
@@ -110,36 +110,19 @@ export default function Fee() {
     }
   };
 
-  // Function to fetch fee details only for specific students (lazy loading)
+  // Fetch fee details for students - single batch API call (fast)
   const fetchFeeDetailsForStudents = useCallback(async (studentIds) => {
+    const ids = studentIds.filter(Boolean);
+    if (ids.length === 0) return;
     setStudentFeeDetails(prev => {
-      const studentsToFetch = studentIds.filter(id => !prev[id]);
-      if (studentsToFetch.length === 0) return prev;
-
-      // Fetch in the background
-      Promise.all(studentsToFetch.map(async (studentId) => {
-        try {
-          const feeStats = await api.getStudentFeeStats(studentId);
-          return { studentId, feeStats };
-        } catch (error) {
-          console.error(`Error fetching fee stats for student ${studentId}:`, error);
-          return { studentId, feeStats: null };
-        }
-      })).then(feeDetailsResults => {
-        setStudentFeeDetails(prevState => {
-          const updated = { ...prevState };
-          feeDetailsResults.forEach(({ studentId, feeStats }) => {
-            if (feeStats) updated[studentId] = feeStats;
-          });
-          return updated;
-        });
-      }).catch(error => {
-        console.error('Error fetching fee details:', error);
-      });
-
+      const toFetch = ids.filter(id => !prev[id]);
+      if (toFetch.length === 0) return prev;
+      api.getStudentFeeStatsBatch(toFetch).then(batch => {
+        setStudentFeeDetails(prevState => ({ ...prevState, ...batch }));
+      }).catch(() => {});
       return prev;
     });
-  }, []); // Stable function - uses functional updates for state
+  }, []);
 
   // Persist discount configs whenever they change
   useEffect(() => {
@@ -162,64 +145,13 @@ export default function Fee() {
     return { ...base, totalExpected: discountedExpected, totalBalance: discountedBalance };
   };
 
-  // Function to update totals (optimized to use cached data when available)
-  const updateTotals = async (studentsData, classesData) => {
+  // Update totals - single fast API call
+  const updateTotals = async () => {
     setLoadingTotals(true);
     try {
-      // Build a map of classId -> class total_fee
-      const classMap = {};
-      classesData.forEach(cls => {
-        classMap[cls.id] = parseFloat(cls.total_fee) || 0;
-      });
-      
-      // Use a callback to get latest fee details state
-      let allFeeDetails = {};
-      setStudentFeeDetails(prev => {
-        allFeeDetails = prev;
-        return prev;
-      });
-      
-      // Fetch fee stats only for students we don't have cached
-      const studentsToFetch = studentsData.filter(s => !allFeeDetails[s.id]);
-      if (studentsToFetch.length > 0) {
-        const feeStatsPromises = studentsToFetch.map(async student => {
-          try {
-            const stats = await api.getStudentFeeStats(student.id);
-            return { studentId: student.id, stats };
-          } catch (e) {
-            return { studentId: student.id, stats: null };
-          }
-        });
-        
-        // Wait for new fetches and update cache
-        const newFeeStats = await Promise.all(feeStatsPromises);
-        setStudentFeeDetails(prev => {
-          const updated = { ...prev };
-          newFeeStats.forEach(({ studentId, stats }) => {
-            if (stats) updated[studentId] = stats;
-          });
-          allFeeDetails = updated; // Update local reference
-          return updated;
-        });
-      }
-      
-      // Calculate totals using all fee details
-      let paidSum = 0;
-      let overallFee = 0;
-      for (const student of studentsData) {
-        const stats = allFeeDetails[student.id];
-        const classTotalFee = classMap[student.class_id] || 0;
-        overallFee += classTotalFee;
-        let paid = 0;
-        if (stats && stats.balance) {
-          // Paid = class total fee - sum of balances
-          const sumBalance = Object.values(stats.balance).reduce((a, b) => a + (b || 0), 0);
-          paid = classTotalFee - sumBalance;
-        }
-        paidSum += paid;
-      }
-      setTotalPaid(paidSum);
-      setTotalOwed(overallFee - paidSum);
+      const { totalPaid: paid, totalOwed: owed } = await api.getFeeTotalsSummary();
+      setTotalPaid(paid);
+      setTotalOwed(owed);
     } catch (e) {
       setTotalPaid(0);
       setTotalOwed(0);
@@ -230,6 +162,11 @@ export default function Fee() {
   // Fetch students on mount (without fee details - fast)
   useEffect(() => {
     fetchStudents();
+  }, []);
+
+  // Fetch totals on mount and when returning to Fee - ensure cards get data
+  useEffect(() => {
+    updateTotals().catch(() => {});
   }, []);
 
   // Memoize student IDs on current page for stable dependency
@@ -350,10 +287,15 @@ export default function Fee() {
     navigate(`/admin-fee/${student.id}`);
   };
 
-  // Handle edit student fees
+  // Handle edit student fees - prefetch stats if not cached for instant modal
   const handleEditStudentFees = (student) => {
     setSelectedStudent(student);
     setPaymentModalOpen(true);
+    if (!studentFeeDetails[student.id]) {
+      api.getStudentFeeStatsBatch([student.id]).then(batch => {
+        if (batch[student.id]) setStudentFeeDetails(prev => ({ ...prev, [student.id]: batch[student.id] }));
+      }).catch(() => {});
+    }
   };
 
   // Helper to compute already paid for a fee type using cached stats
@@ -398,10 +340,11 @@ export default function Fee() {
     }
   };
 
-  // Handle generate receipt
+  // Handle generate receipt - use cached stats when available
   const handleGenerateReceipt = async (student) => {
     try {
-      const stats = await api.getStudentFeeStats(student.id);
+      const cached = studentFeeDetails[student.id];
+      const stats = cached || await api.getStudentFeeStats(student.id);
       const transactions = await api.getStudentPaymentDetails(student.id);
       if (stats && stats.student && stats.balance) {
         setReceiptData({
@@ -419,10 +362,11 @@ export default function Fee() {
     }
   };
 
-  // Handle generate receipt for specific payment
+  // Handle generate receipt for specific payment - use cached stats when available
   const handleGenerateReceiptForPayment = async (student, payment) => {
     try {
-      const stats = await api.getStudentFeeStats(student.id);
+      const cached = studentFeeDetails[student.id];
+      const stats = cached || await api.getStudentFeeStats(student.id);
       const transactions = await api.getStudentPaymentDetails(student.id);
       if (stats && stats.student && stats.balance) {
         setReceiptData({
@@ -487,14 +431,12 @@ export default function Fee() {
           let detailsMap = { ...studentFeeDetails };
           if (missing.length) {
             try {
-              const results = await Promise.all(missing.map(async m => {
-                try { return { id: m.id, details: await api.getStudentFeeStats(m.id) }; } catch { return { id: m.id, details: null }; }
-              }));
+              const batch = await api.getStudentFeeStatsBatch(missing.map(m => m.id));
               const updates = {};
-              results.forEach(r => {
-                if (r.details) {
-                  detailsMap[r.id] = r.details;
-                  updates[r.id] = r.details;
+              Object.entries(batch).forEach(([id, data]) => {
+                if (data) {
+                  detailsMap[id] = data;
+                  updates[id] = data;
                 }
               });
               if (Object.keys(updates).length) {
@@ -690,18 +632,39 @@ export default function Fee() {
       }
       
       // Update only this student's cached stats so the table reflects immediately
+      let refreshed = null;
       try {
-        const refreshed = await api.getStudentFeeStats(selectedStudent.id);
+        refreshed = await api.getStudentFeeStats(selectedStudent.id);
         setStudentFeeDetails(prev => ({ ...prev, [selectedStudent.id]: refreshed }));
       } catch {}
       
-      // Close modal and show success message
+      // Close payment modal
       setPaymentModalOpen(false);
       setPayType('');
       setPayAmount('');
+      
+      // If payment was made (increase), show receipt modal immediately with Print button
+      if (desiredTotal > alreadyPaid && refreshed) {
+        const delta = desiredTotal - alreadyPaid;
+        setReceiptData({
+          student: refreshed.student,
+          balance: refreshed.balance,
+          currentPayment: {
+            amount: delta,
+            fee_type: payType,
+            paid_at: new Date().toISOString()
+          },
+          discountApplied: !!discountApplies[selectedStudent.id],
+          discountRate: parseFloat(discountRate) || 0
+        });
+        setReceiptModalOpen(true);
+      }
+      
       setSelectedStudent(null);
       setSuccessMessage(message);
       setTimeout(() => setSuccessMessage(''), 4000);
+      // Refresh totals cards after payment change
+      updateTotals().catch(() => {});
     } catch (error) {
       console.error('Error updating fee:', error);
       setSuccessMessage('');
@@ -879,9 +842,19 @@ export default function Fee() {
           </div>
           
           {studentsLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-              <div style={{ width: '40px', height: '40px', border: '4px solid #e1e5e9', borderTop: '4px solid #1976d2', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
-              <p>Loading students and fee data...</p>
+            <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+              <div style={{ background: '#204080', height: 48 }} />
+              {[1,2,3,4,5,6,7,8].map(i => (
+                <div key={i} style={{ display: 'flex', padding: '16px 12px', borderBottom: '1px solid #e5e7eb', gap: 12 }}>
+                  <div style={{ width: '25%', height: 20, background: '#e5e7eb', borderRadius: 4 }} />
+                  <div style={{ width: '12%', height: 20, background: '#e5e7eb', borderRadius: 4 }} />
+                  <div style={{ width: '12%', height: 20, background: '#e5e7eb', borderRadius: 4 }} />
+                  <div style={{ width: '12%', height: 20, background: '#e5e7eb', borderRadius: 4 }} />
+                  <div style={{ width: '12%', height: 20, background: '#e5e7eb', borderRadius: 4 }} />
+                  <div style={{ width: '12%', height: 20, background: '#e5e7eb', borderRadius: 4 }} />
+                  <div style={{ width: '15%', height: 20, background: '#e5e7eb', borderRadius: 4 }} />
+                </div>
+              ))}
             </div>
           ) : filteredStudents.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
@@ -1548,15 +1521,10 @@ export default function Fee() {
                <label>Fee Type</label>
                <select 
                  value={payType} 
-                 onChange={async e => {
+                 onChange={e => {
                    const selected = e.target.value;
                    setPayType(selected);
-                   // Refresh stats for accurate prefill if the user edited before
                    if (selected && selectedStudent) {
-                     try {
-                       const refreshed = await api.getStudentFeeStats(selectedStudent.id);
-                       setStudentFeeDetails(prev => ({ ...prev, [selectedStudent.id]: refreshed }));
-                     } catch {}
                      const alreadyPaid = getAlreadyPaidForType(selectedStudent.id, selected);
                      setPayAmount(alreadyPaid ? String(alreadyPaid) : '');
                    }
