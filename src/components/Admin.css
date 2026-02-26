@@ -214,6 +214,49 @@
   margin-left: 8px;
 }
 
+.finance-cards-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 32px 0 24px 0;
+  flex-wrap: wrap;
+}
+
+.finance-print-summary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+  color: white;
+  border: 2px solid #fff;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(30, 58, 138, 0.35);
+  letter-spacing: 0.3px;
+}
+
+.finance-print-summary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 58, 138, 0.45);
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  color: white;
+  border-color: #fff;
+}
+
+.finance-print-summary-btn:active {
+  transform: translateY(0);
+}
+
+.finance-cards-row .dashboard-cards {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
 .dashboard-cards {
   display: flex;
   gap: 24px;

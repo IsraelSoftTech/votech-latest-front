@@ -112,12 +112,12 @@ export default function Inventory() {
 
   const fetchInitialData = async () => {
     try {
-      const [inventory, budget, assets, depts, financialSummary, balanceSheet] = await Promise.all([
+      // Load core data first for immediate display - don't block on financial summary
+      const [inventory, budget, assets, depts, balanceSheet] = await Promise.all([
         api.getInventory(),
         api.getBudgetHeads(),
         api.getAssetCategories(),
         api.getSpecialties(),
-        api.getFinancialSummary().catch(() => null),
         api.getBalanceSheet().catch(() => null)
       ]);
       
@@ -125,8 +125,10 @@ export default function Inventory() {
       setBudgetHeads(budget);
       setAssetCategories(assets);
       setDepartments(depts.map(d => ({ id: d.id, name: d.name })));
-      setFinancialSummary(financialSummary);
       setBalanceSheet(balanceSheet);
+
+      // Fetch financial summary in background - shows immediately when ready
+      api.getFinancialSummary().then(setFinancialSummary).catch(() => setFinancialSummary(null));
     } catch (error) {
       setError('Failed to fetch initial data');
       console.error(error);
@@ -484,9 +486,30 @@ export default function Inventory() {
                 <tr style="page-break-inside: avoid;">
                   <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">5</td>
                   <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">Fees</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: 500;">Total Fees Collected</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: 500;">Total Fees Collected (Period)</td>
                   <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatCurrency(financialSummary.fee_reports.total_fees_collected)}</td>
                   <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">Collected</td>
+                </tr>
+                <tr style="page-break-inside: avoid;">
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">5a</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">Fees</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: 500;">Total Fee Paid (All-Time)</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatCurrency(financialSummary.fee_reports.total_paid_fees ?? financialSummary.fee_reports.total_fees_collected)}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">Paid</td>
+                </tr>
+                <tr style="page-break-inside: avoid;">
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">5b</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">Fees</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: 500;">Total Expected Fees</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatCurrency(financialSummary.fee_reports.total_expected_fees ?? 0)}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">Expected</td>
+                </tr>
+                <tr style="page-break-inside: avoid;">
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">5c</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left;">Fees</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: 500;">Total Fee Owed</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${formatCurrency(financialSummary.fee_reports.total_owed_fees ?? 0)}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">Outstanding</td>
                 </tr>
                 ${financialSummary.fee_reports.fee_breakdown ? financialSummary.fee_reports.fee_breakdown.map((fee, index) => `
                   <tr style="page-break-inside: avoid;">
@@ -1247,8 +1270,20 @@ export default function Inventory() {
                           <h5>🎓 Fee Collection Reports</h5>
                           <div className="reports-grid">
                             <div className="report-item">
-                              <span>Total Fees Collected:</span>
+                              <span>Total Fees Collected (Period):</span>
                               <span className="amount positive">{formatCurrency(financialSummary.fee_reports.total_fees_collected)}</span>
+                            </div>
+                            <div className="report-item">
+                              <span>Total Fee Paid (All-Time):</span>
+                              <span className="amount positive">{formatCurrency(financialSummary.fee_reports.total_paid_fees ?? financialSummary.fee_reports.total_fees_collected)}</span>
+                            </div>
+                            <div className="report-item">
+                              <span>Total Expected Fees:</span>
+                              <span className="amount neutral">{formatCurrency(financialSummary.fee_reports.total_expected_fees ?? 0)}</span>
+                            </div>
+                            <div className="report-item">
+                              <span>Total Fee Owed:</span>
+                              <span className="amount negative">{formatCurrency(financialSummary.fee_reports.total_owed_fees ?? 0)}</span>
                             </div>
                             
                             {financialSummary.fee_reports.fee_breakdown && financialSummary.fee_reports.fee_breakdown.length > 0 && (
@@ -1346,8 +1381,11 @@ export default function Inventory() {
                       </button>
                     </div>
                   ) : (
-                    <div className="inv-no-data-message">
-                      <p>No financial summary available. Click "Refresh Summary" to generate.</p>
+                    <div className="inv-no-data-message inv-summary-loading">
+                      <p>Loading financial summary...</p>
+                      <button className="inv-primary-btn" style={{ marginTop: 12 }} onClick={() => fetchFinancialSummary()}>
+                        Refresh Now
+                      </button>
                     </div>
                   )}
                 </div>

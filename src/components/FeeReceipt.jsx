@@ -289,7 +289,7 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
         </div>
       </div>
 
-      {/* Student Information - Name left, Student ID right, same row */}
+      {/* Student Information - Name left, Student ID right, Class same row */}
       <div className="student-info-section">
         <div className="student-details student-details-row">
           <div className="student-row">
@@ -299,6 +299,10 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
           <div className="student-row">
             <span className="label">Student ID:</span>
             <span className="value">{student.student_id}</span>
+          </div>
+          <div className="student-row">
+            <span className="label">Class:</span>
+            <span className="value">{student.class_name || student.class || 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -475,6 +479,10 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
         <div class="prv-student-row">
           <span class="prv-label">Student ID:</span>
           <span class="prv-value">${esc(student.student_id)}</span>
+        </div>
+        <div class="prv-student-row">
+          <span class="prv-label">Class:</span>
+          <span class="prv-value">${esc(student.class_name || student.class || 'N/A')}</span>
         </div>
       </div>
       ${currentPayment ? `

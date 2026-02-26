@@ -1434,6 +1434,14 @@ class ApiService {
     return await response.json();
   }
 
+  async getFeeSummaryByClass() {
+    const response = await fetch(`${API_URL}/financial/fee-summary-by-class`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch fee summary by class");
+    return await response.json();
+  }
+
   async getBalanceSheet(asOfDate = null) {
     const params = asOfDate ? `?as_of_date=${asOfDate}` : "";
     const response = await fetch(

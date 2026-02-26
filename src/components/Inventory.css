@@ -319,6 +319,33 @@
   box-shadow: 0 6px 16px rgba(43, 17, 139, 0.4);
 }
 
+.inv-print-summary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.35);
+  letter-spacing: 0.3px;
+}
+
+.inv-print-summary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.45);
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+}
+
+.inv-print-summary-btn:active {
+  transform: translateY(0);
+}
+
 .inv-secondary-btn {
   display: inline-flex;
   align-items: center;
