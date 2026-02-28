@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './DisciplineSideTop.css';
 import logo from '../assets/logo.png';
-import { FaEnvelope, FaUserGraduate, FaClipboardList, FaGavel, FaFileAlt, FaComments, FaShieldAlt, FaCog, FaBars, FaSignOutAlt, FaUser, FaCamera, FaTimes, FaFileInvoiceDollar, FaPenFancy } from 'react-icons/fa';
+import { FaEnvelope, FaUserGraduate, FaClipboardList, FaGavel, FaFileAlt, FaComments, FaShieldAlt, FaCog, FaBars, FaSignOutAlt, FaUser, FaCamera, FaTimes, FaFileInvoiceDollar, FaPenFancy, FaBookOpen } from 'react-icons/fa';
 import { MdDashboard } from 'react-icons/md';
 import ReactDOM from 'react-dom';
 import api from '../services/api';
@@ -16,6 +16,7 @@ const menuItems = [
   { label: 'Attendance', icon: <FaClipboardList />, path: '/attendance' },
   { label: 'Disciplinary Cases', icon: <FaGavel />, path: '/discipline-cases' },
   { label: "Teachers' Cases", icon: <FaGavel />, path: '/teacher-cases' },
+  { label: 'Subjects', icon: <FaBookOpen />, path: '/academics/subjects' },
   { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/discipline-lesson-plans' },
   { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
   { label: 'Events', icon: <FaClipboardList />, path: '/discipline-events' }

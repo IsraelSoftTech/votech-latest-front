@@ -93,6 +93,18 @@ function PayslipWithDisciplineLayout() {
   return <PaySlip />;
 }
 
+function SubjectsWithDisciplineLayout() {
+  const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+  if (authUser?.role === "Discipline") {
+    return (
+      <DisciplineSideTop>
+        <SubjectPage noLayoutWrapper />
+      </DisciplineSideTop>
+    );
+  }
+  return <SubjectPage />;
+}
+
 function TeacherCasesWithDisciplineLayout() {
   const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
   if (authUser?.role === "Discipline") {
@@ -358,7 +370,7 @@ function App() {
         {/* ----------------------------------------- */}
         {/* Academics - marks-module pages */}
         <Route path="/academics/academic-years" element={<AcademicYear />} />
-        <Route path="/academics/subjects" element={<SubjectPage />} />
+        <Route path="/academics/subjects" element={<SubjectsWithDisciplineLayout />} />
         <Route path="/academics/classes" element={<ClassPage />} />
         <Route path="/academics/bands" element={<AcademicBandsPage />} />
         <Route

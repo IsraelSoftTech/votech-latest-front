@@ -23,7 +23,7 @@ function Welcome() {
         </div>
 
         <nav className="nav-right">
-          <button className="nav-link active" onClick={handleGetStarted}>Login</button>
+          <button className="nav-link nav-login-btn active" onClick={handleGetStarted}>Login</button>
         </nav>
       </header>
 
