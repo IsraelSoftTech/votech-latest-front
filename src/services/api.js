@@ -1254,41 +1254,79 @@ class ApiService {
     return await response.json();
   }
 
-  // Inventory API
-  async getInventory(type = "income") {
-    const response = await fetch(`${API_URL}/inventory?type=${type}`, {
+  // Report Inventory API
+  async getReportInventory() {
+    const response = await fetch(`${API_URL}/report-inventory`, {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch inventory");
     return await response.json();
   }
 
-  async registerInventoryItem(data) {
-    const response = await fetch(`${API_URL}/inventory`, {
+  async createReportInventoryItem(data) {
+    const response = await fetch(`${API_URL}/report-inventory`, {
       method: "POST",
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Failed to register inventory item");
+    if (!response.ok) throw new Error("Failed to register item");
     return await response.json();
   }
 
-  async deleteInventoryItem(id) {
-    const response = await fetch(`${API_URL}/inventory/${id}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error("Failed to delete inventory item");
-    return await response.json();
-  }
-
-  async editInventoryItem(id, data) {
-    const response = await fetch(`${API_URL}/inventory/${id}`, {
+  async updateReportInventoryItem(id, data) {
+    const response = await fetch(`${API_URL}/report-inventory/${id}`, {
       method: "PUT",
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Failed to edit inventory item");
+    if (!response.ok) throw new Error("Failed to update item");
+    return await response.json();
+  }
+
+  async deleteReportInventoryItem(id) {
+    const response = await fetch(`${API_URL}/report-inventory/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to delete item");
+    return await response.json();
+  }
+
+  // Report Inventory Heads API
+  async getReportInventoryHeads() {
+    const response = await fetch(`${API_URL}/report-inventory/heads`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch heads");
+    return await response.json();
+  }
+
+  async createReportInventoryHead(data) {
+    const response = await fetch(`${API_URL}/report-inventory/heads`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to add head");
+    return await response.json();
+  }
+
+  async updateReportInventoryHead(id, data) {
+    const response = await fetch(`${API_URL}/report-inventory/heads/${id}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to update head");
+    return await response.json();
+  }
+
+  async deleteReportInventoryHead(id) {
+    const response = await fetch(`${API_URL}/report-inventory/heads/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to delete head");
     return await response.json();
   }
 
@@ -1439,31 +1477,6 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch fee summary by class");
-    return await response.json();
-  }
-
-  async getBalanceSheet(asOfDate = null) {
-    const params = asOfDate ? `?as_of_date=${asOfDate}` : "";
-    const response = await fetch(
-      `${API_URL}/inventory/balance-sheet${params}`,
-      {
-        headers: this.getAuthHeaders(),
-      }
-    );
-    if (!response.ok) throw new Error("Failed to fetch balance sheet");
-    return await response.json();
-  }
-
-  async calculateDepreciation(month, year) {
-    const response = await fetch(
-      `${API_URL}/inventory/calculate-depreciation`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ month, year }),
-      }
-    );
-    if (!response.ok) throw new Error("Failed to calculate depreciation");
     return await response.json();
   }
 

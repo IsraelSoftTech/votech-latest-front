@@ -68,8 +68,10 @@ import DeanEvent from "./components/DeanEvent";
 import DeanLessonPlan from "./components/DeanLessonPlan.jsx";
 import UserEvents from "./components/UserEvents";
 
-// Inventory / Misc
-import Inventory from "./components/Inventory.jsx";
+// Misc
+import Reports from "./components/Reports.jsx";
+import ReportInventory from "./components/ReportInventory.jsx";
+import ReportFinances from "./components/ReportFinances.jsx";
 import GroupChat from "./components/GroupChat";
 import PsycoDash from "./components/PsycoDash.jsx";
 import Cases from "./components/Cases.jsx";
@@ -246,7 +248,8 @@ function App() {
         <Route path="/admin-lesson-plans" element={<LessonPlan />} />
         <Route path="/lesson-plans" element={<LessonPlan />} />
 
-        <Route path="/admin-inventory" element={<Inventory />} />
+        <Route path="/admin-reports-inventory" element={<ReportInventory />} />
+        <Route path="/admin-reports-finances" element={<ReportFinances />} />
         <Route
           path="/admin-timetable"
           element={<TimeTable authUser={authUser} />}

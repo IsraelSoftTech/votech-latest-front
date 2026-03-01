@@ -3,6 +3,8 @@
   background: var(--card-bg);
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  max-width: 100%;
   /* font-family removed to allow global font */
   animation: fadeIn 0.7s cubic-bezier(0.4,0,0.2,1);
   box-sizing: border-box;

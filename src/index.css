@@ -1,3 +1,16 @@
+/* Prevent horizontal scroll/shake on mobile - 100vw includes scrollbar and causes overflow */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+#root {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 :root {
   --primary-blue: #1e3a8a;
   --link: #f59e0b;

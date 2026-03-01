@@ -164,7 +164,7 @@ export default function SideTop({ children }) {
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
 
       {
-        label: "Financial Summary",
+        label: "Fee Overview",
         icon: <FaMoneyBill />,
         path: "/admin-finance",
       },
@@ -180,7 +180,14 @@ export default function SideTop({ children }) {
         icon: <FaFileInvoiceDollar />,
         path: "/admin2-payslip",
       },
-      { label: "Inventory", icon: <FaBoxes />, path: "/admin-inventory" },
+      {
+        label: "Reports",
+        icon: <FaFileAlt />,
+        submenu: [
+          { label: "Inventory", path: "/admin-reports-inventory", icon: <FaBoxes /> },
+          { label: "Finances", path: "/admin-reports-finances", icon: <FaMoneyBill /> },
+        ],
+      },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       // { label: "Marks", icon: <FaChartBar />, path: "/admin-marks" },
       {

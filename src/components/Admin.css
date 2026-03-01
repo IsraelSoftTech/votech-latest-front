@@ -257,6 +257,22 @@
   min-width: 0;
 }
 
+/* Fee Overview: Print button at top on mobile, professional positioning */
+@media (max-width: 768px) {
+  .finance-cards-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin: 20px 0 20px 0;
+  }
+  .finance-print-summary-btn {
+    order: -1;
+    align-self: flex-end;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
+
 .dashboard-cards {
   display: flex;
   gap: 24px;
@@ -374,9 +390,9 @@
   to { opacity: 1; }
 }
 
-/* Prevent horizontal scroll/shaking */
+/* Prevent horizontal scroll/shaking - avoid 100vw (includes scrollbar, causes overflow) */
 .admin-container, .main-content, .admin-header, .dashboard-cards, .dashboard-section {
-  max-width: 100vw;
+  max-width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
 }
@@ -400,6 +416,10 @@
   .dashboard-cards {
     flex-direction: column;
     gap: 18px;
+  }
+  .dashboard-cards .card {
+    min-width: 0;
+    width: 100%;
   }
 }
 @media (max-width: 700px) {
@@ -490,7 +510,7 @@
     border-radius: 6px;
     background: #fff;
     overflow-x: auto;
-    max-width: 100vw;
+    max-width: 100%;
   }
   .table-scroll table {
     min-width: 500px;
@@ -560,11 +580,11 @@
 }
 @media (max-width: 900px) {
   .calendar-wrapper {
-    max-width: 100vw;
+    max-width: 100%;
     padding: 0;
   }
   .admin-calendar {
-    max-width: 100vw;
+    max-width: 100%;
     font-size: 0.98rem;
   }
 }
@@ -572,8 +592,8 @@
   .admin-calendar {
     font-size: 0.95rem;
     min-width: 0;
-    width: calc(100vw - 10px);
-    max-width: calc(100vw - 10px);
+    width: calc(100% - 10px);
+    max-width: calc(100% - 10px);
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(32,64,128,0.04);
     margin-top: 8px;
@@ -583,8 +603,8 @@
     overflow-x: auto;
   }
   .calendar-wrapper {
-    width: calc(100vw - 10px);
-    max-width: calc(100vw - 10px);
+    width: calc(100% - 10px);
+    max-width: calc(100% - 10px);
     min-width: 0;
     padding: 0;
     justify-content: center;

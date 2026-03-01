@@ -3,6 +3,8 @@
   display: flex;
   min-height: 100vh;
   background: #f7f8fa;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .sidebar {
@@ -168,7 +170,7 @@
 
 /* Submenu items */
 .submenu-item {
-  color: white;
+  color: #f59e0b;
   background: none !important;
   font-size: 0.95rem;
   border-radius: 5px !important;
@@ -184,6 +186,7 @@
   font-size: 0.95rem;
   flex-shrink: 0;
   opacity: 0.95;
+  color: #f59e0b;
 }
 .submenu-item .menu-label {
   flex: 1 1 auto;
@@ -226,6 +229,8 @@
   margin-left: 240px;
   padding: 0 24px 24px 24px;
   width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .admin-header {

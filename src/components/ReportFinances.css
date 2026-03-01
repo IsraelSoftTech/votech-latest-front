@@ -1,0 +1,287 @@
+/* Report Finances - scoped (rf- prefix) */
+
+.rf-root {
+  background: #fff;
+  min-height: 100%;
+  padding: 24px;
+}
+
+.rf-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rf-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0;
+}
+
+.rf-print-btn-top {
+  margin-left: auto;
+}
+
+.rf-loading {
+  padding: 48px;
+  text-align: center;
+  color: #64748b;
+}
+
+.rf-report-section {
+  margin-bottom: 40px;
+}
+
+.rf-report-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 16px 0;
+}
+
+.rf-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.rf-table th,
+.rf-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rf-table th {
+  background: #204080;
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rf-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rf-table tbody tr:hover:not(.rf-row-total):not(.rf-row-grand) {
+  background: #f8fafc;
+}
+
+.rf-heading-cell {
+  min-width: 180px;
+}
+
+.rf-amount-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.rf-row-header td {
+  font-weight: 600;
+  background: #f1f5f9;
+}
+
+.rf-row-total td {
+  font-weight: 600;
+  background: #e2e8f0;
+}
+
+.rf-row-grand td {
+  font-weight: 700;
+  background: #204080;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.rf-empty {
+  padding: 24px;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Tabs */
+.rf-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rf-tab {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.rf-tab:hover {
+  color: #204080;
+}
+
+.rf-tab-active {
+  color: #204080;
+  border-bottom-color: #204080;
+}
+
+/* Financial Statement - Word-style combined table */
+.rf-statement-root {
+  background: #fff;
+  max-width: 800px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.rf-statement-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #204080;
+}
+
+.rf-statement-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.rf-statement-school-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0;
+}
+
+.rf-statement-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 24px 0;
+  color: #204080;
+}
+
+.rf-statement-section {
+  margin-bottom: 28px;
+}
+
+.rf-statement-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #333;
+  font-size: 0.9rem;
+}
+
+.rf-statement-table th,
+.rf-statement-table td {
+  border: 1px solid #333;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.rf-statement-table th {
+  background: #204080;
+  color: #fff;
+  font-weight: 600;
+}
+
+.rf-statement-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.rf-statement-total-row td {
+  font-weight: 700;
+  background: #e8eef6;
+  border-top: 2px solid #333;
+  padding: 12px 14px;
+}
+
+.rf-statement-net-row td {
+  font-weight: 700;
+  background: #204080;
+  color: #fff;
+  border-top: 3px solid #333;
+  padding: 14px;
+  font-size: 1rem;
+}
+
+.rf-print-btn {
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #204080;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rf-print-btn:hover {
+  background: #163366;
+}
+
+@media print {
+  .rf-tabs,
+  .rf-print-btn,
+  .rf-print-btn-top {
+    display: none !important;
+  }
+
+  .rf-statement-root {
+    box-shadow: none;
+    border: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .rf-root {
+    padding: 16px;
+  }
+
+  .rf-table th,
+  .rf-table td {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .rf-tabs {
+    flex-wrap: wrap;
+  }
+
+  .rf-tab {
+    padding: 8px 14px;
+    font-size: 0.9rem;
+  }
+
+  .rf-statement-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .rf-statement-table th,
+  .rf-statement-table td {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+}
