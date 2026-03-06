@@ -36,6 +36,7 @@ import {
   FaBookOpen,
   FaTable,
   FaExclamationTriangle,
+  FaWarehouse,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
@@ -186,6 +187,7 @@ export default function SideTop({ children }) {
         submenu: [
           { label: "Inventory", path: "/admin-reports-inventory", icon: <FaBoxes /> },
           { label: "Finances", path: "/admin-reports-finances", icon: <FaMoneyBill /> },
+          { label: "Property & Equipment", path: "/admin-reports-property-equipment", icon: <FaWarehouse /> },
         ],
       },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
@@ -943,7 +945,7 @@ export default function SideTop({ children }) {
       </aside>
 
       <div
-        className="main-content"
+        className={`main-content ${location.pathname.includes('admin-reports') ? 'main-content-reports' : ''}`}
         style={{
           paddingTop: 32,
           minHeight: "calc(100vh - 0px)",

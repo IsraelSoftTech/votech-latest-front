@@ -22,14 +22,48 @@
   margin: 0;
 }
 
-.rf-print-btn-top {
+.rf-statement-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-left: auto;
+}
+
+.rf-download-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #16a34a;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rf-download-pdf-btn:hover {
+  background: #15803d;
+}
+
+.rf-print-btn-top {
+  margin-left: 0;
 }
 
 .rf-loading {
   padding: 48px;
   text-align: center;
   color: #64748b;
+}
+
+.rf-report-actions {
+  margin-bottom: 16px;
+}
+
+.rf-report-actions .rf-download-pdf-btn {
+  margin-left: 0;
 }
 
 .rf-report-section {
@@ -45,9 +79,10 @@
 
 .rf-table-wrap {
   overflow-x: auto;
+  overflow-y: visible;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .rf-table {
@@ -254,9 +289,272 @@
   }
 }
 
+/* Mobile - Card layout for Income/Expenditure tables (600px and below) */
+@media (max-width: 600px) {
+  .rf-table-wrap {
+    overflow: visible !important;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+  }
+
+  .rf-table thead {
+    display: none;
+  }
+
+  .rf-table tbody tr.rf-empty-row td {
+    display: block !important;
+    padding: 24px 16px !important;
+    text-align: center;
+  }
+
+  .rf-table tbody tr.rf-empty-row td::before {
+    display: none;
+  }
+
+  .rf-table tbody tr:not(.rf-empty-row) {
+    display: block;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .rf-table tbody tr.rf-row-header {
+    background: #f1f5f9;
+    font-weight: 600;
+  }
+
+  .rf-table tbody tr.rf-row-total {
+    background: #e2e8f0;
+    font-weight: 600;
+  }
+
+  .rf-table tbody tr.rf-row-grand {
+    background: #204080;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .rf-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .rf-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border: none;
+    font-size: 0.9rem;
+  }
+
+  .rf-table td::before {
+    content: attr(data-label);
+    font-weight: 500;
+    color: #64748b;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+
+  .rf-table td.rf-amount-cell {
+    justify-content: flex-end;
+  }
+
+  .rf-table tr.rf-row-header td::before,
+  .rf-table tr.rf-row-total td::before,
+  .rf-table tr.rf-row-grand td::before {
+    display: none;
+  }
+
+  .rf-table tr.rf-row-header td,
+  .rf-table tr.rf-row-total td,
+  .rf-table tr.rf-row-grand td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .rf-table tr.rf-row-header td:empty,
+  .rf-table tr.rf-row-total td:empty,
+  .rf-table tr.rf-row-grand td:empty {
+    display: none;
+  }
+
+  .rf-table tr.rf-row-header .rf-heading-cell,
+  .rf-table tr.rf-row-total .rf-heading-cell,
+  .rf-table tr.rf-row-grand .rf-heading-cell {
+    font-weight: 700;
+  }
+
+  .rf-table tr.rf-row-grand td {
+    color: #fff;
+  }
+
+  .rf-table tr.rf-row-grand .rf-heading-cell,
+  .rf-table tr.rf-row-grand .rf-amount-cell {
+    color: #fff;
+  }
+}
+
+/* Mobile-first responsive: 480px and below */
+@media (max-width: 480px) {
+  .rf-root {
+    padding: 12px;
+    min-height: 100vh;
+  }
+
+  .rf-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .rf-page-title {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  .rf-statement-actions {
+    flex-direction: column;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .rf-download-pdf-btn,
+  .rf-print-btn-top {
+    margin-left: 0;
+    width: 100%;
+    padding: 12px 16px;
+    justify-content: center;
+  }
+
+  .rf-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .rf-tab {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    padding: 12px 10px;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  .rf-report-section {
+    margin-bottom: 24px;
+  }
+
+  .rf-report-title {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .rf-table-wrap {
+    margin: 0;
+    border-radius: 0;
+    overflow: visible !important;
+    display: block;
+    width: 100%;
+  }
+
+  .rf-table {
+    font-size: 0.8rem;
+    min-width: unset;
+    width: 100%;
+  }
+
+  .rf-table th,
+  .rf-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .rf-heading-cell {
+    min-width: unset;
+  }
+
+  .rf-empty {
+    padding: 20px 12px;
+    font-size: 0.9rem;
+  }
+
+  /* Financial Statement mobile */
+  .rf-statement-root {
+    padding: 16px;
+    margin: 0 -12px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .rf-statement-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .rf-statement-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .rf-statement-school-name {
+    font-size: 1.2rem;
+  }
+
+  .rf-statement-title {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+
+  .rf-statement-section {
+    margin-bottom: 20px;
+  }
+
+  .rf-statement-table {
+    font-size: 0.8rem;
+  }
+
+  .rf-statement-table th,
+  .rf-statement-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .rf-loading {
+    padding: 32px 16px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Tablet and small desktop */
 @media (max-width: 768px) {
   .rf-root {
     padding: 16px;
+  }
+
+  .rf-table-wrap {
+    margin: 0 -16px;
+    overflow-x: auto !important;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+    width: 100%;
+  }
+
+  .rf-table {
+    min-width: 600px;
   }
 
   .rf-table th,

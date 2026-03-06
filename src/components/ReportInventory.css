@@ -92,9 +92,10 @@
 
 .ri-heads-table-wrap {
   overflow-x: auto;
+  overflow-y: visible;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ri-heads-table {
@@ -159,6 +160,8 @@
 
 .ri-table-wrap {
   overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ri-table {
@@ -489,7 +492,7 @@
   border-top: 1px solid #e2e8f0;
 }
 
-/* Responsive */
+/* Responsive - Tablet */
 @media (max-width: 768px) {
   .ri-root {
     padding: 16px;
@@ -500,12 +503,40 @@
     align-items: stretch;
   }
 
+  .ri-tabs {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .ri-tab {
+    flex: 1;
+    text-align: center;
+  }
+
   .ri-add-btn {
     justify-content: center;
+    width: 100%;
+  }
+
+  .ri-add-head-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ri-heads-table-wrap {
+    margin: 0 -16px;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .ri-table-wrap {
     margin: 0 -16px;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ri-table {
+    min-width: 700px;
   }
 
   .ri-table th,
@@ -523,16 +554,142 @@
     height: 32px;
     font-size: 0.85rem;
   }
+
+  .ri-modal {
+    max-width: 95%;
+    margin: 0 16px;
+  }
 }
 
+/* Mobile - Same table layout with horizontal scroll */
 @media (max-width: 600px) {
-  .ri-table th:nth-child(3),
-  .ri-table td:nth-child(3) {
-    display: none;
+  .ri-root {
+    padding: 12px;
+    min-height: 100vh;
   }
 
-  .ri-table th:nth-child(10),
-  .ri-table td:nth-child(10) {
-    display: none;
+  .ri-header {
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .ri-title {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  .ri-tabs {
+    gap: 6px;
+  }
+
+  .ri-tab {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  .ri-tab-content {
+    margin-top: 16px;
+  }
+
+  .ri-tab-header {
+    margin-bottom: 12px;
+  }
+
+  .ri-add-btn,
+  .ri-add-head-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+
+  /* Heads table - horizontal scroll, same layout as desktop */
+  .ri-heads-table-wrap {
+    margin: 0 -12px;
+    border-radius: 0;
+    overflow-x: auto !important;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+    width: 100%;
+  }
+
+  .ri-heads-table {
+    min-width: 320px;
+  }
+
+  .ri-heads-table th,
+  .ri-heads-table td {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  /* Items table - horizontal scroll, same layout as desktop */
+  .ri-table-wrap {
+    margin: 0 -12px;
+    overflow-x: auto !important;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+    width: 100%;
+  }
+
+  .ri-table {
+    min-width: 750px;
+  }
+
+  .ri-table th,
+  .ri-table td {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .ri-empty {
+    padding: 32px 16px !important;
+    font-size: 0.95rem;
+  }
+
+  .ri-empty-state {
+    padding: 32px 16px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Mobile - 480px and below: modal and form tweaks */
+@media (max-width: 480px) {
+  .ri-modal-overlay {
+    padding: 0 8px;
+    align-items: flex-start;
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .ri-modal {
+    max-width: 100%;
+    max-height: 85vh;
+  }
+
+  .ri-modal-header {
+    padding: 16px 20px;
+  }
+
+  .ri-modal-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .ri-form {
+    padding: 20px;
+  }
+
+  .ri-form-row {
+    margin-bottom: 14px;
+  }
+
+  .ri-delete-modal {
+    max-width: 100%;
+  }
+
+  .ri-delete-modal-body {
+    padding: 20px;
   }
 }

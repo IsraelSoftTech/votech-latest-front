@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { FaDownload } from 'react-icons/fa';
+import jsPDF from 'jspdf';
 import SideTop from './SideTop';
 import api from '../services/api';
 import logo from '../assets/logo.png';
@@ -6,44 +8,12 @@ import './ReportFinances.css';
 
 const SCHOOL_NAME = 'VOTECH S7 ACADEMY';
 
-function buildIncomeRows(items, feeTotalPaid) {
+function buildIncomeRows(items) {
   const rows = [];
   let itemSn = 1;
   let grandTotal = 0;
 
-  // Fee - first income head (from Fee component)
-  rows.push({
-    sn: '',
-    date: '',
-    heading: 'Fee',
-    amount: '',
-    supportDoc: '',
-    subTotal: '',
-    isHeader: true,
-  });
-  rows.push({
-    sn: itemSn++,
-    date: '',
-    heading: 'Total fee paid',
-    amount: feeTotalPaid,
-    supportDoc: '',
-    subTotal: feeTotalPaid,
-    isHeader: false,
-    isItem: true,
-  });
-  rows.push({
-    sn: '',
-    date: '',
-    heading: 'TOTAL',
-    amount: '',
-    supportDoc: '',
-    subTotal: feeTotalPaid,
-    isHeader: false,
-    isTotal: true,
-  });
-  grandTotal += feeTotalPaid;
-
-  // Inventory income items grouped by head
+  // Inventory income items grouped by head (Fee, Salary, etc. are created as heads and entered manually)
   const filtered = items.filter((i) => i.category === 'income');
   const byHead = {};
   filtered.forEach((item) => {
@@ -66,7 +36,7 @@ function buildIncomeRows(items, feeTotalPaid) {
       isHeader: true,
     });
     headItems.forEach((item) => {
-      const amt = (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+      const amt = item.amount != null ? Number(item.amount) : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
       headTotal += amt;
       const dateStr = item.created_at
         ? new Date(item.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -76,7 +46,7 @@ function buildIncomeRows(items, feeTotalPaid) {
         date: dateStr,
         heading: item.item_name,
         amount: amt,
-        supportDoc: item.item_id || String(item.id),
+        supportDoc: item.support_doc || item.item_id || String(item.id),
         subTotal: amt,
         isHeader: false,
         isItem: true,
@@ -109,44 +79,12 @@ function buildIncomeRows(items, feeTotalPaid) {
   return rows;
 }
 
-function buildExpenditureRows(items, salaryTotalCurrentMonth) {
+function buildExpenditureRows(items) {
   const rows = [];
   let itemSn = 1;
   let grandTotal = 0;
 
-  // Salary - first expenditure head (from Salary component, current month)
-  rows.push({
-    sn: '',
-    date: '',
-    heading: 'Salary',
-    amount: '',
-    supportDoc: '',
-    subTotal: '',
-    isHeader: true,
-  });
-  rows.push({
-    sn: itemSn++,
-    date: '',
-    heading: 'Total salary paid for current month',
-    amount: salaryTotalCurrentMonth,
-    supportDoc: 'Salary for this month',
-    subTotal: salaryTotalCurrentMonth,
-    isHeader: false,
-    isItem: true,
-  });
-  rows.push({
-    sn: '',
-    date: '',
-    heading: 'TOTAL',
-    amount: '',
-    supportDoc: '',
-    subTotal: salaryTotalCurrentMonth,
-    isHeader: false,
-    isTotal: true,
-  });
-  grandTotal += salaryTotalCurrentMonth;
-
-  // Inventory expenditure items grouped by head
+  // Inventory expenditure items grouped by head (Fee, Salary, etc. are created as heads and entered manually)
   const filtered = items.filter((i) => i.category === 'expenditure');
   const byHead = {};
   filtered.forEach((item) => {
@@ -169,7 +107,7 @@ function buildExpenditureRows(items, salaryTotalCurrentMonth) {
       isHeader: true,
     });
     headItems.forEach((item) => {
-      const amt = (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+      const amt = item.amount != null ? Number(item.amount) : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
       headTotal += amt;
       const dateStr = item.created_at
         ? new Date(item.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -179,7 +117,7 @@ function buildExpenditureRows(items, salaryTotalCurrentMonth) {
         date: dateStr,
         heading: item.item_name,
         amount: amt,
-        supportDoc: item.item_id || String(item.id),
+        supportDoc: item.support_doc || item.item_id || String(item.id),
         subTotal: amt,
         isHeader: false,
         isItem: true,
@@ -212,18 +150,18 @@ function buildExpenditureRows(items, salaryTotalCurrentMonth) {
   return rows;
 }
 
-function buildFinancialStatementData(items, feeTotalPaid, salaryTotalCurrentMonth) {
+function buildFinancialStatementData(items) {
   const incomeItems = items.filter((i) => i.category === 'income');
   const expenditureItems = items.filter((i) => i.category === 'expenditure');
 
-  // Income: Fee + heads from inventory (same structure as Income tab)
-  const incomeCategories = ['Fee'];
-  const incomeAmounts = { Fee: feeTotalPaid };
+  // Income: heads from inventory (Fee, Salary, etc. created as heads and entered manually)
+  const incomeCategories = [];
+  const incomeAmounts = {};
   const incomeByHead = {};
   incomeItems.forEach((item) => {
     const headName = item.head_name || 'Uncategorized';
     if (!incomeByHead[headName]) incomeByHead[headName] = 0;
-    incomeByHead[headName] += (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+    incomeByHead[headName] += item.amount != null ? Number(item.amount) : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
   });
   Object.keys(incomeByHead)
     .sort()
@@ -232,14 +170,14 @@ function buildFinancialStatementData(items, feeTotalPaid, salaryTotalCurrentMont
       incomeAmounts[name] = incomeByHead[name];
     });
 
-  // Expenditure: Salary + heads from inventory (same structure as Expenditure tab)
-  const expenditureCategories = ['Salary'];
-  const expenditureAmounts = { Salary: salaryTotalCurrentMonth };
+  // Expenditure: heads from inventory (Fee, Salary, etc. created as heads and entered manually)
+  const expenditureCategories = [];
+  const expenditureAmounts = {};
   const expenditureByHead = {};
   expenditureItems.forEach((item) => {
     const headName = item.head_name || 'Uncategorized';
     if (!expenditureByHead[headName]) expenditureByHead[headName] = 0;
-    expenditureByHead[headName] += (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+    expenditureByHead[headName] += item.amount != null ? Number(item.amount) : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
   });
   Object.keys(expenditureByHead)
     .sort()
@@ -286,7 +224,7 @@ function ReportTable({ title, rows }) {
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr>
+              <tr className="rf-empty-row">
                 <td colSpan={6} className="rf-empty">No records</td>
               </tr>
             ) : rows.map((row, idx) => (
@@ -296,12 +234,12 @@ function ReportTable({ title, rows }) {
                   row.isHeader ? 'rf-row-header' : row.isTotal ? 'rf-row-total' : row.isGrandTotal ? 'rf-row-grand' : ''
                 }
               >
-                <td>{row.sn}</td>
-                <td>{row.date}</td>
-                <td className="rf-heading-cell">{row.heading}</td>
-                <td className="rf-amount-cell">{formatNum(row.amount)}</td>
-                <td>{row.supportDoc}</td>
-                <td className="rf-amount-cell">{formatNum(row.subTotal)}</td>
+                <td data-label="SN">{row.sn}</td>
+                <td data-label="Date">{row.date}</td>
+                <td className="rf-heading-cell" data-label="Heading">{row.heading}</td>
+                <td className="rf-amount-cell" data-label="Amount">{formatNum(row.amount)}</td>
+                <td data-label="Support Doc">{row.supportDoc}</td>
+                <td className="rf-amount-cell" data-label="Sub Total">{formatNum(row.subTotal)}</td>
               </tr>
             ))}
           </tbody>
@@ -412,8 +350,6 @@ function FinancialStatement({ data, onPrint }) {
 
 export default function ReportFinances() {
   const [items, setItems] = useState([]);
-  const [feeTotalPaid, setFeeTotalPaid] = useState(0);
-  const [salaryTotalCurrentMonth, setSalaryTotalCurrentMonth] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('income');
   const statementRef = useRef(null);
@@ -422,33 +358,190 @@ export default function ReportFinances() {
     (async () => {
       try {
         setLoading(true);
-        const [inventoryData, feeTotals, paidSalaries] = await Promise.all([
-          api.getReportInventory(),
-          api.getFeeTotalsSummary().catch(() => ({ totalPaid: 0 })),
-          api.getPaidSalaries().catch(() => []),
-        ]);
+        const inventoryData = await api.getReportInventory();
         setItems(Array.isArray(inventoryData) ? inventoryData : []);
-        setFeeTotalPaid(Number(feeTotals?.totalPaid) || 0);
-        const now = new Date();
-        const curMonth = now.getMonth() + 1;
-        const curYear = now.getFullYear();
-        const salaryTotal = (Array.isArray(paidSalaries) ? paidSalaries : [])
-          .filter((s) => Number(s.month) === curMonth && Number(s.year) === curYear)
-          .reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
-        setSalaryTotalCurrentMonth(salaryTotal);
       } catch {
         setItems([]);
-        setFeeTotalPaid(0);
-        setSalaryTotalCurrentMonth(0);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  const incomeRows = buildIncomeRows(items, feeTotalPaid);
-  const expenditureRows = buildExpenditureRows(items, salaryTotalCurrentMonth);
-  const statementData = buildFinancialStatementData(items, feeTotalPaid, salaryTotalCurrentMonth);
+  const incomeRows = buildIncomeRows(items);
+  const expenditureRows = buildExpenditureRows(items);
+  const statementData = buildFinancialStatementData(items);
+
+  const handleDownloadIncomePDF = () => {
+    const formatNum = (n) =>
+      n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
+    const doc = new jsPDF('p', 'mm', 'a4');
+    let y = 20;
+    doc.setFontSize(18);
+    doc.setTextColor(32, 64, 128);
+    doc.text(SCHOOL_NAME, 20, y);
+    y += 12;
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text('INCOME REPORT', 105, y, { align: 'center' });
+    y += 18;
+    doc.setFontSize(10);
+    doc.text('SN', 20, y);
+    doc.text('Date', 35, y);
+    doc.text('Heading', 55, y);
+    doc.text('Amount (XAF)', 170, y);
+    y += 8;
+    doc.line(20, y, 190, y);
+    y += 8;
+    incomeRows.forEach((row) => {
+      if (row.isHeader) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(row.heading || '', 25, y);
+        doc.setFont('helvetica', 'normal');
+      } else if (row.isTotal) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('TOTAL', 55, y);
+        doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+      } else if (row.isGrandTotal) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('GRAND TOTAL INCOME', 55, y);
+        doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+      } else if (row.isItem) {
+        doc.text(String(row.sn || ''), 20, y);
+        doc.text(row.date || '', 35, y);
+        doc.text(row.heading || '', 55, y);
+        doc.text(formatNum(row.amount), 170, y, { align: 'right' });
+      }
+      y += 7;
+      if (y > 270) { doc.addPage(); y = 20; }
+    });
+    doc.save(`Income-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const handleDownloadExpenditurePDF = () => {
+    const formatNum = (n) =>
+      n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
+    const doc = new jsPDF('p', 'mm', 'a4');
+    let y = 20;
+    doc.setFontSize(18);
+    doc.setTextColor(32, 64, 128);
+    doc.text(SCHOOL_NAME, 20, y);
+    y += 12;
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text('EXPENDITURE REPORT', 105, y, { align: 'center' });
+    y += 18;
+    doc.setFontSize(10);
+    doc.text('SN', 20, y);
+    doc.text('Date', 35, y);
+    doc.text('Heading', 55, y);
+    doc.text('Amount (XAF)', 170, y);
+    y += 8;
+    doc.line(20, y, 190, y);
+    y += 8;
+    expenditureRows.forEach((row) => {
+      if (row.isHeader) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(row.heading || '', 25, y);
+        doc.setFont('helvetica', 'normal');
+      } else if (row.isTotal) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('TOTAL', 55, y);
+        doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+      } else if (row.isGrandTotal) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('GRAND TOTAL EXPENDITURE', 55, y);
+        doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+      } else if (row.isItem) {
+        doc.text(String(row.sn || ''), 20, y);
+        doc.text(row.date || '', 35, y);
+        doc.text(row.heading || '', 55, y);
+        doc.text(formatNum(row.amount), 170, y, { align: 'right' });
+      }
+      y += 7;
+      if (y > 270) { doc.addPage(); y = 20; }
+    });
+    doc.save(`Expenditure-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const handleDownloadPDF = () => {
+    const formatNum = (n) =>
+      n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
+    const {
+      incomeCategories,
+      expenditureCategories,
+      incomeAmounts,
+      expenditureAmounts,
+      totalIncome,
+      totalExpenditure,
+      netProfitLoss,
+    } = statementData;
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+    let y = 20;
+
+    doc.setFontSize(18);
+    doc.setTextColor(32, 64, 128);
+    doc.text(SCHOOL_NAME, 20, y);
+    y += 12;
+
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text('FINANCIAL STATEMENT', 105, y, { align: 'center' });
+    y += 18;
+
+    doc.setFontSize(10);
+    doc.text('Income Category', 20, y);
+    doc.text('Amount (XAF)', 170, y);
+    y += 8;
+    doc.setDrawColor(0, 0, 0);
+    doc.line(20, y, 190, y);
+    y += 8;
+
+    incomeCategories.forEach((cat) => {
+      doc.text(cat, 25, y);
+      doc.text(formatNum(incomeAmounts[cat]), 170, y, { align: 'right' });
+      y += 7;
+    });
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL INCOME', 25, y);
+    doc.text(formatNum(totalIncome), 170, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += 12;
+
+    doc.text('Expenditure Category', 20, y);
+    doc.text('Amount (XAF)', 170, y);
+    y += 8;
+    doc.line(20, y, 190, y);
+    y += 8;
+
+    expenditureCategories.forEach((cat) => {
+      doc.text(cat, 25, y);
+      doc.text(formatNum(expenditureAmounts[cat]), 170, y, { align: 'right' });
+      y += 7;
+    });
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL EXPENDITURE', 25, y);
+    doc.text(formatNum(totalExpenditure), 170, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += 12;
+
+    doc.setFillColor(32, 64, 128);
+    doc.rect(20, y - 4, 170, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.text('NET PROFIT/LOSS', 25, y + 3);
+    doc.text(formatNum(netProfitLoss), 170, y + 3, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+
+    const filename = `Financial-Statement-${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(filename);
+  };
 
   const handlePrintStatement = () => {
     const logoImg = statementRef.current?.querySelector('.rf-statement-logo');
@@ -541,12 +634,16 @@ export default function ReportFinances() {
     (function() {
       var src = ${JSON.stringify(logoSrc || '')};
       var imgs = document.querySelectorAll('.fs-logo');
-      imgs.forEach(function(img) { if (src) img.src = src; });
+      if (imgs && imgs.forEach) imgs.forEach(function(img) { if (src) img.src = src; });
+      var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      var delay = isMobile ? 800 : 350;
       setTimeout(function() {
-        window.print();
-        window.onafterprint = function() { window.close(); };
-        setTimeout(function() { window.close(); }, 1500);
-      }, 250);
+        requestAnimationFrame(function() {
+          window.print();
+          window.onafterprint = function() { window.close(); };
+          setTimeout(function() { window.close(); }, 2000);
+        });
+      }, delay);
     })();
   <\/script>
 </body>
@@ -567,9 +664,14 @@ export default function ReportFinances() {
         <div className="rf-page-header">
           <h1 className="rf-page-title">Finances Report</h1>
           {activeTab === 'statement' && (
-            <button type="button" className="rf-print-btn rf-print-btn-top" onClick={handlePrintStatement}>
-              Print
-            </button>
+            <div className="rf-statement-actions">
+              <button type="button" className="rf-download-pdf-btn rf-print-btn-top" onClick={handleDownloadPDF}>
+                <FaDownload /> Download PDF
+              </button>
+              <button type="button" className="rf-print-btn rf-print-btn-top" onClick={handlePrintStatement}>
+                Print
+              </button>
+            </div>
           )}
         </div>
         <div className="rf-tabs">
@@ -603,8 +705,26 @@ export default function ReportFinances() {
           </div>
         ) : (
           <>
-            {activeTab === 'income' && <ReportTable title="Income" rows={incomeRows} />}
-            {activeTab === 'expenditure' && <ReportTable title="Expenditure" rows={expenditureRows} />}
+            {activeTab === 'income' && (
+              <>
+                <div className="rf-report-actions">
+                  <button type="button" className="rf-download-pdf-btn" onClick={handleDownloadIncomePDF}>
+                    <FaDownload /> Generate Income Report (PDF)
+                  </button>
+                </div>
+                <ReportTable title="Income" rows={incomeRows} />
+              </>
+            )}
+            {activeTab === 'expenditure' && (
+              <>
+                <div className="rf-report-actions">
+                  <button type="button" className="rf-download-pdf-btn" onClick={handleDownloadExpenditurePDF}>
+                    <FaDownload /> Generate Expenditure Report (PDF)
+                  </button>
+                </div>
+                <ReportTable title="Expenditure" rows={expenditureRows} />
+              </>
+            )}
           </>
         )}
       </div>

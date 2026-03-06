@@ -1330,6 +1330,44 @@ class ApiService {
     return await response.json();
   }
 
+  // Property & Equipment (Fixed Assets) API
+  async getPropertyEquipment() {
+    const response = await fetch(`${API_URL}/property-equipment`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch property & equipment");
+    return await response.json();
+  }
+
+  async createPropertyEquipment(data) {
+    const response = await fetch(`${API_URL}/property-equipment`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to register");
+    return await response.json();
+  }
+
+  async updatePropertyEquipment(id, data) {
+    const response = await fetch(`${API_URL}/property-equipment/${id}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to update");
+    return await response.json();
+  }
+
+  async deletePropertyEquipment(id) {
+    const response = await fetch(`${API_URL}/property-equipment/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to delete");
+    return await response.json();
+  }
+
   // Budget Heads API
   async getBudgetHeads() {
     const response = await fetch(`${API_URL}/budget-heads`, {

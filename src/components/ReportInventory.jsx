@@ -5,7 +5,7 @@ import SuccessMessage from './SuccessMessage';
 import { FaPlus, FaEdit, FaTrashAlt } from 'react-icons/fa';
 import './ReportInventory.css';
 
-const UOM_OPTIONS = ['Pieces', 'Kg', 'Liters', 'Cartons'];
+const UOM_OPTIONS = ['Pieces', 'Kg', 'Liters', 'Cartons', 'Others'];
 const CATEGORY_OPTIONS = [
   { value: 'income', label: 'Income' },
   { value: 'expenditure', label: 'Expenditure' },
@@ -16,9 +16,9 @@ const INITIAL_FORM = {
   head_id: '',
   category: 'income',
   uom: 'Pieces',
-  quantity: '1',
-  unit_cost_price: '',
-  depreciation_rate: '',
+  quantity: '',
+  amount: '',
+  support_doc: '',
   supplier: '',
 };
 
@@ -92,14 +92,15 @@ export default function ReportInventory() {
 
   const openEditForm = (item) => {
     setSuccess('');
+    const amt = item.amount != null ? item.amount : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
     setForm({
       item_name: item.item_name || '',
       head_id: item.head_id ? String(item.head_id) : '',
       category: item.category || 'income',
       uom: item.uom || 'Pieces',
-      quantity: String(item.quantity ?? 1),
-      unit_cost_price: String(item.unit_cost_price ?? ''),
-      depreciation_rate: item.depreciation_rate != null ? String(item.depreciation_rate) : '',
+      quantity: item.quantity != null ? String(item.quantity) : '',
+      amount: String(amt),
+      support_doc: item.support_doc || '',
       supplier: item.supplier || '',
     });
     setEditingItem(item);
@@ -113,13 +114,14 @@ export default function ReportInventory() {
       setError('Item name is required');
       return;
     }
-    if (!form.unit_cost_price || isNaN(parseFloat(form.unit_cost_price))) {
-      setError('Valid unit cost price is required');
+    const amt = parseFloat(form.amount);
+    if (isNaN(amt) || amt < 0) {
+      setError('Valid amount is required');
       return;
     }
-    const qty = parseInt(form.quantity, 10);
-    if (isNaN(qty) || qty < 1) {
-      setError('Quantity must be at least 1');
+    const qty = form.quantity === '' || form.quantity == null ? null : parseInt(form.quantity, 10);
+    if (qty !== null && (isNaN(qty) || qty < 1)) {
+      setError('Quantity must be at least 1 when provided');
       return;
     }
     setSubmitting(true);
@@ -129,9 +131,9 @@ export default function ReportInventory() {
         head_id: form.head_id ? parseInt(form.head_id, 10) : null,
         category: form.category,
         uom: form.uom,
-        quantity: parseInt(form.quantity, 10) || 1,
-        unit_cost_price: parseFloat(form.unit_cost_price),
-        depreciation_rate: form.depreciation_rate ? parseFloat(form.depreciation_rate) : null,
+        quantity: qty,
+        amount: amt,
+        support_doc: form.support_doc?.trim() || null,
         supplier: form.category === 'income' ? (form.supplier?.trim() || null) : null,
       };
       if (editingItem) {
@@ -267,6 +269,11 @@ export default function ReportInventory() {
       maximumFractionDigits: 2,
     }).format(Number(n) || 0);
 
+  const getItemAmount = (item) => {
+    if (item.amount != null && !isNaN(Number(item.amount))) return Number(item.amount);
+    return (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+  };
+
   return (
     <SideTop>
       {success && <SuccessMessage message={success} type={successType} onClose={() => setSuccess('')} />}
@@ -373,40 +380,38 @@ export default function ReportInventory() {
                     <th>Category</th>
                     <th>UOM</th>
                     <th>Quantity</th>
-                    <th>Unit Cost</th>
-                    <th>Total Cost</th>
-                    <th>Depreciation %</th>
+                    <th>Amount</th>
+                    <th>Support Doc</th>
                     <th>Supplier</th>
                     <th className="ri-actions-col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.length === 0 ? (
-                    <tr>
-                      <td colSpan={11} className="ri-empty">
+                    <tr className="ri-empty-row">
+                      <td colSpan={10} className="ri-empty">
                         No items yet. Click &quot;Add Item&quot; to register.
                       </td>
                     </tr>
                   ) : (
                     items.map((item) => (
                       <tr key={item.id}>
-                        <td className="ri-id">{item.item_id || item.id}</td>
-                        <td>{item.item_name}</td>
-                        <td className="ri-desc">{item.head_name || '—'}</td>
-                        <td>
+                        <td className="ri-id" data-label="Item ID">{item.item_id || item.id}</td>
+                        <td data-label="Item Name">{item.item_name}</td>
+                        <td className="ri-desc" data-label="Head">{item.head_name || '—'}</td>
+                        <td data-label="Category">
                           <span
                             className={`ri-badge ri-badge-${item.category}`}
                           >
                             {item.category === 'income' ? 'Income' : 'Expenditure'}
                           </span>
                         </td>
-                        <td>{item.uom}</td>
-                        <td>{item.quantity ?? 1}</td>
-                        <td className="ri-cost">{formatCurrency(item.unit_cost_price)}</td>
-                        <td className="ri-cost">{formatCurrency((Number(item.unit_cost_price) || 0) * (item.quantity ?? 1))}</td>
-                        <td>{item.depreciation_rate != null ? `${item.depreciation_rate}%` : '—'}</td>
-                        <td>{item.supplier || '—'}</td>
-                        <td className="ri-actions-cell">
+                        <td data-label="UOM">{item.uom}</td>
+                        <td data-label="Quantity">{item.quantity != null ? item.quantity : '—'}</td>
+                        <td className="ri-cost" data-label="Amount">{formatCurrency(getItemAmount(item))}</td>
+                        <td data-label="Support Doc">{item.support_doc || '—'}</td>
+                        <td data-label="Supplier">{item.supplier || '—'}</td>
+                        <td className="ri-actions-cell" data-label="">
                           <button
                             type="button"
                             className="ri-action-btn ri-edit"
@@ -515,25 +520,24 @@ export default function ReportInventory() {
                   </select>
                 </div>
                 <div className="ri-form-row">
-                  <label>Quantity <span className="ri-required">*</span></label>
+                  <label>Quantity (optional)</label>
                   <input
                     type="number"
                     name="quantity"
                     value={form.quantity}
                     onChange={handleFormChange}
-                    placeholder="1"
+                    placeholder="Leave blank for services"
                     min="1"
                     step="1"
                     className="ri-input"
-                    required
                   />
                 </div>
                 <div className="ri-form-row">
-                  <label>Unit Cost Price <span className="ri-required">*</span></label>
+                  <label>Amount (XAF) <span className="ri-required">*</span></label>
                   <input
                     type="number"
-                    name="unit_cost_price"
-                    value={form.unit_cost_price}
+                    name="amount"
+                    value={form.amount}
                     onChange={handleFormChange}
                     placeholder="0.00"
                     step="0.01"
@@ -543,25 +547,13 @@ export default function ReportInventory() {
                   />
                 </div>
                 <div className="ri-form-row">
-                  <label>Total Cost</label>
+                  <label>Support Doc Number</label>
                   <input
                     type="text"
-                    value={formatCurrency((parseFloat(form.unit_cost_price) || 0) * (parseInt(form.quantity, 10) || 1))}
-                    disabled
-                    className="ri-input ri-disabled"
-                  />
-                </div>
-                <div className="ri-form-row">
-                  <label>Depreciation Rate (%)</label>
-                  <input
-                    type="number"
-                    name="depreciation_rate"
-                    value={form.depreciation_rate}
+                    name="support_doc"
+                    value={form.support_doc}
                     onChange={handleFormChange}
-                    placeholder="Optional"
-                    step="0.01"
-                    min="0"
-                    max="100"
+                    placeholder="e.g. Invoice #, Receipt #"
                     className="ri-input"
                   />
                 </div>

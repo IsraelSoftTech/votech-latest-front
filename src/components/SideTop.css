@@ -233,6 +233,11 @@
   overflow-x: hidden;
 }
 
+/* Allow report pages (Finances, Inventory) to show content on mobile */
+.main-content.main-content-reports {
+  overflow-x: visible;
+}
+
 .admin-header {
   height: 64px;
   background: #e0f2fe;

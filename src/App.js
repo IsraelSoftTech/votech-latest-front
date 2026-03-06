@@ -72,6 +72,7 @@ import UserEvents from "./components/UserEvents";
 import Reports from "./components/Reports.jsx";
 import ReportInventory from "./components/ReportInventory.jsx";
 import ReportFinances from "./components/ReportFinances.jsx";
+import PropertyEquipment from "./components/PropertyEquipment.jsx";
 import GroupChat from "./components/GroupChat";
 import PsycoDash from "./components/PsycoDash.jsx";
 import Cases from "./components/Cases.jsx";
@@ -250,6 +251,7 @@ function App() {
 
         <Route path="/admin-reports-inventory" element={<ReportInventory />} />
         <Route path="/admin-reports-finances" element={<ReportFinances />} />
+        <Route path="/admin-reports-property-equipment" element={<PropertyEquipment />} />
         <Route
           path="/admin-timetable"
           element={<TimeTable authUser={authUser} />}
