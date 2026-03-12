@@ -8,6 +8,29 @@ import './ReportFinances.css';
 
 const SCHOOL_NAME = 'VOTECH S7 ACADEMY';
 
+function getLogoBase64() {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    const logoUrl = typeof logo === 'string'
+      ? (logo.startsWith('http') ? logo : `${window.location.origin}${logo.startsWith('/') ? logo : '/' + logo}`)
+      : logo;
+    img.src = logoUrl;
+  });
+}
+
 function buildIncomeRows(items) {
   const rows = [];
   let itemSn = 1;
@@ -372,11 +395,16 @@ export default function ReportFinances() {
   const expenditureRows = buildExpenditureRows(items);
   const statementData = buildFinancialStatementData(items);
 
-  const handleDownloadIncomePDF = () => {
+  const handleDownloadIncomePDF = async () => {
     const formatNum = (n) =>
       n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
+    const logoData = await getLogoBase64();
     const doc = new jsPDF('p', 'mm', 'a4');
     let y = 20;
+    if (logoData) {
+      doc.addImage(logoData, 'PNG', 20, 10, 18, 18);
+      y = 32;
+    }
     doc.setFontSize(18);
     doc.setTextColor(32, 64, 128);
     doc.text(SCHOOL_NAME, 20, y);
@@ -420,11 +448,16 @@ export default function ReportFinances() {
     doc.save(`Income-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
-  const handleDownloadExpenditurePDF = () => {
+  const handleDownloadExpenditurePDF = async () => {
     const formatNum = (n) =>
       n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
+    const logoData = await getLogoBase64();
     const doc = new jsPDF('p', 'mm', 'a4');
     let y = 20;
+    if (logoData) {
+      doc.addImage(logoData, 'PNG', 20, 10, 18, 18);
+      y = 32;
+    }
     doc.setFontSize(18);
     doc.setTextColor(32, 64, 128);
     doc.text(SCHOOL_NAME, 20, y);
@@ -468,7 +501,7 @@ export default function ReportFinances() {
     doc.save(`Expenditure-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const formatNum = (n) =>
       n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
     const {
@@ -481,9 +514,14 @@ export default function ReportFinances() {
       netProfitLoss,
     } = statementData;
 
+    const logoData = await getLogoBase64();
     const doc = new jsPDF('p', 'mm', 'a4');
     let y = 20;
 
+    if (logoData) {
+      doc.addImage(logoData, 'PNG', 20, 10, 18, 18);
+      y = 32;
+    }
     doc.setFontSize(18);
     doc.setTextColor(32, 64, 128);
     doc.text(SCHOOL_NAME, 20, y);
@@ -661,6 +699,10 @@ export default function ReportFinances() {
   return (
     <SideTop>
       <div className="rf-root">
+        <div className="rf-print-header">
+          <img src={logo} alt="VOTECH Logo" className="rf-print-logo" />
+          <span className="rf-print-school">VOTECH S7 ACADEMY</span>
+        </div>
         <div className="rf-page-header">
           <h1 className="rf-page-title">Finances Report</h1>
           {activeTab === 'statement' && (

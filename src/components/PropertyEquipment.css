@@ -322,14 +322,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 20px 24px;
   background: #204080;
   color: #fff;
 }
 
+.pe-report-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .pe-report-header h2 {
   margin: 0;
   font-size: 1.25rem;
+  flex: 1;
 }
 
 .pe-report-body {

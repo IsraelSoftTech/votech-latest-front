@@ -45,17 +45,16 @@ function Welcome() {
         <h2 className="features-title">Key Features</h2>
         <div className="features-grid">
           {[
-            { title: "Student Database", desc: "Easy and secure management of school fee" },
-            { title: "Fee Payment", desc: "Maintain a comprehensive student database" },
-            { title: "Salary Payment", desc: "Efficient management of teacher information" },
-            { title: "Timetable Management", desc: "Empolyed eallbwance" },
-            { title: "Marks Management", desc: "Deska management" },
-            { title: "Report Cards", desc: "Marks management" },
-          ].map((f, i) => (
-            <div key={i} className="feature-card">
+            "Student Database",
+            "Fee Payment",
+            "Salary Payment",
+            "Timetable Management",
+            "Marks Management",
+            "Report Cards",
+          ].map((title, i) => (
+            <div key={i} className={`feature-card feature-card-${i}`}>
               <div className="feature-icon" />
-              <div className="feature-title">{f.title}</div>
-              <div className="feature-desc">{f.desc}</div>
+              <div className="feature-title">{title}</div>
             </div>
           ))}
         </div>

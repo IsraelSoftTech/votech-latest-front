@@ -1,5 +1,32 @@
 /* Report Finances - scoped (rf- prefix) */
 
+.rf-print-header {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #204080;
+}
+
+@media print {
+  .rf-print-header {
+    display: flex !important;
+  }
+}
+
+.rf-print-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.rf-print-school {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #204080;
+}
+
 .rf-root {
   background: #fff;
   min-height: 100%;

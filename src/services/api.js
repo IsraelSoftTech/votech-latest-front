@@ -2067,6 +2067,20 @@ class ApiService {
     }
   }
 
+  async getAcademicYears() {
+    try {
+      const response = await fetch(`${API_URL}/v1/academic-years`, {
+        headers: this.getAuthHeaders(),
+      });
+      const data = await this.handleResponse(response);
+      const list = data?.data ?? data;
+      return Array.isArray(list) ? list : [];
+    } catch (error) {
+      console.error("Get academic years error:", error);
+      return [];
+    }
+  }
+
   async getPaidSalaries() {
     try {
       const response = await fetch(`${API_URL}/salary/paid-salaries`, {

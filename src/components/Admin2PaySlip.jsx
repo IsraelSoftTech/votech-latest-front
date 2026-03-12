@@ -37,8 +37,7 @@ export default function Admin2PaySlip({ authUser }) {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('paid_at');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [filterMonth, setFilterMonth] = useState('');
-  const [filterYear, setFilterYear] = useState('');
+  const [activeAcademicYear, setActiveAcademicYear] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPayslip, setSelectedPayslip] = useState(null);
   const [showPayslipModal, setShowPayslipModal] = useState(false);
@@ -87,9 +86,21 @@ export default function Admin2PaySlip({ authUser }) {
       setLoading(false);
       return;
     }
+    fetchActiveAcademicYear();
     fetchPaidSalaries();
     loadPayslipSettings();
   }, [authUser]);
+
+  const fetchActiveAcademicYear = async () => {
+    try {
+      const list = await api.getAcademicYears();
+      const active = Array.isArray(list) ? list.find((y) => (y.status || '').toLowerCase() === 'active') : null;
+      setActiveAcademicYear(active || null);
+    } catch (e) {
+      console.error('Failed to fetch active academic year:', e);
+      setActiveAcademicYear(null);
+    }
+  };
 
   const showMessage = (title, message, type = 'info', onConfirm = null, confirmText = 'OK', cancelText = 'Cancel', showCancel = false) => {
     setMessageBox({
@@ -198,25 +209,35 @@ export default function Admin2PaySlip({ authUser }) {
     });
   };
 
-  const getCurrentAcademicYear = () => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-    if (currentMonth >= 8) {
-      return `${currentYear}/${currentYear + 1}`;
-    } else {
-      return `${currentYear - 1}/${currentYear}`;
-    }
+  const getMonthNumber = (monthName) => {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months.indexOf(monthName) + 1;
+  };
+
+  const isSalaryInActiveAcademicYear = (salary) => {
+    if (!activeAcademicYear || !activeAcademicYear.name) return true;
+    const name = String(activeAcademicYear.name).trim();
+    const match = name.match(/^(\d{4})\/(\d{4})$/);
+    if (!match) return true;
+    const startYear = parseInt(match[1], 10);
+    const endYear = parseInt(match[2], 10);
+    const salaryYear = parseInt(salary.year, 10);
+    const monthNum = getMonthNumber(salary.month);
+    if (salaryYear === startYear && monthNum >= 9) return true;
+    if (salaryYear === endYear && monthNum <= 8) return true;
+    return false;
   };
 
   const getFilteredAndSortedData = () => {
     let filtered = paidSalaries.filter(salary => {
       const displayName = (salary.user_name || salary.applicant_name || '').toLowerCase();
       const matchesSearch = displayName.includes(searchQuery.toLowerCase()) ||
-                           salary.contact.includes(searchQuery);
-      const matchesMonth = !filterMonth || salary.month === filterMonth;
-      const matchesYear = !filterYear || salary.year.toString() === filterYear;
-      return matchesSearch && matchesMonth && matchesYear;
+                           (salary.contact || '').includes(searchQuery);
+      const matchesAcademicYear = isSalaryInActiveAcademicYear(salary);
+      return matchesSearch && matchesAcademicYear;
     });
 
     filtered.sort((a, b) => {
@@ -248,14 +269,6 @@ export default function Admin2PaySlip({ authUser }) {
     });
 
     return filtered;
-  };
-
-  const getMonthNumber = (monthName) => {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return months.indexOf(monthName) + 1;
   };
 
   const handleSort = (field) => {
@@ -341,7 +354,8 @@ export default function Admin2PaySlip({ authUser }) {
             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
           }
-          const fileName = `payslip_${(salary.user_name||salary.applicant_name||'user').replace(/\s+/g, '_')}_${salary.month}_${salary.year}.pdf`;
+          const yearPart = activeAcademicYear?.name ? activeAcademicYear.name.replace(/\//g, '-') : salary.year;
+          const fileName = `payslip_${(salary.user_name||salary.applicant_name||'user').replace(/\s+/g, '_')}_${salary.month}_${yearPart}.pdf`;
           pdf.save(fileName);
           closePayslipModal();
         }
@@ -352,22 +366,6 @@ export default function Admin2PaySlip({ authUser }) {
     }
   };
 
-  const months = [
-    { value: '', label: 'All Months' },
-    { value: 'January', label: 'January' },
-    { value: 'February', label: 'February' },
-    { value: 'March', label: 'March' },
-    { value: 'April', label: 'April' },
-    { value: 'May', label: 'May' },
-    { value: 'June', label: 'June' },
-    { value: 'July', label: 'July' },
-    { value: 'August', label: 'August' },
-    { value: 'September', label: 'September' },
-    { value: 'October', label: 'October' },
-    { value: 'November', label: 'November' },
-    { value: 'December', label: 'December' }
-  ];
-
   const generateEmploymentNumber = (rec) => {
     const base = (rec?.applicant_name || '').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 5) || 'STAFF';
     const id = Number(rec?.id || 0);
@@ -375,20 +373,6 @@ export default function Admin2PaySlip({ authUser }) {
     return `${base}-${String(pseudo).padStart(5, '0')}`;
   };
 
-  const generateAcademicYears = () => {
-    const currentAcademicYear = getCurrentAcademicYear();
-    const [startYear] = currentAcademicYear.split('/');
-    const startYearNum = parseInt(startYear);
-    const years = [];
-    years.push({ value: '', label: 'All Years' });
-    for (let year = startYearNum; year <= 2050; year++) {
-      const academicYear = `${year}/${year + 1}`;
-      years.push({ value: year.toString(), label: academicYear });
-    }
-    return years;
-  };
-
-  const years = generateAcademicYears();
   const filteredData = getFilteredAndSortedData();
 
   return (
@@ -433,29 +417,10 @@ export default function Admin2PaySlip({ authUser }) {
 
           <div className="admin2-payslip-filters">
             <div className="admin2-payslip-filter-group">
-              <label className="admin2-payslip-filter-label">Month</label>
-              <select
-                value={filterMonth}
-                onChange={(e) => setFilterMonth(e.target.value)}
-                className="admin2-payslip-filter-select"
-              >
-                {months.map(month => (
-                  <option key={month.value} value={month.value}>{month.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="admin2-payslip-filter-group">
-              <label className="admin2-payslip-filter-label">Year</label>
-              <select
-                value={filterYear}
-                onChange={(e) => setFilterYear(e.target.value)}
-                className="admin2-payslip-filter-select"
-              >
-                {years.map(year => (
-                  <option key={year.value} value={year.value}>{year.label}</option>
-                ))}
-              </select>
+              <label className="admin2-payslip-filter-label">Academic Year</label>
+              <div className="admin2-payslip-academic-year-display">
+                {activeAcademicYear?.name || '—'}
+              </div>
             </div>
           </div>
         </div>
@@ -479,8 +444,8 @@ export default function Admin2PaySlip({ authUser }) {
           <div className="admin2-payslip-stat-card">
             <FaCalendarAlt className="admin2-payslip-stat-icon" />
             <div className="admin2-payslip-stat-content">
-              <h3>Current Period</h3>
-              <p>{getCurrentAcademicYear()}</p>
+              <h3>Academic Year</h3>
+              <p>{activeAcademicYear?.name || '—'}</p>
             </div>
           </div>
         </div>
@@ -710,6 +675,7 @@ export default function Admin2PaySlip({ authUser }) {
                     employmentNumber={generateEmploymentNumber(selectedPayslip)}
                     month={selectedPayslip.month}
                     year={selectedPayslip.year}
+                    academicYear={activeAcademicYear?.name || null}
                     grossAmount={selectedPayslip.amount}
                     debitPercentCNPS={getCnpsIncludedFor(selectedPayslip) ? 4 : 0}
                     structure={payslipStructure && payslipStructure.length ? payslipStructure : undefined}

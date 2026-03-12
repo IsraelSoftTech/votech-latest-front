@@ -3,6 +3,7 @@ import SideTop from './SideTop';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
 import { FaPlus, FaEdit, FaTrashAlt } from 'react-icons/fa';
+import logo from '../assets/logo.png';
 import './ReportInventory.css';
 
 const UOM_OPTIONS = ['Pieces', 'Kg', 'Liters', 'Cartons', 'Others'];
@@ -278,6 +279,10 @@ export default function ReportInventory() {
     <SideTop>
       {success && <SuccessMessage message={success} type={successType} onClose={() => setSuccess('')} />}
       <div className="ri-root">
+        <div className="ri-print-header">
+          <img src={logo} alt="VOTECH Logo" className="ri-print-logo" />
+          <span className="ri-print-school">VOTECH S7 ACADEMY</span>
+        </div>
         <div className="ri-header">
           <h1 className="ri-title">Inventory</h1>
           <div className="ri-tabs">
