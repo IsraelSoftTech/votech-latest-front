@@ -375,10 +375,13 @@ const ReportCardHomePage = () => {
         });
       }, 200);
 
-      const response = await api.get(`/report-cards/bulk-html?${params}`, {
-        responseType: "blob",
-        timeout: 180000,
-      });
+      const response = await api.get(
+        `/report-cards/bulk-pdfs-direct?${params}`,
+        {
+          responseType: "blob",
+          timeout: 180000,
+        }
+      );
 
       clearInterval(fetchInterval);
 
