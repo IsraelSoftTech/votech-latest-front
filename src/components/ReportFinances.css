@@ -1,0 +1,612 @@
+/* Report Finances - scoped (rf- prefix) */
+
+.rf-print-header {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #204080;
+}
+
+@media print {
+  .rf-print-header {
+    display: flex !important;
+  }
+}
+
+.rf-print-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.rf-print-school {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #204080;
+}
+
+.rf-root {
+  background: #fff;
+  min-height: 100%;
+  padding: 24px;
+}
+
+.rf-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rf-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0;
+}
+
+.rf-statement-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.rf-download-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #16a34a;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rf-download-pdf-btn:hover {
+  background: #15803d;
+}
+
+.rf-print-btn-top {
+  margin-left: 0;
+}
+
+.rf-loading {
+  padding: 48px;
+  text-align: center;
+  color: #64748b;
+}
+
+.rf-report-actions {
+  margin-bottom: 16px;
+}
+
+.rf-report-actions .rf-download-pdf-btn {
+  margin-left: 0;
+}
+
+.rf-report-section {
+  margin-bottom: 40px;
+}
+
+.rf-report-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 16px 0;
+}
+
+.rf-table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.rf-table th,
+.rf-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rf-table th {
+  background: #204080;
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rf-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rf-table tbody tr:hover:not(.rf-row-total):not(.rf-row-grand) {
+  background: #f8fafc;
+}
+
+.rf-heading-cell {
+  min-width: 180px;
+}
+
+.rf-amount-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.rf-row-header td {
+  font-weight: 600;
+  background: #f1f5f9;
+}
+
+.rf-row-total td {
+  font-weight: 600;
+  background: #e2e8f0;
+}
+
+.rf-row-grand td {
+  font-weight: 700;
+  background: #204080;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.rf-empty {
+  padding: 24px;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Tabs */
+.rf-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rf-tab {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.rf-tab:hover {
+  color: #204080;
+}
+
+.rf-tab-active {
+  color: #204080;
+  border-bottom-color: #204080;
+}
+
+/* Financial Statement - Word-style combined table */
+.rf-statement-root {
+  background: #fff;
+  max-width: 800px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.rf-statement-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #204080;
+}
+
+.rf-statement-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.rf-statement-school-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0;
+}
+
+.rf-statement-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 24px 0;
+  color: #204080;
+}
+
+.rf-statement-section {
+  margin-bottom: 28px;
+}
+
+.rf-statement-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #333;
+  font-size: 0.9rem;
+}
+
+.rf-statement-table th,
+.rf-statement-table td {
+  border: 1px solid #333;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.rf-statement-table th {
+  background: #204080;
+  color: #fff;
+  font-weight: 600;
+}
+
+.rf-statement-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.rf-statement-total-row td {
+  font-weight: 700;
+  background: #e8eef6;
+  border-top: 2px solid #333;
+  padding: 12px 14px;
+}
+
+.rf-statement-net-row td {
+  font-weight: 700;
+  background: #204080;
+  color: #fff;
+  border-top: 3px solid #333;
+  padding: 14px;
+  font-size: 1rem;
+}
+
+.rf-print-btn {
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #204080;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rf-print-btn:hover {
+  background: #163366;
+}
+
+@media print {
+  .rf-tabs,
+  .rf-print-btn,
+  .rf-print-btn-top {
+    display: none !important;
+  }
+
+  .rf-statement-root {
+    box-shadow: none;
+    border: none;
+  }
+}
+
+/* Mobile - Card layout for Income/Expenditure tables (600px and below) */
+@media (max-width: 600px) {
+  .rf-table-wrap {
+    overflow: visible !important;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+  }
+
+  .rf-table thead {
+    display: none;
+  }
+
+  .rf-table tbody tr.rf-empty-row td {
+    display: block !important;
+    padding: 24px 16px !important;
+    text-align: center;
+  }
+
+  .rf-table tbody tr.rf-empty-row td::before {
+    display: none;
+  }
+
+  .rf-table tbody tr:not(.rf-empty-row) {
+    display: block;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .rf-table tbody tr.rf-row-header {
+    background: #f1f5f9;
+    font-weight: 600;
+  }
+
+  .rf-table tbody tr.rf-row-total {
+    background: #e2e8f0;
+    font-weight: 600;
+  }
+
+  .rf-table tbody tr.rf-row-grand {
+    background: #204080;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .rf-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .rf-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border: none;
+    font-size: 0.9rem;
+  }
+
+  .rf-table td::before {
+    content: attr(data-label);
+    font-weight: 500;
+    color: #64748b;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+
+  .rf-table td.rf-amount-cell {
+    justify-content: flex-end;
+  }
+
+  .rf-table tr.rf-row-header td::before,
+  .rf-table tr.rf-row-total td::before,
+  .rf-table tr.rf-row-grand td::before {
+    display: none;
+  }
+
+  .rf-table tr.rf-row-header td,
+  .rf-table tr.rf-row-total td,
+  .rf-table tr.rf-row-grand td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .rf-table tr.rf-row-header td:empty,
+  .rf-table tr.rf-row-total td:empty,
+  .rf-table tr.rf-row-grand td:empty {
+    display: none;
+  }
+
+  .rf-table tr.rf-row-header .rf-heading-cell,
+  .rf-table tr.rf-row-total .rf-heading-cell,
+  .rf-table tr.rf-row-grand .rf-heading-cell {
+    font-weight: 700;
+  }
+
+  .rf-table tr.rf-row-grand td {
+    color: #fff;
+  }
+
+  .rf-table tr.rf-row-grand .rf-heading-cell,
+  .rf-table tr.rf-row-grand .rf-amount-cell {
+    color: #fff;
+  }
+}
+
+/* Mobile-first responsive: 480px and below */
+@media (max-width: 480px) {
+  .rf-root {
+    padding: 12px;
+    min-height: 100vh;
+  }
+
+  .rf-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .rf-page-title {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  .rf-statement-actions {
+    flex-direction: column;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .rf-download-pdf-btn,
+  .rf-print-btn-top {
+    margin-left: 0;
+    width: 100%;
+    padding: 12px 16px;
+    justify-content: center;
+  }
+
+  .rf-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .rf-tab {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    padding: 12px 10px;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  .rf-report-section {
+    margin-bottom: 24px;
+  }
+
+  .rf-report-title {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .rf-table-wrap {
+    margin: 0;
+    border-radius: 0;
+    overflow: visible !important;
+    display: block;
+    width: 100%;
+  }
+
+  .rf-table {
+    font-size: 0.8rem;
+    min-width: unset;
+    width: 100%;
+  }
+
+  .rf-table th,
+  .rf-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .rf-heading-cell {
+    min-width: unset;
+  }
+
+  .rf-empty {
+    padding: 20px 12px;
+    font-size: 0.9rem;
+  }
+
+  /* Financial Statement mobile */
+  .rf-statement-root {
+    padding: 16px;
+    margin: 0 -12px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .rf-statement-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .rf-statement-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .rf-statement-school-name {
+    font-size: 1.2rem;
+  }
+
+  .rf-statement-title {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+
+  .rf-statement-section {
+    margin-bottom: 20px;
+  }
+
+  .rf-statement-table {
+    font-size: 0.8rem;
+  }
+
+  .rf-statement-table th,
+  .rf-statement-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .rf-loading {
+    padding: 32px 16px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Tablet and small desktop */
+@media (max-width: 768px) {
+  .rf-root {
+    padding: 16px;
+  }
+
+  .rf-table-wrap {
+    margin: 0 -16px;
+    overflow-x: auto !important;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+    width: 100%;
+  }
+
+  .rf-table {
+    min-width: 600px;
+  }
+
+  .rf-table th,
+  .rf-table td {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .rf-tabs {
+    flex-wrap: wrap;
+  }
+
+  .rf-tab {
+    padding: 8px 14px;
+    font-size: 0.9rem;
+  }
+
+  .rf-statement-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .rf-statement-table th,
+  .rf-statement-table td {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+}

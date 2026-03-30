@@ -68,8 +68,11 @@ import DeanEvent from "./components/DeanEvent";
 import DeanLessonPlan from "./components/DeanLessonPlan.jsx";
 import UserEvents from "./components/UserEvents";
 
-// Inventory / Misc
-import Inventory from "./components/Inventory.jsx";
+// Misc
+import Reports from "./components/Reports.jsx";
+import ReportInventory from "./components/ReportInventory.jsx";
+import ReportFinances from "./components/ReportFinances.jsx";
+import PropertyEquipment from "./components/PropertyEquipment.jsx";
 import GroupChat from "./components/GroupChat";
 import PsycoDash from "./components/PsycoDash.jsx";
 import Cases from "./components/Cases.jsx";
@@ -79,6 +82,43 @@ import TeacherCases from "./components/TeacherCases.jsx";
 import MasterSheetPage from "./components/marks-module/pages/MasterSheetPage/MasterSheet.page";
 import UnauthorizedPage from "./components/Unauthorized.page";
 import ReportCard from "./components/marks-module/components/ReportCard/ReportCard.component";
+
+// Wrappers so Discipline always sees DisciplineSideTop menu on shared routes
+function PayslipWithDisciplineLayout() {
+  const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+  if (authUser?.role === "Discipline") {
+    return (
+      <DisciplineSideTop>
+        <PaySlip noLayoutWrapper />
+      </DisciplineSideTop>
+    );
+  }
+  return <PaySlip />;
+}
+
+function SubjectsWithDisciplineLayout() {
+  const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+  if (authUser?.role === "Discipline") {
+    return (
+      <DisciplineSideTop>
+        <SubjectPage noLayoutWrapper />
+      </DisciplineSideTop>
+    );
+  }
+  return <SubjectPage />;
+}
+
+function TeacherCasesWithDisciplineLayout() {
+  const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+  if (authUser?.role === "Discipline") {
+    return (
+      <DisciplineSideTop>
+        <TeacherCases noLayoutWrapper />
+      </DisciplineSideTop>
+    );
+  }
+  return <TeacherCases />;
+}
 
 function App() {
   const [showLoader, setShowLoader] = React.useState(true);
@@ -183,7 +223,7 @@ function App() {
           path="/admin2-payslip"
           element={<Admin2PaySlip authUser={authUser} />}
         />
-        <Route path="/payslip" element={<PaySlip />} />
+        <Route path="/payslip" element={<PayslipWithDisciplineLayout />} />
 
         {/* Attendance / Staff */}
         <Route
@@ -209,7 +249,9 @@ function App() {
         <Route path="/admin-lesson-plans" element={<LessonPlan />} />
         <Route path="/lesson-plans" element={<LessonPlan />} />
 
-        <Route path="/admin-inventory" element={<Inventory />} />
+        <Route path="/admin-reports-inventory" element={<ReportInventory />} />
+        <Route path="/admin-reports-finances" element={<ReportFinances />} />
+        <Route path="/admin-reports-property-equipment" element={<PropertyEquipment />} />
         <Route
           path="/admin-timetable"
           element={<TimeTable authUser={authUser} />}
@@ -265,7 +307,14 @@ function App() {
             </DisciplineSideTop>
           }
         />
-        <Route path="/discipline-lesson-plans" element={<LessonPlan />} />
+        <Route
+          path="/discipline-lesson-plans"
+          element={
+            <DisciplineSideTop>
+              <LessonPlan noLayoutWrapper />
+            </DisciplineSideTop>
+          }
+        />
         <Route
           path="/admin-discipline-cases"
           element={
@@ -321,12 +370,12 @@ function App() {
         />
         <Route path="/psycho-messages" element={<PsychoMessage />} />
         <Route path="/psycho-chat/:userId" element={<PsychoChat />} />
-        <Route path="/teacher-cases" element={<TeacherCases />} />
+        <Route path="/teacher-cases" element={<TeacherCasesWithDisciplineLayout />} />
 
         {/* ----------------------------------------- */}
         {/* Academics - marks-module pages */}
         <Route path="/academics/academic-years" element={<AcademicYear />} />
-        <Route path="/academics/subjects" element={<SubjectPage />} />
+        <Route path="/academics/subjects" element={<SubjectsWithDisciplineLayout />} />
         <Route path="/academics/classes" element={<ClassPage />} />
         <Route path="/academics/bands" element={<AcademicBandsPage />} />
         <Route

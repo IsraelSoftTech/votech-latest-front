@@ -1,31 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import SideTop from './SideTop';
-import { FaUserGraduate, FaChalkboardTeacher, FaBoxes } from 'react-icons/fa';
+import { FaUserGraduate, FaChalkboardTeacher } from 'react-icons/fa';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../services/api';
 
-const COLORS = ['#204080', '#388e3c', '#f59e0b'];
+const COLORS = ['#204080', '#388e3c'];
 
 export default function Admin2Dash() {
   const [students, setStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
-  const [inventory, setInventory] = useState([]);
 
   useEffect(() => {
     api.getStudents().then(setStudents).catch(() => setStudents([]));
     api.getAllTeachers().then(setTeachers).catch(() => setTeachers([]));
-    // Try to fetch inventory, fallback to empty if not implemented
-    if (api.getInventory) {
-      api.getInventory().then(setInventory).catch(() => setInventory([]));
-    } else {
-      setInventory([]);
-    }
   }, []);
 
   const data = [
     { name: 'Students', value: students.length },
     { name: 'Teachers', value: teachers.length },
-    { name: 'Inventory', value: inventory.length },
   ];
 
   return (
@@ -40,11 +32,6 @@ export default function Admin2Dash() {
           <div className="icon"><FaChalkboardTeacher /></div>
           <div className="count" style={{ fontSize: 22 }}>{teachers.length}</div>
           <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Staff</div>
-        </div>
-        <div className="card inventory">
-          <div className="icon"><FaBoxes /></div>
-          <div className="count" style={{ fontSize: 22 }}>{inventory.length}</div>
-          <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Inventory Records</div>
         </div>
       </div>
       <div className="dashboard-section" style={{ marginTop: 32, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

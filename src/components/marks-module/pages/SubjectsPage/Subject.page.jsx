@@ -181,7 +181,7 @@ const SubjectModal = ({ isOpen, onClose, title, children }) => {
   );
 };
 
-export const SubjectPage = () => {
+export const SubjectPage = ({ noLayoutWrapper = false }) => {
   const user = useRestrictTo(
     "Admin1",
     "Admin2",
@@ -532,8 +532,8 @@ export const SubjectPage = () => {
     },
   ];
 
-  return (
-    <SideTop>
+  const content = (
+    <>
       <div className="subject-page-container">
         <h2 className="page-title">
           {user.role === "Admin3"
@@ -749,8 +749,10 @@ export const SubjectPage = () => {
           onUpdate={fetchSubjects}
         />
       </SubjectModal>
-    </SideTop>
+    </>
   );
+
+  return noLayoutWrapper ? content : <SideTop>{content}</SideTop>;
 };
 
 function NoSubjectsAssigned() {

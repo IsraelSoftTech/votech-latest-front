@@ -1,84 +1,92 @@
-/* Fee Receipt - House Rent Receipt Template Style */
+/* Fee Receipt - Match print design: sans-serif, 2 per A4 page */
 
-/* Debug styles for PDF generation */
 .receipt-container {
   background: white;
-  width: 210mm; /* A4 width */
-  min-height: 140mm; /* Increased height for single receipt */
-  height: auto;
+  width: 210mm;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 8mm; /* Increased padding */
+  padding: 6mm;
   box-sizing: border-box;
-  font-family: 'Times New Roman', serif;
-  color: black;
-  position: relative;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #333;
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
-/* Receipt Template */
+/* Screen: show single receipt. Print: hide */
+.receipt-single-view {
+  display: block;
+}
+
+/* Screen: hide. Print: show two receipts per page */
+.receipt-print-sheet {
+  display: none;
+}
+
+/* Receipt Template - Match reference: 2 per A4, thin borders */
 .receipt-template {
   width: 100%;
-  height: 130mm; /* Fixed height for consistent printing */
-  min-height: 130mm;
-  max-height: 130mm;
-  padding: 4mm; /* Reduced padding */
-  border: 1px dotted #000;
-  background: linear-gradient(to bottom, #fefefe, #f5f5f0);
-  position: relative;
+  max-width: 195mm;
+  padding: 4mm 5mm;
+  border: 1px solid #333;
+  background: #fff;
   box-sizing: border-box;
-  overflow: hidden; /* Prevent content from overflowing */
   page-break-inside: avoid;
   break-inside: avoid;
-  flex-shrink: 0;
-  margin-bottom: 6mm; /* Reduced margin between receipts */
 }
 
-/* Header Section */
+/* Header - Logo left, Academy name right */
 .receipt-header {
-  text-align: center;
-  margin-bottom: 3mm; /* Further reduced margin */
+  margin-bottom: 3mm;
+  padding-bottom: 2mm;
+  border-bottom: 1px solid #333;
 }
 
 .header-with-logo {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4mm;
   margin-bottom: 2mm;
 }
 
 .school-logo {
-  width: 20mm;
-  height: 20mm;
+  width: 14mm;
+  height: 14mm;
   object-fit: contain;
-  border-radius: 2mm;
+  flex-shrink: 0;
 }
 
 .school-info {
   flex: 1;
-  text-align: center;
+  text-align: left;
 }
 
 .school-name {
-  font-size: 11pt; /* Further reduced font size */
+  font-size: 11pt;
   font-weight: bold;
-  margin: 0 0 0.8mm 0; /* Further reduced margin */
+  margin: 0;
   color: #333;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.receipt-title-section {
+  margin-top: 2mm;
+  text-align: center;
+}
+
+.receipt-ref {
+  font-size: 8pt;
+  color: #666;
+  margin-top: 1mm;
 }
 
 .receipt-title {
-  font-size: 16pt; /* Further reduced font size */
+  font-size: 12pt;
   font-weight: bold;
-  margin: 0 0 1.5mm 0; /* Further reduced margin */
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  margin: 0;
+  color: #1976d2;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .receipt-meta {
@@ -167,39 +175,126 @@
   padding-bottom: 0.5mm; /* Reduced padding */
 }
 
-/* Fee Types Table */
-.fee-types-section {
-  margin-bottom: 2.5mm; /* Further reduced margin */
+/* Student info - Name left, Student ID right, same row */
+.student-info-section {
+  margin-bottom: 3mm;
 }
 
-.fee-types-title {
-  font-size: 11pt; /* Further reduced font size */
+.student-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8mm;
+}
+
+.student-details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4mm;
+}
+
+.student-row {
+  display: flex;
+  gap: 2mm;
+  margin-bottom: 0;
+  font-size: 9pt;
+  color: #333;
+}
+
+.student-row .label {
+  font-weight: 600;
+  min-width: 70px;
+}
+
+/* Payment confirmation - light blue box, thin dark grey border */
+.receipt-payment-confirmation {
+  background: #e3f2fd;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 3mm 4mm;
+  margin-bottom: 3mm;
+}
+
+.receipt-payment-confirmation .confirmation-row {
+  padding: 2mm 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.receipt-payment-confirmation .confirmation-label {
+  font-size: 9pt;
+  color: #333;
+  font-weight: 600;
+}
+
+.receipt-payment-confirmation .confirmation-row.amount-paid .confirmation-value {
+  font-size: 11pt;
+  font-weight: 800;
+  color: #2e7d32;
+}
+
+.receipt-payment-confirmation .confirmation-row.pending-balance .confirmation-value {
+  font-size: 11pt;
+  font-weight: 700;
+  color: #c62828;
+}
+
+/* Payment statement */
+.payment-statement {
+  margin-bottom: 3mm;
+}
+
+.payment-statement p,
+.statement-text,
+.amount-in-words,
+.amount-in-figures {
+  margin: 0.5mm 0;
+  font-size: 9pt;
+  color: #333;
+}
+
+.current-payment-details p {
+  margin: 0.2mm 0;
+  font-size: 7pt;
+}
+
+/* Fee Types Table - compact */
+.fee-types-section {
+  margin-bottom: 2mm;
+}
+
+.fee-types-title,
+.summary-title {
+  font-size: 8pt;
   font-weight: bold;
-  margin: 0 0 1.5mm 0; /* Further reduced margin */
-  text-decoration: underline;
+  margin: 0 0 1mm 0;
   text-align: center;
 }
 
 .fee-types-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #000;
-  font-size: 7pt; /* Further reduced font size */
+  border: 1px solid #333;
+  font-size: 8pt;
   box-sizing: border-box;
 }
 
 .fee-types-table th,
 .fee-types-table td {
-  border: 1px solid #000;
-  padding: 0.8mm; /* Further reduced padding */
+  border: 1px solid #333;
+  padding: 1mm 1.5mm;
   text-align: center;
   box-sizing: border-box;
+  color: #333;
 }
 
 .fee-types-table th {
-  background-color: #f0f0f0;
+  background-color: #e8e8e8;
   font-weight: bold;
-  font-size: 8pt; /* Further reduced font size */
+  font-size: 7pt;
+  color: #333;
 }
 
 .fee-type-name {
@@ -226,9 +321,9 @@
 
 .fee-percentage {
   font-weight: bold;
-  font-size: 8pt; /* Slightly larger for percentage */
-  padding: 0.4mm 0.8mm; /* Further reduced padding */
-  border-radius: 1mm; /* Reduced border radius */
+  font-size: 6pt;
+  padding: 0.3mm 0.5mm;
+  border-radius: 1mm;
   box-sizing: border-box;
   text-align: center;
 }
@@ -254,28 +349,31 @@
   border: 1px solid #dee2e6;
 }
 
-/* Amount Summary */
+/* Amount Summary - compact */
 .amount-summary-section {
-  margin-bottom: 1.5mm; /* Further reduced margin */
+  margin-bottom: 1mm;
 }
 
 .summary-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #000;
+  border: 1px solid #333;
+  font-size: 8pt;
   box-sizing: border-box;
 }
 
 .summary-table td {
-  border: 1px solid #000;
-  padding: 0.8mm; /* Further reduced padding */
-  font-size: 8pt; /* Further reduced font size */
+  border: 1px solid #333;
+  padding: 1mm 1.5mm;
   box-sizing: border-box;
+  color: #333;
 }
 
 .summary-label {
   font-weight: bold;
   text-align: left;
+  text-transform: uppercase;
+  font-size: 8pt;
 }
 
 .summary-value {
@@ -283,24 +381,47 @@
   font-weight: bold;
 }
 
-/* Footer */
+/* Footer - minimal */
 .receipt-footer {
-  position: absolute;
-  bottom: 2mm;
-  right: 4mm;
+  margin-top: 1mm;
+  min-height: 0;
 }
 
-.footer-text {
-  font-size: 9pt;
-  color: #666;
-  font-style: italic;
+/* Receipt Action Buttons */
+.receipt-action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+/* Print Button - Prominent, one-click */
+.receipt-print-btn {
+  background: linear-gradient(135deg, #1976d2, #1565c0);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 28px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.35);
+  transition: all 0.2s ease;
+}
+
+.receipt-print-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.45);
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
 }
 
 /* Download Button */
 .download-pdf-btn {
-  position: fixed;
-  top: 20px;
-  right: 20px;
   background: linear-gradient(135deg, #4caf50, #388e3c);
   color: white;
   border: none;
@@ -314,7 +435,6 @@
   gap: 8px;
   box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
   transition: all 0.3s ease;
-  z-index: 1000;
 }
 
 .download-pdf-btn:hover {
@@ -322,41 +442,97 @@
   box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
 }
 
-/* Print Styles */
+/* Payment Confirmation - screen: same as print */
+.receipt-payment-confirmation .confirmation-label {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Print Styles - ONE page, two identical receipts */
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
+
 @media print {
-  .receipt-container {
-    width: 100% !important;
-    min-height: auto !important;
-    padding: 4mm !important;
-    margin: 0 !important;
+  /* Force single page - no extra pages */
+  html, body {
+    height: auto !important;
     overflow: visible !important;
   }
   
-  .receipt-template {
-    page-break-inside: avoid;
-    break-inside: avoid;
-    height: 130mm !important;
-    min-height: 130mm !important;
-    max-height: 130mm !important;
-    overflow: hidden !important;
-    margin-bottom: 6mm !important;
-    padding: 4mm !important;
+  /* Hide non-receipt UI */
+  body * {
+    visibility: hidden;
+  }
+  .fee-receipt-modal-overlay,
+  .fee-receipt-modal-overlay * {
+    visibility: visible !important;
+  }
+  .fee-receipt-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: #fff !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+  .fee-receipt-modal-content .text-button,
+  .fee-receipt-modal-content .close-btn,
+  .receipt-action-buttons {
+    display: none !important;
+  }
+  .fee-receipt-modal-content {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    background: transparent !important;
+    overflow: visible !important;
   }
   
+  /* Hide single view, show print sheet with 2 receipts on ONE page */
+  .receipt-single-view {
+    display: none !important;
+  }
+  .receipt-print-sheet {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    gap: 4mm !important;
+    width: 100% !important;
+    max-width: 195mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    break-inside: avoid !important;
+  }
+  .receipt-container {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+  
+  /* Each receipt: equal space, both on same page */
+  .receipt-print-sheet .receipt-template {
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    padding: 3mm 4mm !important;
+    margin: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border: 1px solid #000 !important;
+  }
+  
+  .receipt-action-buttons,
+  .receipt-print-btn,
   .download-pdf-btn {
     display: none !important;
   }
   
-  /* Ensure proper page breaks */
-  .receipt-template:first-child {
-    page-break-before: auto;
-  }
-  
-  .receipt-template:last-child {
-    page-break-after: auto;
-  }
-  
-  /* Ensure table borders print properly */
   .fee-types-table,
   .fee-types-table th,
   .fee-types-table td,
@@ -369,10 +545,9 @@
     background: #f0f0f0 !important;
   }
   
-  /* Ensure logo prints properly */
   .school-logo {
-    width: 20mm !important;
-    height: 20mm !important;
+    width: 14mm !important;
+    height: 14mm !important;
     object-fit: contain !important;
   }
 }
@@ -548,6 +723,8 @@
     font-size: 8pt !important;
   }
   
+  .receipt-action-buttons,
+  .receipt-print-btn,
   .download-pdf-btn {
     display: none !important;
   }
@@ -699,9 +876,7 @@
   overflow: visible;
 }
 
-/* Ensure proper spacing in modal */
-.fee-receipt-modal-content .receipt-template {
-  margin-bottom: 15mm;
-  height: auto;
-  min-height: 130mm;
+/* Modal display - single receipt fits content */
+.fee-receipt-modal-content .receipt-single-view .receipt-template {
+  margin-bottom: 0;
 } 

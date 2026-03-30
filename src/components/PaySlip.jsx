@@ -9,11 +9,12 @@ import './Admin2PaySlip.css';
 import PayslipTemplate from './PayslipTemplate';
 import './PayslipTemplate.css';
 
-export default function PaySlip() {
+export default function PaySlip({ noLayoutWrapper = false }) {
   const [loading, setLoading] = useState(true);
   const [paidSalaries, setPaidSalaries] = useState([]);
   const [salaryDescriptions, setSalaryDescriptions] = useState([]);
   const [payslipStructure, setPayslipStructure] = useState([]);
+  const [activeAcademicYear, setActiveAcademicYear] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPayslip, setSelectedPayslip] = useState(null);
   const [showPayslipModal, setShowPayslipModal] = useState(false);
@@ -23,16 +24,19 @@ export default function PaySlip() {
     const init = async () => {
       try {
         setLoading(true);
-        const [myPaidRes, descriptions, settings] = await Promise.all([
+        const [myPaidRes, descriptions, settings, yearsList] = await Promise.all([
           api.getMyPaidSalaries(),
           api.getSalaryDescriptions(),
-          api.getPayslipSettings()
+          api.getPayslipSettings(),
+          api.getAcademicYears()
         ]);
         const paidArray = Array.isArray(myPaidRes?.data) ? myPaidRes.data : (Array.isArray(myPaidRes) ? myPaidRes : []);
         setPaidSalaries(paidArray);
         setSalaryDescriptions(Array.isArray(descriptions) ? descriptions : []);
         const structure = settings?.settings?.structure;
         setPayslipStructure(Array.isArray(structure) ? structure : []);
+        const active = Array.isArray(yearsList) ? yearsList.find((y) => (y.status || '').toLowerCase() === 'active') : null;
+        setActiveAcademicYear(active || null);
       } catch (error) {
         console.error('Failed to load payslips:', error);
       } finally {
@@ -140,7 +144,8 @@ export default function PaySlip() {
         heightLeft -= pageHeight;
       }
 
-      const fileName = `payslip_${(selectedPayslip.user_name||selectedPayslip.applicant_name||'user').replace(/\s+/g, '_')}_${selectedPayslip.month}_${selectedPayslip.year}.pdf`;
+      const yearPart = activeAcademicYear?.name ? activeAcademicYear.name.replace(/\//g, '-') : selectedPayslip.year;
+      const fileName = `payslip_${(selectedPayslip.user_name||selectedPayslip.applicant_name||'user').replace(/\s+/g, '_')}_${selectedPayslip.month}_${yearPart}.pdf`;
       pdf.save(fileName);
       closePayslipModal();
     } catch (error) {
@@ -168,9 +173,8 @@ export default function PaySlip() {
     );
   });
 
-  return (
-    <SideTop>
-      <div className="teacher-payslip-container">
+  const content = (
+    <div className="teacher-payslip-container">
         <div className="teacher-payslip-header">
           <div className="teacher-payslip-header-content">
             <div className="teacher-payslip-header-text">
@@ -249,6 +253,7 @@ export default function PaySlip() {
                     employmentNumber={makeEmploymentNumber(selectedPayslip)}
                     month={selectedPayslip.month}
                     year={selectedPayslip.year}
+                    academicYear={activeAcademicYear?.name || null}
                     grossAmount={selectedPayslip.amount}
                     structure={payslipStructure && payslipStructure.length ? payslipStructure : undefined}
                   />
@@ -265,6 +270,7 @@ export default function PaySlip() {
           </div>
         )}
       </div>
-    </SideTop>
   );
+
+  return noLayoutWrapper ? content : <SideTop>{content}</SideTop>;
 } 

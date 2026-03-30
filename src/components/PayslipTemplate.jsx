@@ -12,6 +12,7 @@ const PayslipTemplate = forwardRef(function PayslipTemplate(
 		employmentNumber = '—',
 		month,
 		year,
+		academicYear = null,
 		grossAmount,
 		debitPercentCNPS = 0,
 		structure = null,
@@ -103,7 +104,7 @@ const PayslipTemplate = forwardRef(function PayslipTemplate(
 				</div>
 				<div className="template-row"><span className="template-label">NAME:</span> <span className="template-value template-bold">{name}</span></div>
 				<div className="template-row"><span className="template-label">EMPLOYMENT NUMBER:</span> <span className="template-value">{employmentNumber}</span></div>
-				<div className="template-row"><span className="template-label">Month, Year:</span> <span className="template-value">{month} {year}</span></div>
+				<div className="template-row"><span className="template-label">Period:</span> <span className="template-value">{month}{academicYear ? ` • ${academicYear}` : ` ${year}`}</span></div>
 			</div>
 
 			<table className="template-table">

@@ -36,6 +36,7 @@ import {
   FaBookOpen,
   FaTable,
   FaExclamationTriangle,
+  FaWarehouse,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
@@ -164,7 +165,7 @@ export default function SideTop({ children }) {
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
 
       {
-        label: "Financial Summary",
+        label: "Fee Overview",
         icon: <FaMoneyBill />,
         path: "/admin-finance",
       },
@@ -180,7 +181,15 @@ export default function SideTop({ children }) {
         icon: <FaFileInvoiceDollar />,
         path: "/admin2-payslip",
       },
-      { label: "Inventory", icon: <FaBoxes />, path: "/admin-inventory" },
+      {
+        label: "Reports",
+        icon: <FaFileAlt />,
+        submenu: [
+          { label: "Inventory", path: "/admin-reports-inventory", icon: <FaBoxes /> },
+          { label: "Finances", path: "/admin-reports-finances", icon: <FaMoneyBill /> },
+          { label: "Property & Equipment", path: "/admin-reports-property-equipment", icon: <FaWarehouse /> },
+        ],
+      },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       // { label: "Marks", icon: <FaChartBar />, path: "/admin-marks" },
       {
@@ -374,23 +383,8 @@ export default function SideTop({ children }) {
         icon: <FaPenFancy />,
         path: "/psychosocialist-lesson-plans",
       },
+      { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "Messages", icon: <FaEnvelope />, path: "/psycho-messages" },
-    ];
-  } else if (authUser?.role === "Discipline") {
-    menuItems = [
-      { label: "Dashboard", icon: <MdDashboard />, path: "/dsc-dashboard" },
-      { label: "Cases", icon: <FaClipboardList />, path: "/dsc-cases" },
-      {
-        label: "Discipline Cases",
-        icon: <FaExclamationTriangle />,
-        path: "/dsc-discipline-cases",
-      },
-      {
-        label: "Teachers' Cases",
-        icon: <FaExclamationTriangle />,
-        path: "/teacher-cases",
-      },
-      { label: "Messages", icon: <FaEnvelope />, path: "/dsc-messages" },
     ];
   } else if (authUser?.role === "Admin1") {
     // Inject Teachers' Cases into Admin1 menu (view-only page handles RBAC)
@@ -904,10 +898,54 @@ export default function SideTop({ children }) {
             );
           })}
         </nav>
+        {/* Username at bottom of sidebar with Settings/Logout submenu (mobile only) */}
+        <div className="sidebar-username-section">
+          <div
+            className={`sidebar-username menu-item has-submenu${expandedMenu === "__sidebar_user__" ? " expanded" : ""}`}
+            onClick={() => setExpandedMenu((prev) => (prev === "__sidebar_user__" ? null : "__sidebar_user__"))}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setExpandedMenu((prev) => (prev === "__sidebar_user__" ? null : "__sidebar_user__"));
+              }
+            }}
+          >
+            <span className="icon"><FaUser /></span>
+            <span className="menu-label sidebar-username-text">{username}</span>
+            <span className="chevron" aria-hidden="true">
+              <FaChevronCircleDown />
+            </span>
+          </div>
+          <div className={`submenu sidebar-user-submenu ${expandedMenu === "__sidebar_user__" ? "expanded" : ""}`}>
+            <div
+              className="submenu-item"
+              onClick={() => {
+                openProfileModal();
+                setSidebarOpen(false);
+              }}
+            >
+              <span className="icon"><FaCog /></span>
+              <span className="menu-label">Settings</span>
+            </div>
+            <div
+              className="submenu-item"
+              onClick={() => {
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("authUser");
+                window.location.href = "/signin";
+              }}
+            >
+              <span className="icon"><FaSignOutAlt /></span>
+              <span className="menu-label">Logout</span>
+            </div>
+          </div>
+        </div>
       </aside>
 
       <div
-        className="main-content"
+        className={`main-content ${location.pathname.includes('admin-reports') ? 'main-content-reports' : ''}`}
         style={{
           paddingTop: 32,
           minHeight: "calc(100vh - 0px)",
@@ -938,7 +976,12 @@ export default function SideTop({ children }) {
             >
               <FaBars />
             </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {sidebarOpen && (
+              <span className="header-votech-when-open">
+                VOTECH
+              </span>
+            )}
+            <div className="header-logo-desktop" style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <img
                 src={logo}
                 alt="logo"
@@ -965,7 +1008,11 @@ export default function SideTop({ children }) {
               count={upcomingEventsCount}
               onClick={handleBellClick}
             />
+            <div className="header-logo-mobile">
+              <img src={logo} alt="logo" className="header-logo-mobile-img" />
+            </div>
             <button
+              className="admin-username-btn"
               style={{
                 background: "none",
                 border: "none",

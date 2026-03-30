@@ -1,17 +1,4 @@
-# MPASAT Online - Financial Management System
 
-A modern financial management system built with React and SQLite, featuring income/expense tracking, reporting, and multi-currency support.
-
-## Features
-
-- 🔐 Secure user authentication
-- 💰 Income and expense tracking
-- 📊 Visual reports and analytics
-- 💱 Multi-currency support (USD, EUR, FCFA)
-- 📱 Responsive design
-- 📄 PDF report generation
-- 📈 Interactive charts
-- 🔄 Real-time updates
 
 ## Prerequisites
 

@@ -139,6 +139,16 @@
   border-color: #204080;
 }
 
+.admin2-payslip-academic-year-display {
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #204080;
+  background: #eef3ff;
+  border-radius: 6px;
+  border: 1px solid #dbe7ff;
+}
+
 /* Statistics Cards */
 .admin2-payslip-stats {
   display: grid;

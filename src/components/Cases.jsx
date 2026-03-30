@@ -106,6 +106,8 @@ export default function Cases() {
         priority: 'medium',
         notes: ''
       });
+      setSuccess('Case created successfully');
+      setError('');
       fetchCases();
     } catch (err) {
       setError('Failed to create case');

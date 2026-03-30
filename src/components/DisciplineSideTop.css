@@ -1,7 +1,7 @@
 html, body {
-  max-width: 100vw;
+  max-width: 100%;
   overflow-x: hidden;
-  width: 100vw;
+  width: 100%;
   position: relative;
 }
 
@@ -257,7 +257,7 @@ html, body {
 }
 
 .discipline-container, .discipline-main, .admin-header, .dashboard-cards, .dashboard-section {
-  max-width: 100vw;
+  max-width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
 }
@@ -274,10 +274,10 @@ html, body {
 .ds-dashboard-section,
 .ds-card,
 .ds-table-scroll {
-  max-width: 100vw;
+  max-width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
-  width: 100vw;
+  width: 100%;
   min-width: 0;
 }
 
@@ -339,7 +339,7 @@ html, body {
     padding: 0 2px;
     border-radius: 6px;
     margin-bottom: 12px;
-    max-width: 100vw;
+    max-width: 100%;
   }
   .ds-table-scroll table {
     min-width: 400px !important;
@@ -394,7 +394,7 @@ html, body {
     padding: 0 !important;
     min-width: 0 !important;
     width: 100% !important;
-    max-width: 100vw !important;
+    max-width: 100% !important;
     box-sizing: border-box;
     margin-top: 48px;
     background: #f7f8fa;
@@ -421,8 +421,8 @@ html, body {
     background: inherit;
   }
   .ds-dashboard-section {
-    width: 100vw !important;
-    max-width: 100vw !important;
+    width: 100% !important;
+    max-width: 100% !important;
     min-width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -436,7 +436,7 @@ html, body {
     background: #fff;
     border-radius: 6px;
     margin-bottom: 2px;
-    max-width: 100vw;
+    max-width: 100%;
   }
   .ds-table-scroll table {
     min-width: 600px !important;
@@ -452,7 +452,7 @@ html, body {
   .ds-header {
     flex-wrap: wrap;
     width: 100% !important;
-    max-width: 100vw !important;
+    max-width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box;
     padding: 0 8px !important;

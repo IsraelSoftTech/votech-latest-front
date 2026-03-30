@@ -554,6 +554,34 @@ class ApiService {
     }
   }
 
+  async verifyForgotPasswordAccount(username, email) {
+    try {
+      const response = await fetch(`${API_URL}/users/check-user-details`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Verify forgot password account error:", error);
+      throw error;
+    }
+  }
+
+  async resetPasswordWithEmail(username, email, newPassword) {
+    try {
+      const response = await fetch(`${API_URL}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, newPassword }),
+      });
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error("Reset password error:", error);
+      throw error;
+    }
+  }
+
   // User management for Admin3
   async getAllUsers() {
     const response = await fetch(`${API_URL}/users/all`, {
@@ -649,7 +677,9 @@ class ApiService {
   }
 
   async getStudents() {
-    const response = await fetch(`${API_URL}/students`);
+    const response = await fetch(`${API_URL}/students`, {
+      headers: this.getAuthHeaders(),
+    });
     if (!response.ok) throw new Error("Failed to fetch students");
     return await response.json();
   }
@@ -694,6 +724,25 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch student fee stats");
+    return await response.json();
+  }
+
+  async getStudentFeeStatsBatch(studentIds) {
+    if (!studentIds || studentIds.length === 0) return {};
+    const ids = Array.isArray(studentIds) ? studentIds : [studentIds];
+    const idsParam = ids.join(",");
+    const response = await fetch(`${API_URL}/fees/students/batch?ids=${encodeURIComponent(idsParam)}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch batch fee stats");
+    return await response.json();
+  }
+
+  async getFeeTotalsSummary() {
+    const response = await fetch(`${API_URL}/fees/totals/summary`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch fee totals");
     return await response.json();
   }
 
@@ -1205,41 +1254,117 @@ class ApiService {
     return await response.json();
   }
 
-  // Inventory API
-  async getInventory(type = "income") {
-    const response = await fetch(`${API_URL}/inventory?type=${type}`, {
+  // Report Inventory API
+  async getReportInventory() {
+    const response = await fetch(`${API_URL}/report-inventory`, {
       headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch inventory");
     return await response.json();
   }
 
-  async registerInventoryItem(data) {
-    const response = await fetch(`${API_URL}/inventory`, {
+  async createReportInventoryItem(data) {
+    const response = await fetch(`${API_URL}/report-inventory`, {
       method: "POST",
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Failed to register inventory item");
+    if (!response.ok) throw new Error("Failed to register item");
     return await response.json();
   }
 
-  async deleteInventoryItem(id) {
-    const response = await fetch(`${API_URL}/inventory/${id}`, {
-      method: "DELETE",
-      headers: this.getAuthHeaders(),
-    });
-    if (!response.ok) throw new Error("Failed to delete inventory item");
-    return await response.json();
-  }
-
-  async editInventoryItem(id, data) {
-    const response = await fetch(`${API_URL}/inventory/${id}`, {
+  async updateReportInventoryItem(id, data) {
+    const response = await fetch(`${API_URL}/report-inventory/${id}`, {
       method: "PUT",
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error("Failed to edit inventory item");
+    if (!response.ok) throw new Error("Failed to update item");
+    return await response.json();
+  }
+
+  async deleteReportInventoryItem(id) {
+    const response = await fetch(`${API_URL}/report-inventory/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to delete item");
+    return await response.json();
+  }
+
+  // Report Inventory Heads API
+  async getReportInventoryHeads() {
+    const response = await fetch(`${API_URL}/report-inventory/heads`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch heads");
+    return await response.json();
+  }
+
+  async createReportInventoryHead(data) {
+    const response = await fetch(`${API_URL}/report-inventory/heads`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to add head");
+    return await response.json();
+  }
+
+  async updateReportInventoryHead(id, data) {
+    const response = await fetch(`${API_URL}/report-inventory/heads/${id}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to update head");
+    return await response.json();
+  }
+
+  async deleteReportInventoryHead(id) {
+    const response = await fetch(`${API_URL}/report-inventory/heads/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to delete head");
+    return await response.json();
+  }
+
+  // Property & Equipment (Fixed Assets) API
+  async getPropertyEquipment() {
+    const response = await fetch(`${API_URL}/property-equipment`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch property & equipment");
+    return await response.json();
+  }
+
+  async createPropertyEquipment(data) {
+    const response = await fetch(`${API_URL}/property-equipment`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to register");
+    return await response.json();
+  }
+
+  async updatePropertyEquipment(id, data) {
+    const response = await fetch(`${API_URL}/property-equipment/${id}`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to update");
+    return await response.json();
+  }
+
+  async deletePropertyEquipment(id) {
+    const response = await fetch(`${API_URL}/property-equipment/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to delete");
     return await response.json();
   }
 
@@ -1385,28 +1510,11 @@ class ApiService {
     return await response.json();
   }
 
-  async getBalanceSheet(asOfDate = null) {
-    const params = asOfDate ? `?as_of_date=${asOfDate}` : "";
-    const response = await fetch(
-      `${API_URL}/inventory/balance-sheet${params}`,
-      {
-        headers: this.getAuthHeaders(),
-      }
-    );
-    if (!response.ok) throw new Error("Failed to fetch balance sheet");
-    return await response.json();
-  }
-
-  async calculateDepreciation(month, year) {
-    const response = await fetch(
-      `${API_URL}/inventory/calculate-depreciation`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ month, year }),
-      }
-    );
-    if (!response.ok) throw new Error("Failed to calculate depreciation");
+  async getFeeSummaryByClass() {
+    const response = await fetch(`${API_URL}/financial/fee-summary-by-class`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error("Failed to fetch fee summary by class");
     return await response.json();
   }
 
@@ -1956,6 +2064,20 @@ class ApiService {
     } catch (error) {
       console.error("Delete all salaries error:", error);
       throw error;
+    }
+  }
+
+  async getAcademicYears() {
+    try {
+      const response = await fetch(`${API_URL}/v1/academic-years`, {
+        headers: this.getAuthHeaders(),
+      });
+      const data = await this.handleResponse(response);
+      const list = data?.data ?? data;
+      return Array.isArray(list) ? list : [];
+    } catch (error) {
+      console.error("Get academic years error:", error);
+      return [];
     }
   }
 
@@ -2828,16 +2950,22 @@ class ApiService {
   async createEvent(eventData) {
     const response = await fetch(`${API_URL}/events`, {
       method: "POST",
-      headers: this.getAuthHeaders(),
+      headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify(eventData),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      if (response.status === 409) {
-        throw new Error(`Event creation failed: ${errorData.error}`);
+      let errorMsg = "Failed to create event";
+      try {
+        const errorData = await response.json();
+        errorMsg = errorData.error || errorMsg;
+      } catch (_) {
+        errorMsg = `Server error (${response.status}). Please try again.`;
       }
-      throw new Error(errorData.error || "Failed to create event");
+      if (response.status === 409) {
+        throw new Error(errorMsg);
+      }
+      throw new Error(errorMsg);
     }
 
     return await this.handleResponse(response);
