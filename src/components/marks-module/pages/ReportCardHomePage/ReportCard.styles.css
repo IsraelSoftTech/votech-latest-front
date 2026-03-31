@@ -1198,3 +1198,34 @@ select {
 .report-table-select .report-select__menu {
   z-index: 1001;
 }
+/* ═══════════════════════════════════════════════════════════════
+   MASTER SHEET BUTTON — Loading spinner styles
+   Add these to your existing ReportCard.styles.css
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Spinner rotation on the button icon */
+.report-btn-spinner {
+  animation: report-spin 1s linear infinite;
+  font-size: 14px;
+}
+
+@keyframes report-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Button loading state — subtle pulse + reduced opacity */
+.report-btn.report-btn-loading {
+  opacity: 0.85;
+  cursor: wait;
+  pointer-events: none;
+  position: relative;
+}
+
+.report-btn.report-btn-loading span {
+  opacity: 0.9;
+}
