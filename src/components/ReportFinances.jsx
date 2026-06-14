@@ -407,7 +407,8 @@ export default function ReportFinances() {
     }
     doc.setFontSize(18);
     doc.setTextColor(32, 64, 128);
-    doc.text(SCHOOL_NAME, 20, y);
+    // Place school name to the right of the logo to avoid overlap
+    doc.text(SCHOOL_NAME, 44, y);
     y += 12;
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
@@ -421,28 +422,44 @@ export default function ReportFinances() {
     y += 8;
     doc.line(20, y, 190, y);
     y += 8;
+    // Helper: draw wrapped text for a cell without overlapping the amount column.
+    const drawWrappedCell = (text, x, startY, maxWidth, fontSize = 10) => {
+      if (!text && text !== 0) return 0;
+      const lines = doc.splitTextToSize(String(text), maxWidth);
+      const lineHeight = (fontSize / 72) * 25; // approximate mm height per line
+      lines.forEach((ln, i) => {
+        doc.text(ln, x, startY + i * (lineHeight));
+      });
+      return lines.length * lineHeight;
+    };
+
     incomeRows.forEach((row) => {
       if (row.isHeader) {
         doc.setFont('helvetica', 'bold');
-        doc.text(row.heading || '', 25, y);
+        // head name placed slightly indented
+        drawWrappedCell(row.heading || '', 25, y, 130, 10);
         doc.setFont('helvetica', 'normal');
+        y += 6;
       } else if (row.isTotal) {
         doc.setFont('helvetica', 'bold');
-        doc.text('TOTAL', 55, y);
+        drawWrappedCell('TOTAL', 55, y, 110, 10);
         doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
+        y += 7;
       } else if (row.isGrandTotal) {
         doc.setFont('helvetica', 'bold');
-        doc.text('GRAND TOTAL INCOME', 55, y);
+        drawWrappedCell('GRAND TOTAL INCOME', 55, y, 110, 10);
         doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
+        y += 7;
       } else if (row.isItem) {
         doc.text(String(row.sn || ''), 20, y);
         doc.text(row.date || '', 35, y);
-        doc.text(row.heading || '', 55, y);
+        // Wrap the heading so it doesn't flow into the amount column
+        const usedHeight = drawWrappedCell(row.heading || '', 55, y, 110, 10) || 6;
         doc.text(formatNum(row.amount), 170, y, { align: 'right' });
+        y += Math.max(usedHeight, 6);
       }
-      y += 7;
       if (y > 270) { doc.addPage(); y = 20; }
     });
     doc.save(`Income-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
@@ -460,7 +477,8 @@ export default function ReportFinances() {
     }
     doc.setFontSize(18);
     doc.setTextColor(32, 64, 128);
-    doc.text(SCHOOL_NAME, 20, y);
+    // Place school name to the right of the logo to avoid overlap
+    doc.text(SCHOOL_NAME, 44, y);
     y += 12;
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
@@ -474,28 +492,40 @@ export default function ReportFinances() {
     y += 8;
     doc.line(20, y, 190, y);
     y += 8;
+    // Helper for wrapping within expenditure PDF
+    const drawWrappedCellExp = (text, x, startY, maxWidth, fontSize = 10) => {
+      if (!text && text !== 0) return 0;
+      const lines = doc.splitTextToSize(String(text), maxWidth);
+      const lineHeight = (fontSize / 72) * 25;
+      lines.forEach((ln, i) => doc.text(ln, x, startY + i * (lineHeight)));
+      return lines.length * lineHeight;
+    };
+
     expenditureRows.forEach((row) => {
       if (row.isHeader) {
         doc.setFont('helvetica', 'bold');
-        doc.text(row.heading || '', 25, y);
+        drawWrappedCellExp(row.heading || '', 25, y, 130, 10);
         doc.setFont('helvetica', 'normal');
+        y += 6;
       } else if (row.isTotal) {
         doc.setFont('helvetica', 'bold');
-        doc.text('TOTAL', 55, y);
+        drawWrappedCellExp('TOTAL', 55, y, 110, 10);
         doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
+        y += 7;
       } else if (row.isGrandTotal) {
         doc.setFont('helvetica', 'bold');
-        doc.text('GRAND TOTAL EXPENDITURE', 55, y);
+        drawWrappedCellExp('GRAND TOTAL EXPENDITURE', 55, y, 110, 10);
         doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
+        y += 7;
       } else if (row.isItem) {
         doc.text(String(row.sn || ''), 20, y);
         doc.text(row.date || '', 35, y);
-        doc.text(row.heading || '', 55, y);
+        const usedHeight = drawWrappedCellExp(row.heading || '', 55, y, 110, 10) || 6;
         doc.text(formatNum(row.amount), 170, y, { align: 'right' });
+        y += Math.max(usedHeight, 6);
       }
-      y += 7;
       if (y > 270) { doc.addPage(); y = 20; }
     });
     doc.save(`Expenditure-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
@@ -524,7 +554,8 @@ export default function ReportFinances() {
     }
     doc.setFontSize(18);
     doc.setTextColor(32, 64, 128);
-    doc.text(SCHOOL_NAME, 20, y);
+    // Place school name to the right of the logo to avoid overlap
+    doc.text(SCHOOL_NAME, 44, y);
     y += 12;
 
     doc.setFontSize(14);
