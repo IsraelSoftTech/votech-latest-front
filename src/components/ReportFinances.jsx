@@ -442,18 +442,18 @@ export default function ReportFinances() {
       if (row.isHeader) {
         doc.setFont('helvetica', 'bold');
         // head name placed slightly indented
-        drawWrappedCell(row.heading || '', 25, y, 130, 10);
+        drawWrappedCell(row.heading || '', 25, y, 10);
         doc.setFont('helvetica', 'normal');
         y += 6;
       } else if (row.isTotal) {
         doc.setFont('helvetica', 'bold');
-        drawWrappedCell('TOTAL', 55, y, 110, 10);
+        drawWrappedCell('TOTAL', 55, y, 10);
         doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
         y += 7;
       } else if (row.isGrandTotal) {
         doc.setFont('helvetica', 'bold');
-        drawWrappedCell('GRAND TOTAL INCOME', 55, y, 110, 10);
+        drawWrappedCell('GRAND TOTAL INCOME', 55, y, 10);
         doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
         y += 7;
@@ -461,7 +461,7 @@ export default function ReportFinances() {
         doc.text(String(row.sn || ''), 20, y);
         doc.text(row.date || '', 35, y);
         // Wrap the heading so it doesn't flow into the amount column
-        const usedHeight = drawWrappedCell(row.heading || '', 55, y, 110, 10) || 6;
+        const usedHeight = drawWrappedCell(row.heading || '', 55, y, 10) || 6;
         doc.text(formatNum(row.amount), 170, y, { align: 'right' });
         y += Math.max(usedHeight, 6);
       }
@@ -497,6 +497,7 @@ export default function ReportFinances() {
     y += 8;
     doc.line(20, y, 190, y);
     y += 8;
+    const amountX = 170;
     // Helper for wrapping within expenditure PDF (same logic as income)
     const drawWrappedCellExp = (text, x, startY, fontSize = 10) => {
       if (!text && text !== 0) return 0;
