@@ -423,12 +423,17 @@ export default function ReportFinances() {
     doc.line(20, y, 190, y);
     y += 8;
     // Helper: draw wrapped text for a cell without overlapping the amount column.
-    const drawWrappedCell = (text, x, startY, maxWidth, fontSize = 10) => {
+    // Calculate available width from the amount column and use a reliable line-height.
+    const amountX = 170;
+    const drawWrappedCell = (text, x, startY, fontSize = 10) => {
       if (!text && text !== 0) return 0;
+      const padding = 6; // small gap before amount column
+      const maxWidth = Math.max(20, amountX - x - padding);
       const lines = doc.splitTextToSize(String(text), maxWidth);
-      const lineHeight = (fontSize / 72) * 25; // approximate mm height per line
+      const ptToMm = 0.3527777778;
+      const lineHeight = fontSize * ptToMm * 1.25; // add a little leading for safety
       lines.forEach((ln, i) => {
-        doc.text(ln, x, startY + i * (lineHeight));
+        doc.text(ln, x, startY + i * lineHeight);
       });
       return lines.length * lineHeight;
     };
@@ -492,38 +497,41 @@ export default function ReportFinances() {
     y += 8;
     doc.line(20, y, 190, y);
     y += 8;
-    // Helper for wrapping within expenditure PDF
-    const drawWrappedCellExp = (text, x, startY, maxWidth, fontSize = 10) => {
+    // Helper for wrapping within expenditure PDF (same logic as income)
+    const drawWrappedCellExp = (text, x, startY, fontSize = 10) => {
       if (!text && text !== 0) return 0;
+      const padding = 6;
+      const maxWidth = Math.max(20, amountX - x - padding);
       const lines = doc.splitTextToSize(String(text), maxWidth);
-      const lineHeight = (fontSize / 72) * 25;
-      lines.forEach((ln, i) => doc.text(ln, x, startY + i * (lineHeight)));
+      const ptToMm = 0.3527777778;
+      const lineHeight = fontSize * ptToMm * 1.25;
+      lines.forEach((ln, i) => doc.text(ln, x, startY + i * lineHeight));
       return lines.length * lineHeight;
     };
 
     expenditureRows.forEach((row) => {
       if (row.isHeader) {
         doc.setFont('helvetica', 'bold');
-        drawWrappedCellExp(row.heading || '', 25, y, 130, 10);
+        const usedH = drawWrappedCellExp(row.heading || '', 25, y, 10) || 6;
         doc.setFont('helvetica', 'normal');
-        y += 6;
+        y += Math.max(usedH, 6);
       } else if (row.isTotal) {
         doc.setFont('helvetica', 'bold');
-        drawWrappedCellExp('TOTAL', 55, y, 110, 10);
-        doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
+        const usedH = drawWrappedCellExp('TOTAL', 55, y, 10) || 6;
+        doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
-        y += 7;
+        y += Math.max(usedH, 7);
       } else if (row.isGrandTotal) {
         doc.setFont('helvetica', 'bold');
-        drawWrappedCellExp('GRAND TOTAL EXPENDITURE', 55, y, 110, 10);
-        doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
+        const usedH = drawWrappedCellExp('GRAND TOTAL EXPENDITURE', 55, y, 10) || 6;
+        doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
-        y += 7;
+        y += Math.max(usedH, 7);
       } else if (row.isItem) {
         doc.text(String(row.sn || ''), 20, y);
         doc.text(row.date || '', 35, y);
-        const usedHeight = drawWrappedCellExp(row.heading || '', 55, y, 110, 10) || 6;
-        doc.text(formatNum(row.amount), 170, y, { align: 'right' });
+        const usedHeight = drawWrappedCellExp(row.heading || '', 55, y, 10) || 6;
+        doc.text(formatNum(row.amount), amountX, y, { align: 'right' });
         y += Math.max(usedHeight, 6);
       }
       if (y > 270) { doc.addPage(); y = 20; }
