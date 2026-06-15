@@ -399,7 +399,10 @@ export default function ReportFinances() {
     const formatNum = (n) =>
       n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
     const logoData = await getLogoBase64();
-    const doc = new jsPDF('p', 'mm', 'a4');
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const centerX = pageWidth / 2;
     let y = 20;
     if (logoData) {
       doc.addImage(logoData, 'PNG', 20, 10, 18, 18);
@@ -412,19 +415,19 @@ export default function ReportFinances() {
     y += 12;
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text('INCOME REPORT', 105, y, { align: 'center' });
+    doc.text('INCOME REPORT', centerX, y, { align: 'center' });
     y += 18;
     doc.setFontSize(10);
+    const amountX = pageWidth - 20;
     doc.text('SN', 20, y);
     doc.text('Date', 35, y);
     doc.text('Heading', 55, y);
-    doc.text('Amount (XAF)', 170, y);
+    doc.text('Amount (XAF)', amountX, y, { align: 'right' });
     y += 8;
-    doc.line(20, y, 190, y);
+    doc.line(20, y, pageWidth - 20, y);
     y += 8;
     // Helper: draw wrapped text for a cell without overlapping the amount column.
     // Calculate available width from the amount column and use a reliable line-height.
-    const amountX = 170;
     const drawWrappedCell = (text, x, startY, fontSize = 10) => {
       if (!text && text !== 0) return 0;
       const padding = 6; // small gap before amount column
@@ -448,13 +451,13 @@ export default function ReportFinances() {
       } else if (row.isTotal) {
         doc.setFont('helvetica', 'bold');
         drawWrappedCell('TOTAL', 55, y, 10);
-        doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
+        doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
         y += 7;
       } else if (row.isGrandTotal) {
         doc.setFont('helvetica', 'bold');
         drawWrappedCell('GRAND TOTAL INCOME', 55, y, 10);
-        doc.text(formatNum(row.subTotal), 170, y, { align: 'right' });
+        doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
         doc.setFont('helvetica', 'normal');
         y += 7;
       } else if (row.isItem) {
@@ -462,10 +465,10 @@ export default function ReportFinances() {
         doc.text(row.date || '', 35, y);
         // Wrap the heading so it doesn't flow into the amount column
         const usedHeight = drawWrappedCell(row.heading || '', 55, y, 10) || 6;
-        doc.text(formatNum(row.amount), 170, y, { align: 'right' });
+        doc.text(formatNum(row.amount), amountX, y, { align: 'right' });
         y += Math.max(usedHeight, 6);
       }
-      if (y > 270) { doc.addPage(); y = 20; }
+      if (y > pageHeight - 20) { doc.addPage(); y = 20; }
     });
     doc.save(`Income-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
@@ -474,7 +477,10 @@ export default function ReportFinances() {
     const formatNum = (n) =>
       n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
     const logoData = await getLogoBase64();
-    const doc = new jsPDF('p', 'mm', 'a4');
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const centerX = pageWidth / 2;
     let y = 20;
     if (logoData) {
       doc.addImage(logoData, 'PNG', 20, 10, 18, 18);
@@ -487,17 +493,17 @@ export default function ReportFinances() {
     y += 12;
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text('EXPENDITURE REPORT', 105, y, { align: 'center' });
+    doc.text('EXPENDITURE REPORT', centerX, y, { align: 'center' });
     y += 18;
     doc.setFontSize(10);
+    const amountX = pageWidth - 20;
     doc.text('SN', 20, y);
     doc.text('Date', 35, y);
     doc.text('Heading', 55, y);
-    doc.text('Amount (XAF)', 170, y);
+    doc.text('Amount (XAF)', amountX, y, { align: 'right' });
     y += 8;
-    doc.line(20, y, 190, y);
+    doc.line(20, y, pageWidth - 20, y);
     y += 8;
-    const amountX = 170;
     // Helper for wrapping within expenditure PDF (same logic as income)
     const drawWrappedCellExp = (text, x, startY, fontSize = 10) => {
       if (!text && text !== 0) return 0;
@@ -535,7 +541,7 @@ export default function ReportFinances() {
         doc.text(formatNum(row.amount), amountX, y, { align: 'right' });
         y += Math.max(usedHeight, 6);
       }
-      if (y > 270) { doc.addPage(); y = 20; }
+      if (y > pageHeight - 20) { doc.addPage(); y = 20; }
     });
     doc.save(`Expenditure-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
@@ -554,7 +560,10 @@ export default function ReportFinances() {
     } = statementData;
 
     const logoData = await getLogoBase64();
-    const doc = new jsPDF('p', 'mm', 'a4');
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const centerX = pageWidth / 2;
     let y = 20;
 
     if (logoData) {
@@ -569,51 +578,52 @@ export default function ReportFinances() {
 
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text('FINANCIAL STATEMENT', 105, y, { align: 'center' });
+    doc.text('FINANCIAL STATEMENT', centerX, y, { align: 'center' });
     y += 18;
 
     doc.setFontSize(10);
+    const amountX = pageWidth - 20;
     doc.text('Income Category', 20, y);
-    doc.text('Amount (XAF)', 170, y);
+    doc.text('Amount (XAF)', amountX, y, { align: 'right' });
     y += 8;
     doc.setDrawColor(0, 0, 0);
-    doc.line(20, y, 190, y);
+    doc.line(20, y, pageWidth - 20, y);
     y += 8;
 
     incomeCategories.forEach((cat) => {
       doc.text(cat, 25, y);
-      doc.text(formatNum(incomeAmounts[cat]), 170, y, { align: 'right' });
+      doc.text(formatNum(incomeAmounts[cat]), amountX, y, { align: 'right' });
       y += 7;
     });
     doc.setFont('helvetica', 'bold');
     doc.text('TOTAL INCOME', 25, y);
-    doc.text(formatNum(totalIncome), 170, y, { align: 'right' });
+    doc.text(formatNum(totalIncome), amountX, y, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     y += 12;
 
     doc.text('Expenditure Category', 20, y);
-    doc.text('Amount (XAF)', 170, y);
+    doc.text('Amount (XAF)', amountX, y, { align: 'right' });
     y += 8;
-    doc.line(20, y, 190, y);
+    doc.line(20, y, pageWidth - 20, y);
     y += 8;
 
     expenditureCategories.forEach((cat) => {
       doc.text(cat, 25, y);
-      doc.text(formatNum(expenditureAmounts[cat]), 170, y, { align: 'right' });
+      doc.text(formatNum(expenditureAmounts[cat]), amountX, y, { align: 'right' });
       y += 7;
     });
     doc.setFont('helvetica', 'bold');
     doc.text('TOTAL EXPENDITURE', 25, y);
-    doc.text(formatNum(totalExpenditure), 170, y, { align: 'right' });
+    doc.text(formatNum(totalExpenditure), amountX, y, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     y += 12;
 
     doc.setFillColor(32, 64, 128);
-    doc.rect(20, y - 4, 170, 10, 'F');
+    doc.rect(20, y - 4, pageWidth - 40, 10, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.text('NET PROFIT/LOSS', 25, y + 3);
-    doc.text(formatNum(netProfitLoss), 170, y + 3, { align: 'right' });
+    doc.text(formatNum(netProfitLoss), amountX, y + 3, { align: 'right' });
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
 
