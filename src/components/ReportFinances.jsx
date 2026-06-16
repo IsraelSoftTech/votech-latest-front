@@ -419,12 +419,20 @@ export default function ReportFinances() {
     y += 18;
     doc.setFontSize(10);
     const amountX = pageWidth - 20;
+    // support (SDN) column placed before amount
+    const supportX = pageWidth - 70;
+    const tableX = 20;
+    const tableWidth = pageWidth - 40;
+    doc.setLineWidth(0.25);
+    doc.setDrawColor(150);
     doc.text('SN', 20, y);
     doc.text('Date', 35, y);
     doc.text('Heading', 55, y);
+    doc.text('SDN', supportX, y);
     doc.text('Amount (XAF)', amountX, y, { align: 'right' });
     y += 8;
-    doc.line(20, y, pageWidth - 20, y);
+    // draw thin header bottom line
+    doc.line(tableX, y, tableX + tableWidth, y);
     y += 8;
     // Helper: draw wrapped text for a cell without overlapping the amount column.
     // Calculate available width from the amount column and use a reliable line-height.
@@ -521,25 +529,43 @@ export default function ReportFinances() {
         doc.setFont('helvetica', 'bold');
         const usedH = drawWrappedCellExp(row.heading || '', 25, y, 10) || 6;
         doc.setFont('helvetica', 'normal');
-        y += Math.max(usedH, 6);
+        // draw border for header row
+        const h = Math.max(usedH, 6);
+        doc.setLineWidth(0.15);
+        doc.rect(tableX - 2, y - 6, tableWidth + 4, h + 6, 'S');
+        y += h;
       } else if (row.isTotal) {
         doc.setFont('helvetica', 'bold');
         const usedH = drawWrappedCellExp('TOTAL', 55, y, 10) || 6;
         doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
+        // draw border for total row
+        const th = Math.max(usedH, 7);
+        doc.setLineWidth(0.15);
+        doc.rect(tableX - 2, y - 6, tableWidth + 4, th + 6, 'S');
         doc.setFont('helvetica', 'normal');
-        y += Math.max(usedH, 7);
+        y += th;
       } else if (row.isGrandTotal) {
         doc.setFont('helvetica', 'bold');
         const usedH = drawWrappedCellExp('GRAND TOTAL EXPENDITURE', 55, y, 10) || 6;
         doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
+        // draw border for grand total row
+        const gh = Math.max(usedH, 7);
+        doc.setLineWidth(0.15);
+        doc.rect(tableX - 2, y - 6, tableWidth + 4, gh + 6, 'S');
         doc.setFont('helvetica', 'normal');
-        y += Math.max(usedH, 7);
+        y += gh;
       } else if (row.isItem) {
         doc.text(String(row.sn || ''), 20, y);
         doc.text(row.date || '', 35, y);
         const usedHeight = drawWrappedCellExp(row.heading || '', 55, y, 10) || 6;
+        // draw support doc (SDN)
+        try { doc.text(String(row.supportDoc || ''), supportX, y); } catch (e) { /* ignore */ }
         doc.text(formatNum(row.amount), amountX, y, { align: 'right' });
-        y += Math.max(usedHeight, 6);
+        // draw thin rectangle around this row to simulate table borders
+        const rh = Math.max(usedHeight, 6);
+        doc.setLineWidth(0.12);
+        doc.rect(tableX - 2, y - (rh - 6), tableWidth + 4, rh + 6, 'S');
+        y += rh;
       }
       if (y > pageHeight - 20) { doc.addPage(); y = 20; }
     });
