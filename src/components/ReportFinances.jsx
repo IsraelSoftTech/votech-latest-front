@@ -505,6 +505,9 @@ export default function ReportFinances() {
     y += 18;
     doc.setFontSize(10);
     const amountX = pageWidth - 20;
+    const supportX = pageWidth - 70;
+    const tableX = 20;
+    const tableWidth = pageWidth - 40;
     doc.text('SN', 20, y);
     doc.text('Date', 35, y);
     doc.text('Heading', 55, y);
