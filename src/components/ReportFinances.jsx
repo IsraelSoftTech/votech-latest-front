@@ -1,12 +1,261 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaDownload } from 'react-icons/fa';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import SideTop from './SideTop';
 import api from '../services/api';
 import logo from '../assets/logo.png';
 import './ReportFinances.css';
 
 const SCHOOL_NAME = 'VOTECH S7 ACADEMY';
+const PDF_MARGIN = 14;
+const PDF_BRAND = [32, 64, 128];
+const PDF_ROW_HEAD_BG = [232, 238, 246];
+const PDF_TOTAL_BG = [240, 244, 248];
+const PDF_BORDER = [210, 210, 210];
+
+function formatPdfNum(n) {
+  return n === '' || n == null
+    ? ''
+    : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
+}
+
+function cellStyle(fillColor, extra = {}) {
+  return { fillColor, ...extra };
+}
+
+function brandRowStyle(extra = {}) {
+  return { fillColor: PDF_BRAND, textColor: [255, 255, 255], fontStyle: 'bold', ...extra };
+}
+
+const BASE_TABLE_STYLES = {
+  theme: 'grid',
+  styles: {
+    font: 'helvetica',
+    fontSize: 9,
+    cellPadding: { top: 3.5, right: 4, bottom: 3.5, left: 4 },
+    overflow: 'linebreak',
+    valign: 'middle',
+    lineColor: PDF_BORDER,
+    lineWidth: 0.15,
+    textColor: [33, 33, 33],
+    minCellHeight: 9,
+  },
+  headStyles: {
+    fillColor: PDF_BRAND,
+    textColor: [255, 255, 255],
+    fontStyle: 'bold',
+    fontSize: 9,
+    halign: 'center',
+    valign: 'middle',
+    cellPadding: { top: 4, right: 4, bottom: 4, left: 4 },
+    lineColor: PDF_BRAND,
+    lineWidth: 0.15,
+  },
+  showHead: 'everyPage',
+  rowPageBreak: 'avoid',
+  margin: { left: PDF_MARGIN, right: PDF_MARGIN, top: PDF_MARGIN, bottom: 16 },
+};
+
+const DETAIL_TABLE_COLUMN_STYLES = {
+  0: { cellWidth: 10, halign: 'center' },
+  1: { cellWidth: 24, halign: 'center' },
+  2: { cellWidth: 118, halign: 'left' },
+  3: { cellWidth: 38, halign: 'right' },
+  4: { cellWidth: 38, halign: 'center' },
+  5: { cellWidth: 39, halign: 'right' },
+};
+
+const STATEMENT_COLUMN_STYLES = {
+  0: { cellWidth: 185, halign: 'left' },
+  1: { cellWidth: 84, halign: 'right' },
+};
+
+function detailRowsToBody(rows) {
+  return rows.map((row) => {
+    if (row.isHeader) {
+      const bg = cellStyle(PDF_ROW_HEAD_BG);
+      return [
+        { content: '', styles: bg },
+        { content: '', styles: bg },
+        { content: row.heading || '', colSpan: 4, styles: { ...bg, fontStyle: 'bold', halign: 'left' } },
+      ];
+    }
+    if (row.isTotal) {
+      const bg = cellStyle(PDF_TOTAL_BG, { fontStyle: 'bold' });
+      return [
+        { content: '', styles: bg },
+        { content: '', styles: bg },
+        { content: 'TOTAL', styles: { ...bg, halign: 'left' } },
+        { content: '', styles: bg },
+        { content: '', styles: bg },
+        { content: formatPdfNum(row.subTotal), styles: { ...bg, halign: 'right' } },
+      ];
+    }
+    if (row.isGrandTotal) {
+      const bg = brandRowStyle();
+      return [
+        { content: '', styles: bg },
+        { content: '', styles: bg },
+        { content: row.heading || '', colSpan: 3, styles: { ...bg, halign: 'left' } },
+        { content: formatPdfNum(row.subTotal), styles: { ...bg, halign: 'right' } },
+      ];
+    }
+    return [
+      String(row.sn ?? ''),
+      row.date || '',
+      row.heading || '',
+      formatPdfNum(row.amount),
+      String(row.supportDoc || ''),
+      formatPdfNum(row.subTotal),
+    ];
+  });
+}
+
+async function initLandscapeReportPdf(reportTitle) {
+  const logoData = await getLogoBase64();
+  const doc = new jsPDF('l', 'mm', 'a4');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = PDF_MARGIN;
+  const y = margin;
+
+  if (logoData) {
+    doc.addImage(logoData, 'PNG', margin, y - 2, 15, 15);
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(...PDF_BRAND);
+  doc.text(SCHOOL_NAME, margin + 20, y + 5);
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text(reportTitle, pageWidth / 2, y + 14, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  doc.text(`Generated: ${dateStr}`, pageWidth - margin, y + 5, { align: 'right' });
+  doc.setTextColor(0, 0, 0);
+
+  return { doc, pageWidth, pageHeight, margin, startY: y + 22 };
+}
+
+function drawPdfPageFooters(doc, pageWidth, pageHeight) {
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(130, 130, 130);
+    doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+  }
+}
+
+function renderDetailReportTable(doc, rows, reportTitle, startY, pageWidth) {
+  autoTable(doc, {
+    ...BASE_TABLE_STYLES,
+    head: [['SN', 'DATE', 'HEADING', 'AMOUNT (XAF)', 'SUPPORT DOC', 'SUB TOTAL']],
+    body: detailRowsToBody(rows),
+    startY,
+    columnStyles: DETAIL_TABLE_COLUMN_STYLES,
+    tableWidth: pageWidth - PDF_MARGIN * 2,
+    didDrawPage: (data) => {
+      if (data.pageNumber > 1) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...PDF_BRAND);
+        doc.text(reportTitle, pageWidth / 2, 10, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
+      }
+    },
+  });
+}
+
+function buildStatementSectionBody(categories, amounts, totalLabel, totalValue) {
+  const rows = categories.map((cat) => [cat, formatPdfNum(amounts[cat])]);
+  const bg = cellStyle(PDF_TOTAL_BG, { fontStyle: 'bold' });
+  rows.push([
+    { content: totalLabel, styles: { ...bg, halign: 'left' } },
+    { content: formatPdfNum(totalValue), styles: { ...bg, halign: 'right' } },
+  ]);
+  return rows;
+}
+
+function renderFinancialStatementPdf(doc, data, startY, pageWidth, margin) {
+  const {
+    incomeCategories,
+    expenditureCategories,
+    incomeAmounts,
+    expenditureAmounts,
+    totalIncome,
+    totalExpenditure,
+    netProfitLoss,
+  } = data;
+
+  const sectionGap = 10;
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  const addSection = (sectionTitle, headLabels, body) => {
+    let y = doc.lastAutoTable ? doc.lastAutoTable.finalY + sectionGap : startY;
+    if (y > pageHeight - 36) {
+      doc.addPage();
+      y = margin + 8;
+    }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...PDF_BRAND);
+    doc.text(sectionTitle, margin, y);
+    doc.setTextColor(0, 0, 0);
+    y += 5;
+
+    autoTable(doc, {
+      ...BASE_TABLE_STYLES,
+      head: [headLabels],
+      body,
+      startY: y,
+      columnStyles: STATEMENT_COLUMN_STYLES,
+      tableWidth: pageWidth - margin * 2,
+      didDrawPage: (data) => {
+        if (data.pageNumber > 1 && data.cursor.y <= margin + 14) {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...PDF_BRAND);
+          doc.text('FINANCIAL STATEMENT', pageWidth / 2, 10, { align: 'center' });
+          doc.setTextColor(0, 0, 0);
+        }
+      },
+    });
+  };
+
+  addSection(
+    'Income',
+    ['Income Category', 'Amount (XAF)'],
+    buildStatementSectionBody(incomeCategories, incomeAmounts, 'TOTAL INCOME', totalIncome)
+  );
+
+  addSection(
+    'Expenditure',
+    ['Expenditure Category', 'Amount (XAF)'],
+    buildStatementSectionBody(
+      expenditureCategories,
+      expenditureAmounts,
+      'TOTAL EXPENDITURE',
+      totalExpenditure
+    )
+  );
+
+  addSection('Financial Summary', ['Financial Summary', 'Amount (XAF)'], [
+    ['Total Income', formatPdfNum(totalIncome)],
+    ['Total Expenditure', formatPdfNum(totalExpenditure)],
+    [
+      { content: 'NET PROFIT/LOSS', styles: brandRowStyle({ halign: 'left' }) },
+      { content: formatPdfNum(netProfitLoss), styles: brandRowStyle({ halign: 'right' }) },
+    ],
+  ]);
+}
 
 function getLogoBase64() {
   return new Promise((resolve) => {
@@ -396,268 +645,24 @@ export default function ReportFinances() {
   const statementData = buildFinancialStatementData(items);
 
   const handleDownloadIncomePDF = async () => {
-    const formatNum = (n) =>
-      n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
-    const logoData = await getLogoBase64();
-    const doc = new jsPDF('l', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const centerX = pageWidth / 2;
-    let y = 20;
-    if (logoData) {
-      doc.addImage(logoData, 'PNG', 20, 10, 18, 18);
-      y = 32;
-    }
-    doc.setFontSize(18);
-    doc.setTextColor(32, 64, 128);
-    // Place school name to the right of the logo to avoid overlap
-    doc.text(SCHOOL_NAME, 44, y);
-    y += 12;
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text('INCOME REPORT', centerX, y, { align: 'center' });
-    y += 18;
-    doc.setFontSize(10);
-    const amountX = pageWidth - 20;
-    // support (SDN) column placed before amount
-    const supportX = pageWidth - 70;
-    const tableX = 20;
-    const tableWidth = pageWidth - 40;
-    doc.setLineWidth(0.25);
-    doc.setDrawColor(150);
-    doc.text('SN', 20, y);
-    doc.text('Date', 35, y);
-    doc.text('Heading', 55, y);
-    doc.text('SDN', supportX, y);
-    doc.text('Amount (XAF)', amountX, y, { align: 'right' });
-    y += 8;
-    // draw thin header bottom line
-    doc.line(tableX, y, tableX + tableWidth, y);
-    y += 8;
-    // Helper: draw wrapped text for a cell without overlapping the amount column.
-    // Calculate available width from the amount column and use a reliable line-height.
-    const drawWrappedCell = (text, x, startY, fontSize = 10) => {
-      if (!text && text !== 0) return 0;
-      const padding = 6; // small gap before amount column
-      const maxWidth = Math.max(20, amountX - x - padding);
-      const lines = doc.splitTextToSize(String(text), maxWidth);
-      const ptToMm = 0.3527777778;
-      const lineHeight = fontSize * ptToMm * 1.25; // add a little leading for safety
-      lines.forEach((ln, i) => {
-        doc.text(ln, x, startY + i * lineHeight);
-      });
-      return lines.length * lineHeight;
-    };
-
-    incomeRows.forEach((row) => {
-      if (row.isHeader) {
-        doc.setFont('helvetica', 'bold');
-        // head name placed slightly indented
-        drawWrappedCell(row.heading || '', 25, y, 10);
-        doc.setFont('helvetica', 'normal');
-        y += 6;
-      } else if (row.isTotal) {
-        doc.setFont('helvetica', 'bold');
-        drawWrappedCell('TOTAL', 55, y, 10);
-        doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
-        doc.setFont('helvetica', 'normal');
-        y += 7;
-      } else if (row.isGrandTotal) {
-        doc.setFont('helvetica', 'bold');
-        drawWrappedCell('GRAND TOTAL INCOME', 55, y, 10);
-        doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
-        doc.setFont('helvetica', 'normal');
-        y += 7;
-      } else if (row.isItem) {
-        doc.text(String(row.sn || ''), 20, y);
-        doc.text(row.date || '', 35, y);
-        // Wrap the heading so it doesn't flow into the amount column
-        const usedHeight = drawWrappedCell(row.heading || '', 55, y, 10) || 6;
-        doc.text(formatNum(row.amount), amountX, y, { align: 'right' });
-        y += Math.max(usedHeight, 6);
-      }
-      if (y > pageHeight - 20) { doc.addPage(); y = 20; }
-    });
+    const { doc, pageWidth, pageHeight, startY } = await initLandscapeReportPdf('INCOME REPORT');
+    renderDetailReportTable(doc, incomeRows, 'INCOME REPORT', startY, pageWidth);
+    drawPdfPageFooters(doc, pageWidth, pageHeight);
     doc.save(`Income-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const handleDownloadExpenditurePDF = async () => {
-    const formatNum = (n) =>
-      n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
-    const logoData = await getLogoBase64();
-    const doc = new jsPDF('l', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const centerX = pageWidth / 2;
-    let y = 20;
-    if (logoData) {
-      doc.addImage(logoData, 'PNG', 20, 10, 18, 18);
-      y = 32;
-    }
-    doc.setFontSize(18);
-    doc.setTextColor(32, 64, 128);
-    // Place school name to the right of the logo to avoid overlap
-    doc.text(SCHOOL_NAME, 44, y);
-    y += 12;
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text('EXPENDITURE REPORT', centerX, y, { align: 'center' });
-    y += 18;
-    doc.setFontSize(10);
-    const amountX = pageWidth - 20;
-    const supportX = pageWidth - 70;
-    const tableX = 20;
-    const tableWidth = pageWidth - 40;
-    doc.text('SN', 20, y);
-    doc.text('Date', 35, y);
-    doc.text('Heading', 55, y);
-    doc.text('Amount (XAF)', amountX, y, { align: 'right' });
-    y += 8;
-    doc.line(20, y, pageWidth - 20, y);
-    y += 8;
-    // Helper for wrapping within expenditure PDF (same logic as income)
-    const drawWrappedCellExp = (text, x, startY, fontSize = 10) => {
-      if (!text && text !== 0) return 0;
-      const padding = 6;
-      const maxWidth = Math.max(20, amountX - x - padding);
-      const lines = doc.splitTextToSize(String(text), maxWidth);
-      const ptToMm = 0.3527777778;
-      const lineHeight = fontSize * ptToMm * 1.25;
-      lines.forEach((ln, i) => doc.text(ln, x, startY + i * lineHeight));
-      return lines.length * lineHeight;
-    };
-
-    expenditureRows.forEach((row) => {
-      if (row.isHeader) {
-        doc.setFont('helvetica', 'bold');
-        const usedH = drawWrappedCellExp(row.heading || '', 25, y, 10) || 6;
-        doc.setFont('helvetica', 'normal');
-        // draw border for header row
-        const h = Math.max(usedH, 6);
-        doc.setLineWidth(0.15);
-        doc.rect(tableX - 2, y - 6, tableWidth + 4, h + 6, 'S');
-        y += h;
-      } else if (row.isTotal) {
-        doc.setFont('helvetica', 'bold');
-        const usedH = drawWrappedCellExp('TOTAL', 55, y, 10) || 6;
-        doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
-        // draw border for total row
-        const th = Math.max(usedH, 7);
-        doc.setLineWidth(0.15);
-        doc.rect(tableX - 2, y - 6, tableWidth + 4, th + 6, 'S');
-        doc.setFont('helvetica', 'normal');
-        y += th;
-      } else if (row.isGrandTotal) {
-        doc.setFont('helvetica', 'bold');
-        const usedH = drawWrappedCellExp('GRAND TOTAL EXPENDITURE', 55, y, 10) || 6;
-        doc.text(formatNum(row.subTotal), amountX, y, { align: 'right' });
-        // draw border for grand total row
-        const gh = Math.max(usedH, 7);
-        doc.setLineWidth(0.15);
-        doc.rect(tableX - 2, y - 6, tableWidth + 4, gh + 6, 'S');
-        doc.setFont('helvetica', 'normal');
-        y += gh;
-      } else if (row.isItem) {
-        doc.text(String(row.sn || ''), 20, y);
-        doc.text(row.date || '', 35, y);
-        const usedHeight = drawWrappedCellExp(row.heading || '', 55, y, 10) || 6;
-        // draw support doc (SDN)
-        try { doc.text(String(row.supportDoc || ''), supportX, y); } catch (e) { /* ignore */ }
-        doc.text(formatNum(row.amount), amountX, y, { align: 'right' });
-        // draw thin rectangle around this row to simulate table borders
-        const rh = Math.max(usedHeight, 6);
-        doc.setLineWidth(0.12);
-        doc.rect(tableX - 2, y - (rh - 6), tableWidth + 4, rh + 6, 'S');
-        y += rh;
-      }
-      if (y > pageHeight - 20) { doc.addPage(); y = 20; }
-    });
+    const { doc, pageWidth, pageHeight, startY } = await initLandscapeReportPdf('EXPENDITURE REPORT');
+    renderDetailReportTable(doc, expenditureRows, 'EXPENDITURE REPORT', startY, pageWidth);
+    drawPdfPageFooters(doc, pageWidth, pageHeight);
     doc.save(`Expenditure-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const handleDownloadPDF = async () => {
-    const formatNum = (n) =>
-      n === '' || n == null ? '' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n));
-    const {
-      incomeCategories,
-      expenditureCategories,
-      incomeAmounts,
-      expenditureAmounts,
-      totalIncome,
-      totalExpenditure,
-      netProfitLoss,
-    } = statementData;
-
-    const logoData = await getLogoBase64();
-    const doc = new jsPDF('l', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const centerX = pageWidth / 2;
-    let y = 20;
-
-    if (logoData) {
-      doc.addImage(logoData, 'PNG', 20, 10, 18, 18);
-      y = 32;
-    }
-    doc.setFontSize(18);
-    doc.setTextColor(32, 64, 128);
-    // Place school name to the right of the logo to avoid overlap
-    doc.text(SCHOOL_NAME, 44, y);
-    y += 12;
-
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text('FINANCIAL STATEMENT', centerX, y, { align: 'center' });
-    y += 18;
-
-    doc.setFontSize(10);
-    const amountX = pageWidth - 20;
-    doc.text('Income Category', 20, y);
-    doc.text('Amount (XAF)', amountX, y, { align: 'right' });
-    y += 8;
-    doc.setDrawColor(0, 0, 0);
-    doc.line(20, y, pageWidth - 20, y);
-    y += 8;
-
-    incomeCategories.forEach((cat) => {
-      doc.text(cat, 25, y);
-      doc.text(formatNum(incomeAmounts[cat]), amountX, y, { align: 'right' });
-      y += 7;
-    });
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL INCOME', 25, y);
-    doc.text(formatNum(totalIncome), amountX, y, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-    y += 12;
-
-    doc.text('Expenditure Category', 20, y);
-    doc.text('Amount (XAF)', amountX, y, { align: 'right' });
-    y += 8;
-    doc.line(20, y, pageWidth - 20, y);
-    y += 8;
-
-    expenditureCategories.forEach((cat) => {
-      doc.text(cat, 25, y);
-      doc.text(formatNum(expenditureAmounts[cat]), amountX, y, { align: 'right' });
-      y += 7;
-    });
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL EXPENDITURE', 25, y);
-    doc.text(formatNum(totalExpenditure), amountX, y, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-    y += 12;
-
-    doc.setFillColor(32, 64, 128);
-    doc.rect(20, y - 4, pageWidth - 40, 10, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.text('NET PROFIT/LOSS', 25, y + 3);
-    doc.text(formatNum(netProfitLoss), amountX, y + 3, { align: 'right' });
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
-
-    const filename = `Financial-Statement-${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(filename);
+    const { doc, pageWidth, pageHeight, margin, startY } = await initLandscapeReportPdf('FINANCIAL STATEMENT');
+    renderFinancialStatementPdf(doc, statementData, startY, pageWidth, margin);
+    drawPdfPageFooters(doc, pageWidth, pageHeight);
+    doc.save(`Financial-Statement-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const handlePrintStatement = () => {
@@ -693,15 +698,15 @@ export default function ReportFinances() {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; background: #fff; padding: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    @page { size: A4 portrait; margin: 15mm; }
-    .fs-page { max-width: 210mm; margin: 0 auto; }
+    @page { size: A4 landscape; margin: 12mm; }
+    .fs-page { max-width: 297mm; margin: 0 auto; }
     .fs-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #204080; }
     .fs-logo { width: 64px; height: 64px; object-fit: contain; }
     .fs-school-name { font-size: 22pt; font-weight: 700; color: #204080; }
     .fs-title { font-size: 18pt; font-weight: 700; text-align: center; margin-bottom: 24px; color: #204080; }
     .fs-section { margin-bottom: 28px; }
-    .fs-table { width: 100%; border-collapse: collapse; border: 1px solid #333; margin-bottom: 0; }
-    .fs-table th, .fs-table td { border: 1px solid #333; padding: 10px 14px; text-align: left; }
+    .fs-table { width: 100%; border-collapse: collapse; border: 1px solid #d2d2d2; margin-bottom: 0; }
+    .fs-table th, .fs-table td { border: 1px solid #d2d2d2; padding: 10px 14px; text-align: left; }
     .fs-table th { background: #204080; color: #fff; font-weight: 600; font-size: 11pt; }
     .fs-table td { font-size: 10pt; }
     .fs-amt { text-align: right; font-variant-numeric: tabular-nums; }
