@@ -132,6 +132,14 @@
   white-space: nowrap;
 }
 
+.rf-table th:first-child,
+.rf-table td:first-child {
+  min-width: 3rem;
+  width: 3rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .rf-table tbody tr:last-child td {
   border-bottom: none;
 }

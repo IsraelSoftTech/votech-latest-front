@@ -58,17 +58,17 @@ const BASE_TABLE_STYLES = {
 };
 
 const DETAIL_TABLE_COLUMN_STYLES = {
-  0: { cellWidth: 10, halign: 'center' },
+  0: { cellWidth: 14, halign: 'center' },
   1: { cellWidth: 24, halign: 'center' },
-  2: { cellWidth: 118, halign: 'left' },
+  2: { cellWidth: 114, halign: 'left' },
   3: { cellWidth: 38, halign: 'right' },
   4: { cellWidth: 38, halign: 'center' },
   5: { cellWidth: 39, halign: 'right' },
 };
 
 const STATEMENT_COLUMN_STYLES = {
-  0: { cellWidth: 185, halign: 'left' },
-  1: { cellWidth: 84, halign: 'right' },
+  0: { cellWidth: 183, halign: 'left' },
+  1: { cellWidth: 82, halign: 'right' },
 };
 
 function detailRowsToBody(rows) {
@@ -156,7 +156,7 @@ function drawPdfPageFooters(doc, pageWidth, pageHeight) {
 function renderDetailReportTable(doc, rows, reportTitle, startY, pageWidth) {
   autoTable(doc, {
     ...BASE_TABLE_STYLES,
-    head: [['SN', 'DATE', 'HEADING', 'AMOUNT (XAF)', 'SUPPORT DOC', 'SUB TOTAL']],
+    head: [['S/N', 'DATE', 'HEADING', 'AMOUNT (XAF)', 'SUPPORT DOC', 'SUB TOTAL']],
     body: detailRowsToBody(rows),
     startY,
     columnStyles: DETAIL_TABLE_COLUMN_STYLES,
@@ -198,7 +198,7 @@ function renderFinancialStatementPdf(doc, data, startY, pageWidth, margin) {
   const pageHeight = doc.internal.pageSize.getHeight();
 
   const addSection = (sectionTitle, headLabels, body) => {
-    let y = doc.lastAutoTable ? doc.lastAutoTable.finalY + sectionGap : startY;
+    let y = doc.lastAutoTable?.finalY != null ? doc.lastAutoTable.finalY + sectionGap : startY;
     if (y > pageHeight - 36) {
       doc.addPage();
       y = margin + 8;
@@ -206,7 +206,7 @@ function renderFinancialStatementPdf(doc, data, startY, pageWidth, margin) {
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.setTextColor(...PDF_BRAND);
+    doc.setTextColor(PDF_BRAND[0], PDF_BRAND[1], PDF_BRAND[2]);
     doc.text(sectionTitle, margin, y);
     doc.setTextColor(0, 0, 0);
     y += 5;
@@ -218,11 +218,16 @@ function renderFinancialStatementPdf(doc, data, startY, pageWidth, margin) {
       startY: y,
       columnStyles: STATEMENT_COLUMN_STYLES,
       tableWidth: pageWidth - margin * 2,
-      didDrawPage: (data) => {
-        if (data.pageNumber > 1 && data.cursor.y <= margin + 14) {
+      headStyles: {
+        ...BASE_TABLE_STYLES.headStyles,
+        0: { halign: 'left' },
+        1: { halign: 'right' },
+      },
+      didDrawPage: (hookData) => {
+        if (hookData.pageNumber > 1 && (hookData.cursor?.y ?? 0) <= margin + 14) {
           doc.setFontSize(10);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...PDF_BRAND);
+          doc.setTextColor(PDF_BRAND[0], PDF_BRAND[1], PDF_BRAND[2]);
           doc.text('FINANCIAL STATEMENT', pageWidth / 2, 10, { align: 'center' });
           doc.setTextColor(0, 0, 0);
         }
@@ -486,7 +491,7 @@ function ReportTable({ title, rows }) {
         <table className="rf-table">
           <thead>
             <tr>
-              <th>SN</th>
+              <th>S/N</th>
               <th>DATE</th>
               <th>HEADING</th>
               <th>AMOUNT</th>
@@ -644,26 +649,40 @@ export default function ReportFinances() {
   const expenditureRows = buildExpenditureRows(items);
   const statementData = buildFinancialStatementData(items);
 
-  const handleDownloadIncomePDF = async () => {
-    const { doc, pageWidth, pageHeight, startY } = await initLandscapeReportPdf('INCOME REPORT');
-    renderDetailReportTable(doc, incomeRows, 'INCOME REPORT', startY, pageWidth);
-    drawPdfPageFooters(doc, pageWidth, pageHeight);
-    doc.save(`Income-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
+  const saveFinanceReportPdf = async (reportTitle, renderContent, filename) => {
+    try {
+      const { doc, pageWidth, pageHeight, margin, startY } = await initLandscapeReportPdf(reportTitle);
+      renderContent(doc, { pageWidth, pageHeight, margin, startY });
+      drawPdfPageFooters(doc, pageWidth, pageHeight);
+      doc.save(filename);
+    } catch (error) {
+      console.error(`Error generating ${reportTitle} PDF:`, error);
+      alert(`Error generating PDF: ${error.message}. Please try again.`);
+    }
   };
 
-  const handleDownloadExpenditurePDF = async () => {
-    const { doc, pageWidth, pageHeight, startY } = await initLandscapeReportPdf('EXPENDITURE REPORT');
-    renderDetailReportTable(doc, expenditureRows, 'EXPENDITURE REPORT', startY, pageWidth);
-    drawPdfPageFooters(doc, pageWidth, pageHeight);
-    doc.save(`Expenditure-Report-${new Date().toISOString().slice(0, 10)}.pdf`);
-  };
+  const handleDownloadIncomePDF = () =>
+    saveFinanceReportPdf(
+      'INCOME REPORT',
+      (doc, { pageWidth, startY }) => renderDetailReportTable(doc, incomeRows, 'INCOME REPORT', startY, pageWidth),
+      `Income-Report-${new Date().toISOString().slice(0, 10)}.pdf`
+    );
 
-  const handleDownloadPDF = async () => {
-    const { doc, pageWidth, pageHeight, margin, startY } = await initLandscapeReportPdf('FINANCIAL STATEMENT');
-    renderFinancialStatementPdf(doc, statementData, startY, pageWidth, margin);
-    drawPdfPageFooters(doc, pageWidth, pageHeight);
-    doc.save(`Financial-Statement-${new Date().toISOString().slice(0, 10)}.pdf`);
-  };
+  const handleDownloadExpenditurePDF = () =>
+    saveFinanceReportPdf(
+      'EXPENDITURE REPORT',
+      (doc, { pageWidth, startY }) =>
+        renderDetailReportTable(doc, expenditureRows, 'EXPENDITURE REPORT', startY, pageWidth),
+      `Expenditure-Report-${new Date().toISOString().slice(0, 10)}.pdf`
+    );
+
+  const handleDownloadPDF = () =>
+    saveFinanceReportPdf(
+      'FINANCIAL STATEMENT',
+      (doc, { pageWidth, margin, startY }) =>
+        renderFinancialStatementPdf(doc, statementData, startY, pageWidth, margin),
+      `Financial-Statement-${new Date().toISOString().slice(0, 10)}.pdf`
+    );
 
   const handlePrintStatement = () => {
     const logoImg = statementRef.current?.querySelector('.rf-statement-logo');
