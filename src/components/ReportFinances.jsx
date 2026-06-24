@@ -58,9 +58,9 @@ const BASE_TABLE_STYLES = {
 };
 
 const DETAIL_TABLE_COLUMN_STYLES = {
-  0: { cellWidth: 14, halign: 'center' },
+  0: { cellWidth: 24, halign: 'center', overflow: 'hidden' },
   1: { cellWidth: 24, halign: 'center' },
-  2: { cellWidth: 114, halign: 'left' },
+  2: { cellWidth: 104, halign: 'left' },
   3: { cellWidth: 38, halign: 'right' },
   4: { cellWidth: 38, halign: 'center' },
   5: { cellWidth: 39, halign: 'right' },
