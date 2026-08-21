@@ -19,7 +19,7 @@ import Finance from "./components/Finance.jsx";
 import Specialty from "./components/Specialty.jsx";
 import Message from "./components/Message.jsx";
 import UserChat from "./components/UserChat";
-import ID from "./components/ID.jsx";
+import ComingSoon from "./components/ComingSoon.jsx";
 import Users from "./components/Users.jsx";
 import MonitorUsers from "./components/MonitorUsers.jsx";
 import Fee from "./components/Fee";
@@ -53,7 +53,6 @@ import DisciplineDashboard from "./components/DisciplineDashboard";
 import DiscMessage from "./components/DiscMessage.jsx";
 import DiscUserChat from "./components/DiscUserChat.jsx";
 
-import Attendance from "./components/Attendance.jsx";
 import StaffAttendance from "./components/StaffAttendance.jsx";
 import DisciplineCases from "./components/DisciplineCases";
 import DiscEvents from "./components/DiscEvents.jsx";
@@ -207,7 +206,14 @@ function App() {
         <Route path="/admin-specialty" element={<Specialty />} />
         <Route path="/admin-messages" element={<Message />} />
         <Route path="/admin-messages/:userId" element={<UserChat />} />
-        <Route path="/admin-idcards" element={<ID />} />
+        <Route
+          path="/admin-idcards"
+          element={
+            <SideTop>
+              <ComingSoon />
+            </SideTop>
+          }
+        />
         <Route path="/admin-users" element={<Users />} />
         <Route path="/monitor-users" element={<MonitorUsers />} />
 
@@ -238,7 +244,15 @@ function App() {
           path="/student-attendance-report"
           element={
             <SideTop>
-              <Attendance />
+              <ComingSoon />
+            </SideTop>
+          }
+        />
+        <Route
+          path="/admin-attendance"
+          element={
+            <SideTop>
+              <ComingSoon />
             </SideTop>
           }
         />
@@ -279,7 +293,7 @@ function App() {
           path="/attendance"
           element={
             <DisciplineSideTop>
-              <Attendance />
+              <div className="ds-coming-soon">Coming soon</div>
             </DisciplineSideTop>
           }
         />

@@ -316,6 +316,13 @@
 .card.fees .icon {
   color: #fff;
 }
+.card.reports {
+  background: #388e3c;
+  color: #fff;
+}
+.card.reports .icon {
+  color: #fff;
+}
 .card .count {
   font-size: 2rem;
   font-weight: bold;
@@ -375,6 +382,35 @@
 }
 .disciplinary-table tr:nth-child(even) td {
   background: #f7f8fa;
+}
+
+.discipline-dashboard-heading {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #204080;
+}
+
+.discipline-dashboard-panel {
+  width: 100%;
+}
+
+.disc-case-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.disc-case-status.resolved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.disc-case-status.open {
+  background: #f8d7da;
+  color: #721c24;
 }
 
 /* Sidebar overlay for mobile */
@@ -894,4 +930,16 @@
     width: 100%;
     padding: 14px 24px;
   }
-} 
+}
+
+.coming-soon-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  width: 100%;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.02em;
+}

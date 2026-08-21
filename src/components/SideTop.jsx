@@ -213,6 +213,11 @@ export default function SideTop({ children }) {
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       { label: "ID Cards", icon: <FaIdCard />, path: "/admin-idcards" },
+      {
+        label: "Student Attendance",
+        icon: <FaClipboardList />,
+        path: "/student-attendance-report",
+      },
       // { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
       // { label: "Marks", icon: <FaChartBar />, path: "/admin-marks" },
       {

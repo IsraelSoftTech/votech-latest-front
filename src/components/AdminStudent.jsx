@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./AdminStudent.css";
+import "./AdminStudent.page.css";
 import "./StudentListReport.css";
 import { useNavigate } from "react-router-dom";
 import {
@@ -54,6 +55,41 @@ const menuItems = [
 import config from "../config";
 
 const years = Array.from({ length: 26 }, (_, i) => `20${25 + i}/20${26 + i}`);
+
+function StudentPhoto({ student }) {
+  const [imgError, setImgError] = useState(false);
+  const initial = student.full_name
+    ? student.full_name.charAt(0).toUpperCase()
+    : "?";
+  const hasSource = Boolean(student.photo || student.photo_url);
+  const showImage = hasSource && !imgError;
+
+  let src = "";
+  if (showImage) {
+    if (student.photo) {
+      src = `${config.API_URL}/students/${student.id}/picture`;
+    } else if (student.photo_url?.startsWith("http")) {
+      src = student.photo_url;
+    } else {
+      src = `${config.API_URL.replace("/api", "")}${student.photo_url}`;
+    }
+  }
+
+  return (
+    <div className="student-avatar-wrap">
+      {showImage ? (
+        <img
+          src={src}
+          alt=""
+          className="student-avatar"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="student-avatar-fallback">{initial}</div>
+      )}
+    </div>
+  );
+}
 
 const students = [
   {
@@ -846,48 +882,30 @@ export default function AdminStudent() {
 
   return (
     <SideTop>
+      <div className="students-page">
+      <header className="students-page-header">
+        <h1 className="students-page-title">Students</h1>
+        <p className="students-page-subtitle">
+          Manage registrations, records, and class lists
+        </p>
+      </header>
+
       <div className="dashboard-cards">
-        <div
-          className="card students"
-          style={{ padding: "24px 18px 18px 18px" }}
-        >
+        <div className="card students">
           <div className="icon">
             <FaUserGraduate />
           </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              width: "100%",
-              gap: 12,
-            }}
-          >
-            <div style={{ textAlign: "left", flex: 1 }}>
-              <div style={{ fontSize: 18, fontWeight: 600 }}>Today</div>
-              <div className="count" style={{ fontSize: 22 }}>
-                {todayCount}
-              </div>
-              <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>
-                Registered Students Today
-              </div>
+          <div className="students-stat-split">
+            <div className="students-stat-block">
+              <div className="students-stat-label">Today</div>
+              <div className="count">{todayCount}</div>
+              <div className="desc">Registered Students Today</div>
             </div>
-            <div
-              style={{
-                width: 1,
-                background: "rgba(255,255,255,0.3)",
-                height: 48,
-                margin: "0 10px",
-              }}
-            ></div>
-            <div style={{ textAlign: "right", flex: 1 }}>
-              <div style={{ fontSize: 18, fontWeight: 600 }}>Total</div>
-              <div className="count" style={{ fontSize: 22 }}>
-                {studentList.length}
-              </div>
-              <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>
-                Total Registered Students
-              </div>
+            <div className="students-stat-divider" aria-hidden="true" />
+            <div className="students-stat-block students-stat-block--right">
+              <div className="students-stat-label">Total</div>
+              <div className="count">{studentList.length}</div>
+              <div className="desc">Total Registered Students</div>
             </div>
           </div>
         </div>
@@ -895,69 +913,42 @@ export default function AdminStudent() {
           <div className="icon">
             <FaChalkboardTeacher />
           </div>
-          <div className="count">{usersCount}</div>
-          <div className="desc">Registered Staff</div>
+          <div className="students-staff-meta">
+            <div className="count">{usersCount}</div>
+            <div className="desc">Registered Staff</div>
+          </div>
         </div>
       </div>
-      {/* Add Button below cards, aligned left */}
-      <div
-        style={{
-          margin: "0 0 18px 0",
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
+
+      <div className="students-toolbar">
         {!(isAdmin1 || isAdmin4) && (
           <button
-            className="add-student-fab"
+            type="button"
+            className="students-btn-register add-student-fab"
             onClick={() => {
               setShowModal(true);
               setEditId(null);
             }}
-            title={'Register Student'}
-            style={{ position: "static", marginLeft: 0 }}
+            title="Register Student"
           >
-            <FaPlus style={{ fontSize: 28, color: "#fff" }} />
+            <FaPlus />
+            <span>Register Student</span>
           </button>
         )}
-        {/* Responsive Search Bar */}
-        <input
-          type="text"
-          className="student-search-bar"
-          placeholder="Search student by name..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          style={{
-            flex: 1,
-            minWidth: 180,
-            maxWidth: 340,
-            padding: "8px 14px",
-            borderRadius: 6,
-            border: "1.5px solid #1976d2",
-            fontSize: 15,
-          }}
-        />
-        {/* Upload Many Button */}
-        {/* Upload Many removed */}
-        {/* Print Class List Button */}
+        <div className="students-toolbar-search-wrap">
+          <input
+            type="text"
+            className="student-search-bar"
+            placeholder="Search student by name..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            aria-label="Search students by name"
+          />
+        </div>
         <button
-          className="signup-btn"
+          type="button"
+          className="students-btn-secondary"
           onClick={() => setPrintModalOpen(true)}
-          style={{
-            background: "#1976d2",
-            color: "#fff",
-            padding: "8px 16px",
-            borderRadius: 6,
-            border: "none",
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
         >
           <FaPrint />
           Print Class List
@@ -967,30 +958,23 @@ export default function AdminStudent() {
       {printModalOpen && (
         <div className="modal-overlay" onClick={() => setPrintModalOpen(false)}>
           <div
-            className="modal-content"
-            style={{ maxWidth: 400, width: "98vw", textAlign: "center" }}
+            className="modal-content students-modal-compact"
             onClick={(e) => e.stopPropagation()}
           >
             <button
+              type="button"
               className="modal-close"
               onClick={() => setPrintModalOpen(false)}
             >
               <FaTimes />
             </button>
             <h2 className="form-title">Print Class List</h2>
-            <div style={{ margin: "18px 0" }}>
+            <div className="students-modal-field-group">
               <label className="input-label">Select Class</label>
               <select
                 className="input-field"
                 value={printClass}
                 onChange={(e) => setPrintClass(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: 6,
-                  border: "1.5px solid #1976d2",
-                  fontSize: 15,
-                }}
               >
                 <option value="">Select Class</option>
                 {classes.map((opt) => (
@@ -1004,39 +988,16 @@ export default function AdminStudent() {
               </select>
             </div>
             <button
-              className="signup-btn"
-              style={{
-                position: "relative",
-                overflow: "hidden",
-                background: !printClass ? "#9e9e9e" : "#616161",
-                color: "#fff",
-                minWidth: 120,
-                fontSize: 16,
-                borderRadius: 6,
-                padding: "12px 0",
-                marginBottom: 8,
-              }}
+              type="button"
+              className="students-download-btn signup-btn"
               onClick={generateStudentListReport}
               disabled={!printClass || isDownloadingClassList}
             >
               <span
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  height: "100%",
-                  width: `${downloadProgress}%`,
-                  background: "#388e3c",
-                  transition: "width 0.2s linear",
-                  zIndex: 1,
-                }}
+                className="students-download-btn-progress"
+                style={{ width: `${downloadProgress}%` }}
               />
-              <span
-                style={{
-                  position: "relative",
-                  zIndex: 2,
-                }}
-              >
+              <span className="students-download-btn-label">
                 {isDownloadingClassList ? "Downloading...." : "Download"}
               </span>
             </button>
@@ -1049,7 +1010,8 @@ export default function AdminStudent() {
       {error && <SuccessMessage message={error} type="error" onClose={() => setError("")} />}
       
       {/* Student Table */}
-      <div className="student-table-wrapper" style={{ overflowX: 'auto' }}>
+      <div className="students-table-card">
+      <div className="student-table-wrapper">
         <table className="student-table">
           <thead>
             <tr>
@@ -1065,15 +1027,20 @@ export default function AdminStudent() {
               <th>Department/Specialty</th>
               <th>Father's Contact</th>
               <th>Mother's Contact</th>
-              <th>Photo</th>
-              <th>Actions</th>
+              <th className="students-col-photo">Photo</th>
+              <th className="students-col-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredStudents.length === 0 ? (
               <tr>
-                <td colSpan="13" style={{ textAlign: "center" }}>
-                  No students found.
+                <td colSpan="14" className="students-empty-cell">
+                  <div className="students-empty-cell-inner">
+                    <div className="students-empty-icon">
+                      <FaUserGraduate />
+                    </div>
+                    <span>No students found.</span>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -1095,61 +1062,31 @@ export default function AdminStudent() {
                   </td>
                   <td>{s.guardian_contact || ''}</td>
                   <td>{s.mother_contact || ''}</td>
-                  <td>
-                    {s.photo || s.photo_url ? (
-                      <img
-                        src={
-                          s.photo 
-                            ? `${config.API_URL}/students/${s.id}/picture`
-                            : s.photo_url.startsWith("http")
-                            ? s.photo_url
-                            : `${config.API_URL.replace("/api", "")}${s.photo_url}`
-                        }
-                        alt="student"
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                        }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: "50%",
-                        backgroundColor: "#f0f0f0",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "12px",
-                        color: "#999"
-                      }}>
-                        {s.full_name ? s.full_name.charAt(0).toUpperCase() : "?"}
-                      </div>
-                    )}
+                  <td className="students-photo-cell">
+                    <StudentPhoto student={s} />
                   </td>
-                  <td className="actions">
+                  <td className="actions students-actions-cell">
                     {!(isAdmin1 || isAdmin4) && (
-                      <>
+                      <div className="students-action-group">
                         <button
+                          type="button"
                           className="action-btn edit"
-                          title={'Edit'}
+                          title="Edit"
+                          aria-label="Edit student"
                           onClick={() => handleEdit(s)}
                         >
                           <FaEdit />
                         </button>
                         <button
+                          type="button"
                           className="action-btn delete"
-                          title={'Delete'}
+                          title="Delete"
+                          aria-label="Delete student"
                           onClick={() => handleDelete(s.id)}
                         >
                           <FaTrash />
                         </button>
-                      </>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -1228,6 +1165,7 @@ export default function AdminStudent() {
           </div>
         </div>
       )}
+      </div>
       
       {showModal && (
         <div
@@ -1240,230 +1178,361 @@ export default function AdminStudent() {
           <div
             className="student-register-modal-content"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="student-form-title"
           >
-            <button
-              className="modal-close thin-x"
-              onClick={() => {
-                setShowModal(false);
-                setEditId(null);
-              }}
-              aria-label="Close"
-            >
-              &#10005;
-            </button>
             <form
-              className="student-modal-form"
+              className="student-modal-form students-register-form"
               onSubmit={handleRegister}
-              style={{ marginTop: "24px" }}
             >
-              <h2 className="form-title">
-                {editId ? "Edit Student" : "Register Student"}
-              </h2>
-              <div className="modal-form-grid">
-                <div>
-                  <label className="input-label">Student ID *</label>
-                  <input
-                    className="input-field"
-                    type="text"
-                    name="studentId"
-                    value={form.studentId}
-                    onChange={handleFormChange}
-                    placeholder="Auto-generated"
-                    readOnly
-                  />
-                  <label className="input-label">Registration Date *</label>
-                  <input
-                    className="input-field"
-                    type="date"
-                    name="regDate"
-                    value={form.regDate}
-                    onChange={handleFormChange}
-                    required
-                  />
-                  <label className="input-label">Full Name *</label>
-                  <input
-                    className="input-field"
-                    type="text"
-                    name="fullName"
-                    value={form.fullName}
-                    onChange={handleFormChange}
-                    placeholder="Enter Full Name"
-                    required
-                  />
-                  <label className="input-label">Sex *</label>
-                  <select
-                    className="input-field"
-                    name="sex"
-                    value={form.sex}
-                    onChange={handleFormChange}
-                    required
-                  >
-                    <option value="">Select</option>
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
-                  </select>
-                  <label className="input-label">Date of Birth *</label>
-                  <input
-                    className="input-field"
-                    type="date"
-                    name="dob"
-                    value={form.dob}
-                    onChange={handleFormChange}
-                    required
-                  />
-                  <label className="input-label">Place of Birth *</label>
-                  <input
-                    className="input-field"
-                    type="text"
-                    name="pob"
-                    value={form.pob}
-                    onChange={handleFormChange}
-                    placeholder="Enter Place of Birth"
-                    required
-                  />
-                  <label className="input-label">Father's Name *</label>
-                  <input
-                    className="input-field"
-                    type="text"
-                    name="father"
-                    value={form.father}
-                    onChange={handleFormChange}
-                    placeholder="Enter Father's Name"
-                    required
-                  />
+              <header className="students-form-header">
+                <div className="students-form-header-text">
+                  <h2 id="student-form-title" className="students-form-title">
+                    {editId ? "Edit Student" : "Register Student"}
+                  </h2>
+                  <p className="students-form-subtitle">
+                    {editId
+                      ? "Update student information below."
+                      : "Complete all required fields to add a new student."}
+                  </p>
                 </div>
-                <div>
-                  <label className="input-label">Mother's Name *</label>
-                  <input
-                    className="input-field"
-                    type="text"
-                    name="mother"
-                    value={form.mother}
-                    onChange={handleFormChange}
-                    placeholder="Enter Mother's Name"
-                    required
-                  />
-                  <label className="input-label">Department/Specialty *</label>
-                  <select
-                    className="input-field"
-                    name="dept"
-                    value={form.dept}
-                    onChange={handleFormChange}
-                    required
-                  >
-                    <option value="">Select</option>
-                    {specialties.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
+                <button
+                  type="button"
+                  className="students-form-close"
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditId(null);
+                  }}
+                  aria-label="Close"
+                >
+                  <FaTimes />
+                </button>
+              </header>
 
-                  <label className="input-label">Class *</label>
-                  <select
-                    className="input-field"
-                    name="class"
-                    value={form.class}
-                    onChange={handleFormChange}
-                    required
-                    disabled={!form.dept} // optional: disable until department is selected
-                  >
-                    <option value="">Select</option>
-                    {classes
-                      .filter((c) => c.department_id === Number(form.dept))
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                  </select>
-
-                  <label className="input-label">Academic Year *</label>
-                  <select
-                    className="input-field"
-                    name="academicYear"
-                    value={form.academicYear}
-                    onChange={handleFormChange}
-                    required
-                  >
-                    <option value="">Select</option>
-                    {accademicYears.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {typeof opt.name === "string"
-                          ? opt.name
-                          : "Unknown Academic Year"}
-                      </option>
-                    ))}
-                  </select>
-
-                  <label className="input-label">Father's Contact *</label>
-                  <input
-                    className="input-field"
-                    type="text"
-                    name="fatherContact"
-                    value={form.fatherContact}
-                    onChange={handleFormChange}
-                    placeholder="Enter Father's Contact"
-                    required
-                  />
-                  <label className="input-label">Mother's Contact</label>
-                  <input
-                    className="input-field"
-                    type="text"
-                    name="motherContact"
-                    value={form.motherContact}
-                    onChange={handleFormChange}
-                    placeholder="Enter Mother's Contact"
-                  />
-                  <label className="input-label">Photo</label>
-                  <div className="photo-input-container">
-                    <div className="photo-preview">
-                      {photoPreview ? (
-                        <img src={photoPreview} alt="Photo Preview" className="photo-preview-img" />
-                      ) : (
-                        <div className="photo-placeholder">
-                          <FaUser size={40} />
-                          <span>No Photo</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="photo-actions" style={{ gap: 10, display: 'flex', alignItems: 'center' }}>
-                      <label className="signup-btn" style={{ padding: '8px 14px', cursor: 'pointer' }}>
-                        Choose Photo
-                        <input type="file" name="photo" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
+              <div className="students-form-body">
+                <section className="students-form-section">
+                  <h3 className="students-form-section-title">Registration</h3>
+                  <div className="students-form-grid students-form-grid--3">
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="studentId">
+                        Student ID <span className="req">*</span>
                       </label>
-                      <span style={{ fontSize: 13, color: '#666', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {form.photo ? form.photo.name : 'No file selected'}
-                      </span>
-                      {photoPreview && (
-                        <button type="button" className="remove-btn" onClick={removePhoto} title="Remove Photo">Remove</button>
-                      )}
+                      <input
+                        id="studentId"
+                        className="students-form-input students-form-input--readonly"
+                        type="text"
+                        name="studentId"
+                        value={form.studentId}
+                        onChange={handleFormChange}
+                        placeholder="Auto-generated"
+                        readOnly
+                      />
+                    </div>
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="regDate">
+                        Registration Date <span className="req">*</span>
+                      </label>
+                      <input
+                        id="regDate"
+                        className="students-form-input"
+                        type="date"
+                        name="regDate"
+                        value={form.regDate}
+                        onChange={handleFormChange}
+                        required
+                      />
+                    </div>
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="academicYear">
+                        Academic Year <span className="req">*</span>
+                      </label>
+                      <select
+                        id="academicYear"
+                        className="students-form-input"
+                        name="academicYear"
+                        value={form.academicYear}
+                        onChange={handleFormChange}
+                        required
+                      >
+                        <option value="">Select year</option>
+                        {accademicYears.map((opt) => (
+                          <option key={opt.id} value={opt.id}>
+                            {typeof opt.name === "string"
+                              ? opt.name
+                              : "Unknown Academic Year"}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
+                </section>
+
+                <section className="students-form-section">
+                  <h3 className="students-form-section-title">Personal Details</h3>
+                  <div className="students-form-grid students-form-grid--2">
+                    <div className="students-form-field students-form-field--wide">
+                      <label className="students-form-label" htmlFor="fullName">
+                        Full Name <span className="req">*</span>
+                      </label>
+                      <input
+                        id="fullName"
+                        className="students-form-input"
+                        type="text"
+                        name="fullName"
+                        value={form.fullName}
+                        onChange={handleFormChange}
+                        placeholder="Enter full name"
+                        required
+                      />
+                    </div>
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="sex">
+                        Sex <span className="req">*</span>
+                      </label>
+                      <select
+                        id="sex"
+                        className="students-form-input"
+                        name="sex"
+                        value={form.sex}
+                        onChange={handleFormChange}
+                        required
+                      >
+                        <option value="">Select</option>
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                      </select>
+                    </div>
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="dob">
+                        Date of Birth <span className="req">*</span>
+                      </label>
+                      <input
+                        id="dob"
+                        className="students-form-input"
+                        type="date"
+                        name="dob"
+                        value={form.dob}
+                        onChange={handleFormChange}
+                        required
+                      />
+                    </div>
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="pob">
+                        Place of Birth <span className="req">*</span>
+                      </label>
+                      <input
+                        id="pob"
+                        className="students-form-input"
+                        type="text"
+                        name="pob"
+                        value={form.pob}
+                        onChange={handleFormChange}
+                        placeholder="Enter place of birth"
+                        required
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="students-form-section">
+                  <h3 className="students-form-section-title">Family &amp; Contact</h3>
+                  <div className="students-form-grid students-form-grid--2">
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="father">
+                        Father&apos;s Name <span className="req">*</span>
+                      </label>
+                      <input
+                        id="father"
+                        className="students-form-input"
+                        type="text"
+                        name="father"
+                        value={form.father}
+                        onChange={handleFormChange}
+                        placeholder="Enter father's name"
+                        required
+                      />
+                    </div>
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="mother">
+                        Mother&apos;s Name <span className="req">*</span>
+                      </label>
+                      <input
+                        id="mother"
+                        className="students-form-input"
+                        type="text"
+                        name="mother"
+                        value={form.mother}
+                        onChange={handleFormChange}
+                        placeholder="Enter mother's name"
+                        required
+                      />
+                    </div>
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="fatherContact">
+                        Father&apos;s Contact <span className="req">*</span>
+                      </label>
+                      <input
+                        id="fatherContact"
+                        className="students-form-input"
+                        type="text"
+                        name="fatherContact"
+                        value={form.fatherContact}
+                        onChange={handleFormChange}
+                        placeholder="Phone number"
+                        required
+                      />
+                    </div>
+                    <div className="students-form-field">
+                      <label className="students-form-label" htmlFor="motherContact">
+                        Mother&apos;s Contact
+                      </label>
+                      <input
+                        id="motherContact"
+                        className="students-form-input"
+                        type="text"
+                        name="motherContact"
+                        value={form.motherContact}
+                        onChange={handleFormChange}
+                        placeholder="Phone number (optional)"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="students-form-split">
+                  <section className="students-form-section students-form-section--grow">
+                    <h3 className="students-form-section-title">Class Assignment</h3>
+                    <div className="students-form-grid students-form-grid--2">
+                      <div className="students-form-field">
+                        <label className="students-form-label" htmlFor="dept">
+                          Department / Specialty <span className="req">*</span>
+                        </label>
+                        <select
+                          id="dept"
+                          className="students-form-input"
+                          name="dept"
+                          value={form.dept}
+                          onChange={handleFormChange}
+                          required
+                        >
+                          <option value="">Select department</option>
+                          {specialties.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="students-form-field">
+                        <label className="students-form-label" htmlFor="class">
+                          Class <span className="req">*</span>
+                        </label>
+                        <select
+                          id="class"
+                          className="students-form-input"
+                          name="class"
+                          value={form.class}
+                          onChange={handleFormChange}
+                          required
+                          disabled={!form.dept}
+                        >
+                          <option value="">
+                            {form.dept ? "Select class" : "Select department first"}
+                          </option>
+                          {classes
+                            .filter((c) => c.department_id === Number(form.dept))
+                            .map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="students-form-section students-form-section--photo">
+                    <h3 className="students-form-section-title">Photo</h3>
+                    <div className="students-photo-card">
+                      <div className="students-photo-preview">
+                        {photoPreview ? (
+                          <img
+                            src={photoPreview}
+                            alt="Preview"
+                            className="students-photo-preview-img"
+                          />
+                        ) : (
+                          <div className="students-photo-placeholder">
+                            <FaUser />
+                            <span>No photo</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="students-photo-controls">
+                        <label className="students-photo-btn">
+                          Choose Photo
+                          <input
+                            type="file"
+                            name="photo"
+                            accept="image/*"
+                            onChange={handlePhotoChange}
+                            hidden
+                          />
+                        </label>
+                        {photoPreview && (
+                          <button
+                            type="button"
+                            className="students-photo-remove"
+                            onClick={removePhoto}
+                          >
+                            Remove
+                          </button>
+                        )}
+                        <p className="students-photo-hint">
+                          {form.photo ? form.photo.name : "JPG or PNG, optional"}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
                 </div>
               </div>
-              {error && <div className="error-message">{error}</div>}
+
+              {error && <div className="students-form-alert students-form-alert--error">{error}</div>}
               {success && <SuccessMessage message={success} />}
-              <button
-                type="submit"
-                className="signup-btn"
-                disabled={registering || isAdmin1 || isAdmin4}
-                title={
-                  (isAdmin1 || isAdmin4)
-                    ? "Not allowed for Admin1"
+
+              <footer className="students-form-footer">
+                <button
+                  type="button"
+                  className="students-form-btn students-form-btn--ghost"
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditId(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="students-form-btn students-form-btn--primary"
+                  disabled={registering || isAdmin1 || isAdmin4}
+                  title={
+                    isAdmin1 || isAdmin4
+                      ? "Not allowed for Admin1"
+                      : editId
+                      ? "Update"
+                      : "Register"
+                  }
+                >
+                  {registering
+                    ? editId
+                      ? "Updating..."
+                      : "Registering..."
                     : editId
-                    ? "Update"
-                    : "Register"
-                }
-              >
-                {registering
-                  ? editId
-                    ? "Updating..."
-                    : "Registering..."
-                  : editId
-                  ? "Update"
-                  : "Register"}
-              </button>
+                    ? "Update Student"
+                    : "Register Student"}
+                </button>
+              </footer>
             </form>
           </div>
         </div>
@@ -1471,8 +1540,7 @@ export default function AdminStudent() {
       {excelModalOpen && (
         <div className="modal-overlay" onClick={() => setExcelModalOpen(false)}>
           <div
-            className="modal-content"
-            style={{ maxWidth: 500, width: "98vw" }}
+            className="modal-content students-excel-modal"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -1592,52 +1660,17 @@ export default function AdminStudent() {
       {showDeleteModal && (
         <div className="modal-overlay" onClick={cancelDelete}>
           <div
-            className="modal-content delete-modal"
-            style={{
-              maxWidth: 380,
-              width: "90%",
-              textAlign: "center",
-              background: "#fff",
-              borderRadius: 12,
-              boxShadow: "0 4px 32px rgba(32,64,128,0.13)",
-              padding: "32px 20px 24px 20px",
-              margin: "0 auto",
-            }}
+            className="modal-content delete-modal students-delete-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              style={{
-                fontSize: 20,
-                marginBottom: 22,
-                color: "#204080",
-                fontWeight: 600,
-              }}
-            >
-              Delete Student
-            </div>
-            <div style={{ fontSize: 16, marginBottom: 24, color: "#444" }}>
+            <div className="students-delete-title">Delete Student</div>
+            <div className="students-delete-text">
               Are you sure you want to delete this student? This action cannot be undone.
             </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "wrap",
-                justifyContent: "center",
-                gap: 18,
-              }}
-            >
+            <div className="students-delete-actions">
               <button
-                className="signup-btn"
-                style={{
-                  background: "#e53e3e",
-                  color: "#fff",
-                  minWidth: 110,
-                  fontSize: 17,
-                  borderRadius: 6,
-                  padding: "12px 0",
-                  marginBottom: 8,
-                }}
+                type="button"
+                className="signup-btn students-btn-danger"
                 onClick={(e) => {
                   e.preventDefault();
                   confirmDelete();
@@ -1646,16 +1679,8 @@ export default function AdminStudent() {
                 Delete
               </button>
               <button
-                className="signup-btn"
-                style={{
-                  background: "#204080",
-                  color: "#fff",
-                  minWidth: 110,
-                  fontSize: 17,
-                  borderRadius: 6,
-                  padding: "12px 0",
-                  marginBottom: 8,
-                }}
+                type="button"
+                className="signup-btn students-btn-cancel"
                 onClick={(e) => {
                   e.preventDefault();
                   cancelDelete();
@@ -1675,8 +1700,7 @@ export default function AdminStudent() {
           onClick={() => setUploadManyModalOpen(false)}
         >
           <div
-            className="modal-content"
-            style={{ maxWidth: 500, width: "98vw" }}
+            className="modal-content students-excel-modal"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -1790,331 +1814,7 @@ export default function AdminStudent() {
           </div>
         </div>
       )}
-      
-
-      
-      <style>{`
-        .student-register-modal-overlay {
-          position: fixed;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(32,64,128,0.13);
-          z-index: 1000;
-          display: flex;
-          align-items: flex-start;
-          justify-content: center;
-          overflow-y: auto;
-        }
-        .student-register-modal-content {
-          background: #fff;
-          border-radius: 16px;
-          box-shadow: 0 8px 40px rgba(32,64,128,0.18);
-          padding: 56px 28px 28px 28px;
-          max-width: 600px;
-          width: 98vw;
-          min-width: 0;
-          position: relative;
-          margin-top: 64px;
-        }
-        .modal-close.thin-x {
-          position: absolute;
-          top: 16px;
-          right: 22px;
-          background: none;
-          border: none;
-          color: #222;
-          font-size: 1.5rem;
-          font-weight: 200;
-          line-height: 1;
-          cursor: pointer;
-          z-index: 1001;
-          padding: 0 6px;
-          transition: color 0.15s;
-        }
-        .modal-close.thin-x:hover {
-          color: #1976d2;
-        }
-        
-        /* Photo Input Styles */
-        .photo-input-container {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          align-items: center;
-        }
-        
-        .photo-preview {
-          width: 120px;
-          height: 120px;
-          border: 2px dashed #ddd;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          background: #f8f9fa;
-          transition: all 0.2s ease;
-        }
-        
-        .photo-preview:hover {
-          border-color: #1976d2;
-          background: #f0f4ff;
-        }
-        
-        .photo-preview-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          border-radius: 6px;
-        }
-        
-        .photo-placeholder {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
-          color: #ccc;
-        }
-        
-        .photo-actions {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
-        
-        .camera-btn, .file-btn, .remove-btn {
-          padding: 12px;
-          border: 2px solid #e0e0e0;
-          border-radius: 8px;
-          font-size: 18px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 44px;
-          height: 44px;
-          min-width: 44px;
-          min-height: 44px;
-          background: transparent;
-          color: #666;
-        }
-        
-        .camera-btn:hover {
-          border-color: #1976d2;
-          color: #1976d2;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(25, 118, 210, 0.1);
-        }
-        
-        .file-btn:hover {
-          border-color: #388e3c;
-          color: #388e3c;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(56, 142, 60, 0.1);
-        }
-        
-        .remove-btn:hover {
-          border-color: #d32f2f;
-          color: #d32f2f;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(211, 47, 47, 0.1);
-        }
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-          .photo-preview {
-            width: 100px;
-            height: 100px;
-          }
-          
-          .photo-actions {
-            flex-direction: column;
-            width: 100%;
-          }
-          
-          .camera-btn, .file-btn, .remove-btn {
-            width: 100%;
-            justify-content: center;
-            padding: 10px 16px;
-          }
-        }
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-          .student-register-modal-content {
-            padding: 40px 20px 20px 20px;
-            margin-top: 40px;
-          }
-        }
-        
-
-        
-        /* Enhanced Photo Input Styles */
-        .photo-input-container {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          align-items: center;
-        }
-        
-        .photo-preview {
-          width: 120px;
-          height: 120px;
-          border: 2px dashed #ddd;
-          border-radius: 12px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          background: #f8f9fa;
-          transition: all 0.2s ease;
-        }
-        
-        .photo-preview:hover {
-          border-color: #1976d2;
-          background: #f0f4ff;
-        }
-        
-        .photo-preview-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          border-radius: 10px;
-        }
-        
-        .photo-placeholder {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
-          color: #ccc;
-          gap: 8px;
-        }
-        
-        .photo-placeholder span {
-          font-size: 12px;
-          font-weight: 500;
-        }
-        
-        .photo-actions {
-          display: flex;
-          gap: 12px;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
-        
-        .file-btn, .remove-btn {
-          padding: 12px;
-          border: 2px solid #e0e0e0;
-          border-radius: 8px;
-          font-size: 18px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 48px;
-          height: 48px;
-          min-width: 48px;
-          min-height: 48px;
-          background: transparent;
-          color: #666;
-        }
-        
-        .file-btn:hover {
-          border-color: #388e3c;
-          color: #388e3c;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(56, 142, 60, 0.1);
-        }
-        
-        .remove-btn:hover {
-          border-color: #d32f2f;
-          color: #d32f2f;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(211, 47, 47, 0.1);
-        }
-        
-        .file-btn {
-          cursor: pointer;
-        }
-        
-        .file-btn input {
-          cursor: pointer;
-        }
-        
-        /* Pagination Responsive Styles */
-        .pagination-container {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 0;
-          flex-wrap: wrap;
-          gap: 16px;
-          border-top: 1px solid #e0e0e0;
-          margin-top: 16px;
-        }
-        
-        @media (max-width: 768px) {
-          .pagination-container {
-            flex-direction: column;
-            gap: 12px;
-            padding: 12px 0;
-          }
-          
-          .pagination-container > div:first-child {
-            order: 2;
-          }
-          
-          .pagination-container > div:nth-child(2) {
-            order: 1;
-          }
-          
-          .pagination-container > div:last-child {
-            order: 3;
-            width: 100%;
-            justify-content: center;
-          }
-          
-          .pagination-container button {
-            padding: 8px 12px;
-            font-size: 13px;
-          }
-          
-          .pagination-container select {
-            padding: 8px 10px;
-            font-size: 13px;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .pagination-container {
-            gap: 8px;
-            padding: 8px 0;
-          }
-          
-          .pagination-container button {
-            padding: 6px 10px;
-            font-size: 12px;
-            min-width: 28px;
-          }
-          
-          .pagination-container select {
-            padding: 6px 8px;
-            font-size: 12px;
-          }
-          
-          .pagination-container > div {
-            font-size: 12px;
-          }
-        }
-      `}</style>
+      </div>
     </SideTop>
   );
 }

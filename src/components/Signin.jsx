@@ -186,50 +186,57 @@ const Signin = () => {
   return (
     <div className="signin-root">
       {showSuccess && <SuccessMessage message={success} type={successType} onClose={() => setShowSuccess(false)} />}
-      <header className="signin-header" style={{ position: 'relative' }}>
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          title="Back to Welcome"
-          className="signin-header-back"
-          style={{ position: 'absolute', right: 16, top: 12, background: 'transparent', border: 'none', cursor: 'pointer', color: '#204080', fontSize: 20 }}
-        >
-          <FaArrowLeft />
-        </button>
-        <div className="signin-header-group">
-          <img src={logo} alt="VOTECH Logo" style={{ width: 44, height: 44, objectFit: 'contain' }} />
-          <span style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: 1.5, color: '#204080' }}>VOTECH</span>
-          <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+      <header className="signin-header">
+        <div className="signin-header-inner">
+          <div className="signin-header-left">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              title="Back to Welcome"
+              className="signin-header-back"
+            >
+              <FaArrowLeft />
+            </button>
+            <div className="signin-brand">
+              <img src={logo} alt="VOTECH Logo" className="signin-brand-logo" />
+              <span className="signin-brand-name">VOTECH</span>
+            </div>
+          </div>
+          <nav className="signin-header-nav">
             <Link className={`signin-header-link${location.pathname === '/signin' || location.pathname === '/' ? ' active' : ''}`} to="/signin">Sign In</Link>
             <Link className={`signin-header-link${location.pathname === '/signup' ? ' active' : ''}`} to="/signup">Sign Up</Link>
-          </div>
+          </nav>
         </div>
       </header>
       <main className="signin-main">
         {showLoader ? (
           <Loader poweredBy />
         ) : (
+          <div className="signin-form-shell">
           <form className="signin-form" onSubmit={handleSubmit}>
             <div className="signin-form-back-arrow">
               <button type="button" className="signin-back-arrow" onClick={() => navigate('/')} title="Back">
                 <FaArrowLeft />
               </button>
             </div>
-            <h2 className="signin-form-title">Sign In</h2>
+            <div className="signin-form-intro">
+              <h2 className="signin-form-title">Sign In</h2>
+              <p className="signin-form-subtitle">Welcome back. Enter your credentials to continue.</p>
+            </div>
             <button type="button" className="signin-google-btn">
               <FcGoogle className="signin-google-icon" />
-              Continue with google authentication
+              Continue with Google
             </button>
             <div className="signin-or-divider">
               <span className="signin-line"></span>
               <span className="signin-or-text">Or</span>
               <span className="signin-line"></span>
             </div>
-            <label className="signin-input-label">Username *</label>
-            <input className="signin-input-field" type="text" name="username" value={form.username} onChange={handleChange} placeholder="Enter Username" />
-            <label className="signin-input-label">Password *</label>
+            <label className="signin-input-label" htmlFor="signin-username">Username <span className="signin-req">*</span></label>
+            <input id="signin-username" className="signin-input-field" type="text" name="username" value={form.username} onChange={handleChange} placeholder="Enter your username" autoComplete="username" />
+            <label className="signin-input-label" htmlFor="signin-password">Password <span className="signin-req">*</span></label>
             <div className="signin-password-field-wrapper">
-              <input className="signin-input-field" type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} placeholder="Enter Password" />
+              <input id="signin-password" className="signin-input-field" type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} placeholder="Enter your password" autoComplete="current-password" />
               <span className="signin-eye-icon" onClick={() => setShowPassword(v => !v)}>
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
@@ -238,9 +245,8 @@ const Signin = () => {
               type="button"
               className="signin-forgot-link"
               onClick={openForgotModal}
-              style={{ alignSelf: 'flex-end', marginBottom: 8 }}
             >
-              Forgot Password?
+              Forgot password?
             </button>
             {error && <div className="signin-error-message">{error}</div>}
             <button type="submit" className="signin-btn" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
@@ -251,6 +257,7 @@ const Signin = () => {
               </Link>
             </div>
           </form>
+          </div>
         )}
 
         {/* Forgot Password Modal */}

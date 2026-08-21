@@ -6,12 +6,13 @@ html, body {
 }
 
 .ds-container {
+  --ds-sidebar-width: 268px;
   display: flex;
   min-height: 100vh;
   background: #f7f8fa;
 }
 .ds-sidebar {
-  width: 220px;
+  width: var(--ds-sidebar-width);
   background: #204080;
   color: #fff;
   display: flex;
@@ -24,23 +25,6 @@ html, body {
   height: 100vh;
   min-height: 0;
 }
-.ds-logo {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #204080;
-  background: #f7f8fa;
-  padding: 0 24px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  letter-spacing: 1px;
-  margin: 0;
-}
-.ds-logo-text {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #204080;
-}
 .ds-menu {
   flex: 1 1 auto;
   display: flex;
@@ -48,18 +32,31 @@ html, body {
   min-height: 0;
   overflow-y: auto;
   margin-top: 0;
+  padding-top: 64px;
 }
 .ds-menu-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  font-size: 1.05rem;
+  gap: 10px;
+  padding: 11px 16px;
+  font-size: 0.9375rem;
   cursor: pointer;
   border-radius: 6px;
-  margin: 2px 12px;
+  margin: 2px 10px;
   transition: background 0.2s;
   color: #fff;
+  min-width: 0;
+}
+
+.ds-menu-item > span:last-child {
+  white-space: nowrap;
+  line-height: 1.25;
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-menu-item svg {
+  flex-shrink: 0;
 }
 .ds-menu-item.active, .ds-menu-item:hover {
   background: #4669b3;
@@ -70,12 +67,27 @@ html, body {
 }
 .ds-main {
   flex: 1;
-  margin-left: 220px;
-  padding: 48px 40px;
+  margin-left: var(--ds-sidebar-width);
+  width: calc(100% - var(--ds-sidebar-width));
+  padding: 0 24px 24px 24px;
   background: #f7f8fa;
   margin-top: 64px;
+  max-width: none;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.ds-main-content {
+  margin-top: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 .ds-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   height: 64px;
   background: #fff;
   display: flex;
@@ -83,25 +95,45 @@ html, body {
   justify-content: space-between;
   padding: 0 24px;
   border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  z-index: 1100;
   min-width: 0;
-  flex-shrink: 1;
+  flex-shrink: 0;
   overflow: visible;
-  display: flex;
   flex-wrap: nowrap;
-  width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
+}
+
+@media (min-width: 701px) {
+  .ds-header {
+    padding-left: calc(var(--ds-sidebar-width) + 24px);
+  }
 }
 .ds-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
   min-width: 0;
   flex-shrink: 1;
   overflow: visible;
+}
+
+.ds-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ds-header-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.ds-header-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #204080;
 }
 .ds-menu-toggle {
   display: none;
@@ -285,12 +317,32 @@ html, body {
   margin-top: 10px;
 }
 
-.ds-main, .ds-dashboard-cards, .ds-dashboard-section {
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
+.ds-main-content .dashboard-cards,
+.ds-main-content .dashboard-section {
   width: 100%;
-  box-sizing: border-box;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.ds-main-content .dashboard-cards {
+  margin-top: 32px;
+}
+
+.ds-main-content .disciplinary-table {
+  width: 100%;
+}
+
+.ds-coming-soon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  width: 100%;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.02em;
 }
 .ds-card {
   width: 100%;
@@ -378,27 +430,44 @@ html, body {
     transform: translateX(-100%);
     position: fixed;
     left: 0;
-    top: 0;
-    height: 100vh;
+    top: 64px;
+    height: calc(100vh - 64px);
+    z-index: 1200;
     box-shadow: 2px 0 8px rgba(32,64,128,0.08);
     transition: transform 0.3s cubic-bezier(.4,0,.2,1);
   }
   .ds-sidebar.open {
     transform: translateX(0);
   }
+
+  .ds-sidebar-overlay {
+    top: 64px;
+    z-index: 1190;
+  }
+
   .ds-menu-toggle {
     display: block;
   }
+
+  .ds-menu {
+    padding-top: 8px;
+  }
+
   .ds-main {
     margin-left: 0;
-    padding: 0 !important;
-    min-width: 0 !important;
     width: 100% !important;
+    padding: 0 12px 24px !important;
+    min-width: 0 !important;
     max-width: 100% !important;
     box-sizing: border-box;
-    margin-top: 48px;
+    margin-top: 64px;
     background: #f7f8fa;
     overflow-x: hidden;
+  }
+
+  .ds-header {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
   .ds-dashboard-cards {
     width: 100% !important;

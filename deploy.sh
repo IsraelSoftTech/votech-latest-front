@@ -1,6 +1,6 @@
 
 echo "Deploying files to server"
 
-scp -r build/* root@31.97.113.198:/var/www/votech/
+scp -r build/* root@169.58.93.96:/var/www/votech/
 
 echo "Done!"
