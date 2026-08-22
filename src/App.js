@@ -43,6 +43,7 @@ import { AcademicYear } from "./components/marks-module/pages/AccademicYearPage/
 import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subject.page";
 import { ClassPage } from "./components/marks-module/pages/ClassPage/Class.page";
 import { AcademicBandsPage } from "./components/marks-module/pages/AcademicBandsPage/AcademicBands";
+import { PromotionPage } from "./components/marks-module/pages/PromotionPage/Promotion";
 import { MarksUploadPage } from "./components/marks-module/pages/MarkPage/MarkPage.page";
 import ReportCardHome from "./components/marks-module/pages/ReportCardHomePage/ReportCardHome.page";
 import { ReportCardPage } from "./components/marks-module/pages/ReportCardPage/ReportCard.page";
@@ -378,6 +379,7 @@ function App() {
         <Route path="/academics/subjects" element={<SubjectsWithDisciplineLayout />} />
         <Route path="/academics/classes" element={<ClassPage />} />
         <Route path="/academics/bands" element={<AcademicBandsPage />} />
+        <Route path="/academics/promotion" element={<PromotionPage />} />
         <Route
           path="/academics/mark-upload/:id"
           element={<MarksUploadPage />}

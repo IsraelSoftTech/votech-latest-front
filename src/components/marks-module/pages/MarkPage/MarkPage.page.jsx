@@ -865,6 +865,13 @@ export const MarksUploadPage = () => {
         api.get(`/class-subjects?subject_id=${id}`),
       ]);
 
+      console.log(
+        "data",
+        yearsRes.value.data,
+        termsRes.value.data,
+        sequencesRes.value.data
+      );
+
       if (!isMountedRef.current) return;
 
       if (subRes.status === "fulfilled") {

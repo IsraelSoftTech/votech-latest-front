@@ -352,7 +352,7 @@ const ReportCardHomePage = () => {
     });
 
     const url = getBackendUrl("report-cards/bulk-pdfs-direct", params);
-
+    window.open(url, "_blank");
     // Show progress modal
     setShowDownloadModal(true);
     setDownloadProgress({

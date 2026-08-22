@@ -1,0 +1,531 @@
+.promo-hist-page {
+  padding: 1.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, sans-serif;
+}
+
+.promo-hist-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0 0 1.1rem;
+}
+
+.promo-hist-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: #f7f9fc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e0;
+  color: #718096;
+}
+
+.promo-hist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.promo-hist-run-card {
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.promo-hist-run-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.promo-hist-run-header-left,
+.promo-hist-run-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.promo-hist-status-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.promo-hist-status-pill.completed { background: #f0fff4; color: #38a169; border: 1px solid #9ae6b4; }
+.promo-hist-status-pill.running { background: #ebf4ff; color: #204080; border: 1px solid #bcd0f7; }
+.promo-hist-status-pill.pending { background: #f7fafc; color: #718096; border: 1px solid #e2e8f0; }
+.promo-hist-status-pill.failed { background: #fdecec; color: #c53030; border: 1px solid #f7b3b3; }
+
+.promo-hist-run-title {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.92rem;
+}
+
+.promo-hist-run-meta {
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+.promo-hist-interrupted-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #b7791f;
+  background: #fff4e5;
+  border: 1px solid #f6cf8e;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.promo-hist-moves {
+  border-top: 1px solid #eef1f6;
+  padding: 0.4rem 1.1rem 0.8rem;
+}
+
+.promo-hist-move-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #f4f6fa;
+}
+.promo-hist-move-row:last-child {
+  border-bottom: none;
+}
+
+.promo-hist-move-info {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.promo-hist-move-classes {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.88rem;
+}
+
+.promo-hist-move-status {
+  font-size: 0.78rem;
+  color: #718096;
+  text-transform: capitalize;
+}
+
+.promo-hist-reverse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  color: #c53030;
+  border: 1.5px solid #f7b3b3;
+  border-radius: 8px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.promo-hist-reverse-btn:hover:not(:disabled) {
+  background: #fdecec;
+}
+.promo-hist-reverse-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.promo-hist-reversed-note {
+  font-size: 0.78rem;
+  color: #a0aec0;
+  font-style: italic;
+}
+
+.promo-hist-move-block {
+  border-bottom: 1px solid #f4f6fa;
+}
+.promo-hist-move-block:last-child {
+  border-bottom: none;
+}
+
+.promo-hist-move-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.promo-hist-view-students-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  color: #204080;
+  border: 1.5px solid #c9d9f5;
+  border-radius: 8px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.promo-hist-view-students-btn:hover {
+  background: #eef3fc;
+}
+
+.promo-hist-students {
+  padding: 0.4rem 0 0.9rem;
+}
+
+.promo-hist-students-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.promo-hist-empty-small {
+  color: #a0aec0;
+  font-size: 0.82rem;
+  margin: 0.3rem 0;
+}
+
+.promo-hist-students-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+.promo-hist-students-table th {
+  text-align: left;
+  color: #718096;
+  font-weight: 600;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #edf2f7;
+}
+.promo-hist-students-table td {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid #f4f6fa;
+  vertical-align: middle;
+}
+
+.promo-hist-incomplete-flag {
+  color: #dd6b20;
+  margin-left: 6px;
+  font-size: 0.85em;
+}
+
+.promo-hist-decision-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.promo-hist-decision-pill.promoted {
+  background: #f0fff4;
+  color: #38a169;
+}
+.promo-hist-decision-pill.promoted_on_condition {
+  background: #fffaf0;
+  color: #b7791f;
+}
+.promo-hist-decision-pill.failed {
+  background: #fdecec;
+  color: #c53030;
+}
+
+.promo-hist-promote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  color: #38a169;
+  border: 1.5px solid #9ae6b4;
+  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.promo-hist-promote-btn:hover {
+  background: #f0fff4;
+}
+
+.promo-hist-btn-promote {
+  background: #38a169;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.promo-hist-btn-promote:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.promo-hist-reason-input {
+  width: 100%;
+  border: 1.5px solid #d7e0ef;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.86rem;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+  margin: 0.6rem 0 0.2rem;
+}
+.promo-hist-reason-input:focus {
+  outline: none;
+  border-color: #204080;
+}
+
+.promo-hist-confirm-icon.good {
+  color: #38a169;
+}
+
+.promo-override-student-name {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0 0 0.7rem;
+}
+
+.promo-override-transition {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+
+.promo-override-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.promo-override-pill.from {
+  background: #fdecec;
+  color: #c53030;
+}
+.promo-override-pill.to {
+  background: #f0fff4;
+  color: #38a169;
+}
+
+.promo-override-arrow {
+  color: #a0aec0;
+  font-weight: 700;
+}
+
+.promo-override-explainer {
+  display: block;
+  font-size: 0.85rem;
+  color: #718096;
+  line-height: 1.5;
+  margin: 0 0 0.6rem;
+}
+
+.promo-hist-confirm-modal p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #4a5568;
+  line-height: 1.5;
+}
+.promo-hist-confirm-icon {
+  color: #dd6b20;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.promo-hist-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+.promo-hist-btn-secondary {
+  background: #fff;
+  color: #4a5568;
+  border: 1.5px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 0.55rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.promo-hist-btn-danger {
+  background: #c53030;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.promo-hist-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.skeleton-line,
+.skeleton-block {
+  background: linear-gradient(90deg, #eef1f6 25%, #e2e8f0 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: promo-hist-shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+.skeleton-line.wide { width: 60%; height: 22px; }
+.skeleton-block { height: 90px; width: 100%; }
+@keyframes promo-hist-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (max-width: 768px) {
+  .promo-hist-page {
+    padding: 1rem;
+    padding-bottom: 2rem;
+  }
+
+  .promo-hist-title {
+    font-size: 1.15rem;
+  }
+
+  .promo-hist-run-header {
+    padding: 0.8rem;
+    gap: 0.6rem;
+  }
+
+  .promo-hist-run-header-left,
+  .promo-hist-run-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .promo-hist-run-title {
+    font-size: 0.84rem;
+  }
+
+  .promo-hist-run-meta {
+    font-size: 0.72rem;
+  }
+
+  .promo-hist-moves {
+    padding: 0.3rem 0.8rem 0.7rem;
+  }
+
+  .promo-hist-move-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .promo-hist-move-actions {
+    width: 100%;
+  }
+  .promo-hist-view-students-btn,
+  .promo-hist-reverse-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Students table -> stacked cards, same discipline as the rest of the
+     academics section (data-label driven key/value rows). */
+  .promo-hist-students-table thead {
+    display: none;
+  }
+  .promo-hist-students-table,
+  .promo-hist-students-table tbody,
+  .promo-hist-students-table tr,
+  .promo-hist-students-table td {
+    display: block;
+    width: 100%;
+  }
+  .promo-hist-students-table tr {
+    border: 1px solid #eef1f6;
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    margin-bottom: 0.5rem;
+  }
+  .promo-hist-students-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.3rem 0;
+    border-bottom: none;
+    text-align: right;
+  }
+  .promo-hist-students-table td[data-label]:not([data-label=""])::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #718096;
+    font-size: 0.75rem;
+    text-align: left;
+  }
+  .promo-hist-students-table td:empty,
+  .promo-hist-students-table td:has(> :only-child:empty) {
+    display: none;
+  }
+  .promo-hist-promote-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .promo-hist-confirm-actions {
+    flex-direction: column-reverse;
+  }
+  .promo-hist-btn-secondary,
+  .promo-hist-btn-danger,
+  .promo-hist-btn-promote {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .promo-hist-page {
+    padding: 0.75rem;
+  }
+  .promo-hist-title {
+    font-size: 1.05rem;
+  }
+  .promo-hist-status-pill {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .promo-hist-page {
+    padding: 0.6rem;
+  }
+  .promo-hist-run-title {
+    font-size: 0.78rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line,
+  .skeleton-block {
+    animation: none !important;
+  }
+}

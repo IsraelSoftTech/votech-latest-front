@@ -25,6 +25,27 @@
   color: white;
 }
 
+.data-table th.sortable-col {
+  cursor: pointer;
+  user-select: none;
+}
+
+.data-table th .th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.data-table th .sort-icon {
+  display: inline-flex;
+  font-size: 0.8em;
+  opacity: 0.9;
+}
+
+.data-table th .sort-icon-idle {
+  opacity: 0.45;
+}
+
 .data-table th,
 .data-table td {
   padding: 12px 15px;

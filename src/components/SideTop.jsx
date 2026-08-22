@@ -42,6 +42,7 @@ import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
 import "./SideTop.css";
 import api from "../services/api";
+import config from "../config";
 import NotificationBell from "./NotificationBell";
 import MessageIcon from "./MessageIcon";
 
@@ -59,6 +60,7 @@ export default function SideTop({ children }) {
     profileImageUrl: null,
   });
   const [isUpdating, setIsUpdating] = useState(false);
+  const [activePromotionRun, setActivePromotionRun] = useState(false);
 
   // Added: local active tab to prevent undefined reference and allow visual highlight if needed
   const [activeTab, setActiveTab] = useState(null);
@@ -75,6 +77,41 @@ export default function SideTop({ children }) {
 
   // Added: derive unread flag to avoid undefined reference
   const hasUnread = unreadMessageCount > 0;
+
+  // Simple sidebar indicator for an in-progress promotion cycle, Admin3
+  // only, since that's the only role that can see the promotion pages at
+  // all. Lightweight periodic check, not a live socket subscription (the
+  // Run Promotion page itself handles live progress).
+  useEffect(() => {
+    if (authUser?.role !== "Admin3") return undefined;
+    let cancelled = false;
+
+    const checkActiveRun = async () => {
+      try {
+        const token =
+          sessionStorage.getItem("token") || localStorage.getItem("token");
+        const res = await fetch(`${config.API_V1_URL}/promotions/runs`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const body = await res.json();
+        const runs = body?.data || [];
+        const active = runs.some(
+          (r) => r.status === "pending" || r.status === "running"
+        );
+        if (!cancelled) setActivePromotionRun(active);
+      } catch (err) {
+        // Non-critical indicator, fail silently.
+      }
+    };
+
+    checkActiveRun();
+    const interval = setInterval(checkActiveRun, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [authUser?.role]);
 
   // Track if the user has manually toggled a submenu to prevent auto-override
   const userToggledRef = useRef(false);
@@ -259,6 +296,11 @@ export default function SideTop({ children }) {
           //   path: "/academics/master-sheets",
           //   icon: <FaTable />,
           // },
+          {
+            label: "Promotion",
+            path: "/academics/promotion",
+            icon: <FaGraduationCap />,
+          },
         ],
       },
       { label: "Monitor Users", icon: <FaUsers />, path: "/monitor-users" },
@@ -820,6 +862,22 @@ export default function SideTop({ children }) {
                   style={{ position: "relative" }}
                 >
                   <span className="icon">{item.icon}</span>
+
+                  {item.label === "Accademics" && activePromotionRun && (
+                    <span
+                      title="A promotion run is in progress"
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        width: 10,
+                        height: 10,
+                        background: "#dd6b20",
+                        borderRadius: "50%",
+                        display: "inline-block",
+                      }}
+                    />
+                  )}
 
                   {item.label === "Messages" && hasUnread && (
                     <span
