@@ -85,6 +85,8 @@
 
 .report-card-content {
   transform: none !important;
+  width: 100%;
+  max-width: 950px;
 }
 
 @media print {

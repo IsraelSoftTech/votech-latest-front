@@ -45,8 +45,8 @@ import { ClassPage } from "./components/marks-module/pages/ClassPage/Class.page"
 import { AcademicBandsPage } from "./components/marks-module/pages/AcademicBandsPage/AcademicBands";
 import { PromotionPage } from "./components/marks-module/pages/PromotionPage/Promotion";
 import { MarksUploadPage } from "./components/marks-module/pages/MarkPage/MarkPage.page";
-import ReportCardHome from "./components/marks-module/pages/ReportCardHomePage/ReportCardHome.page";
 import { ReportCardPage } from "./components/marks-module/pages/ReportCardPage/ReportCard.page";
+import { ReportCardsPage } from "./components/marks-module/pages/ReportCardsPage/ReportCards.page";
 
 // Discipline / Attendance / Counseling
 import DisciplineSideTop from "./components/DisciplineSideTop";
@@ -384,7 +384,15 @@ function App() {
           path="/academics/mark-upload/:id"
           element={<MarksUploadPage />}
         />
-        <Route path="/academics/report-cards" element={<ReportCardHome />} />
+        <Route path="/academics/report-cards" element={<ReportCardsPage />} />
+        <Route
+          path="/academics/report-cards/sessions"
+          element={<ReportCardsPage />}
+        />
+        <Route
+          path="/academics/report-cards/sessions/:id"
+          element={<ReportCardsPage />}
+        />
         <Route path="/academics/report-card/:id" element={<ReportCardPage />} />
         <Route path="/academics/master-sheets" element={<MasterSheetPage />} />
         <Route path="/test/report/card" element={<ReportCard />} />

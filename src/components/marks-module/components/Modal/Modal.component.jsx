@@ -37,7 +37,7 @@ const mobileModalVariants = {
   },
 };
 
-export default function Modal({ isOpen, onClose, title, children, icon }) {
+export default function Modal({ isOpen, onClose, title, children, icon, size }) {
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
   const dragControls = useDragControls();
@@ -115,7 +115,7 @@ export default function Modal({ isOpen, onClose, title, children, icon }) {
           <motion.div
             className={`clean-modal-container ${
               isMobile ? "mobile" : "desktop"
-            }`}
+            } ${!isMobile && size === "large" ? "large" : ""}`}
             variants={isMobile ? mobileModalVariants : desktopModalVariants}
             initial="hidden"
             animate="visible"

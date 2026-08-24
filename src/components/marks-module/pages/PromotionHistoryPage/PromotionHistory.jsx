@@ -12,7 +12,36 @@ import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api from "../../utils/api";
 import Modal from "../../components/Modal/Modal.component";
 import { PromotionMoveResults } from "../../components/PromotionMoveResults/PromotionMoveResults.component";
+import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
 import "./PromotionHistory.styles.css";
+
+const RUN_STATUS_OPTIONS = [
+  { value: "pending", label: "Pending" },
+  { value: "running", label: "Running" },
+  { value: "completed", label: "Completed" },
+  { value: "interrupted", label: "Interrupted" },
+  { value: "failed", label: "Failed" },
+];
+
+const RUN_SORT_OPTIONS = [
+  { value: "id", label: "Run #" },
+  { value: "initiated_at", label: "Date" },
+  { value: "status", label: "Status" },
+  { value: "scope", label: "Scope" },
+];
+
+// A split move (Orientation-style fan-out) has no single destination_class,
+// the backend attaches a per-destination count breakdown instead.
+const formatMoveDestination = (move) => {
+  if (move.is_graduation) return "Graduating";
+  if (move.destination_class) return move.destination_class.name;
+  if (move.destination_breakdown && move.destination_breakdown.length > 0) {
+    return move.destination_breakdown
+      .map((d) => `${d.class_name} (${d.count})`)
+      .join(", ");
+  }
+  return "Multiple classes/departments";
+};
 
 export const PromotionHistoryPage = () => {
   useRestrictTo("Admin3");
@@ -27,15 +56,25 @@ export const PromotionHistoryPage = () => {
   const [overriding, setOverriding] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
 
-  useEffect(() => {
-    fetchRuns();
-  }, []);
+  // Search/filter/sort/pagination is all server-side (see listRuns in
+  // promotion.controller.js) — history can grow to cover years of runs,
+  // so this never loads more than one page's worth into the browser.
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sortBy, setSortBy] = useState("id");
+  const [sortDir, setSortDir] = useState("desc");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
 
   const fetchRuns = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/promotions/runs");
-      setRuns(res?.data?.data || []);
+      const params = new URLSearchParams({ page: String(page), limit: "10", sortBy, sortDir });
+      if (search.trim()) params.set("search", search.trim());
+      if (statusFilter) params.set("status", statusFilter);
+      const res = await api.get(`/promotions/runs?${params.toString()}`);
+      setRuns(res?.data?.data?.runs || []);
+      setPagination(res?.data?.data?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 });
     } catch (err) {
       console.error("Failed to load promotion history:", err);
       toast.error("Failed to load promotion history");
@@ -43,6 +82,19 @@ export const PromotionHistoryPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchRuns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, sortBy, sortDir, search, statusFilter]);
+
+  // Reset to page 1 whenever the search/filter/sort criteria change, a
+  // stale page number from a previous filter could otherwise point past
+  // the end of the new, smaller result set.
+  useEffect(() => {
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, statusFilter, sortBy, sortDir]);
 
   const attemptReverse = async (runId, moveId, confirmDespiteDownstreamMarks = false) => {
     setReversing(moveId);
@@ -98,24 +150,36 @@ export const PromotionHistoryPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-        <div className="promo-hist-page">
+  return (
+      <div className="promo-hist-page">
+        <h1 className="promo-hist-title">Promotion History</h1>
+
+        <ServerListControls
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search by class, scope, status, or run #..."
+          statusOptions={RUN_STATUS_OPTIONS}
+          statusValue={statusFilter}
+          onStatusChange={setStatusFilter}
+          sortOptions={RUN_SORT_OPTIONS}
+          sortValue={sortBy}
+          onSortChange={setSortBy}
+          sortDir={sortDir}
+          onSortDirChange={setSortDir}
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          onPageChange={setPage}
+          loading={loading}
+        />
+
+        {loading && runs.length === 0 ? (
           <div className="promo-hist-skeleton">
             <div className="skeleton-line wide" />
             <div className="skeleton-block" />
             <div className="skeleton-block" />
           </div>
-        </div>
-    );
-  }
-
-  return (
-      <div className="promo-hist-page">
-        <h1 className="promo-hist-title">Promotion History</h1>
-
-        {runs.length === 0 ? (
-          <div className="promo-hist-empty">No promotion runs yet.</div>
+        ) : runs.length === 0 ? (
+          <div className="promo-hist-empty">No promotion runs match these filters.</div>
         ) : (
           <div className="promo-hist-list">
             {runs.map((run) => (
@@ -299,7 +363,7 @@ const MoveRow = ({
           <span className="promo-hist-move-classes">
             {move.source_class?.name}
             {" to "}
-            {move.is_graduation ? "Graduating" : move.destination_class?.name}
+            {formatMoveDestination(move)}
           </span>
           <span className={`promo-hist-move-status ${move.status}`}>
             {move.status}, {move.processed_students}/{move.total_students}

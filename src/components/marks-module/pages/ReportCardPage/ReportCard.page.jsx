@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaArrowLeft, FaPrint } from "react-icons/fa";
+import { FaArrowLeft, FaDownload } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -9,42 +9,46 @@ import "./ReportCardPage.styles.css";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
 
+// Displayed with real components (data straight from /report-cards/single,
+// the same fixed query bulk/session generation uses under the hood) so the
+// admin gets a clean, navigable screen, not a PDF stuffed in an iframe.
+// Download is a separate concern: it hits /report-cards/single-pdf-direct,
+// which reuses the exact same pdfmake docDefinition builder as bulk, so
+// the file you get is byte-for-byte the same layout either way.
+function getBackendUrl(path, params) {
+  const base = api.defaults.baseURL || "http://localhost:5000/api/v1";
+  const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+  if (token) params.set("token", token);
+  return `${base}/${path}?${params.toString()}`;
+}
+
 export const ReportCardPage = () => {
   const navigate = useNavigate();
-
   const location = useLocation();
   const {
-    student, // full student object
-    academicYear, // full academic year object
-    department, // full department object
-    class: studentClass, // alias 'class' -> studentClass (full class object)
-    term, // full term object (if provided)
-    sequence, // full sequence object (if provided)
-
-    // optional fallbacks if only IDs were sent
+    student,
+    academicYear,
+    department,
+    class: studentClass,
+    term,
     ids = {},
     academic_year_id,
     department_id,
     class_id,
   } = location.state || {};
 
-  // Standardized IDs derived from the objects first, then fall back to ids/flat ids
   const academicYearId =
     academicYear?.id ?? ids.academic_year_id ?? academic_year_id ?? null;
   const departmentId =
     department?.id ?? ids.department_id ?? department_id ?? null;
   const classId = studentClass?.id ?? ids.class_id ?? class_id ?? null;
-  // console.log("data", location.state);
+  const termId = term?.id ?? ids.term_id ?? null;
+
   const [reportCard, setReportCard] = useState(null);
   const [loading, setLoading] = useState(false);
   const [academicBands, setAcademicBands] = useState([]);
 
-  // console.log("Student Data", student);
-  // console.log("Term", term);
-
-  const handleGoBack = () => {
-    navigate(-1);
-  };
+  const handleGoBack = () => navigate(-1);
 
   useEffect(() => {
     if (!student) return;
@@ -52,65 +56,68 @@ export const ReportCardPage = () => {
     const fetchReportCard = async () => {
       setLoading(true);
       try {
-        // if you added optional academicYearId in your controller
         const res = await api.get(
-          `/report-cards/single?studentId=${student.id}&academicYearId=${academic_year_id}&classId=${class_id}&departmentId=${department_id}`
+          `/report-cards/single?studentId=${student.id}&academicYearId=${academicYearId}&classId=${classId}&departmentId=${departmentId}`
         );
-        res.data.data.reportCard.student.term = term.name.toUpperCase();
-        res.data.data.reportCard.student.term;
-        let parents = [];
+        const rc = res.data.data.reportCard;
+        if (term?.name) rc.student.term = term.name.toUpperCase();
 
-        if (student?.father_name) parents.push(student.father_name);
-        if (student?.mother_name) parents.push(student.mother_name);
+        const parents = [student?.father_name, student?.mother_name].filter(Boolean);
+        rc.administration.parents = parents.length ? parents.join(", ") : "N/A";
 
-        res.data.data.reportCard.administration.parents =
-          parents.length > 0 ? parents.join(", ") : "N/A";
-
-        res.data.data.reportCard.administration.parents = parents.join(", ");
         const academicBandsRes = await api.get(
-          `/academic-bands?academic_year_id=${academic_year_id}&class_id=${studentClass.id}`
+          `/academic-bands?academic_year_id=${academicYearId}&class_id=${classId}`
         );
         setAcademicBands(academicBandsRes.data.data || []);
-        setReportCard(res.data.data.reportCard || []);
-        console.log(academicBands);
+        setReportCard(rc);
       } catch (err) {
         toast.error(
           err.response?.data?.details ||
             err.response?.data?.message ||
             "Failed to load student Report Card"
         );
-        console.log("Failed to fetch report card", err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchReportCard();
-  }, [student, academic_year_id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [student, academicYearId]);
+
+  const isReady = Boolean(student?.id && academicYearId && departmentId && classId);
+  const downloadUrl = isReady
+    ? getBackendUrl(
+        "report-cards/single-pdf-direct",
+        new URLSearchParams({
+          studentId: student.id,
+          academicYearId,
+          departmentId,
+          classId,
+          ...(termId ? { term: termId } : {}),
+          disposition: "attachment",
+        })
+      )
+    : null;
 
   return (
     <div className="report-page">
-      {/* Header */}
       <header className="report-page-header">
         <h2>Student Report Card</h2>
-        <div class="report-page-header-back-n-print-btn">
+        <div className="report-page-header-back-n-print-btn">
           <button className="back-btn" onClick={handleGoBack}>
             <FaArrowLeft /> <span>Go Back</span>
           </button>
           <div className="report-actions">
-            <button
-              className="btn btn-create"
-              onClick={() => {
-                window.print();
-              }}
-            >
-              <FaPrint /> <span>Print</span>
-            </button>
+            {downloadUrl && (
+              <a className="btn btn-create" href={downloadUrl}>
+                <FaDownload /> <span>Download PDF</span>
+              </a>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Report Card */}
       <div className="report-card-wrapper">
         <div className="report-card-content">
           {loading ? (
@@ -122,11 +129,7 @@ export const ReportCardPage = () => {
                 justifyContent: "center",
               }}
             >
-              <Skeleton
-                height={1000} // A4 approx height
-                width={800} // A4 approx width
-                style={{ borderRadius: "8px" }}
-              />
+              <Skeleton height={1000} width={800} style={{ borderRadius: "8px" }} />
             </div>
           ) : !reportCard ? (
             <p>No report card found</p>
@@ -136,13 +139,14 @@ export const ReportCardPage = () => {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="report-page-footer">
         <p>
-          Tip: You can print or save this report card as PDF for records. Ensure
-          the printed version is signed by the authorized school staff.
+          This is a preview for review — use Download PDF for the official,
+          signable copy (identical layout to bulk-printed report cards).
         </p>
       </footer>
     </div>
   );
 };
+
+export default ReportCardPage;

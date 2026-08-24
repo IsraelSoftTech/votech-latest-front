@@ -1,0 +1,95 @@
+.msd-page {
+  padding: 1.3rem 0 3rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.msd-panel {
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 14px;
+  padding: 1.4rem 1.5rem;
+  box-shadow: 0 2px 10px rgba(32, 64, 128, 0.05);
+}
+
+.msd-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0 0 0.4rem;
+}
+
+.msd-panel-subtitle {
+  color: #718096;
+  font-size: 0.88rem;
+  margin: 0 0 1.2rem;
+  line-height: 1.5;
+}
+
+.msd-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.3rem;
+}
+
+.msd-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 0.35rem;
+}
+
+.msd-actions {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.msd-view-btn,
+.msd-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  padding: 0.7rem 1.4rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.msd-view-btn {
+  background: #204080;
+  color: #fff;
+}
+
+.msd-view-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.msd-view-btn:not(:disabled):hover {
+  background: #16305f;
+}
+
+.msd-download-btn {
+  background: #fff;
+  color: #204080;
+  border: 1px solid #204080;
+}
+
+.msd-download-btn:hover {
+  background: #f5f9ff;
+}
+
+@media (max-width: 720px) {
+  .msd-form {
+    grid-template-columns: 1fr;
+  }
+}

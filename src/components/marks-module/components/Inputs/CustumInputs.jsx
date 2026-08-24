@@ -381,8 +381,8 @@ export const CustomDatePicker = ({
 };
 
 /* ------------------- Submit Button ------------------- */
-export const SubmitBtn = ({ title }) => (
-  <button type="submit" className="submit-btn">
+export const SubmitBtn = ({ title, disabled = false }) => (
+  <button type="submit" className="submit-btn" disabled={disabled}>
     {title}
   </button>
 );

@@ -37,6 +37,14 @@
   max-height: 90vh;
 }
 
+/* Opt-in wider variant for data-dense content (tables, bulk pickers),
+   pass size="large" to Modal. Every other caller is unaffected. */
+.clean-modal-container.large {
+  width: 90vw;
+  max-width: 1100px;
+  align-items: stretch;
+}
+
 /* ===== MOBILE BOTTOM SHEET STYLES ===== */
 .clean-modal-container.mobile {
   width: 100%;

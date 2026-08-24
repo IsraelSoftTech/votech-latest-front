@@ -170,7 +170,7 @@
 
 /* Submenu items */
 .submenu-item {
-  color: #f59e0b;
+  color: #fff;
   background: none !important;
   font-size: 0.95rem;
   border-radius: 5px !important;
@@ -186,7 +186,7 @@
   font-size: 0.95rem;
   flex-shrink: 0;
   opacity: 0.95;
-  color: #f59e0b;
+  color: #fff;
 }
 .submenu-item .menu-label {
   flex: 1 1 auto;
@@ -197,10 +197,14 @@
 }
 .submenu-item.active,
 .submenu-item:hover {
-  color: #204080 !important;
-  background: #fff !important;
+  color: #fff !important;
+  background: #4669b3 !important;
   border-radius: 5px !important;
   box-shadow: 0 1px 4px rgba(32, 64, 128, 0.04);
+}
+.submenu-item.active .icon,
+.submenu-item:hover .icon {
+  color: #fff;
 }
 
 .see-more-btn {

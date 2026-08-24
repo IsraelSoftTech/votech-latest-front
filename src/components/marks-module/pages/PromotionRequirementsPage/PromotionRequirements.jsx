@@ -17,6 +17,8 @@ const emptyForm = {
   min_professional_subjects_passed: "0",
   compulsory_general_subject_ids: [],
   compulsory_professional_subject_ids: [],
+  promotion_mode: "single",
+  decision_mode: "automatic",
 };
 
 export const PromotionRequirementsPage = () => {
@@ -126,12 +128,18 @@ export const PromotionRequirementsPage = () => {
         (req.compulsory_professional_subject_ids?.length || 0)
       : 0;
 
+    const tags = [];
+    if (req?.promotion_mode === "split") tags.push("splits into departments");
+    if (req?.decision_mode === "manual") tags.push("manual (national exam)");
+
     return {
       id: cls.id,
       name: cls.name,
       department: department?.name || "N/A",
       status: req
-        ? `Min avg ${req.min_average} · ${compulsoryCount} compulsory subject(s)`
+        ? `Min avg ${req.min_average} · ${compulsoryCount} compulsory subject(s)${
+            tags.length ? ` · ${tags.join(", ")}` : ""
+          }`
         : "Not configured",
       configured: !!req,
     };
@@ -190,6 +198,11 @@ export const PromotionRequirementsPage = () => {
         compulsory_professional_subject_ids: copyFrom
           ? []
           : source.compulsory_professional_subject_ids || [],
+        // Structural flags about this specific class, not the criteria
+        // magnitude, so like the subject picks these don't carry over when
+        // copying settings into a different class.
+        promotion_mode: copyFrom ? "single" : source.promotion_mode || "single",
+        decision_mode: copyFrom ? "automatic" : source.decision_mode || "automatic",
       });
     } else {
       setForm({ ...emptyForm, academic_year_id: selectedYear, class_id: row.id });
@@ -252,6 +265,8 @@ export const PromotionRequirementsPage = () => {
         compulsory_general_subject_ids: form.compulsory_general_subject_ids,
         compulsory_professional_subject_ids:
           form.compulsory_professional_subject_ids,
+        promotion_mode: form.promotion_mode,
+        decision_mode: form.decision_mode,
       });
       toast.success("Promotion requirements saved");
       closeModal();
@@ -259,8 +274,8 @@ export const PromotionRequirementsPage = () => {
     } catch (err) {
       console.error(err);
       toast.error(
-        err.response?.data?.details ||
-          err.response?.data?.message ||
+        err.response?.data?.message ||
+          err.response?.data?.details ||
           "Failed to save promotion requirements"
       );
     } finally {
@@ -430,6 +445,57 @@ export const PromotionRequirementsPage = () => {
               handleSave();
             }}
           >
+            <div className="promo-req-mode-section">
+              <label className="promo-req-mode-toggle">
+                <input
+                  type="checkbox"
+                  checked={form.promotion_mode === "split"}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      promotion_mode: e.target.checked ? "split" : "single",
+                    }))
+                  }
+                />
+                This class can promote students into different classes or
+                departments (e.g. Orientation classes that split into
+                Electrical, Building, Mechanics, etc.)
+              </label>
+              {form.promotion_mode === "split" && (
+                <p className="promo-req-mode-warning">
+                  When a promotion run reaches this class, the same-department
+                  restriction is waived and the admin must assign each
+                  promoted student's destination class by hand. Only enable
+                  this for classes that genuinely fan out into different
+                  departments, misconfiguring it lets students scatter into
+                  the wrong department by accident.
+                </p>
+              )}
+
+              <label className="promo-req-mode-toggle">
+                <input
+                  type="checkbox"
+                  checked={form.decision_mode === "manual"}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      decision_mode: e.target.checked ? "manual" : "automatic",
+                    }))
+                  }
+                />
+                This class's real result comes from a national exam (GCE,
+                ITVEE, etc.) not tracked in this system
+              </label>
+              {form.decision_mode === "manual" && (
+                <p className="promo-req-mode-warning">
+                  The criteria below become a recommendation only, based on
+                  whatever internal marks exist. When a promotion run reaches
+                  this class, an admin must select who is promoted by hand
+                  instead of it being computed automatically.
+                </p>
+              )}
+            </div>
+
             <div className="promo-req-form-row">
               <CustomInput
                 label="Minimum Promotion Average"

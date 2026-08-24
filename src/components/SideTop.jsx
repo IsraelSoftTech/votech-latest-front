@@ -34,7 +34,6 @@ import {
   FaCalendar,
   FaLayerGroup,
   FaBookOpen,
-  FaTable,
   FaExclamationTriangle,
   FaWarehouse,
 } from "react-icons/fa";
@@ -45,6 +44,7 @@ import api from "../services/api";
 import config from "../config";
 import NotificationBell from "./NotificationBell";
 import MessageIcon from "./MessageIcon";
+import AcademicJobNotificationBell from "./AcademicJobNotificationBell";
 
 export default function SideTop({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -78,10 +78,11 @@ export default function SideTop({ children }) {
   // Added: derive unread flag to avoid undefined reference
   const hasUnread = unreadMessageCount > 0;
 
-  // Simple sidebar indicator for an in-progress promotion cycle, Admin3
-  // only, since that's the only role that can see the promotion pages at
-  // all. Lightweight periodic check, not a live socket subscription (the
-  // Run Promotion page itself handles live progress).
+  // Simple sidebar indicator for an in-progress promotion cycle or report
+  // card generation session, Admin3 only, since that's the only role that
+  // can see these pages at all. Lightweight periodic check, not a live
+  // socket subscription (the Run Promotion / Report Card Sessions pages
+  // themselves handle live progress).
   useEffect(() => {
     if (authUser?.role !== "Admin3") return undefined;
     let cancelled = false;
@@ -90,15 +91,34 @@ export default function SideTop({ children }) {
       try {
         const token =
           sessionStorage.getItem("token") || localStorage.getItem("token");
-        const res = await fetch(`${config.API_V1_URL}/promotions/runs`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) return;
-        const body = await res.json();
-        const runs = body?.data || [];
-        const active = runs.some(
-          (r) => r.status === "pending" || r.status === "running"
-        );
+        // limit=5 is enough — both lists sort newest-first and the
+        // report-card watchdog auto-fails anything stale within 15
+        // minutes, so an active run/session is always near the top.
+        const [promoRes, sessionRes] = await Promise.all([
+          fetch(`${config.API_V1_URL}/promotions/runs?limit=5`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${config.API_V1_URL}/report-card-sessions?limit=5`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+        let active = false;
+        if (promoRes.ok) {
+          const body = await promoRes.json();
+          const runs = body?.data?.runs || [];
+          active =
+            active ||
+            runs.some((r) => r.status === "pending" || r.status === "running");
+        }
+        if (sessionRes.ok) {
+          const body = await sessionRes.json();
+          const sessions = body?.data?.sessions || [];
+          active =
+            active ||
+            sessions.some(
+              (s) => s.status === "pending" || s.status === "running"
+            );
+        }
         if (!cancelled) setActivePromotionRun(active);
       } catch (err) {
         // Non-critical indicator, fail silently.
@@ -144,9 +164,9 @@ export default function SideTop({ children }) {
         icon: <FaGraduationCap />,
         submenu: [
           {
-            label: "Subjects",
-            path: "/academics/subjects",
-            icon: <FaChalkboardTeacher />,
+            label: "Academic Bands",
+            path: "/academics/bands",
+            icon: <FaLayerGroup />,
           },
           {
             label: "Academic Years",
@@ -159,20 +179,15 @@ export default function SideTop({ children }) {
             icon: <FaChalkboard />,
           },
           {
-            label: "Academic Bands",
-            path: "/academics/bands",
-            icon: <FaLayerGroup />,
-          },
-          {
             label: "Report Cards",
             path: "/academics/report-cards",
             icon: <FaBookOpen />,
           },
-          // {
-          //   label: "Master Sheets",
-          //   path: "/academics/master-sheets",
-          //   icon: <FaTable />,
-          // },
+          {
+            label: "Subjects",
+            path: "/academics/subjects",
+            icon: <FaChalkboardTeacher />,
+          },
         ],
       },
       {
@@ -267,9 +282,9 @@ export default function SideTop({ children }) {
         icon: <FaGraduationCap />,
         submenu: [
           {
-            label: "Subjects",
-            path: "/academics/subjects",
-            icon: <FaChalkboardTeacher />,
+            label: "Academic Bands",
+            path: "/academics/bands",
+            icon: <FaLayerGroup />,
           },
           {
             label: "Academic Years",
@@ -282,24 +297,19 @@ export default function SideTop({ children }) {
             icon: <FaChalkboard />,
           },
           {
-            label: "Academic Bands",
-            path: "/academics/bands",
-            icon: <FaLayerGroup />,
+            label: "Promotion",
+            path: "/academics/promotion",
+            icon: <FaGraduationCap />,
           },
           {
             label: "Report Cards",
             path: "/academics/report-cards",
             icon: <FaBookOpen />,
           },
-          // {
-          //   label: "Master Sheets",
-          //   path: "/academics/master-sheets",
-          //   icon: <FaTable />,
-          // },
           {
-            label: "Promotion",
-            path: "/academics/promotion",
-            icon: <FaGraduationCap />,
+            label: "Subjects",
+            path: "/academics/subjects",
+            icon: <FaChalkboardTeacher />,
           },
         ],
       },
@@ -865,7 +875,7 @@ export default function SideTop({ children }) {
 
                   {item.label === "Accademics" && activePromotionRun && (
                     <span
-                      title="A promotion run is in progress"
+                      title="A promotion run or report card session is in progress"
                       style={{
                         position: "absolute",
                         top: 8,
@@ -1066,6 +1076,7 @@ export default function SideTop({ children }) {
               count={upcomingEventsCount}
               onClick={handleBellClick}
             />
+            <AcademicJobNotificationBell />
             <div className="header-logo-mobile">
               <img src={logo} alt="logo" className="header-logo-mobile-img" />
             </div>

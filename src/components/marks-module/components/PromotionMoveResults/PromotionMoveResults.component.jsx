@@ -64,6 +64,7 @@ export const PromotionMoveResults = ({
     overall_average: s.overall_average,
     decisionLabel: DECISION_LABELS[s.decision] || s.decision,
     decision: s.decision,
+    promotedTo: s.to_class?.name || (s.decision === "failed" ? "Repeats here" : "—"),
     reasons:
       s.detail_snapshot?.reasons?.length > 0
         ? s.detail_snapshot.reasons.join("; ")
@@ -74,6 +75,10 @@ export const PromotionMoveResults = ({
     has_incomplete_data: s.has_incomplete_data,
     _raw: s,
   }));
+
+  const distinctDestinations = [
+    ...new Set(tableData.map((r) => r.promotedTo).filter(Boolean)),
+  ].sort();
 
   if (loading) {
     return (
@@ -118,10 +123,19 @@ export const PromotionMoveResults = ({
           { label: "Reg. No.", accessor: "registration_number" },
           { label: "Average", accessor: "overall_average" },
           { label: "Outcome", accessor: "decisionLabel" },
+          { label: "Promoted To", accessor: "promotedTo" },
           { label: "Reason", accessor: "reasons", sortable: false },
         ]}
         data={tableData}
         filterCategories={Object.values(DECISION_LABELS)}
+        filters={[
+          {
+            key: "promotedTo",
+            label: "Promoted To",
+            accessor: "promotedTo",
+            options: distinctDestinations,
+          },
+        ]}
         loading={false}
         limit={10}
         onEdit={() => {}}

@@ -15,6 +15,7 @@ import api, { headers, subBaseURL } from "../../utils/api";
 import DataTable from "../../components/DataTable/DataTable.component";
 import Modal from "../../components/Modal/Modal.component";
 import { PromotionMoveResults } from "../../components/PromotionMoveResults/PromotionMoveResults.component";
+import { RosterAssignmentModal } from "../../components/RosterAssignmentModal/RosterAssignmentModal.component";
 import "./PromotionRun.styles.css";
 
 const CONFIRM_DELAY_SECONDS = 5;
@@ -26,6 +27,25 @@ const DECISION_LABELS = {
   failed: "Failed / Repeats",
 };
 
+const getErrorMessage = (err, fallback) =>
+  err?.response?.data?.message ||
+  err?.response?.data?.details ||
+  err?.message ||
+  fallback;
+
+// A split move (Orientation-style fan-out) has no single destination_class,
+// the backend attaches a per-destination count breakdown instead.
+const formatMoveDestination = (move) => {
+  if (move.is_graduation) return "Graduating";
+  if (move.destination_class) return move.destination_class.name;
+  if (move.destination_breakdown && move.destination_breakdown.length > 0) {
+    return move.destination_breakdown
+      .map((d) => `${d.class_name} (${d.count})`)
+      .join(", ");
+  }
+  return "Multiple classes/departments";
+};
+
 export const PromotionRunPage = () => {
   useRestrictTo("Admin3");
 
@@ -34,12 +54,29 @@ export const PromotionRunPage = () => {
   const [classes, setClasses] = useState([]);
   const [promotedClasses, setPromotedClasses] = useState(new Map()); // class_id -> {move_id, status}
   const [loading, setLoading] = useState(true);
+  // class_id -> { promotion_mode: "single"|"split", decision_mode: "automatic"|"manual" }
+  const [requirementModes, setRequirementModes] = useState({});
 
   const [scope, setScope] = useState("class");
   const [toYearId, setToYearId] = useState(null);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
   const [selectedSourceClassId, setSelectedSourceClassId] = useState(null);
   const [manualAverageOverride, setManualAverageOverride] = useState("");
+
+  // Split/manual roster (Orientation-style fan-out classes, and classes
+  // whose real result is a national exam not tracked here), only relevant
+  // for the "class"/"manual" scope's single source class.
+  const [rosterData, setRosterData] = useState(null);
+  const [rosterLoading, setRosterLoading] = useState(false);
+  const [manualDecisions, setManualDecisions] = useState({}); // { student_id: decision }
+  const [destinationOverrides, setDestinationOverrides] = useState({}); // { student_id: destination_class_id }
+  const [rosterModalOpen, setRosterModalOpen] = useState(false);
+  // A manual class's decisions default to the computed recommendation,
+  // which is explicitly NOT authoritative, that's the whole reason the
+  // class is flagged manual. Never let a run start on those defaults
+  // without the admin actually opening and confirming the roster at least
+  // once for this class.
+  const [rosterReviewed, setRosterReviewed] = useState(false);
 
   // department/school scope: { [source_class_id]: { destination_class_id, is_graduation } }
   const [moveConfig, setMoveConfig] = useState({});
@@ -91,10 +128,17 @@ export const PromotionRunPage = () => {
     [academicYears]
   );
 
+  const classesById = useMemo(
+    () => new Map(classes.map((c) => [c.id, c])),
+    [classes]
+  );
+
   useEffect(() => {
     if (!activeYear) return;
     api
-      .get(`/promotions/promoted-classes?academic_year_from_id=${activeYear.id}`)
+      .get(
+        `/promotions/promoted-classes?academic_year_from_id=${activeYear.id}`
+      )
       .then((res) => {
         const map = new Map();
         (res?.data?.data || []).forEach((row) => {
@@ -107,6 +151,96 @@ export const PromotionRunPage = () => {
       });
   }, [activeYear]);
 
+  useEffect(() => {
+    if (!activeYear) return;
+    api
+      .get(`/promotion-requirements?academic_year_id=${activeYear.id}`)
+      .then((res) => {
+        const map = {};
+        (res?.data?.data || []).forEach((r) => {
+          map[r.class_id] = {
+            promotion_mode: r.promotion_mode || "single",
+            decision_mode: r.decision_mode || "automatic",
+          };
+        });
+        setRequirementModes(map);
+      })
+      .catch((err) => {
+        console.error("Failed to load promotion requirement modes:", err);
+      });
+  }, [activeYear]);
+
+  const selectedMode = requirementModes[selectedSourceClassId] || {};
+  const isSplitClass = selectedMode.promotion_mode === "split";
+  const isManualClass = selectedMode.decision_mode === "manual";
+  const needsRoster =
+    (scope === "class" || scope === "manual") &&
+    (isSplitClass || isManualClass);
+
+  // Selecting a different source class invalidates whatever roster/manual
+  // picks were in progress for the previous one.
+  useEffect(() => {
+    setRosterData(null);
+    setManualDecisions({});
+    setDestinationOverrides({});
+    setRosterModalOpen(false);
+    setRosterReviewed(false);
+  }, [selectedSourceClassId]);
+
+  const openRosterModal = () => {
+    setRosterModalOpen(true);
+    setRosterReviewed(true);
+  };
+
+  useEffect(() => {
+    if (!needsRoster || !selectedSourceClassId || !toYearId || !activeYear) {
+      return;
+    }
+    // A split class has no single destination to require, everything else
+    // still needs one before the roster's recommendations mean anything.
+    if (!isSplitClass && !singleGraduation && !singleDestinationId) {
+      setRosterData(null);
+      return;
+    }
+    setRosterLoading(true);
+    api
+      .post("/promotions/preview", {
+        source_class_id: selectedSourceClassId,
+        academic_year_from_id: activeYear.id,
+        academic_year_to_id: toYearId,
+        destination_class_id: isSplitClass ? undefined : singleDestinationId,
+        is_graduation: isSplitClass ? false : singleGraduation,
+      })
+      .then((res) => {
+        const data = res?.data?.data;
+        setRosterData(data);
+        if (isManualClass) {
+          setManualDecisions((prev) => {
+            const seeded = { ...prev };
+            (data?.results || []).forEach((r) => {
+              if (seeded[r.student_id] === undefined)
+                seeded[r.student_id] = r.decision;
+            });
+            return seeded;
+          });
+        }
+      })
+      .catch((err) => {
+        toast.error(getErrorMessage(err, "Failed to load this class's roster"));
+        setRosterData(null);
+      })
+      .finally(() => setRosterLoading(false));
+  }, [
+    needsRoster,
+    selectedSourceClassId,
+    toYearId,
+    isSplitClass,
+    isManualClass,
+    singleDestinationId,
+    singleGraduation,
+    activeYear,
+  ]);
+
   const departmentClasses = (departmentId) =>
     classes.filter((c) => c.department_id === departmentId);
 
@@ -114,14 +248,60 @@ export const PromotionRunPage = () => {
     const sourceClass = classes.find((c) => c.id === sourceClassId);
     if (!sourceClass) return [];
     return classes.filter(
-      (c) => c.department_id === sourceClass.department_id && c.id !== sourceClassId
+      (c) =>
+        c.department_id === sourceClass.department_id && c.id !== sourceClassId
     );
   };
+
+  // A student's effective decision: the admin's manual pick for a manual
+  // class, otherwise whatever the roster's automatic computation says.
+  const effectiveDecisionFor = (studentId) =>
+    isManualClass
+      ? manualDecisions[studentId]
+      : rosterData?.results?.find((r) => r.student_id === studentId)?.decision;
+
+  const rosterPromotedIds = (rosterData?.results || [])
+    .filter((r) => effectiveDecisionFor(r.student_id) !== "failed")
+    .map((r) => r.student_id);
+
+  const rosterMissingDecisions = isManualClass
+    ? (rosterData?.results || []).filter((r) => !manualDecisions[r.student_id])
+    : [];
+  const rosterMissingDestinations = isSplitClass
+    ? rosterPromotedIds.filter((id) => !destinationOverrides[id])
+    : [];
+
+  const rosterComplete =
+    !needsRoster ||
+    (!!rosterData &&
+      rosterMissingDecisions.length === 0 &&
+      rosterMissingDestinations.length === 0 &&
+      (!isManualClass || rosterReviewed));
 
   // ── Build the moves this run will attempt, from current setup state ──
   const buildMoves = () => {
     if (scope === "class" || scope === "manual") {
       if (!selectedSourceClassId) return [];
+
+      if (needsRoster) {
+        if (!rosterComplete) return [];
+        return [
+          {
+            source_class_id: selectedSourceClassId,
+            destination_class_id: isSplitClass
+              ? null
+              : singleGraduation
+              ? null
+              : singleDestinationId,
+            is_graduation: isSplitClass ? false : singleGraduation,
+            manual_decisions: isManualClass ? manualDecisions : undefined,
+            destination_overrides: isSplitClass
+              ? destinationOverrides
+              : undefined,
+          },
+        ];
+      }
+
       if (!singleGraduation && !singleDestinationId) return [];
       return [
         {
@@ -148,7 +328,9 @@ export const PromotionRunPage = () => {
         if (!cfg.is_graduation && !cfg.destination_class_id) return null;
         return {
           source_class_id: cls.id,
-          destination_class_id: cfg.is_graduation ? null : cfg.destination_class_id,
+          destination_class_id: cfg.is_graduation
+            ? null
+            : cfg.destination_class_id,
           is_graduation: !!cfg.is_graduation,
         };
       })
@@ -160,14 +342,32 @@ export const PromotionRunPage = () => {
   const setMoveDestination = (classId, destinationClassId) => {
     setMoveConfig((prev) => ({
       ...prev,
-      [classId]: { ...prev[classId], destination_class_id: destinationClassId, is_graduation: false },
+      [classId]: {
+        ...prev[classId],
+        destination_class_id: destinationClassId,
+        is_graduation: false,
+      },
     }));
   };
   const setMoveGraduation = (classId, isGraduation) => {
     setMoveConfig((prev) => ({
       ...prev,
-      [classId]: { ...prev[classId], is_graduation: isGraduation, destination_class_id: null },
+      [classId]: {
+        ...prev[classId],
+        is_graduation: isGraduation,
+        destination_class_id: null,
+      },
     }));
+  };
+
+  // A split/manual class can't be part of a bulk department/school run,
+  // jump straight to "One Class" scope with it preselected instead of just
+  // telling the admin to go find it themselves.
+  const handleIndividually = (classId) => {
+    setScope("class");
+    setSelectedSourceClassId(classId);
+    setSingleDestinationId(null);
+    setSingleGraduation(false);
   };
 
   // ── Preview ──
@@ -194,7 +394,49 @@ export const PromotionRunPage = () => {
           academic_year_from_id: activeYear.id,
           academic_year_to_id: toYearId,
         });
-        results.push({ move, data: res?.data?.data });
+        let data = res?.data?.data;
+
+        // A split/manual move's real outcome is whatever the admin picked
+        // in the roster, not the server's recomputed recommendation, merge
+        // that in so the review step (and the eventual run) shows the same
+        // thing the admin actually chose.
+        if (move.manual_decisions || move.destination_overrides) {
+          const mergedResults = (data?.results || []).map((r) => {
+            const decision = move.manual_decisions
+              ? move.manual_decisions[r.student_id] || r.decision
+              : r.decision;
+            const destId = move.destination_overrides
+              ? move.destination_overrides[r.student_id]
+              : null;
+            return {
+              ...r,
+              decision,
+              destinationName: destId
+                ? classesById.get(Number(destId))?.name
+                : null,
+            };
+          });
+          data = {
+            ...data,
+            results: mergedResults,
+            summary: {
+              total: mergedResults.length,
+              promoted: mergedResults.filter((r) => r.decision === "promoted")
+                .length,
+              promoted_on_condition: mergedResults.filter(
+                (r) => r.decision === "promoted_on_condition"
+              ).length,
+              failed: mergedResults.filter((r) => r.decision === "failed")
+                .length,
+              incomplete_data_count: mergedResults.filter(
+                (r) => r.has_incomplete_data
+              ).length,
+            },
+            is_split: !!move.destination_overrides,
+          };
+        }
+
+        results.push({ move, data });
       }
       setPreviewResults(results);
       setStep("review");
@@ -210,11 +452,7 @@ export const PromotionRunPage = () => {
       }, 1000);
     } catch (err) {
       console.error(err);
-      toast.error(
-        err.response?.data?.details ||
-          err.response?.data?.message ||
-          "Failed to preview promotion"
-      );
+      toast.error(getErrorMessage(err, "Failed to preview promotion"));
       setStep("setup");
     }
   };
@@ -231,7 +469,13 @@ export const PromotionRunPage = () => {
       acc.incomplete_data_count += s.incomplete_data_count || 0;
       return acc;
     },
-    { total: 0, promoted: 0, promoted_on_condition: 0, failed: 0, incomplete_data_count: 0 }
+    {
+      total: 0,
+      promoted: 0,
+      promoted_on_condition: 0,
+      failed: 0,
+      incomplete_data_count: 0,
+    }
   );
 
   // ── Execute ──
@@ -342,158 +586,179 @@ export const PromotionRunPage = () => {
 
   if (loading) {
     return (
-        <div className="promo-run-page">
-          <div className="promo-run-skeleton">
-            <div className="skeleton-line wide" />
-            <div className="skeleton-line" />
-            <div className="skeleton-line" />
-            <div className="skeleton-block" />
-          </div>
+      <div className="promo-run-page">
+        <div className="promo-run-skeleton">
+          <div className="skeleton-line wide" />
+          <div className="skeleton-line" />
+          <div className="skeleton-line" />
+          <div className="skeleton-block" />
         </div>
+      </div>
     );
   }
 
   return (
-      <div className="promo-run-page">
-        <div className="promo-run-header">
-          <h1 className="promo-run-title">
-            <FaGraduationCap /> Run Promotion
-          </h1>
-          {!activeYear && (
-            <span className="promo-run-warning-badge">
-              <FaExclamationTriangle /> No active academic year found
-            </span>
-          )}
-        </div>
-
-        {step === "setup" && (
-          <SetupStep
-            activeYear={activeYear}
-            academicYears={academicYears}
-            departments={departments}
-            classes={classes}
-            promotedClasses={promotedClasses}
-            scope={scope}
-            setScope={setScope}
-            toYearId={toYearId}
-            setToYearId={setToYearId}
-            selectedDepartmentId={selectedDepartmentId}
-            setSelectedDepartmentId={setSelectedDepartmentId}
-            selectedSourceClassId={selectedSourceClassId}
-            setSelectedSourceClassId={setSelectedSourceClassId}
-            singleGraduation={singleGraduation}
-            setSingleGraduation={setSingleGraduation}
-            singleDestinationId={singleDestinationId}
-            setSingleDestinationId={setSingleDestinationId}
-            manualAverageOverride={manualAverageOverride}
-            setManualAverageOverride={setManualAverageOverride}
-            sameDepartmentDestinations={sameDepartmentDestinations}
-            departmentClasses={departmentClasses}
-            moveConfig={moveConfig}
-            setMoveDestination={setMoveDestination}
-            setMoveGraduation={setMoveGraduation}
-            movesCount={moves.length}
-            onPreview={runPreview}
-          />
+    <div className="promo-run-page">
+      <div className="promo-run-header">
+        <h1 className="promo-run-title">
+          <FaGraduationCap /> Run Promotion
+        </h1>
+        {!activeYear && (
+          <span className="promo-run-warning-badge">
+            <FaExclamationTriangle /> No active academic year found
+          </span>
         )}
-
-        {step === "previewing" && (
-          <div className="promo-run-skeleton">
-            <p className="promo-run-loading-text">Computing decisions for every student in scope…</p>
-            <div className="skeleton-block" />
-            <div className="skeleton-block" />
-          </div>
-        )}
-
-        {step === "review" && (
-          <ReviewStep
-            previewResults={previewResults}
-            anyBlocked={anyBlocked}
-            aggregateSummary={aggregateSummary}
-            countdown={countdown}
-            onBack={resetToSetup}
-            onConfirm={confirmAndRun}
-            runError={runError}
-            classes={classes}
-            departments={departments}
-          />
-        )}
-
-        {step === "starting" && (
-          <div className="promo-run-skeleton">
-            <p className="promo-run-loading-text">Starting the promotion run…</p>
-            <div className="skeleton-block" />
-          </div>
-        )}
-
-        {(step === "running" || step === "done") && run && (
-          <RunProgressStep
-            run={run}
-            isSocketConnected={isConnected}
-            isDone={step === "done"}
-            onNewRun={resetToSetup}
-            refreshToken={resultsRefreshToken}
-            onPromoteConditionally={(moveId, studentPromotion) =>
-              setOverrideTarget({ moveId, studentPromotion })
-            }
-          />
-        )}
-
-        <Modal
-          isOpen={!!overrideTarget}
-          onClose={() => {
-            setOverrideTarget(null);
-            setOverrideReason("");
-          }}
-          title="Promote Conditionally"
-        >
-          {overrideTarget && (
-            <div className="promo-run-override-modal">
-              <p className="promo-override-student-name">
-                {overrideTarget.studentPromotion.name}
-              </p>
-              <div className="promo-override-transition">
-                <span className="promo-override-pill from">Repeating</span>
-                <span className="promo-override-arrow">→</span>
-                <span className="promo-override-pill to">
-                  <FaArrowCircleUp /> Promoted on Condition
-                </span>
-              </div>
-              <p className="promo-override-explainer">
-                They will move into this move's destination class instead of
-                repeating.
-              </p>
-              <textarea
-                className="promo-run-override-reason"
-                placeholder="Reason (optional, kept in the audit trail)"
-                value={overrideReason}
-                onChange={(e) => setOverrideReason(e.target.value)}
-                rows={3}
-              />
-              <div className="promo-run-override-actions">
-                <button
-                  type="button"
-                  className="promo-run-secondary-btn"
-                  onClick={() => {
-                    setOverrideTarget(null);
-                    setOverrideReason("");
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="promo-run-primary-btn"
-                  disabled={overriding}
-                  onClick={submitOverride}
-                >
-                  {overriding ? "Saving..." : "Promote Conditionally"}
-                </button>
-              </div>
-            </div>
-          )}
-        </Modal>
       </div>
+
+      {step === "setup" && (
+        <SetupStep
+          activeYear={activeYear}
+          academicYears={academicYears}
+          departments={departments}
+          classes={classes}
+          promotedClasses={promotedClasses}
+          scope={scope}
+          setScope={setScope}
+          toYearId={toYearId}
+          setToYearId={setToYearId}
+          selectedDepartmentId={selectedDepartmentId}
+          setSelectedDepartmentId={setSelectedDepartmentId}
+          selectedSourceClassId={selectedSourceClassId}
+          setSelectedSourceClassId={setSelectedSourceClassId}
+          singleGraduation={singleGraduation}
+          setSingleGraduation={setSingleGraduation}
+          singleDestinationId={singleDestinationId}
+          setSingleDestinationId={setSingleDestinationId}
+          manualAverageOverride={manualAverageOverride}
+          setManualAverageOverride={setManualAverageOverride}
+          sameDepartmentDestinations={sameDepartmentDestinations}
+          departmentClasses={departmentClasses}
+          moveConfig={moveConfig}
+          setMoveDestination={setMoveDestination}
+          setMoveGraduation={setMoveGraduation}
+          movesCount={moves.length}
+          onPreview={runPreview}
+          isSplitClass={isSplitClass}
+          isManualClass={isManualClass}
+          needsRoster={needsRoster}
+          rosterData={rosterData}
+          rosterLoading={rosterLoading}
+          manualDecisions={manualDecisions}
+          setManualDecisions={setManualDecisions}
+          destinationOverrides={destinationOverrides}
+          setDestinationOverrides={setDestinationOverrides}
+          rosterMissingDestinations={rosterMissingDestinations}
+          rosterMissingDecisions={rosterMissingDecisions}
+          rosterPromotedIds={rosterPromotedIds}
+          rosterComplete={rosterComplete}
+          requirementModes={requirementModes}
+          onHandleIndividually={handleIndividually}
+          rosterModalOpen={rosterModalOpen}
+          setRosterModalOpen={setRosterModalOpen}
+          openRosterModal={openRosterModal}
+          rosterReviewed={rosterReviewed}
+        />
+      )}
+
+      {step === "previewing" && (
+        <div className="promo-run-skeleton">
+          <p className="promo-run-loading-text">
+            Computing decisions for every student in scope…
+          </p>
+          <div className="skeleton-block" />
+          <div className="skeleton-block" />
+        </div>
+      )}
+
+      {step === "review" && (
+        <ReviewStep
+          previewResults={previewResults}
+          anyBlocked={anyBlocked}
+          aggregateSummary={aggregateSummary}
+          countdown={countdown}
+          onBack={resetToSetup}
+          onConfirm={confirmAndRun}
+          runError={runError}
+          classes={classes}
+          departments={departments}
+        />
+      )}
+
+      {step === "starting" && (
+        <div className="promo-run-skeleton">
+          <p className="promo-run-loading-text">Starting the promotion run…</p>
+          <div className="skeleton-block" />
+        </div>
+      )}
+
+      {(step === "running" || step === "done") && run && (
+        <RunProgressStep
+          run={run}
+          isSocketConnected={isConnected}
+          isDone={step === "done"}
+          onNewRun={resetToSetup}
+          refreshToken={resultsRefreshToken}
+          onPromoteConditionally={(moveId, studentPromotion) =>
+            setOverrideTarget({ moveId, studentPromotion })
+          }
+        />
+      )}
+
+      <Modal
+        isOpen={!!overrideTarget}
+        onClose={() => {
+          setOverrideTarget(null);
+          setOverrideReason("");
+        }}
+        title="Promote Conditionally"
+      >
+        {overrideTarget && (
+          <div className="promo-run-override-modal">
+            <p className="promo-override-student-name">
+              {overrideTarget.studentPromotion.name}
+            </p>
+            <div className="promo-override-transition">
+              <span className="promo-override-pill from">Repeating</span>
+              <span className="promo-override-arrow">→</span>
+              <span className="promo-override-pill to">
+                <FaArrowCircleUp /> Promoted on Condition
+              </span>
+            </div>
+            <p className="promo-override-explainer">
+              They will move into this move's destination class instead of
+              repeating.
+            </p>
+            <textarea
+              className="promo-run-override-reason"
+              placeholder="Reason (optional, kept in the audit trail)"
+              value={overrideReason}
+              onChange={(e) => setOverrideReason(e.target.value)}
+              rows={3}
+            />
+            <div className="promo-run-override-actions">
+              <button
+                type="button"
+                className="promo-run-secondary-btn"
+                onClick={() => {
+                  setOverrideTarget(null);
+                  setOverrideReason("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="promo-run-primary-btn"
+                disabled={overriding}
+                onClick={submitOverride}
+              >
+                {overriding ? "Saving..." : "Promote Conditionally"}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
   );
 };
 
@@ -526,6 +791,25 @@ const SetupStep = ({
   setMoveGraduation,
   movesCount,
   onPreview,
+  isSplitClass,
+  isManualClass,
+  needsRoster,
+  rosterData,
+  rosterLoading,
+  manualDecisions,
+  setManualDecisions,
+  destinationOverrides,
+  setDestinationOverrides,
+  rosterMissingDestinations,
+  rosterMissingDecisions,
+  rosterPromotedIds,
+  rosterComplete,
+  requirementModes,
+  onHandleIndividually,
+  rosterModalOpen,
+  setRosterModalOpen,
+  openRosterModal,
+  rosterReviewed,
 }) => {
   const scopeOptions = [
     { value: "class", label: "One Class" },
@@ -546,7 +830,9 @@ const SetupStep = ({
 
       <div className="promo-run-filters">
         <div className="promo-run-filter-group">
-          <label className="promo-run-filter-label">Promote Into Academic Year</label>
+          <label className="promo-run-filter-label">
+            Promote Into Academic Year
+          </label>
           <Select
             placeholder="Select destination academic year"
             options={academicYears
@@ -554,7 +840,10 @@ const SetupStep = ({
               .map((y) => ({ value: y.id, label: y.name }))}
             value={
               toYearId
-                ? { value: toYearId, label: academicYears.find((y) => y.id === toYearId)?.name }
+                ? {
+                    value: toYearId,
+                    label: academicYears.find((y) => y.id === toYearId)?.name,
+                  }
                 : null
             }
             onChange={(opt) => setToYearId(opt?.value || null)}
@@ -592,7 +881,9 @@ const SetupStep = ({
                   selectedSourceClassId
                     ? {
                         value: selectedSourceClassId,
-                        label: classes.find((c) => c.id === selectedSourceClassId)?.name,
+                        label: classes.find(
+                          (c) => c.id === selectedSourceClassId
+                        )?.name,
                       }
                     : null
                 }
@@ -602,21 +893,26 @@ const SetupStep = ({
                 }}
                 classNamePrefix="select"
               />
-              {selectedSourceClassId && promotedClasses.has(selectedSourceClassId) && (
-                <p className="promo-run-already-promoted-hint">
-                  This class was already promoted out of the active year.
-                  Reverse that move on the History tab first.
-                </p>
-              )}
+              {selectedSourceClassId &&
+                promotedClasses.has(selectedSourceClassId) && (
+                  <p className="promo-run-already-promoted-hint">
+                    This class was already promoted out of the active year.
+                    Reverse that move on the History tab first.
+                  </p>
+                )}
             </div>
 
-            {!singleGraduation && (
+            {!singleGraduation && !isSplitClass && (
               <div className="promo-run-filter-group">
-                <label className="promo-run-filter-label">Destination Class</label>
+                <label className="promo-run-filter-label">
+                  Destination Class
+                </label>
                 <Select
                   placeholder="Select destination"
                   isDisabled={!selectedSourceClassId}
-                  options={sameDepartmentDestinations(selectedSourceClassId).map((c) => ({
+                  options={sameDepartmentDestinations(
+                    selectedSourceClassId
+                  ).map((c) => ({
                     value: c.id,
                     label: c.name,
                   }))}
@@ -624,7 +920,9 @@ const SetupStep = ({
                     singleDestinationId
                       ? {
                           value: singleDestinationId,
-                          label: classes.find((c) => c.id === singleDestinationId)?.name,
+                          label: classes.find(
+                            (c) => c.id === singleDestinationId
+                          )?.name,
                         }
                       : null
                   }
@@ -650,15 +948,93 @@ const SetupStep = ({
             )}
           </div>
 
-          <label className="promo-run-graduation-toggle">
-            <input
-              type="checkbox"
-              checked={singleGraduation}
-              onChange={(e) => setSingleGraduation(e.target.checked)}
-            />
-            This is a graduating class, so promoted students leave the school
-            instead of moving to another class
-          </label>
+          {!isSplitClass && (
+            <label className="promo-run-graduation-toggle">
+              <input
+                type="checkbox"
+                checked={singleGraduation}
+                onChange={(e) => setSingleGraduation(e.target.checked)}
+              />
+              This is a graduating class, so promoted students leave the school
+              instead of moving to another class
+            </label>
+          )}
+
+          {isSplitClass && (
+            <p className="promo-run-split-hint">
+              This class is configured to promote students into different
+              classes/departments, each promoted student needs a destination
+              assigned in the roster below instead of one for the whole class.
+            </p>
+          )}
+          {isManualClass && (
+            <p className="promo-run-split-hint">
+              This class's results come from a national exam not tracked here,
+              recommendations below are pre-filled from internal marks, review
+              and confirm before running.
+            </p>
+          )}
+
+          {needsRoster && selectedSourceClassId && (
+            <div className="promo-run-roster-summary">
+              {rosterLoading ? (
+                <p className="promo-run-roster-loading">
+                  Loading roster and recommendations…
+                </p>
+              ) : rosterData ? (
+                <>
+                  <div className="promo-run-roster-summary-counts">
+                    {isManualClass && (
+                      <span>
+                        <strong>{rosterPromotedIds.length}</strong>/
+                        {rosterData.results.length} marked promoted
+                      </span>
+                    )}
+                    {isSplitClass && (
+                      <span>
+                        <strong>
+                          {rosterPromotedIds.length -
+                            rosterMissingDestinations.length}
+                        </strong>
+                        /{rosterPromotedIds.length} promoted students assigned a
+                        destination
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="promo-run-btn-configure-roster"
+                    onClick={openRosterModal}
+                  >
+                    Configure Roster ({rosterData.results.length} students)
+                  </button>
+                </>
+              ) : null}
+              {isManualClass && rosterData && !rosterReviewed && (
+                <p className="promo-run-roster-review-hint">
+                  You must open and confirm this roster at least once before
+                  running, the decisions above are only a recommendation.
+                </p>
+              )}
+            </div>
+          )}
+
+          <RosterAssignmentModal
+            isOpen={rosterModalOpen}
+            onClose={() => setRosterModalOpen(false)}
+            sourceClassName={
+              classes.find((c) => c.id === selectedSourceClassId)?.name || ""
+            }
+            rosterData={rosterData}
+            isSplitClass={isSplitClass}
+            isManualClass={isManualClass}
+            manualDecisions={manualDecisions}
+            setManualDecisions={setManualDecisions}
+            destinationOverrides={destinationOverrides}
+            setDestinationOverrides={setDestinationOverrides}
+            classes={classes}
+            departments={departments}
+          />
         </div>
       )}
 
@@ -669,12 +1045,17 @@ const SetupStep = ({
               <label className="promo-run-filter-label">Department</label>
               <Select
                 placeholder="Select department"
-                options={departments.map((d) => ({ value: d.id, label: d.name }))}
+                options={departments.map((d) => ({
+                  value: d.id,
+                  label: d.name,
+                }))}
                 value={
                   selectedDepartmentId
                     ? {
                         value: selectedDepartmentId,
-                        label: departments.find((d) => d.id === selectedDepartmentId)?.name,
+                        label: departments.find(
+                          (d) => d.id === selectedDepartmentId
+                        )?.name,
                       }
                     : null
                 }
@@ -693,6 +1074,11 @@ const SetupStep = ({
             const cfg = moveConfig[cls.id] || {};
             const destinations = sameDepartmentDestinations(cls.id);
             const alreadyPromoted = promotedClasses.has(cls.id);
+            const mode = requirementModes[cls.id] || {};
+            const needsIndividualHandling =
+              !alreadyPromoted &&
+              (mode.promotion_mode === "split" ||
+                mode.decision_mode === "manual");
             return (
               <div key={cls.id} className="promo-run-move-row">
                 <span className="promo-run-move-source">{cls.name}</span>
@@ -701,31 +1087,56 @@ const SetupStep = ({
                   <span className="promo-run-move-already-promoted">
                     Already promoted, reverse on History tab to redo
                   </span>
+                ) : needsIndividualHandling ? (
+                  <div className="promo-run-move-needs-individual">
+                    <span>
+                      {mode.promotion_mode === "split"
+                        ? "Fans out into different departments"
+                        : "National exam, manual selection"}
+                      , can't be included in a bulk run.
+                    </span>
+                    <button
+                      type="button"
+                      className="promo-run-handle-individually-btn"
+                      onClick={() => onHandleIndividually(cls.id)}
+                    >
+                      Handle this class now
+                    </button>
+                  </div>
                 ) : cfg.is_graduation ? (
                   <span className="promo-run-move-graduating">Graduating</span>
                 ) : (
                   <Select
                     className="promo-run-move-select"
                     placeholder="Select destination"
-                    options={destinations.map((c) => ({ value: c.id, label: c.name }))}
+                    options={destinations.map((c) => ({
+                      value: c.id,
+                      label: c.name,
+                    }))}
                     value={
                       cfg.destination_class_id
                         ? {
                             value: cfg.destination_class_id,
-                            label: classes.find((c) => c.id === cfg.destination_class_id)?.name,
+                            label: classes.find(
+                              (c) => c.id === cfg.destination_class_id
+                            )?.name,
                           }
                         : null
                     }
-                    onChange={(opt) => setMoveDestination(cls.id, opt?.value || null)}
+                    onChange={(opt) =>
+                      setMoveDestination(cls.id, opt?.value || null)
+                    }
                     classNamePrefix="select"
                   />
                 )}
-                {!alreadyPromoted && (
+                {!alreadyPromoted && !needsIndividualHandling && (
                   <label className="promo-run-move-grad-toggle">
                     <input
                       type="checkbox"
                       checked={!!cfg.is_graduation}
-                      onChange={(e) => setMoveGraduation(cls.id, e.target.checked)}
+                      onChange={(e) =>
+                        setMoveGraduation(cls.id, e.target.checked)
+                      }
                     />
                     Graduating
                   </label>
@@ -736,13 +1147,30 @@ const SetupStep = ({
         </div>
       )}
 
+      {needsRoster && rosterData && !rosterComplete && (
+        <p className="promo-run-roster-incomplete-hint">
+          {rosterMissingDecisions.length > 0 &&
+            `${rosterMissingDecisions.length} student(s) still need a decision. `}
+          {rosterMissingDestinations.length > 0 &&
+            `${rosterMissingDestinations.length} promoted student(s) still need a destination class. `}
+          {isManualClass &&
+            !rosterReviewed &&
+            rosterMissingDecisions.length === 0 &&
+            rosterMissingDestinations.length === 0 &&
+            "Open the roster and confirm it before running."}
+        </p>
+      )}
+
       <button
         type="button"
         className="promo-run-primary-btn"
         disabled={movesCount === 0 || !toYearId}
         onClick={onPreview}
       >
-        Preview {movesCount > 0 ? `(${movesCount} class${movesCount > 1 ? "es" : ""})` : ""}
+        Preview{" "}
+        {movesCount > 0
+          ? `(${movesCount} class${movesCount > 1 ? "es" : ""})`
+          : ""}
       </button>
     </div>
   );
@@ -776,7 +1204,14 @@ const ReviewStep = ({
       id: `${data.source_class.id}-${r.student_id}`,
       class: data.source_class?.name,
       department: departmentNameForClass(data.source_class?.id),
-      destination: data.is_graduation ? "Graduating" : data.destination_class?.name,
+      destination:
+        r.decision === "failed"
+          ? `${data.source_class?.name} (repeats)`
+          : data.is_graduation
+          ? "Graduating"
+          : r.destinationName ||
+            data.destination_class?.name ||
+            "Not yet assigned",
       decisionLabel: DECISION_LABELS[r.decision] || r.decision,
       notesText: [
         ...(r.reasons || []),
@@ -793,103 +1228,155 @@ const ReviewStep = ({
   ].sort();
 
   return (
-  <div className="promo-run-review">
-    {runError && (
-      <div className="promo-run-error-banner">
-        <FaExclamationTriangle /> {runError}
-      </div>
-    )}
-
-    <div className="promo-run-summary-cards">
-      <SummaryCard label="Total Students" value={aggregateSummary.total} />
-      <SummaryCard label="Promoted" value={aggregateSummary.promoted} tone="good" />
-      <SummaryCard
-        label="Promoted on Condition"
-        value={aggregateSummary.promoted_on_condition}
-        tone="warn"
-      />
-      <SummaryCard label="Failed / Repeats" value={aggregateSummary.failed} tone="bad" />
-      <SummaryCard
-        label="Incomplete Data"
-        value={aggregateSummary.incomplete_data_count}
-        tone="warn"
-      />
-    </div>
-
-    {blockedMoves.map(({ data }, idx) => (
-      <div className="promo-run-move-review" key={`blocked-${idx}`}>
-        <div className="promo-run-move-review-header">
-          <h3>
-            {data?.source_class?.name}
-            {" → "}
-            {data?.is_graduation ? "Graduating" : data?.destination_class?.name}
-          </h3>
+    <div className="promo-run-review">
+      {runError && (
+        <div className="promo-run-error-banner">
+          <FaExclamationTriangle /> {runError}
         </div>
-        <div className="promo-run-config-error">
-          <FaExclamationTriangle />
-          <div>
-            {data.configuration_errors.map((e, i) => (
-              <p key={i}>{e}</p>
-            ))}
+      )}
+
+      <div className="promo-run-summary-cards">
+        <SummaryCard label="Total Students" value={aggregateSummary.total} />
+        <SummaryCard
+          label="Promoted"
+          value={aggregateSummary.promoted}
+          tone="good"
+        />
+        <SummaryCard
+          label="Promoted on Condition"
+          value={aggregateSummary.promoted_on_condition}
+          tone="warn"
+        />
+        <SummaryCard
+          label="Failed / Repeats"
+          value={aggregateSummary.failed}
+          tone="bad"
+        />
+        <SummaryCard
+          label="Incomplete Data"
+          value={aggregateSummary.incomplete_data_count}
+          tone="warn"
+        />
+      </div>
+
+      {okMoves
+        .filter(({ move }) => move.destination_overrides)
+        .map(({ move, data }, idx) => {
+          const breakdown = {};
+          (data.results || []).forEach((r) => {
+            if (r.decision === "failed") return;
+            const name = r.destinationName || "Not yet assigned";
+            breakdown[name] = (breakdown[name] || 0) + 1;
+          });
+          return (
+            <div className="promo-run-split-breakdown" key={`split-${idx}`}>
+              <h4>
+                {data.source_class?.name} splits into{" "}
+                {Object.keys(breakdown).length} destination(s), does this match
+                what you intended?
+              </h4>
+              <div className="promo-run-split-breakdown-list">
+                {Object.entries(breakdown).map(([name, count]) => (
+                  <span
+                    key={name}
+                    className={`promo-run-split-breakdown-chip ${
+                      name === "Not yet assigned" ? "warn" : ""
+                    }`}
+                  >
+                    <strong>{count}</strong> → {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+      {blockedMoves.map(({ data }, idx) => (
+        <div className="promo-run-move-review" key={`blocked-${idx}`}>
+          <div className="promo-run-move-review-header">
+            <h3>
+              {data?.source_class?.name}
+              {" → "}
+              {data?.is_graduation
+                ? "Graduating"
+                : data?.destination_class?.name ||
+                  "Multiple classes/departments"}
+            </h3>
+          </div>
+          <div className="promo-run-config-error">
+            <FaExclamationTriangle />
+            <div>
+              {data.configuration_errors.map((e, i) => (
+                <p key={i}>{e}</p>
+              ))}
+            </div>
           </div>
         </div>
+      ))}
+
+      {combinedRows.length > 0 && (
+        <DataTable
+          columns={[
+            { label: "Student", accessor: "name" },
+            { label: "Class", accessor: "class" },
+            { label: "Department", accessor: "department" },
+            { label: "Destination", accessor: "destination" },
+            { label: "Reg. No.", accessor: "registration_number" },
+            { label: "Average", accessor: "overall_average" },
+            { label: "Decision", accessor: "decisionLabel" },
+            { label: "Notes", accessor: "notesText", sortable: false },
+          ]}
+          data={combinedRows}
+          filters={[
+            {
+              key: "class",
+              label: "Class",
+              accessor: "class",
+              options: distinctClasses,
+            },
+            {
+              key: "department",
+              label: "Department",
+              accessor: "department",
+              options: distinctDepartments,
+            },
+            {
+              key: "decision",
+              label: "Decision",
+              accessor: "decisionLabel",
+              options: Object.values(DECISION_LABELS),
+            },
+          ]}
+          onEdit={() => {}}
+          onDelete={() => {}}
+          editRoles={[]}
+          deleteRoles={[]}
+          limit={10}
+        />
+      )}
+
+      <div className="promo-run-review-actions">
+        <button
+          type="button"
+          className="promo-run-secondary-btn"
+          onClick={onBack}
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          className="promo-run-primary-btn promo-run-confirm-btn"
+          disabled={anyBlocked || countdown > 0}
+          onClick={onConfirm}
+        >
+          {anyBlocked
+            ? "Fix configuration errors above to continue"
+            : countdown > 0
+            ? `Confirm & Run Promotion (${countdown})`
+            : "Confirm & Run Promotion"}
+        </button>
       </div>
-    ))}
-
-    {combinedRows.length > 0 && (
-      <DataTable
-        columns={[
-          { label: "Student", accessor: "name" },
-          { label: "Class", accessor: "class" },
-          { label: "Department", accessor: "department" },
-          { label: "Destination", accessor: "destination" },
-          { label: "Reg. No.", accessor: "registration_number" },
-          { label: "Average", accessor: "overall_average" },
-          { label: "Decision", accessor: "decisionLabel" },
-          { label: "Notes", accessor: "notesText", sortable: false },
-        ]}
-        data={combinedRows}
-        filters={[
-          { key: "class", label: "Class", accessor: "class", options: distinctClasses },
-          {
-            key: "department",
-            label: "Department",
-            accessor: "department",
-            options: distinctDepartments,
-          },
-          {
-            key: "decision",
-            label: "Decision",
-            accessor: "decisionLabel",
-            options: Object.values(DECISION_LABELS),
-          },
-        ]}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        editRoles={[]}
-        deleteRoles={[]}
-        limit={10}
-      />
-    )}
-
-    <div className="promo-run-review-actions">
-      <button type="button" className="promo-run-secondary-btn" onClick={onBack}>
-        Back
-      </button>
-      <button
-        type="button"
-        className="promo-run-primary-btn promo-run-confirm-btn"
-        disabled={anyBlocked || countdown > 0}
-        onClick={onConfirm}
-      >
-        {anyBlocked
-          ? "Fix configuration errors above to continue"
-          : countdown > 0
-          ? `Confirm & Run Promotion (${countdown})`
-          : "Confirm & Run Promotion"}
-      </button>
     </div>
-  </div>
   );
 };
 
@@ -916,7 +1403,9 @@ const RunProgressStep = ({
     <div className="promo-run-progress">
       <div className="promo-run-connection-status">
         <FaWifi className={isSocketConnected ? "connected" : "disconnected"} />
-        {isSocketConnected ? "Live updates connected" : "Reconnecting, showing latest polled status"}
+        {isSocketConnected
+          ? "Live updates connected"
+          : "Reconnecting, showing latest polled status"}
       </div>
 
       <div className="promo-run-status-banner">
@@ -953,7 +1442,7 @@ const RunProgressStep = ({
               <span>
                 {move.source_class?.name}
                 {" → "}
-                {move.is_graduation ? "Graduating" : move.destination_class?.name}
+                {formatMoveDestination(move)}
               </span>
               <span>
                 {move.processed_students}/{move.total_students} ({move.status})
@@ -966,25 +1455,31 @@ const RunProgressStep = ({
               />
             </div>
 
-            {isDone && move.status === "completed" && move.processed_students > 0 && (
-              <div className="promo-run-move-results">
-                <PromotionMoveResults
-                  runId={run.id}
-                  moveId={move.id}
-                  refreshToken={refreshToken}
-                  canOverride
-                  onPromoteConditionally={(studentPromotion) =>
-                    onPromoteConditionally(move.id, studentPromotion)
-                  }
-                />
-              </div>
-            )}
+            {isDone &&
+              move.status === "completed" &&
+              move.processed_students > 0 && (
+                <div className="promo-run-move-results">
+                  <PromotionMoveResults
+                    runId={run.id}
+                    moveId={move.id}
+                    refreshToken={refreshToken}
+                    canOverride
+                    onPromoteConditionally={(studentPromotion) =>
+                      onPromoteConditionally(move.id, studentPromotion)
+                    }
+                  />
+                </div>
+              )}
           </div>
         );
       })}
 
       {isDone && (
-        <button type="button" className="promo-run-primary-btn" onClick={onNewRun}>
+        <button
+          type="button"
+          className="promo-run-primary-btn"
+          onClick={onNewRun}
+        >
           Start Another Run
         </button>
       )}
