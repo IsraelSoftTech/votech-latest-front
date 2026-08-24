@@ -1,0 +1,230 @@
+.students-page {
+  padding: 1.4rem 1.6rem 3rem;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.students-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.1rem;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.students-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 0;
+}
+
+.students-header-actions {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.students-register-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #204080;
+  color: #fff;
+  border: none;
+  padding: 0.65rem 1.3rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.students-register-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.students-register-btn:not(:disabled):hover {
+  background: #16305f;
+}
+
+.students-backfill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: #204080;
+  border: 1px solid #204080;
+  padding: 0.65rem 1.3rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.students-backfill-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.students-backfill-btn:not(:disabled):hover {
+  background: #f5f9ff;
+}
+
+.students-filters-row {
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.students-class-filter {
+  max-width: 320px;
+  flex: 1 1 260px;
+}
+
+.students-classlist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: #204080;
+  border: 1px solid #204080;
+  text-decoration: none;
+  padding: 0.55rem 1rem;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.students-classlist-btn:hover:not(:disabled) {
+  background: #f5f9ff;
+}
+
+.students-classlist-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.students-spin {
+  animation: students-spin-anim 0.9s linear infinite;
+}
+
+@keyframes students-spin-anim {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.students-table-wrap {
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.students-empty {
+  padding: 2.5rem 0;
+  text-align: center;
+  color: #a0aec0;
+  font-size: 0.88rem;
+}
+
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.students-table th {
+  background: #204080;
+  color: #fff;
+  text-align: left;
+  padding: 0.65rem 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.students-table td {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid #f1f4f9;
+}
+
+.students-row {
+  cursor: pointer;
+}
+
+.students-row:hover {
+  background: #f8fafc;
+}
+
+.students-status-pill {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.students-status-pill.active {
+  background: #f0fff4;
+  color: #2f855a;
+}
+
+.students-status-pill.graduated {
+  background: #ebf4ff;
+  color: #2b6cb0;
+}
+
+.students-status-pill.withdrawn {
+  background: #fdecec;
+  color: #c53030;
+}
+
+.students-actions-cell {
+  display: flex;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.students-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #204080;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.students-icon-btn:hover {
+  background: #f5f9ff;
+}
+
+.students-icon-btn.danger {
+  color: #c53030;
+}
+
+.students-icon-btn.danger:hover {
+  background: #fdecec;
+}
+
+@media (max-width: 720px) {
+  .students-page {
+    padding: 1rem;
+  }
+}

@@ -12,7 +12,13 @@ import Signup from "./components/Signup";
 // Admin / Core
 import Admin from "./components/Admin.jsx";
 import Admin2Dash from "./components/Admin2Dash.jsx";
-import AdminStudents from "./components/AdminStudent.jsx";
+// Rebuilt into src/components/marks-module/pages/StudentsPage — kept here,
+// commented out, so restoring the old page is uncommenting two lines
+// (this import + the /admin-student route below), see StudentsPage
+// import below.
+// import AdminStudents from "./components/AdminStudent.jsx";
+import { StudentsPage } from "./components/marks-module/pages/StudentsPage/Students.page";
+import { Admin3Dashboard } from "./components/marks-module/pages/Admin3Dashboard/Admin3Dashboard.page";
 import AdminTeachers from "./components/AdminTeacher.jsx";
 import AdminClass from "./components/AdminClass.jsx";
 import Finance from "./components/Finance.jsx";
@@ -199,9 +205,18 @@ function App() {
         {/* Admin / Core */}
         <Route
           path="/admin"
-          element={authUser?.role === "Admin2" ? <Admin2Dash /> : <Admin />}
+          element={
+            authUser?.role === "Admin2" ? (
+              <Admin2Dash />
+            ) : authUser?.role === "Admin3" ? (
+              <Admin3Dashboard />
+            ) : (
+              <Admin />
+            )
+          }
         />
-        <Route path="/admin-student" element={<AdminStudents />} />
+        {/* <Route path="/admin-student" element={<AdminStudents />} /> */}
+        <Route path="/admin-student" element={<StudentsPage />} />
         <Route path="/admin-teacher" element={<AdminTeachers />} />
         <Route path="/admin-class" element={<AdminClass />} />
         <Route path="/admin-finance" element={<Finance />} />

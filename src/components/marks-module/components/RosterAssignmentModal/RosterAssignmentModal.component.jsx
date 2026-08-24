@@ -80,24 +80,54 @@ export const RosterAssignmentModal = ({
     [classes]
   );
 
-  const destinationsByDepartment = useMemo(() => {
-    return classes.reduce((acc, c) => {
+  // Shared by the full (unrestricted) options list and each row's
+  // narrowed-to-allowed-departments list below — same grouping logic,
+  // just fed a different class subset.
+  const buildGroupedOptions = (classList) => {
+    const byDept = classList.reduce((acc, c) => {
       const deptName =
         departments.find((d) => d.id === c.department_id)?.name || "Other";
       if (!acc[deptName]) acc[deptName] = [];
       acc[deptName].push(c);
       return acc;
     }, {});
-  }, [classes, departments]);
+    return Object.entries(byDept).map(([deptName, opts]) => ({
+      label: deptName,
+      options: opts.map((c) => ({ value: c.id, label: c.name })),
+    }));
+  };
 
   const destinationGroupedOptions = useMemo(
-    () =>
-      Object.entries(destinationsByDepartment).map(([deptName, opts]) => ({
-        label: deptName,
-        options: opts.map((c) => ({ value: c.id, label: c.name })),
-      })),
-    [destinationsByDepartment]
+    () => buildGroupedOptions(classes),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [classes, departments]
   );
+
+  // Orientation backward-compat restriction: a row whose student has
+  // recorded department choices (allowed_department_ids, from
+  // registration or the backfill tool) only offers destinations inside
+  // those departments. `restricted` and `noEligibleClasses` drive the
+  // small flag shown next to the picker, so an admin always sees when a
+  // row is narrowed, or when it fell back to unrestricted because none
+  // of the student's chosen departments currently has a class in it
+  // (e.g. renamed/deleted since registration) — never a silent
+  // difference either way.
+  const getRowDestinationInfo = (row) => {
+    if (!row.allowed_department_ids) {
+      return { options: destinationGroupedOptions, restricted: false, noEligibleClasses: false };
+    }
+    const eligibleClasses = classes.filter((c) =>
+      row.allowed_department_ids.includes(c.department_id)
+    );
+    if (eligibleClasses.length === 0) {
+      return { options: destinationGroupedOptions, restricted: true, noEligibleClasses: true };
+    }
+    return {
+      options: buildGroupedOptions(eligibleClasses),
+      restricted: true,
+      noEligibleClasses: false,
+    };
+  };
 
   const statusFilterOptions = useMemo(() => {
     const opts = [{ value: "all", label: "All students" }];
@@ -253,12 +283,29 @@ export const RosterAssignmentModal = ({
       toast.error("Choose a destination class first");
       return;
     }
-    const eligible = [...selectedIds].filter(
+    const destDepartmentId = classesById.get(Number(bulkDestination.value))?.department_id;
+    const promoted = [...selectedIds].filter(
       (id) => rows.find((r) => r.student_id === id)?.isPromoted
     );
-    const skipped = selectedIds.size - eligible.length;
+    // A student whose recorded departments don't include this
+    // destination is skipped from the bulk action, same as a repeating
+    // student — never silently assigned somewhere outside their chosen
+    // departments just because they were in the selected batch.
+    const restricted = promoted.filter((id) => {
+      const row = rows.find((r) => r.student_id === id);
+      return (
+        row?.allowed_department_ids &&
+        !row.allowed_department_ids.includes(destDepartmentId)
+      );
+    });
+    const eligible = promoted.filter((id) => !restricted.includes(id));
+    const skippedRepeating = selectedIds.size - promoted.length;
     if (eligible.length === 0) {
-      toast.error("Nothing to assign, everyone selected is repeating");
+      toast.error(
+        restricted.length > 0
+          ? "Nothing to assign, every selected student's chosen department excludes this destination"
+          : "Nothing to assign, everyone selected is repeating"
+      );
       return;
     }
     setDestinationOverrides((prev) => {
@@ -268,11 +315,12 @@ export const RosterAssignmentModal = ({
       });
       return next;
     });
+    const skippedParts = [];
+    if (skippedRepeating > 0) skippedParts.push(`${skippedRepeating} repeating`);
+    if (restricted.length > 0) skippedParts.push(`${restricted.length} outside their chosen department`);
     toast.success(
       `${eligible.length} student(s) assigned to ${bulkDestination.label}` +
-        (skipped > 0
-          ? `, ${skipped} repeating student(s) in your selection were skipped`
-          : "")
+        (skippedParts.length ? `, ${skippedParts.join(", ")} student(s) were skipped` : "")
     );
     setSelectedIds(new Set());
     setBulkDestination(null);
@@ -446,25 +494,54 @@ export const RosterAssignmentModal = ({
                             Repeats here
                           </span>
                         ) : (
-                          <Select
-                            classNamePrefix="select"
-                            className="roster-modal-row-select"
-                            placeholder="Not assigned"
-                            options={destinationGroupedOptions}
-                            value={
-                              row.destinationId
-                                ? {
-                                    value: row.destinationId,
-                                    label: row.destinationName,
+                          (() => {
+                            const destInfo = getRowDestinationInfo(row);
+                            return (
+                              <>
+                                <Select
+                                  classNamePrefix="select"
+                                  className="roster-modal-row-select"
+                                  placeholder="Not assigned"
+                                  options={destInfo.options}
+                                  value={
+                                    row.destinationId
+                                      ? {
+                                          value: row.destinationId,
+                                          label: row.destinationName,
+                                        }
+                                      : null
                                   }
-                                : null
-                            }
-                            onChange={(opt) =>
-                              setDestinationFor(row.student_id, opt?.value)
-                            }
-                            isClearable
-                            {...selectPortalProps}
-                          />
+                                  onChange={(opt) =>
+                                    setDestinationFor(row.student_id, opt?.value)
+                                  }
+                                  isClearable
+                                  {...selectPortalProps}
+                                />
+                                {destInfo.noEligibleClasses ? (
+                                  <span
+                                    className="roster-modal-dest-flag warn"
+                                    title="None of this student's chosen departments currently has a class — showing all classes."
+                                  >
+                                    No class in chosen dept.
+                                  </span>
+                                ) : destInfo.restricted ? (
+                                  <span
+                                    className="roster-modal-dest-flag"
+                                    title="Limited to this student's chosen departments."
+                                  >
+                                    Restricted
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="roster-modal-dest-flag muted"
+                                    title="No department choices recorded for this student — any class allowed."
+                                  >
+                                    No choices recorded
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()
                         )}
                       </td>
                     )}

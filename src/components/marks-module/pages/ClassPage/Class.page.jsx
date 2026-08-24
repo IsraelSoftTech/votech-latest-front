@@ -11,12 +11,14 @@ import {
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
 import Stats from "../../components/Stats/Stats.component";
+import { useNavigate } from "react-router-dom";
 import {
   FaBan,
   FaCheckCircle,
   FaLayerGroup,
   FaPlus,
   FaTimes,
+  FaUserGraduate,
 } from "react-icons/fa";
 
 // Custom hook to detect mobile
@@ -157,6 +159,7 @@ const ClassModal = ({ isOpen, onClose, title, children }) => {
 };
 
 export const ClassPage = () => {
+  const navigate = useNavigate();
   const capitalizeWords = (str) =>
     str
       .split("_")
@@ -169,6 +172,7 @@ export const ClassPage = () => {
     { label: "Department", accessor: "department" },
     { label: "Class Master", accessor: "classMaster" },
     { label: "Status", accessor: "suspended" },
+    { label: "Orientation", accessor: "orientationLabel" },
     { label: "Tuition Fee", accessor: "tuition_fee" },
     { label: "PTA Fee", accessor: "pta_fee" },
     { label: "Total Fee", accessor: "total_fee" },
@@ -198,6 +202,7 @@ export const ClassPage = () => {
     pta_fee: "",
     total_fee: "",
     suspended: "",
+    is_orientation: false,
   });
 
   function transformClassForm(form) {
@@ -248,6 +253,7 @@ export const ClassPage = () => {
       pta_fee: "",
       total_fee: "",
       suspended: "",
+      is_orientation: false,
     });
     setFormErrors({});
   };
@@ -269,6 +275,7 @@ export const ClassPage = () => {
               ? el.classMaster?.name || el.classMaster.username
               : "-",
             suspended: el.suspended ? "Suspended" : "Active",
+            orientationLabel: el.is_orientation ? "Yes" : "No",
             registration_fee: el.registration_fee
               ? Number(el.registration_fee).toLocaleString("fr-CM")
               : "-",
@@ -437,6 +444,18 @@ export const ClassPage = () => {
     }
   };
 
+  // A class whose name says "orientation" but isn't flagged as one would
+  // silently never trigger the six-choice registration flow or the
+  // promotion restriction — a soft nudge here, not a hard block, since a
+  // class named e.g. "Orientation Committee" legitimately isn't one.
+  const confirmOrientationNameMismatch = () => {
+    if (form.is_orientation) return true;
+    if (!form.name?.toLowerCase().includes("orientation")) return true;
+    return window.confirm(
+      `"${form.name}" looks like an orientation class, but "Orientation class" isn't checked. Continue without it?`
+    );
+  };
+
   // Form handlers
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
@@ -446,6 +465,7 @@ export const ClassPage = () => {
       toast.error(Object.values(errors)[0]);
       return;
     }
+    if (!confirmOrientationNameMismatch()) return;
     createClass();
   };
 
@@ -457,6 +477,7 @@ export const ClassPage = () => {
       toast.error(Object.values(errors)[0]);
       return;
     }
+    if (!confirmOrientationNameMismatch()) return;
     editClass();
   };
 
@@ -474,6 +495,7 @@ export const ClassPage = () => {
       pta_fee: row.pta_fee,
       total_fee: row.total_fee,
       suspended: row.suspended === "Suspended",
+      is_orientation: !!row.is_orientation,
     });
     setEditModalOpen(true);
   };
@@ -532,6 +554,14 @@ export const ClassPage = () => {
             onRowClick={handleRowClick}
             warnDelete={() => {}}
             filterCategories={filters}
+            extraActions={[
+              {
+                icon: <FaUserGraduate />,
+                title: "See Students",
+                onClick: (row) =>
+                  navigate("/admin-student", { state: { class_id: row.id } }),
+              },
+            ]}
           />
         </div>
 
@@ -585,6 +615,24 @@ export const ClassPage = () => {
               {formErrors.class_master_id && (
                 <p className="class-form-error">{formErrors.class_master_id}</p>
               )}
+            </div>
+
+            <div className="class-form-group class-checkbox-group">
+              <label className="class-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={!!form.is_orientation}
+                  onChange={(e) =>
+                    handleUpdateForm("is_orientation", e.target.checked)
+                  }
+                />
+                This is an Orientation class (Form One)
+              </label>
+              <p className="class-checkbox-hint">
+                Registration will capture six ranked department choices for
+                students in this class, and promotion will only offer
+                classes in a student's chosen departments as destinations.
+              </p>
             </div>
 
             {/* Fees */}
@@ -676,6 +724,24 @@ export const ClassPage = () => {
               {formErrors.class_master_id && (
                 <p className="class-form-error">{formErrors.class_master_id}</p>
               )}
+            </div>
+
+            <div className="class-form-group class-checkbox-group">
+              <label className="class-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={!!form.is_orientation}
+                  onChange={(e) =>
+                    handleUpdateForm("is_orientation", e.target.checked)
+                  }
+                />
+                This is an Orientation class (Form One)
+              </label>
+              <p className="class-checkbox-hint">
+                Registration will capture six ranked department choices for
+                students in this class, and promotion will only offer
+                classes in a student's chosen departments as destinations.
+              </p>
             </div>
 
             <div className="class-fees-section">

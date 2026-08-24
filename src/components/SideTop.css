@@ -115,12 +115,12 @@
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  margin: 1px 6px;
-  font-size: 0.58rem;
+  gap: 16px;
+  padding: 12px 24px;
+  margin: 2px 12px;
+  font-size: 1.05rem;
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 6px;
   transition: background 0.2s;
   position: relative; /* for badges */
 }
@@ -129,7 +129,7 @@
   background: #4669b3;
 }
 .menu-item .icon {
-  font-size: 0.7rem;
+  font-size: 1.2rem;
   flex-shrink: 0;
 }
 .menu-item .menu-label {
@@ -244,12 +244,12 @@
 
 .admin-header {
   height: 64px;
-  background: #e0f2fe;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  border-bottom: 1px solid rgba(32, 64, 128, 0.08);
+  border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
   z-index: 10;
