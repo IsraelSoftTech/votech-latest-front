@@ -24,6 +24,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useActiveYear, useSelectableAcademicYears } from "../../../../context/ActiveYearContext";
 import Modal from "../../components/Modal/Modal.component";
 import { FaCoffee } from "react-icons/fa";
 
@@ -74,14 +75,21 @@ const useIsMobile = () => {
 const ReportCardHomePage = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const isReadOnly =
+  const isAdmin1ReadOnly =
     JSON.parse(sessionStorage.getItem("authUser") || "{}").role === "Admin1";
+  const {
+    isViewingArchived,
+    activeYear,
+  } = useActiveYear();
+  const isReadOnly = isAdmin1ReadOnly || isViewingArchived;
 
   const [loadingPage, setLoadingPage] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
 
   const [students, setStudents] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
+  const selectableYears = useSelectableAcademicYears(academicYears);
+  const isYearSelectionLocked = Boolean(activeYear?.id);
   const [departments, setDepartments] = useState([]);
   const [classes, setClasses] = useState([]);
   const [terms, setTerms] = useState([]);
@@ -242,6 +250,14 @@ const ReportCardHomePage = () => {
   }, []);
 
   useEffect(() => {
+    if (!activeYear?.id) return;
+    setFilters((prev) => ({
+      ...prev,
+      academic_year_id: activeYear.id,
+    }));
+  }, [activeYear?.id]);
+
+  useEffect(() => {
     const { class_id, department_id, academic_year_id } = filters;
     if (class_id && department_id && academic_year_id) fetchStudents();
   }, [filters]);
@@ -249,7 +265,7 @@ const ReportCardHomePage = () => {
   // ── Navigate to individual report card ──
   const handleGoToReportCard = (student, termObj) => {
     const academicYear =
-      academicYears.find((y) => y.id === filters.academic_year_id) || null;
+      selectableYears.find((y) => y.id === filters.academic_year_id) || null;
     const department =
       (departments || []).find((d) => d.id === filters.department_id) || null;
     const klass = classes.find((c) => c.id === filters.class_id) || null;
@@ -598,12 +614,12 @@ const ReportCardHomePage = () => {
                   <label className="report-form-label">Academic Year</label>
                   <Select
                     placeholder="Select Academic Year"
-                    options={academicYears.map((y) => ({
+                    options={selectableYears.map((y) => ({
                       value: y.id,
                       label: y.name,
                     }))}
                     value={
-                      academicYears
+                      selectableYears
                         .map((y) => ({ value: y.id, label: y.name }))
                         .find(
                           (opt) => opt.value === filters.academic_year_id
@@ -616,8 +632,8 @@ const ReportCardHomePage = () => {
                         bulk_term: "annual",
                       }))
                     }
-                    isDisabled={showDownloadModal || masterSheetLoading}
-                    isClearable
+                    isDisabled={showDownloadModal || masterSheetLoading || isYearSelectionLocked}
+                    isClearable={!isYearSelectionLocked}
                     className="report-react-select"
                     classNamePrefix="report-select"
                   />

@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { FaLock, FaPlus, FaCopy, FaEdit } from "react-icons/fa";
 import Select from "react-select";
 import SideTop from "../../../SideTop";
+import { useActiveYear, useSelectableAcademicYears } from "../../../../context/ActiveYearContext";
 import api, { headers, subBaseURL } from "../../utils/api";
 import DataTable from "../../components/DataTable/DataTable.component";
 import Modal from "../../components/Modal/Modal.component";
@@ -10,11 +11,18 @@ import { CustomInput, SubmitBtn } from "../../components/Inputs/CustumInputs";
 import "./AcademicBands.styles.css";
 
 export const AcademicBandsPage = () => {
-  const isReadOnly =
+  const isAdmin1ReadOnly =
     JSON.parse(sessionStorage.getItem("authUser") || "{}").role === "Admin1";
+  const {
+    isViewingArchived,
+    activeYear,
+  } = useActiveYear();
+  const isReadOnly = isAdmin1ReadOnly || isViewingArchived;
 
   // Data states
   const [academicYears, setAcademicYears] = useState([]);
+  const selectableYears = useSelectableAcademicYears(academicYears);
+  const isYearSelectionLocked = Boolean(activeYear?.id);
   const [departments, setDepartments] = useState([]);
   const [classes, setClasses] = useState([]);
   const [bandsData, setBandsData] = useState([]);
@@ -45,6 +53,12 @@ export const AcademicBandsPage = () => {
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  useEffect(() => {
+    if (activeYear?.id) {
+      setSelectedYear(Number(activeYear.id));
+    }
+  }, [activeYear?.id]);
 
   const fetchInitialData = async () => {
     setIsLoading(true);
@@ -304,6 +318,12 @@ export const AcademicBandsPage = () => {
 
   // Save bands
   const handleSave = async () => {
+    if (isReadOnly) {
+      toast.error(
+        "This academic year is read-only. Switch to the active year to save bands."
+      );
+      return;
+    }
     if (!validateForm()) return;
 
     try {
@@ -376,7 +396,7 @@ export const AcademicBandsPage = () => {
             </label>
             <Select
               placeholder="Select Academic Year"
-              options={academicYears.map((y) => ({
+              options={selectableYears.map((y) => ({
                 value: y.id,
                 label: y.name,
               }))}
@@ -384,13 +404,14 @@ export const AcademicBandsPage = () => {
                 selectedYear
                   ? {
                       value: selectedYear,
-                      label: academicYears.find((y) => y.id === selectedYear)
+                      label: selectableYears.find((y) => y.id === selectedYear)
                         ?.name,
                     }
                   : null
               }
               onChange={(opt) => setSelectedYear(opt?.value || null)}
-              isClearable
+              isClearable={!isYearSelectionLocked}
+              isDisabled={isYearSelectionLocked}
               className="bands-select"
               classNamePrefix="select"
             />

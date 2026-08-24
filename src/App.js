@@ -20,6 +20,8 @@ import Specialty from "./components/Specialty.jsx";
 import Message from "./components/Message.jsx";
 import UserChat from "./components/UserChat";
 import ComingSoon from "./components/ComingSoon.jsx";
+import StudentIdCards from "./components/StudentIdCards.jsx";
+import AcademicYearManagement from "./components/AcademicYearManagement.jsx";
 import Users from "./components/Users.jsx";
 import MonitorUsers from "./components/MonitorUsers.jsx";
 import Fee from "./components/Fee";
@@ -37,9 +39,8 @@ import Subjects from "./components/Subjects.jsx";
 import Admin4Sub from "./components/Admin4Sub.jsx";
 import LessonPlan from "./components/LessonPlan.jsx";
 import Marks from "./components/Marks.jsx";
-
 import TimeTable from "./components/TimeTable.jsx";
-import { AcademicYear } from "./components/marks-module/pages/AccademicYearPage/AcademicYear.page";
+
 import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subject.page";
 import { ClassPage } from "./components/marks-module/pages/ClassPage/Class.page";
 import { AcademicBandsPage } from "./components/marks-module/pages/AcademicBandsPage/AcademicBands";
@@ -81,6 +82,7 @@ import TeacherCases from "./components/TeacherCases.jsx";
 import MasterSheetPage from "./components/marks-module/pages/MasterSheetPage/MasterSheet.page";
 import UnauthorizedPage from "./components/Unauthorized.page";
 import ReportCard from "./components/marks-module/components/ReportCard/ReportCard.component";
+import { ActiveYearProvider } from "./context/ActiveYearContext";
 
 // Wrappers so Discipline always sees DisciplineSideTop menu on shared routes
 function PayslipWithDisciplineLayout() {
@@ -187,6 +189,7 @@ function App() {
 
   return (
     <>
+      <ActiveYearProvider>
       <Routes>
         {/* Public */}
         <Route path="/" element={<Welcome />} />
@@ -199,6 +202,7 @@ function App() {
           path="/admin"
           element={authUser?.role === "Admin2" ? <Admin2Dash /> : <Admin />}
         />
+        <Route path="/admin-academic-years" element={<AcademicYearManagement />} />
         <Route path="/admin-student" element={<AdminStudents />} />
         <Route path="/admin-teacher" element={<AdminTeachers />} />
         <Route path="/admin-class" element={<AdminClass />} />
@@ -206,14 +210,7 @@ function App() {
         <Route path="/admin-specialty" element={<Specialty />} />
         <Route path="/admin-messages" element={<Message />} />
         <Route path="/admin-messages/:userId" element={<UserChat />} />
-        <Route
-          path="/admin-idcards"
-          element={
-            <SideTop>
-              <ComingSoon />
-            </SideTop>
-          }
-        />
+        <Route path="/admin-idcards" element={<StudentIdCards />} />
         <Route path="/admin-users" element={<Users />} />
         <Route path="/monitor-users" element={<MonitorUsers />} />
 
@@ -388,7 +385,10 @@ function App() {
 
         {/* ----------------------------------------- */}
         {/* Academics - marks-module pages */}
-        <Route path="/academics/academic-years" element={<AcademicYear />} />
+        <Route
+          path="/academics/academic-years"
+          element={<Navigate to="/admin-academic-years" replace />}
+        />
         <Route path="/academics/subjects" element={<SubjectsWithDisciplineLayout />} />
         <Route path="/academics/classes" element={<ClassPage />} />
         <Route path="/academics/bands" element={<AcademicBandsPage />} />
@@ -406,6 +406,7 @@ function App() {
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </ActiveYearProvider>
     </>
   );
 }

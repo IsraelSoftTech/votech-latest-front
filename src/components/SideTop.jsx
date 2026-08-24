@@ -37,11 +37,15 @@ import {
   FaTable,
   FaExclamationTriangle,
   FaWarehouse,
+  FaLock,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
 import "./SideTop.css";
 import api from "../services/api";
+import {
+  useActiveYear,
+} from "../context/ActiveYearContext";
 import NotificationBell from "./NotificationBell";
 import MessageIcon from "./MessageIcon";
 
@@ -59,6 +63,12 @@ export default function SideTop({ children }) {
     profileImageUrl: null,
   });
   const [isUpdating, setIsUpdating] = useState(false);
+  const {
+    activeYear: activeYearSnapshot,
+    viewingYear: viewingYearFilter,
+    isViewingArchived: isViewingArchivedYear,
+    clearViewingYearFilter,
+  } = useActiveYear();
 
   // Added: local active tab to prevent undefined reference and allow visual highlight if needed
   const [activeTab, setActiveTab] = useState(null);
@@ -79,11 +89,18 @@ export default function SideTop({ children }) {
   // Track if the user has manually toggled a submenu to prevent auto-override
   const userToggledRef = useRef(false);
 
+  const showActiveYearChip = ["Admin1", "Admin3"].includes(authUser?.role);
+
   let menuItems = [];
 
   if (authUser?.role === "Admin1") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
+      {
+        label: "Academic Years",
+        icon: <FaCalendarAlt />,
+        path: "/admin-academic-years",
+      },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       {
         label: "Teachers' Cases",
@@ -110,11 +127,6 @@ export default function SideTop({ children }) {
             label: "Subjects",
             path: "/academics/subjects",
             icon: <FaChalkboardTeacher />,
-          },
-          {
-            label: "Academic Years",
-            path: "/academics/academic-years",
-            icon: <FaCalendar />,
           },
           {
             label: "Classes",
@@ -202,6 +214,11 @@ export default function SideTop({ children }) {
   } else if (authUser?.role === "Admin3") {
     menuItems = [
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
+      {
+        label: "Academic Years",
+        icon: <FaCalendarAlt />,
+        path: "/admin-academic-years",
+      },
 
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       // { label: "Classes", icon: <FaBook />, path: "/admin-class" },
@@ -238,11 +255,6 @@ export default function SideTop({ children }) {
             label: "Subjects",
             path: "/academics/subjects",
             icon: <FaChalkboardTeacher />,
-          },
-          {
-            label: "Academic Years",
-            path: "/academics/academic-years",
-            icon: <FaCalendar />,
           },
           {
             label: "Classes",
@@ -1002,6 +1014,11 @@ export default function SideTop({ children }) {
               >
                 VOTECH
               </span>
+              {showActiveYearChip && activeYearSnapshot?.name && (
+                <span className="header-active-year-chip" title="Current active academic year">
+                  {activeYearSnapshot.name}
+                </span>
+              )}
             </div>
           </div>
           <div className="admin-actions">
@@ -1118,7 +1135,22 @@ export default function SideTop({ children }) {
               )}
           </div>
         </header>
-        <div style={{ marginTop: 32 }}>{children}</div>
+        {isViewingArchivedYear && (
+          <div className="active-year-readonly-banner" role="status">
+            <span className="active-year-readonly-banner-text">
+              <FaLock aria-hidden="true" /> Viewing {viewingYearFilter.name} — Read
+              Only
+            </span>
+            <button
+              type="button"
+              className="active-year-readonly-banner-btn"
+              onClick={clearViewingYearFilter}
+            >
+              Back to active year
+            </button>
+          </div>
+        )}
+        <div style={{ marginTop: isViewingArchivedYear ? 72 : 32 }}>{children}</div>
       </div>
       {sidebarOpen && (
         <div

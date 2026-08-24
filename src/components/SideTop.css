@@ -629,3 +629,70 @@
   }
 }
 /* --- End teacher sidebar/topbar styles --- */
+
+.header-active-year-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef3fb;
+  color: #204080;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid #c7d7f5;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active-year-readonly-banner {
+  position: fixed;
+  top: 64px;
+  left: 240px;
+  right: 0;
+  z-index: 1090;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  background: #fef3c7;
+  border-bottom: 1px solid #fcd34d;
+  color: #92400e;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.active-year-readonly-banner-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.active-year-readonly-banner-btn {
+  border: 1px solid #d97706;
+  background: #fff;
+  color: #92400e;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.active-year-readonly-banner-btn:hover {
+  background: #fffbeb;
+}
+
+@media (max-width: 900px) {
+  .active-year-readonly-banner {
+    left: 0;
+  }
+
+  .header-active-year-chip {
+    display: none;
+  }
+}

@@ -131,6 +131,60 @@ export default function UserEvents({ wrap = true }) {
   const upcomingEvents = events.filter(event => isEventUpcoming(event.event_date));
   const pastEvents = events.filter(event => !isEventUpcoming(event.event_date));
 
+  const renderEventActions = (event) => {
+    if (!isAdminRole) return null;
+    const eventCreatorId = parseInt(event.created_by);
+    const currentUserId = parseInt(authUser.id);
+    if (eventCreatorId !== currentUserId) return null;
+    return (
+      <div className="event-actions">
+        <button type="button" className="event-actions-btn event-actions-btn--edit" onClick={() => openEditModal(event)}>
+          <FaEdit /> Edit
+        </button>
+        <button type="button" className="event-actions-btn event-actions-btn--delete" onClick={() => handleDeleteEvent(event.id)}>
+          <FaTrash /> Delete
+        </button>
+      </div>
+    );
+  };
+
+  const renderEventForm = (onSubmit, submitLabel, isUpdate = false) => (
+    <form className="events-form" onSubmit={onSubmit}>
+      <div className="events-form-row">
+        <select name="type" value={form.type} onChange={handleFormChange}>
+          <option value="Meeting">Meeting</option>
+          <option value="Class">Class</option>
+          <option value="Others">Others</option>
+        </select>
+        <input type="date" name="date" value={form.date} onChange={handleFormChange} required />
+      </div>
+      <div className="events-form-row">
+        <input type="time" name="time" value={form.time} onChange={handleFormChange} required />
+        <input type="text" name="title" value={form.title} onChange={handleFormChange} placeholder="Event title" required />
+      </div>
+      <textarea name="description" value={form.description} onChange={handleFormChange} placeholder="Description" required />
+      <div className="participants-section">
+        <label className="participants-label">Select Participants</label>
+        <div className="participants-grid">
+          {users.map(user => (
+            <label key={user.id} className="participant-checkbox">
+              <input
+                type="checkbox"
+                checked={selectedParticipants.some(p => p.id === user.id)}
+                onChange={() => handleParticipantToggle(user.id, user.username)}
+              />
+              <span className="participant-name">{user.username}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      {formError && <div className="events-form-error">{formError}</div>}
+      <button type="submit" className={`events-form-submit${isUpdate ? ' events-form-submit--update' : ''}`}>
+        {submitLabel}
+      </button>
+    </form>
+  );
+
   // Create event handlers (Admin roles only)
   const openCreateForDate = (date) => {
     if (!isAdminRole) return;
@@ -310,27 +364,17 @@ export default function UserEvents({ wrap = true }) {
       <div className="user-events-content">
         {/* Calendar Section */}
         <div className="calendar-section">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div className="calendar-section-header">
             <h2>Event Calendar</h2>
             {isAdminRole && (
-              <button 
-                onClick={() => { 
-                  setShowCreate(true); 
-                  setModalDate(new Date()); 
-                  setForm(f => ({ ...f, date: new Date().toISOString().slice(0, 10) })); 
-                  setSelectedParticipants([]); 
-                }}
-                style={{ 
-                  background: '#204080', 
-                  color: '#fff', 
-                  border: 'none', 
-                  borderRadius: 6, 
-                  padding: '10px 16px', 
-                  fontWeight: 600, 
-                  cursor: 'pointer', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 8 
+              <button
+                type="button"
+                className="events-create-btn"
+                onClick={() => {
+                  setShowCreate(true);
+                  setModalDate(new Date());
+                  setForm(f => ({ ...f, date: new Date().toISOString().slice(0, 10) }));
+                  setSelectedParticipants([]);
                 }}
               >
                 <FaPlus /> Create Event
@@ -370,7 +414,7 @@ export default function UserEvents({ wrap = true }) {
                       <span className="event-type">{event.event_type}</span>
                       <span className="event-date">{formatDate(event.event_date)}</span>
                     </div>
-                    <div className="event-title" onClick={() => handleEventClick(event)} style={{ cursor: 'pointer' }}>
+                    <div className="event-title" onClick={() => handleEventClick(event)}>
                       {event.title}
                     </div>
                     {event.description && (
@@ -385,50 +429,7 @@ export default function UserEvents({ wrap = true }) {
                       </div>
                     </div>
                     
-                    {/* Action Buttons for Creator */}
-                    {isAdminRole && (() => {
-                      const eventCreatorId = parseInt(event.created_by);
-                      const currentUserId = parseInt(authUser.id);
-                      const shouldShow = eventCreatorId === currentUserId;
-                      return shouldShow ? (
-                        <div className="event-actions" style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-                          <button
-                            onClick={() => openEditModal(event)}
-                            style={{
-                              background: '#10b981',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: 4,
-                              padding: '6px 12px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <FaEdit /> Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEvent(event.id)}
-                            style={{
-                              background: '#ef4444',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: 4,
-                              padding: '6px 12px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <FaTrash /> Delete
-                          </button>
-                        </div>
-                      ) : null;
-                    })()}
+                    {renderEventActions(event)}
                   </div>
                 ))}
               </div>
@@ -453,7 +454,7 @@ export default function UserEvents({ wrap = true }) {
                       <span className="event-type">{event.event_type}</span>
                       <span className="event-date">{formatDate(event.event_date)}</span>
                     </div>
-                    <div className="event-title" onClick={() => handleEventClick(event)} style={{ cursor: 'pointer' }}>
+                    <div className="event-title" onClick={() => handleEventClick(event)}>
                       {event.title}
                     </div>
                     {event.description && (
@@ -468,50 +469,7 @@ export default function UserEvents({ wrap = true }) {
                       </div>
                     </div>
                     
-                    {/* Action Buttons for Creator */}
-                    {isAdminRole && (() => {
-                      const eventCreatorId = parseInt(event.created_by);
-                      const currentUserId = parseInt(authUser.id);
-                      const shouldShow = eventCreatorId === currentUserId;
-                      return shouldShow ? (
-                        <div className="event-actions" style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-                          <button
-                            onClick={() => openEditModal(event)}
-                            style={{
-                              background: '#10b981',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: 4,
-                              padding: '6px 12px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <FaEdit /> Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEvent(event.id)}
-                            style={{
-                              background: '#ef4444',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: 4,
-                              padding: '6px 12px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <FaTrash /> Delete
-                          </button>
-                        </div>
-                      ) : null;
-                    })()}
+                    {renderEventActions(event)}
                   </div>
                 ))}
               </div>
@@ -571,44 +529,12 @@ export default function UserEvents({ wrap = true }) {
       {isAdminRole && showCreate && (
         <div className="event-modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="event-modal-content" onClick={e => e.stopPropagation()}>
-            <button className="event-modal-close" onClick={() => setShowCreate(false)}>&times;</button>
+            <button type="button" className="event-modal-close" onClick={() => setShowCreate(false)}>&times;</button>
             <div className="event-modal-header">
               <div className="event-modal-type">Create Event</div>
               <div className="event-modal-date">{modalDate ? modalDate.toLocaleDateString() : form.date}</div>
             </div>
-            <form onSubmit={submitCreate} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <select name="type" value={form.type} onChange={handleFormChange} style={{ flex: '1 1 120px', minWidth: '120px', padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }}>
-                  <option value="Meeting">Meeting</option>
-                  <option value="Class">Class</option>
-                  <option value="Others">Others</option>
-                </select>
-                <input type="date" name="date" value={form.date} onChange={handleFormChange} style={{ flex: '1 1 120px', minWidth: '120px', padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-              </div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <input type="time" name="time" value={form.time} onChange={handleFormChange} style={{ flex: '1 1 120px', minWidth: '120px', padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-              </div>
-              <input type="text" name="title" value={form.title} onChange={handleFormChange} placeholder="Title" style={{ padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-              <textarea name="description" value={form.description} onChange={handleFormChange} placeholder="Description" style={{ padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15, minHeight: 60, resize: 'vertical' }} required />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontWeight: 600, color: '#374151', fontSize: 14 }}>Select Participants:</label>
-                <div style={{ maxHeight: 120, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, background: '#f9fafb', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 6 }}>
-                  {users.map(user => (
-                    <label key={user.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px', borderRadius: 4, background: '#fff', cursor: 'pointer', border: '1px solid #e5e7eb', fontSize: 12 }}>
-                      <input 
-                        type="checkbox" 
-                        checked={selectedParticipants.some(p => p.id === user.id)} 
-                        onChange={() => handleParticipantToggle(user.id, user.username)} 
-                        style={{ width: 14, height: 14, accentColor: '#204080' }} 
-                      />
-                      <span style={{ fontSize: 12, color: '#374151', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              {formError && <div style={{ color: '#e53e3e', fontSize: 14 }}>{formError}</div>}
-              <button type="submit" style={{ background: '#204080', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 0', fontSize: 16, fontWeight: 600, marginTop: 4 }}>Create Event</button>
-            </form>
+            {renderEventForm(submitCreate, 'Create Event')}
           </div>
         </div>
       )}
@@ -617,44 +543,12 @@ export default function UserEvents({ wrap = true }) {
       {isAdminRole && showEdit && editingEvent && (
         <div className="event-modal-overlay" onClick={() => setShowEdit(false)}>
           <div className="event-modal-content" onClick={e => e.stopPropagation()}>
-            <button className="event-modal-close" onClick={() => setShowEdit(false)}>&times;</button>
+            <button type="button" className="event-modal-close" onClick={() => setShowEdit(false)}>&times;</button>
             <div className="event-modal-header">
               <div className="event-modal-type">Edit Event</div>
               <div className="event-modal-date">{formatDate(editingEvent.event_date)}</div>
             </div>
-            <form onSubmit={submitEdit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <select name="type" value={form.type} onChange={handleFormChange} style={{ flex: '1 1 120px', minWidth: '120px', padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }}>
-                  <option value="Meeting">Meeting</option>
-                  <option value="Class">Class</option>
-                  <option value="Others">Others</option>
-                </select>
-                <input type="date" name="date" value={form.date} onChange={handleFormChange} style={{ flex: '1 1 120px', minWidth: '120px', padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-              </div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <input type="time" name="time" value={form.time} onChange={handleFormChange} style={{ flex: '1 1 120px', minWidth: '120px', padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-              </div>
-              <input type="text" name="title" value={form.title} onChange={handleFormChange} placeholder="Title" style={{ padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15 }} required />
-              <textarea name="description" value={form.description} onChange={handleFormChange} placeholder="Description" style={{ padding: '10px 12px', borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 15, minHeight: 60, resize: 'vertical' }} required />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontWeight: 600, color: '#374151', fontSize: 14 }}>Select Participants:</label>
-                <div style={{ maxHeight: 120, overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: 6, padding: 8, background: '#f9fafb', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 6 }}>
-                  {users.map(user => (
-                    <label key={user.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px', borderRadius: 4, background: '#fff', cursor: 'pointer', border: '1px solid #e5e7eb', fontSize: 12 }}>
-                      <input 
-                        type="checkbox" 
-                        checked={selectedParticipants.some(p => p.id === user.id)} 
-                        onChange={() => handleParticipantToggle(user.id, user.username)} 
-                        style={{ width: 14, height: 14, accentColor: '#204080' }} 
-                      />
-                      <span style={{ fontSize: 12, color: '#374151', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              {formError && <div style={{ color: '#e53e3e', fontSize: 14 }}>{formError}</div>}
-              <button type="submit" style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 0', fontSize: 16, fontWeight: 600, marginTop: 4 }}>Update Event</button>
-            </form>
+            {renderEventForm(submitEdit, 'Update Event', true)}
           </div>
         </div>
       )}

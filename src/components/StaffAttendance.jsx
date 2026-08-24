@@ -582,8 +582,15 @@ export default function StaffAttendance() {
 
 
   return (
-    <div className="attendance-container">
+    <div className="staff-att-page">
       {showSuccess && <SuccessMessage message="Operation successful" />}
+
+      <div className="staff-att-header">
+        <h1 className="staff-att-title">Staff Attendance</h1>
+        <p className="staff-att-subtitle">
+          Track staff presence, employment type, and generate monthly reports
+        </p>
+      </div>
 
       {/* Statistics Cards */}
       <div className="attendance-cards">
@@ -592,8 +599,8 @@ export default function StaffAttendance() {
           <div className="stats">
             <span className="present">Present: {stats.currentMonth.present_count}</span>
             <span className="absent">Absent: {stats.currentMonth.absent_count}</span>
-            <span style={{ color: '#d97706' }}>Late: {stats.currentMonth.late_count}</span>
-            <span style={{ color: '#7c3aed' }}>Half Day: {stats.currentMonth.half_day_count}</span>
+            <span className="late">Late: {stats.currentMonth.late_count}</span>
+            <span className="half-day">Half Day: {stats.currentMonth.half_day_count}</span>
           </div>
           <div className="total">Attendance Rate: {stats.currentMonth.attendanceRate}%</div>
         </div>
@@ -603,62 +610,48 @@ export default function StaffAttendance() {
           <div className="stats">
             <span className="present">Present: {stats.lastMonth.present_count}</span>
             <span className="absent">Absent: {stats.lastMonth.absent_count}</span>
-            <span style={{ color: '#d97706' }}>Late: {stats.lastMonth.late_count}</span>
-            <span style={{ color: '#7c3aed' }}>Half Day: {stats.lastMonth.half_day_count}</span>
+            <span className="late">Late: {stats.lastMonth.late_count}</span>
+            <span className="half-day">Half Day: {stats.lastMonth.half_day_count}</span>
           </div>
           <div className="total">Attendance Rate: {stats.lastMonth.attendanceRate}%</div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '2px solid #e5e7eb' }}>
+      <div className="staff-att-tabs">
         <button
+          type="button"
+          className={`staff-att-tab-btn ${activeTab === 'employment' ? 'active' : ''}`}
           onClick={() => setActiveTab('employment')}
-          style={{
-            padding: '10px 20px',
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'employment' ? '3px solid #3b82f6' : '3px solid transparent',
-            color: activeTab === 'employment' ? '#3b82f6' : '#6b7280',
-            fontWeight: activeTab === 'employment' ? '600' : '400',
-            fontSize: '14px'
-          }}
         >
-          Full/Part Time
+          Full / Part Time
         </button>
         <button
+          type="button"
+          className={`staff-att-tab-btn ${activeTab === 'records' ? 'active' : ''}`}
           onClick={() => setActiveTab('records')}
-          style={{
-            padding: '10px 20px',
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'records' ? '3px solid #3b82f6' : '3px solid transparent',
-            color: activeTab === 'records' ? '#3b82f6' : '#6b7280',
-            fontWeight: activeTab === 'records' ? '600' : '400',
-            fontSize: '14px'
-          }}
         >
           Attendance Records
         </button>
       </div>
 
-      {/* Action Buttons */}
-      <div className="actions-row" style={{ gap: 8, marginBottom: 20 }}>
-        {activeTab === 'records' && canManageRecords && (
-          <button 
-            className="att-primary-btn" 
-            onClick={handleCreateNew}
-            disabled={editingRecord !== null}
-          >
-            New
-          </button>
-        )}
-        
-        {/* Month Selection for Records filter & Report */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {/* Toolbar */}
+      <div className="staff-att-toolbar">
+        <div className="staff-att-toolbar-left">
+          {activeTab === 'records' && canManageRecords && (
+            <button
+              className="att-primary-btn"
+              onClick={handleCreateNew}
+              disabled={editingRecord !== null}
+            >
+              New Record
+            </button>
+          )}
+        </div>
+
+        <div className="staff-att-toolbar-right">
           <select
+            className="staff-att-month-select"
             value={selectedMonth && selectedYear ? `${selectedMonth}-${selectedYear}` : 'all'}
             onChange={(e) => {
               const val = e.target.value;
@@ -671,7 +664,6 @@ export default function StaffAttendance() {
                 setSelectedYear(parseInt(year));
               }
             }}
-            style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc' }}
           >
             {monthOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -679,9 +671,9 @@ export default function StaffAttendance() {
               </option>
             ))}
           </select>
-          
-          <button 
-            className="att-primary-btn" 
+
+          <button
+            className="att-primary-btn"
             onClick={generateMonthlyReport}
             disabled={loading}
           >
@@ -690,20 +682,18 @@ export default function StaffAttendance() {
         </div>
       </div>
 
-
-
       {/* Employment Status Tab */}
       {activeTab === 'employment' && (
-        <div className="att-sessions-table">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div className="staff-att-section att-sessions-table">
+          <div className="staff-att-section-header">
             <h3>Staff Employment Status</h3>
             {canManageSettings && (
               <button
-                className="att-primary-btn"
+                type="button"
+                className="att-primary-btn staff-att-settings-btn"
                 onClick={() => setShowSettingsModal(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <circle cx="12" cy="12" r="3"></circle>
                   <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
                 </svg>
@@ -765,16 +755,15 @@ export default function StaffAttendance() {
 
       {/* Records Table */}
       {activeTab === 'records' && (
-        <div className="att-sessions-table">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-            <h3 style={{ margin: 0 }}>Staff Attendance Records</h3>
-            {selectedMonth && selectedYear && (
-              <span style={{ fontSize: '13px', color: '#6b7280' }}>
+        <div className="staff-att-section att-sessions-table">
+          <div className="staff-att-section-header">
+            <h3>Staff Attendance Records</h3>
+            {selectedMonth && selectedYear ? (
+              <span className="staff-att-filter-hint">
                 Showing {monthOptions.find(o => o.month === selectedMonth && o.year === selectedYear)?.label || `${selectedMonth}/${selectedYear}`}
               </span>
-            )}
-            {(!selectedMonth || !selectedYear) && (
-              <span style={{ fontSize: '13px', color: '#6b7280' }}>Showing all months (most recent 500)</span>
+            ) : (
+              <span className="staff-att-filter-hint">Showing all months (most recent 500)</span>
             )}
           </div>
         <div className="att-table-wrapper">
@@ -793,20 +782,18 @@ export default function StaffAttendance() {
             <tbody>
               {/* New record creation row */}
               {canManageRecords && isCreatingNew && (
-                <tr style={{ backgroundColor: '#f8f9fa' }}>
+                <tr className="staff-att-editing-row">
                   <td>
                     <input
                       type="date"
                       value={editingRecord.date}
                       onChange={(e) => setEditingRecord({...editingRecord, date: e.target.value})}
-                      style={{ width: '100%', padding: '4px' }}
                     />
                   </td>
                   <td>
                     <select
                       value={editingRecord.staff_name}
                       onChange={(e) => setEditingRecord({...editingRecord, staff_name: e.target.value})}
-                      style={{ width: '100%', padding: '4px' }}
                     >
                       <option value="">Select Staff Member</option>
                       {users.map(user => (
@@ -821,7 +808,6 @@ export default function StaffAttendance() {
                       type="time"
                       value={editingRecord.time_in || ''}
                       onChange={(e) => setEditingRecord({...editingRecord, time_in: e.target.value})}
-                      style={{ width: '100%', padding: '4px' }}
                     />
                   </td>
                   <td>
@@ -829,13 +815,12 @@ export default function StaffAttendance() {
                       type="time"
                       value={editingRecord.time_out || ''}
                       onChange={(e) => setEditingRecord({...editingRecord, time_out: e.target.value})}
-                      style={{ width: '100%', padding: '4px' }}
                     />
                   </td>
                   <td>
-                    <div style={{ maxHeight: '100px', overflowY: 'auto', border: '1px solid #ccc', padding: '4px' }}>
+                    <div className="staff-att-class-picker">
                       {classes.map(classItem => (
-                        <label key={classItem.id} style={{ display: 'block', fontSize: '12px', marginBottom: '2px' }}>
+                        <label key={classItem.id} className="staff-att-class-option">
                           <input
                             type="checkbox"
                             checked={editingRecord.classes_taught.includes(classItem.name)}
@@ -845,9 +830,8 @@ export default function StaffAttendance() {
                                 : editingRecord.classes_taught.filter(c => c !== classItem.name);
                               setEditingRecord({...editingRecord, classes_taught: newClasses});
                             }}
-                            style={{ marginRight: '4px' }}
                           />
-                                                          {classItem.name}
+                          {classItem.name}
                         </label>
                       ))}
                     </div>
@@ -856,7 +840,6 @@ export default function StaffAttendance() {
                     <select
                       value={editingRecord.status}
                       onChange={(e) => setEditingRecord({...editingRecord, status: e.target.value})}
-                      style={{ width: '100%', padding: '4px' }}
                     >
                       <option value="Present">Present</option>
                       <option value="Absent">Absent</option>
@@ -865,23 +848,25 @@ export default function StaffAttendance() {
                     </select>
                   </td>
                   <td>
-                    <button 
-                      className="att-primary-btn" 
-                      onClick={handleSaveEdit}
-                      style={{ marginRight: '4px', padding: '4px 8px', fontSize: '12px' }}
-                    >
-                      Save
-                    </button>
-                    <button 
-                      className="att-ghost-btn" 
-                      onClick={() => {
-                        setEditingRecord(null);
-                        setIsCreatingNew(false);
-                      }}
-                      style={{ padding: '4px 8px', fontSize: '12px' }}
-                    >
-                      Cancel
-                    </button>
+                    <div className="staff-att-row-actions">
+                      <button
+                        type="button"
+                        className="att-primary-btn"
+                        onClick={handleSaveEdit}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="att-ghost-btn"
+                        onClick={() => {
+                          setEditingRecord(null);
+                          setIsCreatingNew(false);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -889,7 +874,7 @@ export default function StaffAttendance() {
               {records.map((record) => {
                 const isRowEditing = canManageRecords && editingRecord && editingRecord.id === record.id;
                 return (
-                  <tr key={record.id}>
+                  <tr key={record.id} className={isRowEditing ? 'staff-att-editing-row' : undefined}>
                     {isRowEditing ? (
                       <>
                         <td>
@@ -897,14 +882,12 @@ export default function StaffAttendance() {
                             type="date"
                             value={editingRecord.date}
                             onChange={(e) => setEditingRecord({...editingRecord, date: e.target.value})}
-                            style={{ width: '100%', padding: '4px' }}
                           />
                         </td>
                         <td>
                           <select
                             value={editingRecord.staff_name}
                             onChange={(e) => setEditingRecord({...editingRecord, staff_name: e.target.value})}
-                            style={{ width: '100%', padding: '4px' }}
                           >
                             <option value="">Select Staff Member</option>
                             {users.map(user => (
@@ -919,7 +902,6 @@ export default function StaffAttendance() {
                             type="time"
                             value={editingRecord.time_in || ''}
                             onChange={(e) => setEditingRecord({...editingRecord, time_in: e.target.value})}
-                            style={{ width: '100%', padding: '4px' }}
                           />
                         </td>
                         <td>
@@ -927,13 +909,12 @@ export default function StaffAttendance() {
                             type="time"
                             value={editingRecord.time_out || ''}
                             onChange={(e) => setEditingRecord({...editingRecord, time_out: e.target.value})}
-                            style={{ width: '100%', padding: '4px' }}
                           />
                         </td>
                         <td>
-                          <div style={{ maxHeight: '100px', overflowY: 'auto', border: '1px solid #ccc', padding: '4px' }}>
+                          <div className="staff-att-class-picker">
                             {classes.map(classItem => (
-                              <label key={classItem.id} style={{ display: 'block', fontSize: '12px', marginBottom: '2px' }}>
+                              <label key={classItem.id} className="staff-att-class-option">
                                 <input
                                   type="checkbox"
                                   checked={editingRecord.classes_taught.includes(classItem.name)}
@@ -943,7 +924,6 @@ export default function StaffAttendance() {
                                       : editingRecord.classes_taught.filter(c => c !== classItem.name);
                                     setEditingRecord({...editingRecord, classes_taught: newClasses});
                                   }}
-                                  style={{ marginRight: '4px' }}
                                 />
                                 {classItem.name}
                               </label>
@@ -954,7 +934,6 @@ export default function StaffAttendance() {
                           <select
                             value={editingRecord.status}
                             onChange={(e) => setEditingRecord({...editingRecord, status: e.target.value})}
-                            style={{ width: '100%', padding: '4px' }}
                           >
                             <option value="Present">Present</option>
                             <option value="Absent">Absent</option>
@@ -964,23 +943,25 @@ export default function StaffAttendance() {
                         </td>
                         {canManageRecords && (
                           <td>
-                            <button 
-                              className="att-primary-btn" 
-                              onClick={handleSaveEdit}
-                              style={{ marginRight: '4px', padding: '4px 8px', fontSize: '12px' }}
-                            >
-                              Save
-                            </button>
-                            <button 
-                              className="att-ghost-btn" 
-                              onClick={() => {
-                                setEditingRecord(null);
-                                setIsCreatingNew(false);
-                              }}
-                              style={{ padding: '4px 8px', fontSize: '12px' }}
-                            >
-                              Cancel
-                            </button>
+                            <div className="staff-att-row-actions">
+                              <button
+                                type="button"
+                                className="att-primary-btn"
+                                onClick={handleSaveEdit}
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                className="att-ghost-btn"
+                                onClick={() => {
+                                  setEditingRecord(null);
+                                  setIsCreatingNew(false);
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
                           </td>
                         )}
                       </>
@@ -998,20 +979,22 @@ export default function StaffAttendance() {
                         </td>
                         {canManageRecords && (
                           <td>
-                            <button 
-                              className="att-primary-btn" 
-                              onClick={() => handleEdit(record)}
-                              style={{ marginRight: '4px', padding: '4px 8px', fontSize: '12px' }}
-                            >
-                              Edit
-                            </button>
-                            <button 
-                              className="att-ghost-btn" 
-                              onClick={() => handleDelete(record.id)}
-                              style={{ padding: '4px 8px', fontSize: '12px' }}
-                            >
-                              Delete
-                            </button>
+                            <div className="staff-att-row-actions">
+                              <button
+                                type="button"
+                                className="att-primary-btn"
+                                onClick={() => handleEdit(record)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="att-ghost-btn"
+                                onClick={() => handleDelete(record.id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         )}
                       </>
@@ -1028,75 +1011,63 @@ export default function StaffAttendance() {
       {/* Settings Modal */}
       {showSettingsModal && canManageSettings && (
         <div className="att-modal-overlay" onClick={() => setShowSettingsModal(false)}>
-          <div className="att-modal" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '20px' }}>
-              <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '600' }}>
-                Attendance Settings
-              </h2>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                  Expected Days per Month - Full Time Staff
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={settingsForm.fullTimeDays}
-                  onChange={(e) => setSettingsForm({...settingsForm, fullTimeDays: parseInt(e.target.value) || 0})}
-                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                />
-                <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                  {settings.full_time_expected_days?.description || 'Expected number of days present per month for full-time staff'}
-                </p>
-              </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                  Expected Days per Month - Part Time Staff
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={settingsForm.partTimeDays}
-                  onChange={(e) => setSettingsForm({...settingsForm, partTimeDays: parseInt(e.target.value) || 0})}
-                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                />
-                <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                  {settings.part_time_expected_days?.description || 'Expected number of days present per month for part-time staff'}
-                </p>
-              </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                  Start Time (Expected Arrival Time)
-                </label>
-                <input
-                  type="time"
-                  value={settingsForm.startTime}
-                  onChange={(e) => setSettingsForm({...settingsForm, startTime: e.target.value})}
-                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                />
-                <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                  {settings.start_time?.description || 'Expected start time for staff (HH:MM format)'}
-                </p>
-              </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                  End Time (Expected Departure Time)
-                </label>
-                <input
-                  type="time"
-                  value={settingsForm.endTime}
-                  onChange={(e) => setSettingsForm({...settingsForm, endTime: e.target.value})}
-                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                />
-                <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                  {settings.end_time?.description || 'Expected end time for staff (HH:MM format)'}
-                </p>
-              </div>
+          <div className="att-modal staff-att-settings-modal" onClick={e => e.stopPropagation()}>
+            <h2>Attendance Settings</h2>
+            <div className="staff-att-settings-field">
+              <label htmlFor="fullTimeDays">Expected Days per Month — Full Time Staff</label>
+              <input
+                id="fullTimeDays"
+                type="number"
+                min="1"
+                max="31"
+                value={settingsForm.fullTimeDays}
+                onChange={(e) => setSettingsForm({...settingsForm, fullTimeDays: parseInt(e.target.value) || 0})}
+              />
+              <p className="staff-att-settings-hint">
+                {settings.full_time_expected_days?.description || 'Expected number of days present per month for full-time staff'}
+              </p>
             </div>
-            <div className="att-modal-actions" style={{ padding: '20px', borderTop: '1px solid #e5e7eb' }}>
-              <button className="att-ghost-btn" onClick={() => setShowSettingsModal(false)}>Cancel</button>
-              <button className="att-primary-btn" onClick={handleSaveSettings}>Save Settings</button>
+            <div className="staff-att-settings-field">
+              <label htmlFor="partTimeDays">Expected Days per Month — Part Time Staff</label>
+              <input
+                id="partTimeDays"
+                type="number"
+                min="1"
+                max="31"
+                value={settingsForm.partTimeDays}
+                onChange={(e) => setSettingsForm({...settingsForm, partTimeDays: parseInt(e.target.value) || 0})}
+              />
+              <p className="staff-att-settings-hint">
+                {settings.part_time_expected_days?.description || 'Expected number of days present per month for part-time staff'}
+              </p>
+            </div>
+            <div className="staff-att-settings-field">
+              <label htmlFor="startTime">Start Time (Expected Arrival Time)</label>
+              <input
+                id="startTime"
+                type="time"
+                value={settingsForm.startTime}
+                onChange={(e) => setSettingsForm({...settingsForm, startTime: e.target.value})}
+              />
+              <p className="staff-att-settings-hint">
+                {settings.start_time?.description || 'Expected start time for staff (HH:MM format)'}
+              </p>
+            </div>
+            <div className="staff-att-settings-field">
+              <label htmlFor="endTime">End Time (Expected Departure Time)</label>
+              <input
+                id="endTime"
+                type="time"
+                value={settingsForm.endTime}
+                onChange={(e) => setSettingsForm({...settingsForm, endTime: e.target.value})}
+              />
+              <p className="staff-att-settings-hint">
+                {settings.end_time?.description || 'Expected end time for staff (HH:MM format)'}
+              </p>
+            </div>
+            <div className="att-modal-actions">
+              <button type="button" className="att-ghost-btn" onClick={() => setShowSettingsModal(false)}>Cancel</button>
+              <button type="button" className="att-primary-btn" onClick={handleSaveSettings}>Save Settings</button>
             </div>
           </div>
         </div>

@@ -103,15 +103,11 @@ export default function MonitorUsers() {
     return `${hours}h ${minutes}m`;
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Logged In':
-        return '#10B981';
-      case 'Logged Out':
-        return '#6B7280';
-      default:
-        return '#6B7280';
+  const getStatusClass = (status) => {
+    if (status === 'Logged In' || status === 'active') {
+      return 'monitor-status-badge--online';
     }
+    return 'monitor-status-badge--offline';
   };
 
   const getActivityIcon = (activityType) => {
@@ -333,8 +329,7 @@ export default function MonitorUsers() {
                           </td>
                           <td>
                             <span 
-                              className="monitor-status-badge"
-                              style={{ backgroundColor: getStatusColor(user.current_status) }}
+                              className={`monitor-status-badge ${getStatusClass(user.current_status)}`}
                             >
                               <span className="monitor-status-dot"></span>
                               {user.current_status || 'Unknown'}
@@ -463,8 +458,7 @@ export default function MonitorUsers() {
                           </td>
                           <td>
                             <span 
-                              className="monitor-status-badge"
-                              style={{ backgroundColor: session.status === 'active' ? '#10B981' : '#6B7280' }}
+                              className={`monitor-status-badge ${getStatusClass(session.status)}`}
                             >
                               <span className="monitor-status-dot"></span>
                               {session.status}
@@ -513,8 +507,7 @@ export default function MonitorUsers() {
                   <div className="monitor-detail-item">
                     <label>Status:</label>
                     <span 
-                      className="monitor-status-badge"
-                      style={{ backgroundColor: getStatusColor(selectedUser.current_status) }}
+                      className={`monitor-status-badge ${getStatusClass(selectedUser.current_status)}`}
                     >
                       {selectedUser.current_status || 'Unknown'}
                     </span>

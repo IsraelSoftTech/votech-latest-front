@@ -311,7 +311,11 @@ export default function DeanEvent() {
   return (
     <SideTop>
       <div className="dean-event-container">
-        <h2>Events</h2>
+        <div className="dean-event-header">
+          <h2>Events</h2>
+          <p className="dean-event-subtitle">Create events on the calendar and manage upcoming activities</p>
+        </div>
+
         <div className="dean-event-cards">
           <div className="dean-event-card total">
             <div className="dean-event-card-title">Total Events</div>
@@ -322,7 +326,10 @@ export default function DeanEvent() {
             <div className="dean-event-card-value">{stats.upcoming}</div>
           </div>
         </div>
+
+        <div className="dean-event-content">
         <div className="dean-event-calendar-wrapper">
+          <h3>Event Calendar</h3>
           <Calendar 
             onClickDay={handleDateClick} 
             tileContent={tileContent}
@@ -356,39 +363,11 @@ export default function DeanEvent() {
                     const currentUserId = parseInt(authUser.id);
                     const shouldShow = eventCreatorId === currentUserId;
                     return shouldShow ? (
-                      <div className="event-actions" style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => openEditModal(event)}
-                          style={{
-                            background: '#10b981',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: 4,
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
+                      <div className="event-actions">
+                        <button type="button" className="event-actions-btn event-actions-btn--edit" onClick={() => openEditModal(event)}>
                           <FaEdit /> Edit
                         </button>
-                        <button
-                          onClick={() => handleDeleteEvent(event.id)}
-                          style={{
-                            background: '#ef4444',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: 4,
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
+                        <button type="button" className="event-actions-btn event-actions-btn--delete" onClick={() => handleDeleteEvent(event.id)}>
                           <FaTrash /> Delete
                         </button>
                       </div>
@@ -400,6 +379,7 @@ export default function DeanEvent() {
           ) : (
             <div className="no-events">No events found. Click on a date to create an event.</div>
           )}
+        </div>
         </div>
 
         {showModal && (
@@ -569,7 +549,7 @@ export default function DeanEvent() {
                   )}
                 </div>
                 
-                <button type="submit" className="create-event-btn" style={{ background: '#10b981' }}>
+                <button type="submit" className="create-event-btn create-event-btn--update">
                   Update Event
                 </button>
               </form>

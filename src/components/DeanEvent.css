@@ -1,80 +1,142 @@
 .dean-event-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 32px 16px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 4px 32px;
+  box-sizing: border-box;
+}
+
+.dean-event-header {
+  margin-bottom: 24px;
+}
+
+.dean-event-header h2 {
+  margin: 0 0 6px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #204080;
+  letter-spacing: -0.02em;
+}
+
+.dean-event-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.dean-event-content {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) 1fr;
+  gap: 24px;
+  align-items: start;
 }
 
 .dean-event-cards {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .dean-event-card {
-  flex: 1 1 220px;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(34, 60, 108, 0.08);
-  padding: 24px 32px;
+  box-shadow: 0 1px 3px rgba(32, 64, 128, 0.08);
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  min-width: 220px;
+  align-items: flex-start;
+  border: 1px solid #e5e9f2;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .dean-event-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(34, 60, 108, 0.15);
+  box-shadow: 0 4px 16px rgba(32, 64, 128, 0.1);
 }
 
-.dean-event-card.total { 
-  border-left: 6px solid #1E3A8A; 
+.dean-event-card.total {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  border: none;
+  color: #fff;
 }
 
-.dean-event-card.upcoming { 
-  border-left: 6px solid #F59E0B; 
+.dean-event-card.total .dean-event-card-title,
+.dean-event-card.total .dean-event-card-value {
+  color: #fff;
+}
+
+.dean-event-card.upcoming {
+  border-left: 4px solid #f59e0b;
 }
 
 .dean-event-card-title {
-  font-size: 1.1rem;
-  color: #888;
+  font-size: 0.85rem;
+  color: #64748b;
   margin-bottom: 8px;
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .dean-event-card-value {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #1E3A8A;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #204080;
+  line-height: 1.1;
 }
 
 .dean-event-calendar-wrapper {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(34, 60, 108, 0.08);
-  padding: 24px;
-  margin-bottom: 32px;
-  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(32, 64, 128, 0.08);
+  padding: 20px 24px;
+  border: 1px solid #e5e9f2;
+  position: sticky;
+  top: 16px;
 }
 
-.react-calendar {
-  border: none;
+.dean-event-calendar-wrapper h3 {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #204080;
+}
+
+.dean-event-calendar-wrapper .react-calendar {
+  border: 1px solid #e5e9f2;
+  border-radius: 10px;
   width: 100%;
   font-family: inherit;
+  padding: 8px;
 }
 
-/* Remove generic .event-date pill and properly style active calendar tile */
-.react-calendar__tile--active {
-  background: #F59E0B !important;
+.dean-event-calendar-wrapper .react-calendar__navigation button {
+  color: #204080;
+  font-weight: 600;
+}
+
+.dean-event-calendar-wrapper .react-calendar__navigation button:enabled:hover {
+  background: #eef2ff;
+  border-radius: 8px;
+}
+
+.dean-event-calendar-wrapper .react-calendar__tile {
+  border-radius: 8px;
+}
+
+.dean-event-calendar-wrapper .react-calendar__tile:enabled:hover {
+  background: #eef2ff;
+}
+
+.dean-event-calendar-wrapper .react-calendar__tile--now {
+  background: #eaf3ff;
+  color: #204080;
+  font-weight: 700;
+}
+
+.dean-event-calendar-wrapper .react-calendar__tile--active {
+  background: #204080 !important;
   color: #fff !important;
-  border-radius: 8px !important;
-}
-
-.react-calendar__tile--active:enabled:hover,
-.react-calendar__tile--active:enabled:focus {
-  background: #d97706 !important;
 }
 
 /* Calendar event indicators */
@@ -421,14 +483,61 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.event-actions button:first-child {
-  background: #10b981;
+.event-actions-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.event-actions-btn--edit {
+  background: #eef2ff;
+  color: #1e3a8a;
+  border: 1px solid rgba(30, 58, 138, 0.15);
+}
+
+.event-actions-btn--edit:hover {
+  background: #204080;
   color: #fff;
 }
 
-.event-actions button:last-child {
-  background: #ef4444;
+.event-actions-btn--delete {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.event-actions-btn--delete:hover {
+  background: #dc2626;
   color: #fff;
+}
+
+.modal-content {
+  max-width: 640px;
+}
+
+.create-event-btn--update {
+  background: #059669;
+}
+
+.create-event-btn--update:hover {
+  background: #047857;
+}
+
+@media (max-width: 1024px) {
+  .dean-event-content {
+    grid-template-columns: 1fr;
+  }
+
+  .dean-event-calendar-wrapper {
+    position: static;
+  }
 }
 
 .event-actions button svg {

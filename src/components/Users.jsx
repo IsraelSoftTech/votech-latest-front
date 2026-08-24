@@ -399,13 +399,14 @@ export default function Users() {
         {/* Create User Modal */}
         {createUserModal && (
           <div className="users-modal-overlay" onClick={() => setCreateUserModal(false)}>
-            <div className="users-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div className="users-modal users-create-modal" onClick={e => e.stopPropagation()}>
+              <div className="users-create-modal-header">
                 <h3>Create New User</h3>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
+                  className="users-create-modal-close"
                   onClick={() => setCreateUserModal(false)}
-                  style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#666' }}
+                  aria-label="Close"
                 >
                   ×
                 </button>
@@ -437,126 +438,134 @@ export default function Users() {
                 </div>
               )}
               
-              <form onSubmit={handleCreateUserSubmit} className="users-edit-form">
-                <label>Full Name *</label>
-                <input 
-                  name="name" 
-                  value={createForm.name} 
-                  onChange={handleCreateUserChange} 
-                  placeholder="Enter Full Name"
-                  required
-                />
-                
-                <label>Email *</label>
-                <input 
-                  name="email" 
-                  type="email"
-                  value={createForm.email} 
-                  onChange={handleCreateUserChange} 
-                  placeholder="Enter Email"
-                  required
-                />
-                
-                <label>Phone Number *</label>
-                <input 
-                  name="phone" 
-                  type="tel"
-                  value={createForm.phone} 
-                  onChange={handleCreateUserChange} 
-                  placeholder="Enter Phone Number"
-                  required
-                />
-                
-                <label>Username *</label>
-                <input 
-                  name="username" 
-                  value={createForm.username} 
-                  onChange={handleCreateUserChange} 
-                  placeholder="Enter Username"
-                  required
-                />
-                
-                <label>Gender *</label>
-                <select
-                  name="gender"
-                  value={createForm.gender}
-                  onChange={handleCreateUserChange}
-                  required
-                >
-                  <option value="">Select</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-                
-                <label>Role *</label>
-                <select
-                  name="role"
-                  value={createForm.role}
-                  onChange={handleCreateUserChange}
-                  required
-                >
-                  <option value="">Select</option>
-                  <option value="Admin1">Admin1</option>
-                  <option value="Admin2">Admin2</option>
-                  <option value="Admin3">Admin3</option>
-                  <option value="Admin4">Admin4</option>
-                  <option value="Teacher">Teacher</option>
-                  <option value="Discipline">Discipline</option>
-                  <option value="Psychosocialist">Psychosocialist</option>
-                </select>
-                
-                <label>Password *</label>
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    name="password" 
-                    type={showPassword ? 'text' : 'password'}
-                    value={createForm.password} 
-                    onChange={handleCreateUserChange} 
-                    placeholder="Enter Password"
-                    required
-                  />
-                  <span 
-                    style={{ 
-                      position: 'absolute', 
-                      right: '10px', 
-                      top: '50%', 
-                      transform: 'translateY(-50%)', 
-                      cursor: 'pointer',
-                      color: '#666'
-                    }}
-                    onClick={() => setShowPassword(v => !v)}
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </span>
+              <form onSubmit={handleCreateUserSubmit} className="users-edit-form users-create-form">
+                <div className="users-create-form-grid">
+                  <div className="users-create-field">
+                    <label>Full Name *</label>
+                    <input
+                      name="name"
+                      value={createForm.name}
+                      onChange={handleCreateUserChange}
+                      placeholder="Enter Full Name"
+                      required
+                    />
+                  </div>
+
+                  <div className="users-create-field">
+                    <label>Email *</label>
+                    <input
+                      name="email"
+                      type="email"
+                      value={createForm.email}
+                      onChange={handleCreateUserChange}
+                      placeholder="Enter Email"
+                      required
+                    />
+                  </div>
+
+                  <div className="users-create-field">
+                    <label>Phone Number *</label>
+                    <input
+                      name="phone"
+                      type="tel"
+                      value={createForm.phone}
+                      onChange={handleCreateUserChange}
+                      placeholder="Enter Phone Number"
+                      required
+                    />
+                  </div>
+
+                  <div className="users-create-field">
+                    <label>Username *</label>
+                    <input
+                      name="username"
+                      value={createForm.username}
+                      onChange={handleCreateUserChange}
+                      placeholder="Enter Username"
+                      required
+                    />
+                  </div>
+
+                  <div className="users-create-field">
+                    <label>Gender *</label>
+                    <select
+                      name="gender"
+                      value={createForm.gender}
+                      onChange={handleCreateUserChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div className="users-create-field">
+                    <label>Role *</label>
+                    <select
+                      name="role"
+                      value={createForm.role}
+                      onChange={handleCreateUserChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      <option value="Admin1">Admin1</option>
+                      <option value="Admin2">Admin2</option>
+                      <option value="Admin3">Admin3</option>
+                      <option value="Admin4">Admin4</option>
+                      <option value="Teacher">Teacher</option>
+                      <option value="Discipline">Discipline</option>
+                      <option value="Psychosocialist">Psychosocialist</option>
+                    </select>
+                  </div>
+
+                  <div className="users-create-field">
+                    <label>Password *</label>
+                    <div className="users-password-field">
+                      <input
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={createForm.password}
+                        onChange={handleCreateUserChange}
+                        placeholder="Enter Password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="users-password-toggle"
+                        onClick={() => setShowPassword(v => !v)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="users-create-field">
+                    <label>Repeat Password *</label>
+                    <div className="users-password-field">
+                      <input
+                        name="repeatPassword"
+                        type={showRepeatPassword ? 'text' : 'password'}
+                        value={createForm.repeatPassword}
+                        onChange={handleCreateUserChange}
+                        placeholder="Repeat password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="users-password-toggle"
+                        onClick={() => setShowRepeatPassword(v => !v)}
+                        aria-label={showRepeatPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showRepeatPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                
-                <label>Repeat Password *</label>
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    name="repeatPassword" 
-                    type={showRepeatPassword ? 'text' : 'password'}
-                    value={createForm.repeatPassword} 
-                    onChange={handleCreateUserChange} 
-                    placeholder="Repeat password"
-                    required
-                  />
-                  <span 
-                    style={{ 
-                      position: 'absolute', 
-                      right: '10px', 
-                      top: '50%', 
-                      transform: 'translateY(-50%)', 
-                      cursor: 'pointer',
-                      color: '#666'
-                    }}
-                    onClick={() => setShowRepeatPassword(v => !v)}
-                  >
-                    {showRepeatPassword ? <FaEyeSlash /> : <FaEye />}
-                  </span>
-                </div>
-                
-                <div className="users-edit-actions">
+
+                <div className="users-edit-actions users-create-actions">
                   <button 
                     type="submit" 
                     className="users-action-btn" 

@@ -676,12 +676,103 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  async getStudents() {
-    const response = await fetch(`${API_URL}/students`, {
-      headers: this.getAuthHeaders(),
-    });
+  async getStudents(options = {}) {
+    const params = new URLSearchParams();
+    if (options.academic_year_id != null && options.academic_year_id !== "") {
+      params.set("academic_year_id", String(options.academic_year_id));
+    }
+    if (options.all_years) {
+      params.set("all_years", "true");
+    }
+    const query = params.toString();
+    const response = await fetch(
+      `${API_URL}/students${query ? `?${query}` : ""}`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
     if (!response.ok) throw new Error("Failed to fetch students");
     return await response.json();
+  }
+
+  async getStudentIdCards(options = {}) {
+    const params = new URLSearchParams();
+    if (options.academic_year_id != null && options.academic_year_id !== "") {
+      params.set("academic_year_id", String(options.academic_year_id));
+    }
+    if (options.all_years) {
+      params.set("all_years", "true");
+    }
+    if (options.paginated) {
+      params.set("paginated", "true");
+    }
+    if (options.page != null) {
+      params.set("page", String(options.page));
+    }
+    if (options.limit != null) {
+      params.set("limit", String(options.limit));
+    }
+    if (options.search) {
+      params.set("search", options.search);
+    }
+    if (options.class_name) {
+      params.set("class_name", options.class_name);
+    }
+    if (options.card_status) {
+      params.set("card_status", options.card_status);
+    }
+    const query = params.toString();
+    const response = await fetch(
+      `${API_URL}/student-id-cards${query ? `?${query}` : ""}`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
+    if (!response.ok) throw new Error("Failed to fetch student ID cards");
+    return await response.json();
+  }
+
+  async getStudentIdCardsBatch(ids = []) {
+    const response = await fetch(`${API_URL}/student-id-cards/batch`, {
+      method: "POST",
+      headers: {
+        ...this.getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ids }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getStudentIdCard(studentDbId) {
+    const response = await fetch(`${API_URL}/student-id-cards/${studentDbId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async backfillStudentIdCards() {
+    const response = await fetch(`${API_URL}/student-id-cards/backfill`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getIdCardSettings() {
+    const response = await fetch(`${API_URL}/student-id-cards/settings`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async updateIdCardSettings(settings) {
+    const response = await fetch(`${API_URL}/student-id-cards/settings`, {
+      method: "PUT",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(settings),
+    });
+    return this.handleResponse(response);
   }
 
   async deleteStudent(id) {
@@ -2079,6 +2170,69 @@ class ApiService {
       console.error("Get academic years error:", error);
       return [];
     }
+  }
+
+  async getActiveAcademicYear() {
+    const response = await fetch(`${API_URL}/v1/academic-years/active`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getAcademicYearContext() {
+    const response = await fetch(`${API_URL}/v1/academic-years/context`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async switchAcademicYear(targetYearId, reason = "") {
+    const response = await fetch(`${API_URL}/v1/academic-years/switch`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({
+        target_year_id: targetYearId,
+        confirm: true,
+        reason,
+      }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async rolloverAcademicYear({ start_date, end_date, reason = "" }) {
+    const response = await fetch(`${API_URL}/v1/academic-years/rollover`, {
+      method: "POST",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({
+        start_date,
+        end_date,
+        activate_immediately: true,
+        confirm: true,
+        reason,
+      }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async reactivateAcademicYear(yearId, reason) {
+    const response = await fetch(
+      `${API_URL}/v1/academic-years/${yearId}/reactivate`,
+      {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ confirm: true, reason }),
+      }
+    );
+    return this.handleResponse(response);
+  }
+
+  async getAcademicYearSwitchLogs(limit = 20) {
+    const response = await fetch(
+      `${API_URL}/v1/academic-years/switch-logs?limit=${limit}`,
+      { headers: this.getAuthHeaders() }
+    );
+    const result = await this.handleResponse(response);
+    return result?.data ?? [];
   }
 
   async getPaidSalaries() {

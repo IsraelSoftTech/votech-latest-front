@@ -1,0 +1,59 @@
+/**
+ * Print iframe styles — keep in sync with StudentIdCardPrint.css
+ * (CRA bundles screen CSS separately; print uses this inline copy.)
+ */
+export const ID_CARD_PRINT_INLINE_CSS = `
+.sid-card-outer{display:inline-block;padding:0;vertical-align:top}
+.sid-card{position:relative;width:85.6mm;height:53.98mm;box-sizing:border-box;background:linear-gradient(160deg,#fafbfd 0%,#eef3fa 38%,#e4ecf7 100%);border-radius:3mm;overflow:hidden;display:flex;flex-direction:column;font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;color:#152238;box-shadow:0 0 0 1px #204080,0 0 0 2.5px #f0f4fa,0 0 0 3.2px #204080}
+.sid-card-frame{position:absolute;inset:1.1mm;border:0.35mm solid rgba(32,64,128,0.22);border-radius:2.2mm;pointer-events:none;z-index:2}
+.sid-card-texture{position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.55;background:radial-gradient(ellipse 80% 60% at 70% 40%,rgba(45,90,168,0.07) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 10% 90%,rgba(32,64,128,0.06) 0%,transparent 60%),repeating-linear-gradient(105deg,transparent,transparent 0.8mm,rgba(32,64,128,0.025) 0.8mm,rgba(32,64,128,0.025) 1.6mm)}
+.sid-card-texture-fine{position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.4;background:repeating-linear-gradient(0deg,transparent,transparent 0.4mm,rgba(255,255,255,0.35) 0.4mm,rgba(255,255,255,0.35) 0.5mm)}
+.sid-card-watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0}
+.sid-card-watermark-logo{width:34mm;height:34mm;object-fit:contain;opacity:0.06;filter:grayscale(30%);box-shadow:none}
+.sid-card-header,.sid-card-title-bar,.sid-card-body,.sid-card-footer-strip{position:relative;z-index:3}
+.sid-card-header{display:flex;align-items:center;justify-content:space-between;gap:2mm;padding:1mm 2mm 0.9mm 1.6mm;background:linear-gradient(180deg,#1e3d7a 0%,#204080 55%,#1a3568 100%);color:#fff;min-height:9mm;border-bottom:0.5mm solid rgba(255,255,255,0.12);overflow:hidden}
+.sid-card-header-accent{position:absolute;inset:0;background:repeating-linear-gradient(-55deg,transparent,transparent 1.5mm,rgba(255,255,255,0.04) 1.5mm,rgba(255,255,255,0.04) 3mm);pointer-events:none}
+.sid-card-header-left{display:flex;align-items:center;gap:1.4mm;flex:1;min-width:0}
+.sid-card-logo-wrap{flex-shrink:0;padding:0.4mm;background:#fff;border-radius:1.2mm;box-shadow:0 0.5mm 1.2mm rgba(0,0,0,0.2)}
+.sid-card-logo{width:7mm;height:7mm;object-fit:contain;display:block}
+.sid-card-school-block{min-width:0}
+.sid-card-school-name{margin:0;font-size:7.2pt;font-weight:800;letter-spacing:0.04em;line-height:1.1;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sid-card-motto{margin:0.25mm 0 0;font-size:4.8pt;opacity:0.92;line-height:1.15;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sid-card-motto::before{content:"\\201C"}
+.sid-card-motto::after{content:"\\201D"}
+.sid-card-header-right{display:flex;flex-direction:column;align-items:flex-end;gap:0.2mm;flex-shrink:0;text-align:right}
+.sid-card-motto-side{font-size:4.2pt;font-weight:700;letter-spacing:0.06em;opacity:0.9;white-space:nowrap}
+.sid-card-motto-side--en{font-size:3.6pt;opacity:0.72;font-weight:600}
+.sid-card-title-bar{text-align:center;background:linear-gradient(180deg,#c8d8ef 0%,#dce8f6 40%,#e8eef8 100%);border-bottom:0.4px solid rgba(32,64,128,0.35);padding:0.5mm 0;position:relative}
+.sid-card-title-bar::before,.sid-card-title-bar::after{content:"";position:absolute;top:50%;width:12mm;height:0.3mm;background:linear-gradient(90deg,transparent,#204080,transparent)}
+.sid-card-title-bar::before{left:3mm}
+.sid-card-title-bar::after{right:3mm}
+.sid-card-title-text{font-size:6.8pt;font-weight:800;letter-spacing:0.18em;color:#204080}
+.sid-card-body{flex:1;display:grid;grid-template-columns:17.5mm minmax(0,1fr);gap:1.6mm;padding:1mm 1.6mm 0.7mm 1.3mm;min-height:0;overflow:hidden}
+.sid-card-left-col{display:flex;flex-direction:column;align-items:center;gap:0.7mm;padding-top:0.2mm}
+.sid-photo-frame{padding:0.5mm;background:linear-gradient(145deg,#fff 0%,#dce6f5 100%);border:0.5mm solid #204080;border-radius:1.2mm;box-shadow:inset 0 0 1mm rgba(32,64,128,0.08)}
+.sid-photo-img,.sid-photo-fallback{width:15mm;height:17.5mm;border-radius:0.6mm;object-fit:cover;background:#dde4f0;display:block}
+.sid-photo-fallback{display:flex;align-items:center;justify-content:center;font-size:14pt;font-weight:800;color:#204080}
+.sid-card-qr-block{display:flex;flex-direction:column;align-items:center;gap:0.25mm;width:100%;padding:0.4mm;background:rgba(255,255,255,0.65);border:0.35mm solid rgba(32,64,128,0.25);border-radius:0.8mm}
+.sid-card-qr{display:block;width:13mm!important;height:13mm!important;background:#fff}
+.sid-card-qr-placeholder{width:13mm;height:13mm;border:1px dashed #aaa;display:flex;align-items:center;justify-content:center;font-size:5pt;color:#888;background:#fff}
+.sid-card-qr-caption{font-size:3.8pt;font-weight:600;color:#204080;text-align:center;line-height:1.1;letter-spacing:0.02em}
+.sid-card-details{display:flex;flex-direction:column;gap:0.5mm;min-width:0;border-left:0.4mm solid rgba(32,64,128,0.15);padding-left:1.2mm}
+.sid-name-strip{display:flex;flex-direction:column;gap:0.15mm;padding:0.5mm 0.8mm;background:linear-gradient(90deg,rgba(32,64,128,0.12) 0%,rgba(32,64,128,0.04) 100%);border-left:0.6mm solid #204080;border-radius:0 0.8mm 0.8mm 0}
+.sid-name-label{font-size:4.5pt;font-weight:700;color:#204080;text-transform:uppercase;letter-spacing:0.08em}
+.sid-name-value{font-size:7.2pt;font-weight:800;color:#152238;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sid-details-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:2mm;row-gap:0.55mm;flex:1;align-content:start}
+.sid-detail-item{display:flex;flex-direction:column;gap:0.1mm;min-width:0;padding-bottom:0.15mm;border-bottom:0.2mm dotted rgba(32,64,128,0.12)}
+.sid-detail-label{font-size:4.8pt;font-weight:700;color:#204080;text-transform:uppercase;letter-spacing:0.04em;line-height:1.1}
+.sid-detail-value{font-size:6.2pt;font-weight:600;color:#152238;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sid-details-footer{display:grid;grid-template-columns:1fr 1fr;gap:2mm;padding-top:0.3mm;margin-top:auto;border-top:0.35mm solid rgba(32,64,128,0.2)}
+.sid-details-footer .sid-detail-item{border-bottom:none;padding-bottom:0}
+.sid-details-footer .sid-detail-value{font-weight:700;color:#204080}
+.sid-card-footer-strip{height:1.4mm;background:linear-gradient(90deg,#1a3568,#204080 30%,#2d5aa8 70%,#1a3568);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.sid-footer-text{font-size:3pt;font-weight:700;color:rgba(255,255,255,0.85);letter-spacing:0.15em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90%}
+.sid-print-sheet{background:#fff;box-sizing:border-box;width:100%}
+.sid-print-sheet--grid{display:grid;grid-template-columns:repeat(2,85.6mm);column-gap:8mm;row-gap:4mm;justify-content:center;align-content:start}
+.sid-print-sheet--single{display:flex;justify-content:center;align-items:flex-start;width:100%}
+.sid-print-slot{width:85.6mm;height:53.98mm;break-inside:avoid;page-break-inside:avoid}
+.sid-print-slot--page-break{page-break-after:always;break-after:page}
+`;

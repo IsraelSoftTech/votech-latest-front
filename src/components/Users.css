@@ -307,6 +307,119 @@
   min-width: 320px;
   max-width: 95vw;
 }
+
+/* Create user modal — wider layout */
+.users-create-modal {
+  width: min(820px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px 32px 32px;
+}
+
+.users-create-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e9f2;
+}
+
+.users-create-modal-header h3 {
+  margin: 0;
+  color: #204080;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.users-create-modal-close {
+  background: #f8fafc;
+  border: 1px solid #e5e9f2;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.users-create-modal-close:hover {
+  background: #eef2ff;
+  color: #204080;
+  border-color: rgba(32, 64, 128, 0.2);
+}
+
+.users-create-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+
+.users-create-field label {
+  display: block;
+  margin-top: 0;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #204080;
+  font-size: 0.9rem;
+}
+
+.users-create-form .users-create-field input,
+.users-create-form .users-create-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  margin-top: 0;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.users-create-form .users-create-field input:focus,
+.users-create-form .users-create-field select:focus {
+  outline: none;
+  border-color: #204080;
+  box-shadow: 0 0 0 3px rgba(32, 64, 128, 0.12);
+}
+
+.users-password-field {
+  position: relative;
+}
+
+.users-password-field input {
+  padding-right: 44px !important;
+}
+
+.users-password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.users-password-toggle:hover {
+  color: #204080;
+}
+
+.users-create-actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e9f2;
+}
 .users-edit-form label {
   display: block;
   margin-top: 12px;
@@ -391,5 +504,12 @@
   }
   .users-table {
     min-width: 600px;
+  }
+  .users-create-modal {
+    width: 95vw;
+    padding: 20px 18px 24px;
+  }
+  .users-create-form-grid {
+    grid-template-columns: 1fr;
   }
 } 

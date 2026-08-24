@@ -25,6 +25,7 @@ import {
   FaUpload,
   FaPrint,
   FaUser,
+  FaLock,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 
@@ -34,6 +35,7 @@ import StudentListReport from "./StudentListReport";
 import * as XLSX from "xlsx";
 import { useLocation } from "react-router-dom";
 import SideTop from "./SideTop";
+import { useActiveYear, useSelectableAcademicYears } from "../context/ActiveYearContext";
 import marksApi from "./marks-module/utils/api";
 import { toast } from "react-toastify";
 import jsPDF from 'jspdf';
@@ -222,6 +224,12 @@ export default function AdminStudent() {
   const roleLower = (authUser?.role || '').toString().toLowerCase();
   const isAdmin1 = roleLower === 'admin1';
   const isAdmin4 = roleLower === 'admin4';
+  const {
+    isViewingArchived: isYearReadOnly,
+    activeYear,
+  } = useActiveYear();
+  const isYearSelectionLocked = Boolean(activeYear?.id);
+  const [listYearFilter, setListYearFilter] = useState(null);
   const [form, setForm] = useState({
     studentId: "",
     regDate: new Date().toISOString().slice(0, 10),
@@ -251,6 +259,7 @@ export default function AdminStudent() {
   const [studentList, setStudentList] = useState([]);
   const [classes, setClasses] = useState([]);
   const [accademicYears, setAcademicYears] = useState([]);
+  const selectableYears = useSelectableAcademicYears(accademicYears);
   const [specialties, setSpecialties] = useState([]);
   const [editId, setEditId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -296,10 +305,14 @@ export default function AdminStudent() {
         setClasses(classData.data.data);
         const specialtyData = await api.getSpecialties();
         setSpecialties(specialtyData);
-        const students = await api.getStudents();
+        const accademicYearsRes = await marksApi.get("/academic-years");
+        const yearsList = accademicYearsRes.data.data || [];
+        setAcademicYears(yearsList);
+        const yearId = listYearFilter ?? activeYear?.id ?? null;
+        const students = await api.getStudents(
+          yearId ? { academic_year_id: yearId } : {}
+        );
         setStudentList(students);
-        const accademicYears = await marksApi.get("/academic-years");
-        setAcademicYears(accademicYears.data.data);
         // Fetch users count for Registered Staff card
         try {
           const users = await api.getUsers();
@@ -312,13 +325,27 @@ export default function AdminStudent() {
           setUsersCount(0);
         }
       } catch (err) {
-        // Optionally handle error
         toast.error("Failed to fetch page data");
         console.log("Fetch Error", err);
       }
     }
     fetchData();
-  }, []);
+  }, [listYearFilter, activeYear?.id]);
+
+  useEffect(() => {
+    if (activeYear?.id) {
+      setListYearFilter(Number(activeYear.id));
+    }
+  }, [activeYear?.id]);
+
+  useEffect(() => {
+    if (showModal && activeYear?.id && !editId) {
+      setForm((f) => ({
+        ...f,
+        academicYear: String(activeYear.id),
+      }));
+    }
+  }, [showModal, activeYear?.id, editId]);
 
 
 
@@ -409,6 +436,11 @@ export default function AdminStudent() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (isYearReadOnly) {
+      setError("Cannot modify students while viewing an archived academic year.");
+      toast.error("This academic year is read-only.");
+      return;
+    }
     setError("");
     setRegistering(true);
     try {
@@ -439,7 +471,9 @@ export default function AdminStudent() {
       }
 
       // Refresh student list
-      const students = await api.getStudents();
+      const students = await api.getStudents(
+        listYearFilter ? { academic_year_id: listYearFilter } : {}
+      );
       setStudentList(students);
       
       setTimeout(() => {
@@ -473,6 +507,10 @@ export default function AdminStudent() {
   };
 
   const handleDelete = (studentId) => {
+    if (isYearReadOnly) {
+      toast.error("Cannot delete students while viewing an archived academic year.");
+      return;
+    }
     setDeleteIdx(studentId);
     setShowDeleteModal(true);
   };
@@ -483,7 +521,9 @@ export default function AdminStudent() {
       await api.deleteStudent(studentId);
       setSuccess("Student deleted successfully!");
       setSuccessType("success");
-      const students = await api.getStudents();
+      const students = await api.getStudents(
+        listYearFilter ? { academic_year_id: listYearFilter } : {}
+      );
       setStudentList(students);
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
@@ -525,7 +565,9 @@ export default function AdminStudent() {
         setExcelSuccess("");
       }, 1200);
       // Refresh student list
-      const students = await api.getStudents();
+      const students = await api.getStudents(
+        listYearFilter ? { academic_year_id: listYearFilter } : {}
+      );
       setStudentList(students);
     } catch (err) {
       setExcelError(err.message || "Failed to import students.");
@@ -862,7 +904,9 @@ export default function AdminStudent() {
         setUploadManySuccess("");
       }, 1200);
       // Refresh student list
-      const students = await api.getStudents();
+      const students = await api.getStudents(
+        listYearFilter ? { academic_year_id: listYearFilter } : {}
+      );
       setStudentList(students);
     } catch (err) {
       setUploadManyError(err.message || "Failed to upload students.");
@@ -884,7 +928,14 @@ export default function AdminStudent() {
     <SideTop>
       <div className="students-page">
       <header className="students-page-header">
-        <h1 className="students-page-title">Students</h1>
+        <h1 className="students-page-title">
+          Students
+          {isYearReadOnly && (
+            <span className="students-read-only-badge">
+              <FaLock /> Read Only
+            </span>
+          )}
+        </h1>
         <p className="students-page-subtitle">
           Manage registrations, records, and class lists
         </p>
@@ -921,7 +972,24 @@ export default function AdminStudent() {
       </div>
 
       <div className="students-toolbar">
-        {!(isAdmin1 || isAdmin4) && (
+        <div className="students-year-filter">
+          <label htmlFor="students-list-year">Academic Year</label>
+          <select
+            id="students-list-year"
+            value={listYearFilter ?? activeYear?.id ?? ""}
+            onChange={(e) =>
+              setListYearFilter(e.target.value ? Number(e.target.value) : null)
+            }
+            disabled={isYearSelectionLocked}
+          >
+            {selectableYears.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {!(isAdmin1 || isAdmin4 || isYearReadOnly) && (
           <button
             type="button"
             className="students-btn-register add-student-fab"
@@ -1066,7 +1134,7 @@ export default function AdminStudent() {
                     <StudentPhoto student={s} />
                   </td>
                   <td className="actions students-actions-cell">
-                    {!(isAdmin1 || isAdmin4) && (
+                    {!(isAdmin1 || isAdmin4 || isYearReadOnly) && (
                       <div className="students-action-group">
                         <button
                           type="button"
@@ -1251,12 +1319,13 @@ export default function AdminStudent() {
                         id="academicYear"
                         className="students-form-input"
                         name="academicYear"
-                        value={form.academicYear}
+                        value={form.academicYear || (activeYear?.id ? String(activeYear.id) : "")}
                         onChange={handleFormChange}
                         required
+                        disabled={isYearSelectionLocked}
                       >
                         <option value="">Select year</option>
-                        {accademicYears.map((opt) => (
+                        {selectableYears.map((opt) => (
                           <option key={opt.id} value={opt.id}>
                             {typeof opt.name === "string"
                               ? opt.name
@@ -1515,7 +1584,7 @@ export default function AdminStudent() {
                 <button
                   type="submit"
                   className="students-form-btn students-form-btn--primary"
-                  disabled={registering || isAdmin1 || isAdmin4}
+                  disabled={registering || isAdmin1 || isAdmin4 || isYearReadOnly}
                   title={
                     isAdmin1 || isAdmin4
                       ? "Not allowed for Admin1"
@@ -1648,7 +1717,7 @@ export default function AdminStudent() {
                 className="signup-btn"
                 style={{ background: "#217346", color: "#fff", minWidth: 120 }}
                 disabled={
-                  excelLoading || !excelFile || !!excelError || isAdmin1
+                  excelLoading || !excelFile || !!excelError || isAdmin1 || isYearReadOnly
                 }
               >
                 {excelLoading ? "Importing..." : "Import"}

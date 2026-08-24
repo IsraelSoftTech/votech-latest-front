@@ -23,8 +23,13 @@ import {
   FaFilter,
   FaUserSlash,
   FaTrash,
+  FaLock,
 } from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
+import {
+  useActiveYear,
+  useSelectableAcademicYears,
+} from "../../../../context/ActiveYearContext";
 import Modal from "../../components/Modal/Modal.component";
 
 // Utility function for string similarity (Levenshtein distance)
@@ -713,6 +718,11 @@ export const MarksUploadPage = () => {
     "Psychosocialist"
   );
 
+  const {
+    isViewingArchived: isMarksReadOnly,
+    activeYear,
+  } = useActiveYear();
+
   const hasFetchedRef = useRef(false);
   const searchInputRef = useRef(null);
   const suggestionsRef = useRef(null);
@@ -727,6 +737,8 @@ export const MarksUploadPage = () => {
   // Data states
   const [students, setStudents] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
+  const selectableYears = useSelectableAcademicYears(academicYears);
+  const isYearSelectionLocked = Boolean(activeYear?.id);
   const [departments, setDepartments] = useState([]);
   const [classes, setClasses] = useState([]);
   const [terms, setTerms] = useState([]);
@@ -990,6 +1002,14 @@ export const MarksUploadPage = () => {
     fetchDropdowns();
   }, [user, fetchDropdowns]);
 
+  useEffect(() => {
+    if (!initialDataLoaded || !activeYear?.id) return;
+    setFilters((prev) => ({
+      ...prev,
+      academic_year_id: activeYear.id,
+    }));
+  }, [initialDataLoaded, activeYear?.id]);
+
   const loadStudentsMarks = useCallback(async () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
 
@@ -1186,6 +1206,14 @@ export const MarksUploadPage = () => {
 
   // NEW: Delete mark function
   const handleDeleteMark = (studentId, markId) => {
+    if (isMarksReadOnly) {
+      showModal(
+        "error",
+        "Read Only",
+        "Cannot delete marks while viewing an archived academic year."
+      );
+      return;
+    }
     if (!markId) {
       showModal("error", "Cannot Delete", "No saved mark found to delete.");
       return;
@@ -1285,6 +1313,15 @@ export const MarksUploadPage = () => {
   };
 
   const handleSave = async () => {
+    if (isMarksReadOnly) {
+      showModal(
+        "error",
+        "Read Only",
+        "You are viewing an archived academic year. Switch to the active year to save marks."
+      );
+      return;
+    }
+
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
 
     if (!academic_year_id || !class_id || !term_id || !sequence_id) {
@@ -1742,6 +1779,15 @@ export const MarksUploadPage = () => {
   };
 
   const handleImportExcel = async (e) => {
+    if (isMarksReadOnly) {
+      showModal(
+        "error",
+        "Read Only",
+        "Cannot import marks while viewing an archived academic year."
+      );
+      e.target.value = "";
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -2276,7 +2322,14 @@ export const MarksUploadPage = () => {
   return (
     <SideTop>
       <div className="marks-upload-page">
-        <h2 className="marks-page-title">Upload {subject.name} Marks</h2>
+        <h2 className="marks-page-title">
+          Upload {subject.name} Marks
+          {isMarksReadOnly && (
+            <span className="marks-read-only-badge">
+              <FaLock /> Read Only
+            </span>
+          )}
+        </h2>
 
         {loadingPage ? (
           <Skeleton height={35} count={6} style={{ marginBottom: "10px" }} />
@@ -2292,16 +2345,16 @@ export const MarksUploadPage = () => {
               <div className="marks-filter-select">
                 <Select
                   placeholder="Academic Year"
-                  options={academicYears.map((y) => ({
+                  options={selectableYears.map((y) => ({
                     value: y.id,
                     label: y.name,
                   }))}
                   value={
-                    academicYears.find(
+                    selectableYears.find(
                       (y) => Number(y.id) === Number(filters.academic_year_id)
                     ) && {
                       value: filters.academic_year_id,
-                      label: academicYears.find(
+                      label: selectableYears.find(
                         (y) => Number(y.id) === Number(filters.academic_year_id)
                       )?.name,
                     }
@@ -2314,6 +2367,8 @@ export const MarksUploadPage = () => {
                       sequence_id: null,
                     }))
                   }
+                  isDisabled={isYearSelectionLocked}
+                  isClearable={!isYearSelectionLocked}
                 />
               </div>
 
@@ -2445,6 +2500,7 @@ export const MarksUploadPage = () => {
                 {exportingExcelFile ? "Downloading..." : "Export to Excel"}
               </button>
 
+              {!isMarksReadOnly && (
               <div className="marks-upload-wrapper">
                 <input
                   type="file"
@@ -2468,6 +2524,7 @@ export const MarksUploadPage = () => {
                   {importingExcelFile ? "Uploading..." : "Upload Excel"}
                 </button>
               </div>
+              )}
             </div>
 
             <div className="marks-controls-container">
@@ -2705,7 +2762,7 @@ export const MarksUploadPage = () => {
                                     handleMarkChange(s.id, val)
                                   }
                                   onClear={() => handleMarkChange(s.id, "")}
-                                  disabled={isExcluded}
+                                  disabled={isExcluded || isMarksReadOnly}
                                 />
                               )}
                             </td>
@@ -2713,7 +2770,8 @@ export const MarksUploadPage = () => {
                               {s.id !== "none" && (
                                 <>
                                   {/* Show delete button if student has a saved mark (regardless of score) */}
-                                  {marks.find(
+                                  {!isMarksReadOnly &&
+                                  marks.find(
                                     (m) => m.student_id === s.id && m.id
                                   ) && (
                                     <button
@@ -2781,7 +2839,7 @@ export const MarksUploadPage = () => {
                                           handleMarkChange(s.id, "")
                                         }
                                         placeholder="0-20"
-                                        disabled={isExcluded}
+                                        disabled={isExcluded || isMarksReadOnly}
                                       />
                                     )}
                                   </div>
@@ -2789,7 +2847,8 @@ export const MarksUploadPage = () => {
                                   {s.id !== "none" && (
                                     <>
                                       {/* Show delete button if student has a saved mark */}
-                                      {marks.find(
+                                      {!isMarksReadOnly &&
+                                      marks.find(
                                         (m) => m.student_id === s.id && m.id
                                       ) && (
                                         <button
@@ -2889,6 +2948,7 @@ export const MarksUploadPage = () => {
               </div>
             )}
 
+            {!isMarksReadOnly && (
             <div className="marks-save-section">
               <button
                 className="marks-btn marks-btn-save"
@@ -2898,6 +2958,7 @@ export const MarksUploadPage = () => {
                 {saving ? "Saving..." : "Save Marks"}
               </button>
             </div>
+            )}
           </>
         )}
 

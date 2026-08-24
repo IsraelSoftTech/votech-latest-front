@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaEye, FaEyeSlash, FaArrowLeft, FaCheckCircle, FaKey } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import api from '../services/api';
+import { prefetchActiveYearContext } from '../context/ActiveYearContext';
 import Loader from './Loader';
 import SuccessMessage from './SuccessMessage';
 
@@ -54,6 +55,7 @@ const Signin = () => {
       const response = await api.login(form.username, form.password);
       const user = response.data?.user || response.user;
       if (user) {
+        await prefetchActiveYearContext();
         setSuccess('Sign in successful! Redirecting...');
         setSuccessType('success');
         setShowSuccess(true);

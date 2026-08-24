@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaClipboardList, FaTachometerAlt, FaSignOutAlt, FaPlus, FaEdit, FaTrash, FaTimes, FaBook, FaChevronRight, FaMoneyBill } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import './AdminClass.css';
+import './Specialty.css';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
 import { useLocation } from 'react-router-dom';
@@ -125,7 +126,7 @@ export default function Specialty(props) {
       setForm({ name: '', abbreviation: '' });
       setAssignedClasses([]);
       await fetchSpecialties(); // Always refresh after save
-      setSuccess('Specialty saved!');
+      setSuccess('Department saved!');
       setTimeout(() => setSuccess(''), 1200);
     } catch (err) {
       setError('Failed to save.');
@@ -134,71 +135,120 @@ export default function Specialty(props) {
 
   return (
     <SideTop>
-      {/* Place the main content of Specialty here, excluding sidebar/topbar */}
-      <div className="programs-section" style={{ maxWidth: 900, margin: '0 auto', padding: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-          <h2 style={{ margin: 0, flex: 1 }}>Specialties</h2>
-          <button className="add-class-btn" onClick={() => { setShowModal(true); setEditId(null); setForm({ name: '', abbreviation: '' }); }} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Add Specialty'}><FaPlus /> Add Specialty</button>
+      <div className="dept-page">
+        <div className="dept-page-header">
+          <h1 className="dept-page-title">Departments</h1>
+          <p className="dept-page-subtitle">
+            Manage departments, abbreviations, and class assignments
+          </p>
         </div>
-        <div className="dashboard-cards" style={{ marginBottom: 24 }}>
-          <div className="card classes" style={{ minWidth: 200, flex: 1 }}>
-            <div className="icon"><FaPlus /></div>
+
+        <div className="dashboard-cards">
+          <div className="card classes">
+            <div className="icon"><FaClipboardList /></div>
             <div className="count">{specialties.length}</div>
-            <div className="desc">Total Specialties</div>
+            <div className="desc">Total Departments</div>
           </div>
         </div>
-        <div className="class-table-wrapper" style={{ overflowX: 'auto' }}>
-          <table className="class-table">
-            <thead>
-              <tr>
-                <th>Specialty Name</th>
-                <th>Abbreviation</th>
-                <th>Classes</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {specialties.map(s => (
-                <tr key={s.id}>
-                  <td>{typeof s.name === 'string' ? s.name : 'Unknown Specialty'}</td>
-                  <td>{s.abbreviation}</td>
-                  <td>
-                    <div style={{ maxHeight: 120, overflowY: 'auto', border: '1px solid #eee', borderRadius: 4, padding: 8 }}>
-                      {classes.filter(c => s.class_ids && s.class_ids.includes(c.id)).map(c => (
-                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          <input type="checkbox" checked={true} disabled /> {typeof c.name === 'string' ? c.name : 'Unknown Class'}
-                        </div>
-                      ))}
-                    </div>
-                  </td>
-                  <td>
-                    <button className="action-btn edit" onClick={() => handleEdit(s)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}><FaEdit /></button>
-                    <button className="action-btn delete" onClick={() => askDelete(s)} disabled={isAdmin1} title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}><FaTrash /></button>
-                  </td>
+
+        <div className="class-section dept-table-section">
+          <div className="class-header-row dept-table-header">
+            <h2>All Departments</h2>
+            <button
+              className="add-class-btn"
+              onClick={() => {
+                setShowModal(true);
+                setEditId(null);
+                setForm({ name: '', abbreviation: '' });
+              }}
+              disabled={isAdmin1}
+              title={isAdmin1 ? 'Not allowed for Admin1' : 'Add Department'}
+            >
+              <FaPlus /> Add Department
+            </button>
+          </div>
+
+          <div className="class-table-wrapper">
+            <table className="class-table">
+              <thead>
+                <tr>
+                  <th>Department Name</th>
+                  <th>Abbreviation</th>
+                  <th>Classes</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {specialties.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', color: '#64748b' }}>
+                      No departments found.
+                    </td>
+                  </tr>
+                ) : (
+                  specialties.map(s => (
+                    <tr key={s.id}>
+                      <td>{typeof s.name === 'string' ? s.name : 'Unknown Department'}</td>
+                      <td>{s.abbreviation}</td>
+                      <td>
+                        <div className="dept-class-list">
+                          {classes.filter(c => s.class_ids && s.class_ids.includes(c.id)).length === 0 ? (
+                            <span className="dept-class-empty">No classes assigned</span>
+                          ) : (
+                            classes
+                              .filter(c => s.class_ids && s.class_ids.includes(c.id))
+                              .map(c => (
+                                <span key={c.id} className="dept-class-chip">
+                                  {typeof c.name === 'string' ? c.name : 'Unknown Class'}
+                                </span>
+                              ))
+                          )}
+                        </div>
+                      </td>
+                      <td className="actions">
+                        <button
+                          className="action-btn edit"
+                          onClick={() => handleEdit(s)}
+                          disabled={isAdmin1}
+                          title={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          className="action-btn delete"
+                          onClick={() => askDelete(s)}
+                          disabled={isAdmin1}
+                          title={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}
+                        >
+                          <FaTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
               <button className="modal-close" onClick={() => setShowModal(false)}><FaTimes /></button>
               <form className="student-modal-form" onSubmit={handleSubmit}>
-                <h2 className="form-title">{editId ? 'Edit Specialty' : 'Add Specialty'}</h2>
+                <h2 className="form-title">{editId ? 'Edit Department' : 'Add Department'}</h2>
                 <div className="modal-form-grid">
                   <div>
-                    <label className="input-label">Specialty Name *</label>
-                    <input className="input-field" type="text" name="name" value={typeof form.name === 'string' ? form.name : ''} onChange={handleFormChange} placeholder="Enter Specialty Name" required />
+                    <label className="input-label">Department Name *</label>
+                    <input className="input-field" type="text" name="name" value={typeof form.name === 'string' ? form.name : ''} onChange={handleFormChange} placeholder="Enter Department Name" required />
                     <label className="input-label">Abbreviation *</label>
                     <input className="input-field" type="text" name="abbreviation" value={form.abbreviation} onChange={handleFormChange} placeholder="Enter Abbreviation" required />
                   </div>
                   {editId && (
                     <div>
                       <label className="input-label">Assign to Classes</label>
-                      <div style={{ maxHeight: 120, overflowY: 'auto', border: '1px solid #eee', borderRadius: 4, padding: 8 }}>
+                      <div className="dept-modal-classes">
                         {classes.map(c => (
-                          <label key={c.id} style={{ display: 'block', fontWeight: 500, color: '#204080', marginBottom: 4 }}>
+                          <label key={c.id} className="dept-modal-class-option">
                             <input
                               type="checkbox"
                               checked={assignedClasses.includes(c.id)}
@@ -207,7 +257,8 @@ export default function Specialty(props) {
                                 else setAssignedClasses(prev => prev.filter(id => id !== c.id));
                               }}
                               disabled={isAdmin1}
-                            /> {typeof c.name === 'string' ? c.name : 'Unknown Class'}
+                            />
+                            {typeof c.name === 'string' ? c.name : 'Unknown Class'}
                           </label>
                         ))}
                       </div>
@@ -236,4 +287,4 @@ export default function Specialty(props) {
       </div>
     </SideTop>
   );
-} 
+}

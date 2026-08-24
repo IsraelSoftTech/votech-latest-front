@@ -1,0 +1,247 @@
+.ay-wizard-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 13000;
+  padding: 16px;
+}
+
+.ay-wizard {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+}
+
+.ay-wizard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 22px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ay-wizard-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #204080;
+}
+
+.ay-wizard-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.ay-wizard-close {
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ay-wizard-steps {
+  display: flex;
+  gap: 8px;
+  padding: 12px 22px 0;
+}
+
+.ay-wizard-step-dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  transition: background 0.2s;
+}
+
+.ay-wizard-step-dot.active {
+  background: #93c5fd;
+}
+
+.ay-wizard-step-dot.current {
+  background: #204080;
+}
+
+.ay-wizard-body {
+  padding: 20px 22px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.ay-wizard-lead {
+  margin: 0 0 16px;
+  color: #475569;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.ay-wizard-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.ay-wizard-mode-tab {
+  padding: 10px 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ay-wizard-mode-tab:hover:not(:disabled) {
+  border-color: #204080;
+}
+
+.ay-wizard-mode-tab.active {
+  border-color: #204080;
+  background: #eef3fb;
+  color: #204080;
+}
+
+.ay-wizard-mode-tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ay-wizard-preview-name {
+  margin: -8px 0 12px;
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.ay-wizard-warning-prominent p {
+  margin: 8px 0 0;
+}
+
+.ay-wizard-summary {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ay-wizard-summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ay-wizard-summary-row:last-child {
+  border-bottom: none;
+}
+
+.ay-wizard-summary-row span {
+  color: #64748b;
+}
+
+.ay-wizard-confirm-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.ay-wizard-footer {
+  padding: 14px 22px 18px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Shared with AcademicYearManagement — re-declare btn styles for portal isolation */
+.ay-wizard .ay-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ay-wizard .ay-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ay-wizard .ay-btn-primary {
+  background: #204080;
+  color: #fff;
+}
+
+.ay-wizard .ay-btn-secondary {
+  background: #e8eef8;
+  color: #204080;
+}
+
+.ay-wizard .ay-form-group {
+  margin-bottom: 16px;
+}
+
+.ay-wizard .ay-form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.ay-wizard .ay-form-group input,
+.ay-wizard .ay-form-group select,
+.ay-wizard .ay-form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.ay-wizard .ay-form-group textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.ay-wizard .ay-warning-box {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  color: #92400e;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.ay-wizard .ay-form-error {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
