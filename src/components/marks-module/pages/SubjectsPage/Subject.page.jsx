@@ -35,6 +35,7 @@ const SUBJECT_COLUMNS = [
   { label: "Teachers", accessor: "teacherName" },
   { label: "Assigned", accessor: "isAssigned" },
   { label: "Departments", accessor: "department" },
+  { label: "Orientation Placement", accessor: "orientationDepartmentName" },
 ];
 
 const INITIAL_FORM_STATE = {
@@ -42,6 +43,7 @@ const INITIAL_FORM_STATE = {
   code: "",
   coefficient: 0,
   name: "",
+  orientationDepartmentName: "",
 };
 
 // Custom hook to detect mobile
@@ -307,6 +309,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
               teacherName: teacherNames.join(", ") || "None",
               isAssigned: subject.classSubjects?.length > 0 ? "Yes" : "No",
               department: departmentNames.join(", ") || "None",
+              orientationDepartmentName: subject.orientationDepartment?.name || "None",
             };
           });
 
@@ -404,6 +407,8 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
 
   if (!user) return <div>Unauthorized access</div>;
 
+  const departmentNameOptions = departments.map((d) => d.label);
+
   const handleRowClick = (row) => setSelectedRow(row);
   const closeModal = () => setSelectedRow(null);
 
@@ -424,12 +429,22 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
     setAssignModalOpen(false);
   };
 
+  // The dropdown stores a department NAME (matching this form's existing
+  // CustomDropdown fields, e.g. category), resolved to the id the API
+  // actually wants right before sending — keeps this consistent with the
+  // rest of the form instead of introducing a differently-shaped select
+  // just for this one field.
+  const resolveOrientationDepartmentId = (name) =>
+    departments.find((d) => d.label === name)?.value ?? null;
+
   const createSubject = async () => {
     try {
       setCreateLoading(true);
+      const { orientationDepartmentName, ...rest } = form;
       await api.post("/subjects", {
-        ...form,
+        ...rest,
         coefficient: Number(form.coefficient),
+        orientation_department_id: resolveOrientationDepartmentId(orientationDepartmentName),
       });
       toast.success("Subject Created successfully.");
       closeCreateModal();
@@ -461,9 +476,11 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
   const editSubject = async () => {
     try {
       setEditLoading(true);
+      const { orientationDepartmentName, ...rest } = form;
       await api.patch(`/subjects/${form.id}`, {
-        ...form,
+        ...rest,
         coefficient: Number(form.coefficient),
+        orientation_department_id: resolveOrientationDepartmentId(orientationDepartmentName),
       });
       toast.success("Subject updated successfully.");
       closeEditModal();
@@ -495,6 +512,8 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
       coefficient: row.coefficient,
       code: row.code,
       category: row.category,
+      orientationDepartmentName:
+        row.orientationDepartmentName === "None" ? "" : row.orientationDepartmentName,
     });
     setFormErrors({});
     setEditModalOpen(true);
@@ -619,6 +638,14 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
             onChange={handleUpdateForm}
             error={formErrors.category}
           />
+          <CustomDropdown
+            label="Orientation Placement Department"
+            value={form.orientationDepartmentName}
+            options={departmentNameOptions}
+            name="orientationDepartmentName"
+            onClear={() => handleUpdateForm("orientationDepartmentName", "")}
+            onChange={handleUpdateForm}
+          />
           <SubmitBtn
             title={createLoading ? "Creating Subject..." : "Create Subject"}
             disabled={createLoading}
@@ -674,6 +701,14 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
             onChange={handleUpdateForm}
             error={formErrors.category}
           />
+          <CustomDropdown
+            label="Orientation Placement Department"
+            value={form.orientationDepartmentName}
+            options={departmentNameOptions}
+            name="orientationDepartmentName"
+            onClear={() => handleUpdateForm("orientationDepartmentName", "")}
+            onChange={handleUpdateForm}
+          />
           <SubmitBtn
             title={editLoading ? "Saving changes..." : "Save Changes"}
             disabled={editLoading}
@@ -728,6 +763,12 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
                 <span className="label">Departments</span>
                 <span className="value">
                   {selectedRow.department || "None"}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Orientation Placement Department</span>
+                <span className="value">
+                  {selectedRow.orientationDepartmentName || "None"}
                 </span>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   FaChartBar,
   FaMoneyBillWave,
@@ -7,6 +8,7 @@ import {
   FaGraduationCap,
   FaDownload,
   FaUser,
+  FaTimes,
 } from "react-icons/fa";
 import Modal from "../Modal/Modal.component";
 import api, { headers, subBaseURL } from "../../utils/api";
@@ -27,7 +29,7 @@ function getBackendUrl(path, params) {
   return `${base}/${path}?${params.toString()}`;
 }
 
-// Every tab here is genuinely popup-sized for one student in one year —
+// Every tab here is genuinely popup-sized for one student in one year,
 // none of this needed its own page. Each tab lazy-loads only when first
 // opened, and caches per (student, tab) for the modal's lifetime so
 // switching tabs back and forth doesn't re-fetch.
@@ -35,11 +37,13 @@ export const StudentDetailModal = ({ isOpen, onClose, student, academicYearId })
   const [activeTab, setActiveTab] = useState("academics");
   const [cache, setCache] = useState({});
   const [loadingTab, setLoadingTab] = useState(false);
+  const [photoLightboxOpen, setPhotoLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab("academics");
       setCache({});
+      setPhotoLightboxOpen(false);
     }
   }, [isOpen, student?.id]);
 
@@ -78,7 +82,15 @@ export const StudentDetailModal = ({ isOpen, onClose, student, academicYearId })
         }
         setCache((prev) => ({ ...prev, [tab]: data }));
       } catch (err) {
-        setCache((prev) => ({ ...prev, [tab]: { error: true } }));
+        // A 404 here means "no record exists yet" (no marks entered, no
+        // fee record, no promotion history): a real, expected state for
+        // plenty of students, not a failure. Only surface the generic
+        // error for anything else (network failure, 500, etc.).
+        if (err.response?.status === 404) {
+          setCache((prev) => ({ ...prev, [tab]: tab === "promotion" ? [] : null }));
+        } else {
+          setCache((prev) => ({ ...prev, [tab]: { error: true } }));
+        }
       } finally {
         setLoadingTab(false);
       }
@@ -111,13 +123,20 @@ export const StudentDetailModal = ({ isOpen, onClose, student, academicYearId })
       <div className="sdm-container">
         <div className="sdm-subheader">
           <div className="sdm-identity">
-            <div className="sdm-photo">
-              {student.photo_url ? (
+            {student.photo_url ? (
+              <button
+                type="button"
+                className="sdm-photo sdm-photo-clickable"
+                onClick={() => setPhotoLightboxOpen(true)}
+                title="View larger photo"
+              >
                 <img src={student.photo_url} alt={student.full_name} />
-              ) : (
+              </button>
+            ) : (
+              <div className="sdm-photo">
                 <FaUser className="sdm-photo-placeholder" />
-              )}
-            </div>
+              </div>
+            )}
             <span className="sdm-id">{student.student_id}</span>
           </div>
           <a className="sdm-download-btn" href={downloadUrl}>
@@ -156,6 +175,31 @@ export const StudentDetailModal = ({ isOpen, onClose, student, academicYearId })
           ) : null}
         </div>
       </div>
+
+      {photoLightboxOpen &&
+        student.photo_url &&
+        createPortal(
+          <div
+            className="sdm-lightbox-backdrop"
+            onClick={() => setPhotoLightboxOpen(false)}
+          >
+            <button
+              type="button"
+              className="sdm-lightbox-close"
+              onClick={() => setPhotoLightboxOpen(false)}
+              aria-label="Close"
+            >
+              <FaTimes />
+            </button>
+            <img
+              src={student.photo_url}
+              alt={student.full_name}
+              className="sdm-lightbox-img"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>,
+          document.body
+        )}
     </Modal>
   );
 };
@@ -167,16 +211,35 @@ function AcademicsTab({ data }) {
     ...(data.professionalSubjects || []),
     ...(data.practicalSubjects || []),
   ];
+  // Present only for orientation-class students who have at least one
+  // subject an admin tagged as an orientation-placement subject on the
+  // Subjects page. See reportCard.controller.js's singleReportCard,
+  // which already pulled these out of the arrays above so nothing here
+  // is listed twice.
+  const orientationSubjects = data.orientationSubjects || [];
+  const bestOrientationCode = orientationSubjects.reduce((bestCode, s) => {
+    const val = s.scores?.finalAvg ?? s.scores?.term3Avg ?? s.scores?.term2Avg ?? s.scores?.term1Avg;
+    if (val == null) return bestCode;
+    const bestVal = bestCode
+      ? orientationSubjects.find((o) => o.code === bestCode)?.scores?.finalAvg ??
+        orientationSubjects.find((o) => o.code === bestCode)?.scores?.term3Avg ??
+        orientationSubjects.find((o) => o.code === bestCode)?.scores?.term2Avg ??
+        orientationSubjects.find((o) => o.code === bestCode)?.scores?.term1Avg
+      : null;
+    return bestVal == null || val > bestVal ? s.code : bestCode;
+  }, null);
+  const bestOrientationSubject = orientationSubjects.find((s) => s.code === bestOrientationCode);
+
   return (
     <div>
       <div className="sdm-stat-row">
         <div className="sdm-stat">
-          <span className="sdm-stat-value">{data.termTotals?.annual?.average ?? "—"}</span>
+          <span className="sdm-stat-value">{data.termTotals?.annual?.average ?? "N/A"}</span>
           <span className="sdm-stat-label">Annual Average</span>
         </div>
         <div className="sdm-stat">
           <span className="sdm-stat-value">
-            {data.termTotals?.annual?.rank ?? "—"} of {data.termTotals?.annual?.outOf ?? "—"}
+            {data.termTotals?.annual?.rank ?? "N/A"} of {data.termTotals?.annual?.outOf ?? "N/A"}
           </span>
           <span className="sdm-stat-label">Class Rank</span>
         </div>
@@ -195,14 +258,47 @@ function AcademicsTab({ data }) {
           {subjects.map((s) => (
             <tr key={s.code}>
               <td>{s.title}</td>
-              <td>{s.scores?.term1Avg ?? "—"}</td>
-              <td>{s.scores?.term2Avg ?? "—"}</td>
-              <td>{s.scores?.term3Avg ?? "—"}</td>
-              <td>{s.scores?.finalAvg ?? "—"}</td>
+              <td>{s.scores?.term1Avg ?? "N/A"}</td>
+              <td>{s.scores?.term2Avg ?? "N/A"}</td>
+              <td>{s.scores?.term3Avg ?? "N/A"}</td>
+              <td>{s.scores?.finalAvg ?? "N/A"}</td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {orientationSubjects.length > 0 && (
+        <>
+          <h4 className="sdm-section-title">Orientation Placement Subjects</h4>
+          <table className="sdm-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>T1</th>
+                <th>T2</th>
+                <th>T3</th>
+                <th>Final</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orientationSubjects.map((s) => (
+                <tr key={s.code} className={s.code === bestOrientationCode ? "sdm-row-best" : ""}>
+                  <td>{s.title}</td>
+                  <td>{s.scores?.term1Avg ?? "N/A"}</td>
+                  <td>{s.scores?.term2Avg ?? "N/A"}</td>
+                  <td>{s.scores?.term3Avg ?? "N/A"}</td>
+                  <td>{s.scores?.finalAvg ?? "N/A"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {bestOrientationSubject && (
+            <p className="sdm-orientation-note">
+              Currently strongest in: <b>{bestOrientationSubject.title}</b>
+            </p>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -257,11 +353,11 @@ function AttendanceTab({ data }) {
   return (
     <div className="sdm-stat-row">
       <div className="sdm-stat">
-        <span className="sdm-stat-value">{data.daysPresent ?? "—"}</span>
+        <span className="sdm-stat-value">{data.daysPresent ?? "N/A"}</span>
         <span className="sdm-stat-label">Days Present</span>
       </div>
       <div className="sdm-stat">
-        <span className="sdm-stat-value">{data.totalSessions ?? "—"}</span>
+        <span className="sdm-stat-value">{data.totalSessions ?? "N/A"}</span>
         <span className="sdm-stat-label">Sessions Recorded</span>
       </div>
     </div>
@@ -294,7 +390,7 @@ function PromotionTab({ data }) {
             {row.from_class?.name} ({row.from_academic_year?.name}) →{" "}
             {row.to_class?.name || "Graduated"}
             {row.to_academic_year ? ` (${row.to_academic_year.name})` : ""}
-            {row.overall_average != null ? ` — Average: ${row.overall_average}` : ""}
+            {row.overall_average != null ? `, Average: ${row.overall_average}` : ""}
           </p>
         </div>
       ))}

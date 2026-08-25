@@ -27,8 +27,69 @@ function StatCard({ label, value, sub, tone }) {
   );
 }
 
+// Separate from the pass/fail cards above (those use a flat average≥10
+// proxy) — this reads the real per-student promotion decision, the same
+// one printed on each individual report card, so it's shown as its own
+// labeled block rather than folded into the existing stats.
+function DecisionStatsSection({ decisionStats }) {
+  if (!decisionStats) return null;
+  const ds = decisionStats;
+
+  if (!ds.configured) {
+    return (
+      <>
+        <h4 className="msv-section-title">Promotion Decision Summary</h4>
+        <p className="msv-decision-note">
+          No promotion requirement is configured for this class/academic year — decision
+          statistics unavailable.
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h4 className="msv-section-title">Promotion Decision Summary</h4>
+      <div className="msv-stat-grid">
+        {ds.mode === "promotion" ? (
+          <>
+            <StatCard
+              label="Promoted"
+              value={ds.promoted}
+              sub={`${ds.promotedRate}%`}
+              tone="good"
+            />
+            <StatCard
+              label="Promoted on Condition"
+              value={ds.promotedOnCondition}
+              sub={`${ds.promotedOnConditionRate}%`}
+              tone="warn"
+            />
+            <StatCard label="Repeated" value={ds.repeated} sub={`${ds.repeatedRate}%`} tone="bad" />
+          </>
+        ) : (
+          <>
+            <StatCard
+              label="Satisfactory"
+              value={ds.satisfactory}
+              sub={`${ds.satisfactoryRate}%`}
+              tone="good"
+            />
+            <StatCard
+              label="Academic Warning"
+              value={ds.warning}
+              sub={`${ds.warningRate}%`}
+              tone="bad"
+            />
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
 function OverviewTab({ meta, analysis }) {
-  const { overallStats, genStats, profStats, pracStats, distribution } = analysis;
+  const { overallStats, genStats, profStats, pracStats, distribution, decisionStats } = analysis;
   return (
     <div className="msv-tab-panel">
       <div className="msv-meta-line">
@@ -64,6 +125,8 @@ function OverviewTab({ meta, analysis }) {
           tone="bad"
         />
       </div>
+
+      <DecisionStatsSection decisionStats={decisionStats} />
 
       <div className="msv-category-row">
         {genStats?.avg != null && (

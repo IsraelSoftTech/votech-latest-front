@@ -33,6 +33,52 @@ const SORT_OPTIONS = [
   { value: "status", label: "Status" },
 ];
 
+// Mirrors the real table's columns/row count instead of a plain "Loading…"
+// line, so the layout doesn't jump once data arrives.
+function StudentsTableSkeleton() {
+  return (
+    <table className="students-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Student ID</th>
+          <th>Class</th>
+          <th>Sex</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <tr key={i}>
+            <td>
+              <div className="students-skel" style={{ width: "72%", height: 14 }} />
+            </td>
+            <td>
+              <div className="students-skel" style={{ width: 84, height: 14 }} />
+            </td>
+            <td>
+              <div className="students-skel" style={{ width: "60%", height: 14 }} />
+            </td>
+            <td>
+              <div className="students-skel" style={{ width: 20, height: 14 }} />
+            </td>
+            <td>
+              <div className="students-skel" style={{ width: 64, height: 20, borderRadius: 999 }} />
+            </td>
+            <td>
+              <div className="students-actions-cell">
+                <div className="students-skel" style={{ width: 30, height: 30, borderRadius: 7 }} />
+                <div className="students-skel" style={{ width: 30, height: 30, borderRadius: 7 }} />
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 // Rebuilt Students page — the old AdminStudent.jsx fetched every student
 // unconditionally (active/graduated/withdrawn all mixed together) and did
 // every filter client-side; this defaults to Active and does everything
@@ -314,7 +360,7 @@ export const StudentsPage = () => {
 
       <div className="students-table-wrap">
         {loading && students.length === 0 ? (
-          <div className="students-empty">Loading students…</div>
+          <StudentsTableSkeleton />
         ) : students.length === 0 ? (
           <div className="students-empty">No students match these filters.</div>
         ) : (

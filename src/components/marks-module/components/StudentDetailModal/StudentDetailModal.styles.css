@@ -29,6 +29,17 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  padding: 0;
+}
+
+.sdm-photo-clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.sdm-photo-clickable:hover {
+  border-color: #204080;
+  transform: scale(1.05);
 }
 
 .sdm-photo img {
@@ -40,6 +51,47 @@
 .sdm-photo-placeholder {
   color: #a0c4ff;
   font-size: 1.2rem;
+}
+
+.sdm-lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10050;
+  padding: 2rem;
+  cursor: pointer;
+}
+
+.sdm-lightbox-img {
+  max-width: min(90vw, 520px);
+  max-height: 85vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+
+.sdm-lightbox-close {
+  position: fixed;
+  top: 1.2rem;
+  right: 1.4rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.sdm-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .sdm-id {
@@ -99,6 +151,24 @@
 .sdm-tab-panel {
   min-height: 200px;
   padding-top: 0.3rem;
+}
+
+.sdm-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #204080;
+  margin: 1.1rem 0 0.5rem;
+}
+
+.sdm-row-best td {
+  background: #ebf4ff;
+  font-weight: 700;
+}
+
+.sdm-orientation-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  color: #204080;
 }
 
 .sdm-loading,

@@ -84,6 +84,17 @@
   border-color: #f7b3b3;
   background: #fdecec;
 }
+.msv-stat-card.warn {
+  border-color: #f6cf8e;
+  background: #fffaf0;
+}
+
+.msv-decision-note {
+  font-size: 0.8rem;
+  color: #718096;
+  font-style: italic;
+  margin: 0 0 1.3rem;
+}
 
 .msv-stat-value {
   font-size: 1.4rem;

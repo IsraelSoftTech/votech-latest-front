@@ -228,6 +228,92 @@ function RadialGauge({ pct, label }) {
   return <Chart options={options} series={[pct]} type="radialBar" height={190} />;
 }
 
+function SkeletonStatCard() {
+  return (
+    <div className="a3d-skel-card">
+      <div className="a3d-skel a3d-skel-icon" />
+      <div className="a3d-skel-body">
+        <div className="a3d-skel a3d-skel-line" style={{ width: "55%", height: 22 }} />
+        <div className="a3d-skel a3d-skel-line" style={{ width: "75%", height: 12, marginTop: 8 }} />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonPanel({ height = 260, title = true }) {
+  return (
+    <div className="a3d-panel">
+      {title && (
+        <div className="a3d-skel a3d-skel-line" style={{ width: 160, height: 16, marginBottom: 16 }} />
+      )}
+      <div className="a3d-skel a3d-skel-block" style={{ height }} />
+    </div>
+  );
+}
+
+// Mirrors the finished page's actual sections/proportions (not a generic
+// spinner) so the layout doesn't visibly jump once real data arrives.
+function DashboardSkeleton() {
+  return (
+    <div className="a3d-page">
+      <div className="a3d-header">
+        <div>
+          <div className="a3d-skel a3d-skel-line" style={{ width: 140, height: 26, marginBottom: 8 }} />
+          <div className="a3d-skel a3d-skel-line" style={{ width: 280, height: 14 }} />
+        </div>
+        <div className="a3d-skel a3d-skel-line" style={{ width: 210, height: 42, borderRadius: 10 }} />
+      </div>
+
+      <section className="a3d-section">
+        <div className="a3d-skel a3d-skel-line" style={{ width: 180, height: 18, marginBottom: 16 }} />
+        <div className="a3d-stat-grid">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+        <SkeletonPanel height={300} />
+        <div className="a3d-two-col">
+          <SkeletonPanel height={220} />
+          <SkeletonPanel height={220} />
+        </div>
+        <SkeletonPanel height={260} />
+      </section>
+
+      <section className="a3d-section">
+        <div className="a3d-skel a3d-skel-line" style={{ width: 200, height: 18, marginBottom: 16 }} />
+        <div className="a3d-stat-grid">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+        <div
+          className="a3d-skel a3d-skel-block"
+          style={{ height: 110, borderRadius: 14, marginBottom: "1.1rem" }}
+        />
+        <SkeletonPanel height={220} />
+      </section>
+
+      <section className="a3d-section">
+        <div className="a3d-skel a3d-skel-line" style={{ width: 190, height: 18, marginBottom: 16 }} />
+        <div className="a3d-stat-grid">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+      </section>
+
+      <section className="a3d-section">
+        <div className="a3d-skel a3d-skel-line" style={{ width: 190, height: 18, marginBottom: 16 }} />
+        <div className="a3d-stat-grid">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // Admin3's own dashboard — real academic data only (no fees, discipline,
 // or attendance, per explicit scope decision), replacing the generic
 // Admin.jsx that Admin1 still sees at the same /admin route. The period
@@ -266,9 +352,7 @@ export const Admin3Dashboard = () => {
   if (loading && !data) {
     return (
       <SideTop>
-        <div className="a3d-page">
-          <div className="a3d-empty">Loading dashboard…</div>
-        </div>
+        <DashboardSkeleton />
       </SideTop>
     );
   }

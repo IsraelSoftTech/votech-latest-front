@@ -85,27 +85,46 @@ export const StudentFormModal = ({
       setChoices(next);
       setPhotoPreview(student.photo_url || null);
     } else {
-      setForm(EMPTY_FORM);
+      // New registrations only ever go into the active academic year
+      // (enforced server-side too) — default it instead of making every
+      // registration start with an extra required click.
+      const activeYear = academicYears.find((y) => y.status === "active");
+      setForm({ ...EMPTY_FORM, academic_year_id: activeYear?.id || null });
       setChoices([null, null, null, null, null, null]);
       setPhotoPreview(null);
     }
     setPhotoFile(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, student]);
 
   const selectedClass = classes.find((c) => c.id === form.class_id) || null;
   const isOrientation = Boolean(selectedClass?.is_orientation);
 
+  // Narrowed by the chosen department so a class from a different
+  // department can't even be selected in the first place — the backend
+  // rejects the mismatch too, but catching it here means the admin sees
+  // a filtered list instead of a submit-time error.
   const classOptions = useMemo(
-    () => classes.map((c) => ({ value: c.id, label: c.name })),
-    [classes]
+    () =>
+      classes
+        .filter((c) => !form.specialty_id || c.department_id === form.specialty_id)
+        .map((c) => ({ value: c.id, label: c.name })),
+    [classes, form.specialty_id]
   );
   const departmentOptions = useMemo(
     () => departments.map((d) => ({ value: d.id, label: d.name })),
     [departments]
   );
+  // New registrations are locked to the active academic year (server
+  // enforces this too); editing an existing student keeps the full list
+  // so a historical record can still be corrected.
   const academicYearOptions = useMemo(
-    () => academicYears.map((y) => ({ value: y.id, label: y.name })),
-    [academicYears]
+    () =>
+      (isEdit ? academicYears : academicYears.filter((y) => y.status === "active")).map((y) => ({
+        value: y.id,
+        label: y.name,
+      })),
+    [academicYears, isEdit]
   );
 
   const updateField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
@@ -278,7 +297,21 @@ export const StudentFormModal = ({
             <Select
               options={departmentOptions}
               value={departmentOptions.find((o) => o.value === form.specialty_id) || null}
-              onChange={(opt) => updateField("specialty_id", opt?.value || null)}
+              onChange={(opt) => {
+                const nextDeptId = opt?.value || null;
+                setForm((f) => {
+                  // A class from a different department can't stay
+                  // selected once the department changes — the backend
+                  // would reject that combination anyway.
+                  const cls = classes.find((c) => c.id === f.class_id);
+                  const classStillValid = !nextDeptId || !cls || cls.department_id === nextDeptId;
+                  return {
+                    ...f,
+                    specialty_id: nextDeptId,
+                    class_id: classStillValid ? f.class_id : null,
+                  };
+                });
+              }}
               isClearable
               classNamePrefix="sfm-select"
               {...selectPortalProps}
