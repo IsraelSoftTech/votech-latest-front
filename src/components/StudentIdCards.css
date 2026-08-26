@@ -200,6 +200,12 @@
   background: #fafbfd;
 }
 
+.sidc-thumb-wrap {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
 .sidc-thumb {
   width: 36px;
   height: 36px;

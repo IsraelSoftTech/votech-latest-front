@@ -21,6 +21,7 @@ import Message from "./components/Message.jsx";
 import UserChat from "./components/UserChat";
 import ComingSoon from "./components/ComingSoon.jsx";
 import StudentIdCards from "./components/StudentIdCards.jsx";
+import StudentAttendance from "./components/StudentAttendance.jsx";
 import AcademicYearManagement from "./components/AcademicYearManagement.jsx";
 import Users from "./components/Users.jsx";
 import MonitorUsers from "./components/MonitorUsers.jsx";
@@ -239,20 +240,9 @@ function App() {
         />
         <Route
           path="/student-attendance-report"
-          element={
-            <SideTop>
-              <ComingSoon />
-            </SideTop>
-          }
+          element={<StudentAttendance defaultTab="reports" />}
         />
-        <Route
-          path="/admin-attendance"
-          element={
-            <SideTop>
-              <ComingSoon />
-            </SideTop>
-          }
-        />
+        <Route path="/admin-attendance" element={<StudentAttendance />} />
 
         {/* Academics */}
         <Route path="/admin-subjects" element={<Subjects />} />
@@ -290,7 +280,7 @@ function App() {
           path="/attendance"
           element={
             <DisciplineSideTop>
-              <div className="ds-coming-soon">Coming soon</div>
+              <StudentAttendance embedded />
             </DisciplineSideTop>
           }
         />

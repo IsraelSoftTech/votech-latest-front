@@ -775,6 +775,66 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  async scanStudentAttendance(qrToken, action = "check_in") {
+    const response = await fetch(`${API_URL}/student-attendance/scan`, {
+      method: "POST",
+      headers: {
+        ...this.getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ qr_token: qrToken, action }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getSchoolHours() {
+    const response = await fetch(`${API_URL}/student-attendance/school-hours`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async updateSchoolHours(settings) {
+    const response = await fetch(`${API_URL}/student-attendance/school-hours`, {
+      method: "PUT",
+      headers: {
+        ...this.getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(settings),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getStudentAttendanceReport(options = {}) {
+    const params = new URLSearchParams();
+    if (options.from) params.set("from", options.from);
+    if (options.to) params.set("to", options.to);
+    if (options.class_id) params.set("class_id", String(options.class_id));
+    if (options.academic_year_id != null) {
+      params.set("academic_year_id", String(options.academic_year_id));
+    }
+    const query = params.toString();
+    const response = await fetch(
+      `${API_URL}/student-attendance/report${query ? `?${query}` : ""}`,
+      { headers: this.getAuthHeaders() }
+    );
+    return this.handleResponse(response);
+  }
+
+  async getStudentAttendanceReportClasses(academicYearId) {
+    const params = new URLSearchParams();
+    if (academicYearId != null) {
+      params.set("academic_year_id", String(academicYearId));
+    }
+    const query = params.toString();
+    const response = await fetch(
+      `${API_URL}/student-attendance/report/classes${query ? `?${query}` : ""}`,
+      { headers: this.getAuthHeaders() }
+    );
+    return this.handleResponse(response);
+  }
+
   async deleteStudent(id) {
     const response = await fetch(`${API_URL}/students/${id}`, {
       method: "DELETE",

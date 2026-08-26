@@ -8,7 +8,7 @@ import React, {
 import { createPortal, flushSync } from "react-dom";
 import {
   FaIdCard,
-  FaPrint,
+  FaDownload,
   FaSearch,
   FaSync,
   FaEye,
@@ -25,10 +25,12 @@ import StudentIdCardPrint from "./StudentIdCardPrint";
 import StudentIdCardPrintSheet from "./StudentIdCardPrintSheet";
 import {
   DEFAULT_ID_CARD_SETTINGS,
-  getStudentThumbUrl,
-  preloadStudentPhotoMap,
+  buildStudentPhotoMap,
+  readCachedIdCardSettings,
+  writeCachedIdCardSettings,
 } from "../utils/studentPhoto.util";
-import { printHtmlElement } from "../utils/printIdCards.util";
+import { getActiveYearSnapshot } from "../utils/activeYearSession";
+import { downloadIdCardsPdf } from "../utils/downloadIdCards.util";
 import "./StudentIdCards.css";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
@@ -51,26 +53,22 @@ function buildCacheKey({ yearId, page, limit, search, classFilter, statusFilter 
 }
 
 const StudentThumb = React.memo(function StudentThumb({ student }) {
-  const [err, setErr] = useState(false);
   const initial = student.full_name?.charAt(0)?.toUpperCase() || "?";
-  const hasPhoto = Boolean(student.photo_url || student.photo);
-  const studentDbId = student.student_db_id || student.id;
-  const thumbUrl = hasPhoto && studentDbId ? getStudentThumbUrl(studentDbId) : null;
+  const src = student.thumb_src || null;
 
-  if (thumbUrl && !err) {
+  if (src) {
     return (
-      <img
-        src={thumbUrl}
-        alt=""
-        className="sidc-thumb"
-        loading="lazy"
-        decoding="async"
-        onError={() => setErr(true)}
-      />
+      <div className="sidc-thumb-wrap">
+        <img src={src} alt="" className="sidc-thumb" decoding="async" />
+      </div>
     );
   }
 
-  return <div className="sidc-thumb sidc-thumb-fallback">{initial}</div>;
+  return (
+    <div className="sidc-thumb-wrap">
+      <div className="sidc-thumb sidc-thumb-fallback">{initial}</div>
+    </div>
+  );
 });
 
 function TableSkeleton({ rows = 5 }) {
@@ -228,6 +226,7 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
 
 export default function StudentIdCards() {
   const { activeYear } = useActiveYear();
+  const yearId = activeYear?.id ?? getActiveYearSnapshot()?.id ?? null;
   const [rows, setRows] = useState([]);
   const [stats, setStats] = useState({ total: 0, generated: 0, missing: 0 });
   const [classOptions, setClassOptions] = useState([]);
@@ -244,14 +243,17 @@ export default function StudentIdCards() {
   const [backfilling, setBackfilling] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [cardSettings, setCardSettings] = useState(DEFAULT_ID_CARD_SETTINGS);
+  const [cardSettings, setCardSettings] = useState(() => ({
+    ...DEFAULT_ID_CARD_SETTINGS,
+    ...(readCachedIdCardSettings() || {}),
+  }));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
-  const [printJob, setPrintJob] = useState(null);
-  const [printPhotoMap, setPrintPhotoMap] = useState({});
-  const [printing, setPrinting] = useState(false);
+  const [downloadJob, setDownloadJob] = useState(null);
+  const [downloadPhotoMap, setDownloadPhotoMap] = useState({});
+  const [downloading, setDownloading] = useState(false);
 
-  const printRef = useRef(null);
+  const downloadRef = useRef(null);
   const fetchSeq = useRef(0);
 
   useEffect(() => {
@@ -263,12 +265,14 @@ export default function StudentIdCards() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, classFilter, statusFilter, itemsPerPage, activeYear?.id]);
+  }, [debouncedSearch, classFilter, statusFilter, itemsPerPage, yearId]);
 
   const fetchSettings = useCallback(async () => {
     try {
       const data = await api.getIdCardSettings();
-      setCardSettings({ ...DEFAULT_ID_CARD_SETTINGS, ...data });
+      const next = { ...DEFAULT_ID_CARD_SETTINGS, ...data };
+      setCardSettings(next);
+      writeCachedIdCardSettings(next);
     } catch (e) {
       console.warn("ID card settings load failed", e);
     }
@@ -285,7 +289,7 @@ export default function StudentIdCards() {
   const fetchPage = useCallback(
     async ({ silent = false, bustCache = false } = {}) => {
       const cacheKey = buildCacheKey({
-        yearId: activeYear?.id,
+        yearId,
         page: currentPage,
         limit: itemsPerPage,
         search: debouncedSearch,
@@ -305,7 +309,7 @@ export default function StudentIdCards() {
       try {
         const data = await api.getStudentIdCards({
           paginated: true,
-          academic_year_id: activeYear?.id,
+          academic_year_id: yearId,
           page: currentPage,
           limit: itemsPerPage,
           search: debouncedSearch,
@@ -326,7 +330,7 @@ export default function StudentIdCards() {
       }
     },
     [
-      activeYear?.id,
+      yearId,
       applyListPayload,
       classFilter,
       currentPage,
@@ -406,51 +410,51 @@ export default function StudentIdCards() {
     }
   };
 
-  const runPrintJob = async (students, mode) => {
+  const runDownloadJob = async (students, mode) => {
     if (!students.length) return;
-    setPrinting(true);
+    setDownloading(true);
     try {
-      toast.info("Preparing cards for print…");
-      const photoMap = await preloadStudentPhotoMap(students);
+      const photoMap = await buildStudentPhotoMap(students);
 
       flushSync(() => {
-        setPrintPhotoMap(photoMap);
-        setPrintJob({ students, mode });
+        setDownloadPhotoMap(photoMap);
+        setDownloadJob({ students, mode });
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-      const cardNodes = printRef.current?.querySelectorAll(".sid-card");
+      const cardNodes = downloadRef.current?.querySelectorAll(".sid-card");
       if (!cardNodes?.length) {
-        throw new Error("Print layout not ready");
+        throw new Error("Download layout not ready");
       }
 
-      const title =
+      const filename =
         mode === "single"
-          ? `ID-${students[0]?.student_id || "card"}`
-          : "Student-ID-Cards";
+          ? `ID-${students[0]?.student_id || "card"}.pdf`
+          : `Student-ID-Cards-${new Date().toISOString().slice(0, 10)}.pdf`;
 
-      await printHtmlElement(printRef.current, title);
+      await downloadIdCardsPdf(downloadRef.current, filename);
+      toast.success("ID card PDF downloaded");
     } catch (e) {
       console.error(e);
-      toast.error("Failed to print ID cards");
+      toast.error("Failed to download ID cards");
     } finally {
-      setPrintJob(null);
-      setPrintPhotoMap({});
-      setPrinting(false);
+      setDownloadJob(null);
+      setDownloadPhotoMap({});
+      setDownloading(false);
     }
   };
 
-  const handlePrintSelected = async () => {
+  const handleDownloadSelected = async () => {
     if (!selected.length) return;
     try {
       const students = await api.getStudentIdCardsBatch(selected);
-      const printable = students.filter((s) => s.card_status === "generated");
-      if (!printable.length) {
-        toast.warn("No printable cards in selection");
+      const downloadable = students.filter((s) => s.card_status === "generated");
+      if (!downloadable.length) {
+        toast.warn("No downloadable cards in selection");
         return;
       }
-      await runPrintJob(printable, "grid");
+      await runDownloadJob(downloadable, "grid");
     } catch (e) {
       console.error(e);
       toast.error("Failed to prepare selected cards");
@@ -475,8 +479,9 @@ export default function StudentIdCards() {
     setSavingSettings(true);
     try {
       const res = await api.updateIdCardSettings(form);
-      const next = res.settings || res;
-      setCardSettings({ ...DEFAULT_ID_CARD_SETTINGS, ...next });
+      const next = { ...DEFAULT_ID_CARD_SETTINGS, ...(res.settings || res) };
+      setCardSettings(next);
+      writeCachedIdCardSettings(next);
       toast.success("ID card settings saved");
       setSettingsOpen(false);
     } catch (e) {
@@ -486,9 +491,7 @@ export default function StudentIdCards() {
     }
   };
 
-  const previewPhotoSrc = previewStudent
-    ? getStudentThumbUrl(previewStudent.student_db_id || previewStudent.id)
-    : null;
+  const previewPhotoSrc = previewStudent?.thumb_src || null;
 
   const showEmpty = !fetching && rows.length === 0;
 
@@ -502,7 +505,7 @@ export default function StudentIdCards() {
               Student ID Cards
             </h1>
             <p className="sidc-subtitle">
-              View and print student ID cards with unique QR codes for attendance
+              View and download student ID cards with unique QR codes for attendance
               scanning. Cards are auto-generated when students are registered.
             </p>
           </div>
@@ -538,11 +541,11 @@ export default function StudentIdCards() {
             <button
               type="button"
               className="sidc-btn sidc-btn-primary"
-              onClick={handlePrintSelected}
-              disabled={selectedPrintCount === 0 || printing}
+              onClick={handleDownloadSelected}
+              disabled={selectedPrintCount === 0 || downloading}
             >
-              <FaPrint />
-              Print selected ({selectedPrintCount})
+              <FaDownload />
+              Download selected ({selectedPrintCount})
             </button>
           </div>
         </header>
@@ -678,7 +681,7 @@ export default function StudentIdCards() {
                       <button
                         type="button"
                         className="sidc-action-btn"
-                        title="View & print"
+                        title="View & download"
                         disabled={row.card_status !== "generated"}
                         onClick={() => openPreview(row)}
                       >
@@ -813,10 +816,10 @@ export default function StudentIdCards() {
                 <button
                   type="button"
                   className="sidc-btn sidc-btn-primary"
-                  disabled={printing || previewStudent.card_status !== "generated"}
-                  onClick={() => runPrintJob([previewStudent], "single")}
+                  disabled={downloading || previewStudent.card_status !== "generated"}
+                  onClick={() => runDownloadJob([previewStudent], "single")}
                 >
-                  <FaPrint /> Print Card
+                  <FaDownload /> Download Card
                 </button>
               </div>
             </div>
@@ -831,18 +834,18 @@ export default function StudentIdCards() {
           onSave={handleSaveSettings}
         />
 
-        {printJob &&
+        {downloadJob &&
           createPortal(
             <div
-              ref={printRef}
+              ref={downloadRef}
               className="sid-print-root sid-print-root--portal"
               aria-hidden="true"
             >
               <StudentIdCardPrintSheet
-                students={printJob.students}
+                students={downloadJob.students}
                 settings={cardSettings}
-                photoMap={printPhotoMap}
-                layout={printJob.mode === "single" ? "single" : "grid"}
+                photoMap={downloadPhotoMap}
+                layout={downloadJob.mode === "single" ? "single" : "grid"}
               />
             </div>,
             document.body

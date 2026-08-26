@@ -12,51 +12,103 @@ function blobToDataUrl(blob) {
   });
 }
 
-export async function fetchStudentThumbDataUrl(studentDbId) {
+export async function fetchStudentThumbDataUrl(studentDbId, size = "card") {
   const id = Number(studentDbId);
   if (!id) return null;
 
-  if (photoCache.has(id)) {
-    return photoCache.get(id);
+  const cacheKey = `${id}:${size}`;
+  if (photoCache.has(cacheKey)) {
+    return photoCache.get(cacheKey);
   }
 
   try {
+    const params = new URLSearchParams({ size });
+    if (size === "card") {
+      params.set("generate", "true");
+    }
     const response = await fetch(
-      `${config.API_URL}/students/${id}/photo/thumb`,
+      `${config.API_URL}/students/${id}/photo/thumb?${params}`,
       { headers: api.getAuthHeaders() }
     );
     if (!response.ok) return null;
     const blob = await response.blob();
     const dataUrl = await blobToDataUrl(blob);
-    photoCache.set(id, dataUrl);
+    photoCache.set(cacheKey, dataUrl);
     return dataUrl;
   } catch {
     return null;
   }
 }
 
-export async function preloadStudentPhotoMap(students = []) {
+export async function buildStudentPhotoMap(students = []) {
   const map = {};
-  await Promise.all(
-    students.map(async (student) => {
-      const id = student.student_db_id || student.id;
-      const hasPhoto = Boolean(student.photo_url || student.photo);
-      if (!hasPhoto || !id) return;
-      const dataUrl = await fetchStudentThumbDataUrl(id);
-      if (dataUrl) map[id] = dataUrl;
-    })
-  );
+  const needFetch = [];
+
+  for (const student of students) {
+    const id = student.student_db_id || student.id;
+    if (!id) continue;
+
+    const hasPhoto =
+      student.has_photo ?? Boolean(student.photo_url || student.photo);
+    if (!hasPhoto) continue;
+
+    if (student.thumb_src) {
+      map[id] = student.thumb_src;
+      photoCache.set(`${id}:card`, student.thumb_src);
+    } else {
+      needFetch.push(id);
+    }
+  }
+
+  if (needFetch.length) {
+    await Promise.all(
+      needFetch.map(async (id) => {
+        const dataUrl = await fetchStudentThumbDataUrl(id, "card");
+        if (dataUrl) map[id] = dataUrl;
+      })
+    );
+  }
+
   return map;
 }
 
-export function getStudentThumbUrl(studentDbId) {
+export async function preloadStudentPhotoMap(students = []) {
+  return buildStudentPhotoMap(students);
+}
+
+export function getStudentThumbUrl(studentDbId, size = "list") {
   const id = Number(studentDbId);
   if (!id) return null;
   const token =
     sessionStorage.getItem("token") || localStorage.getItem("token");
+  const params = new URLSearchParams();
+  if (size === "card") params.set("size", "card");
+  if (token) params.set("access_token", token);
+  const query = params.toString();
   const base = `${config.API_URL}/students/${id}/photo/thumb`;
-  if (!token) return base;
-  return `${base}?access_token=${encodeURIComponent(token)}`;
+  return query ? `${base}?${query}` : base;
+}
+
+export const ID_CARD_SETTINGS_CACHE_KEY = "votech_id_card_settings_v1";
+
+export function readCachedIdCardSettings() {
+  try {
+    const raw = sessionStorage.getItem(ID_CARD_SETTINGS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeCachedIdCardSettings(settings) {
+  try {
+    sessionStorage.setItem(
+      ID_CARD_SETTINGS_CACHE_KEY,
+      JSON.stringify(settings)
+    );
+  } catch {
+    /* ignore */
+  }
 }
 
 export const ID_CARD_PRINT_PAGE_STYLE = `
