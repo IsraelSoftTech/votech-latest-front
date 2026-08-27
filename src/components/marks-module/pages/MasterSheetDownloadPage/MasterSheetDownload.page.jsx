@@ -1,11 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import Skeleton from "react-loading-skeleton";
 import { FaDownload, FaEye, FaTable } from "react-icons/fa";
 import api, { headers, subBaseURL } from "../../utils/api";
 import { MasterSheetView } from "../../components/MasterSheetView/MasterSheetView.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
 import "./MasterSheetDownload.styles.css";
+
+// Mirrors the real filter form (4 labeled select boxes) instead of
+// generic gray bars, so the layout doesn't jump once dropdowns arrive.
+function MsdFormSkeleton() {
+  return (
+    <div className="msd-form">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div className="msd-field" key={i}>
+          <div className="msd-skel msd-skel-line" style={{ width: 90, height: 12, marginBottom: 8 }} />
+          <div className="msd-skel msd-skel-block" style={{ height: 38 }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Mirrors the real view's stat cards + grade table instead of plain bars.
+function MsdViewSkeleton() {
+  return (
+    <div className="msd-view-skel">
+      <div className="msd-skel-stat-grid">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div className="msd-skel msd-skel-stat-card" key={i} />
+        ))}
+      </div>
+      <div className="msd-skel-table">
+        <div className="msd-skel msd-skel-table-row header" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div className="msd-skel msd-skel-table-row" key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // Download stays a direct, synchronous PDF (measured worst case ~485MB RSS
 // for a single 1000-student class, streamed server-side, safe for one
@@ -95,17 +129,17 @@ export const MasterSheetDownloadPage = () => {
 
   return (
     <div className="msd-page">
+      <PageHeader
+        title={
+          <span className="msd-title-inner">
+            <FaTable /> Master Sheet
+          </span>
+        }
+        subtitle="Pick a class to view or download its master sheet — class averages, rankings, and grade distribution for a term."
+      />
       <div className="msd-panel">
-        <h3 className="msd-panel-title">
-          <FaTable /> Master Sheet
-        </h3>
-        <p className="msd-panel-subtitle">
-          Pick a class to view or download its master sheet — class averages, rankings, and grade
-          distribution for a term.
-        </p>
-
         {loadingPage ? (
-          <Skeleton height={38} count={4} style={{ marginBottom: 10 }} />
+          <MsdFormSkeleton />
         ) : (
           <>
             <div className="msd-form">
@@ -184,7 +218,7 @@ export const MasterSheetDownloadPage = () => {
               )}
             </div>
 
-            {loadingView && <Skeleton height={36} count={5} style={{ marginTop: 16 }} />}
+            {loadingView && <MsdViewSkeleton />}
 
             {viewData && !loadingView && (
               <MasterSheetView meta={viewData.meta} analysis={viewData.analysis} />

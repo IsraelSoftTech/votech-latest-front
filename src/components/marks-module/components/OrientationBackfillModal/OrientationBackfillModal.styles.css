@@ -58,11 +58,9 @@
   border-radius: 8px;
   min-height: 40px;
   background: #fafbfc;
-  box-shadow: none;
 }
 .obm-select .select__control--is-focused {
   border-color: #204080;
-  box-shadow: 0 0 0 1px #204080;
 }
 
 .obm-bulkbar {

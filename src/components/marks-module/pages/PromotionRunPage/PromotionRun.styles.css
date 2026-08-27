@@ -1,26 +1,15 @@
+@import "../../styles/tokens.css";
+
 .promo-run-page {
   padding: 1.5rem;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, sans-serif;
 }
 
-.promo-run-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1.1rem;
-}
-
-.promo-run-title {
-  display: flex;
+.promo-run-title-inner {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #204080;
-  margin: 0;
 }
 
 .promo-run-warning-badge {
@@ -78,7 +67,7 @@
 }
 .promo-run-plain-input:focus {
   outline: none;
-  border-color: #204080;
+  border-color: var(--vt-primary);
 }
 
 .promo-run-single-move {
@@ -99,7 +88,7 @@
 }
 .promo-run-graduation-toggle input,
 .promo-run-move-grad-toggle input {
-  accent-color: #204080;
+  accent-color: var(--vt-primary);
   width: 15px;
   height: 15px;
   cursor: pointer;
@@ -147,7 +136,7 @@
 }
 .promo-run-move-graduating {
   font-weight: 600;
-  color: #204080;
+  color: var(--vt-primary);
   min-width: 220px;
 }
 .promo-run-move-already-promoted {
@@ -155,6 +144,15 @@
   color: #b7791f;
   font-size: 0.85rem;
   min-width: 220px;
+}
+.promo-run-move-status-running {
+  color: #204080;
+}
+.promo-run-move-status-pending {
+  color: #718096;
+}
+.promo-run-move-status-failed {
+  color: #c0392b;
 }
 .promo-run-move-needs-individual {
   display: flex;
@@ -196,7 +194,7 @@
 }
 
 .promo-run-primary-btn {
-  background: #204080;
+  background: var(--vt-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -216,8 +214,8 @@
 
 .promo-run-secondary-btn {
   background: #fff;
-  color: #204080;
-  border: 1.5px solid #204080;
+  color: var(--vt-primary);
+  border: 1.5px solid var(--vt-primary);
   border-radius: 8px;
   padding: 0.7rem 1.4rem;
   font-size: 0.92rem;
@@ -298,7 +296,7 @@
   display: block;
   font-size: 1.6rem;
   font-weight: 700;
-  color: #204080;
+  color: var(--vt-primary);
 }
 .promo-run-summary-label {
   display: block;
@@ -325,7 +323,7 @@
 .promo-run-split-breakdown h4 {
   margin: 0 0 0.6rem;
   font-size: 0.92rem;
-  color: #204080;
+  color: var(--vt-primary);
 }
 .promo-run-split-breakdown-list {
   display: flex;
@@ -356,7 +354,7 @@
 .promo-run-move-review-header h3 {
   margin: 0;
   font-size: 1.02rem;
-  color: #204080;
+  color: var(--vt-primary);
 }
 .promo-run-move-review-summary {
   font-size: 0.83rem;
@@ -436,7 +434,7 @@
 }
 .promo-run-progress-bar-fill {
   height: 100%;
-  background: #204080;
+  background: var(--vt-primary);
   border-radius: 999px;
   transition: width 0.4s ease;
 }
@@ -458,7 +456,7 @@
   display: block;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #204080;
+  color: var(--vt-primary);
   margin: 0 0 0.7rem;
 }
 
@@ -514,7 +512,7 @@
 }
 .promo-run-override-reason:focus {
   outline: none;
-  border-color: #204080;
+  border-color: var(--vt-primary);
 }
 .promo-run-override-actions {
   display: flex;
@@ -526,16 +524,6 @@
   .promo-run-page {
     padding: 1rem;
     padding-bottom: 2rem;
-  }
-
-  .promo-run-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .promo-run-title {
-    font-size: 1.15rem;
   }
 
   .promo-run-info-card {
@@ -634,9 +622,6 @@
   .promo-run-page {
     padding: 0.75rem;
   }
-  .promo-run-title {
-    font-size: 1.05rem;
-  }
   .promo-run-summary-cards {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -705,7 +690,7 @@
 
 .promo-run-btn-configure-roster {
   margin-left: auto;
-  background: #204080;
+  background: var(--vt-primary);
   color: white;
   border: none;
   padding: 9px 18px;

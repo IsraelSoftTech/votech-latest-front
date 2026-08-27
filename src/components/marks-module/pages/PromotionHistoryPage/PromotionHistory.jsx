@@ -13,6 +13,8 @@ import api from "../../utils/api";
 import Modal from "../../components/Modal/Modal.component";
 import { PromotionMoveResults } from "../../components/PromotionMoveResults/PromotionMoveResults.component";
 import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import { EmptyState } from "../../components/EmptyState/EmptyState.component";
 import "./PromotionHistory.styles.css";
 
 const RUN_STATUS_OPTIONS = [
@@ -152,7 +154,7 @@ export const PromotionHistoryPage = () => {
 
   return (
       <div className="promo-hist-page">
-        <h1 className="promo-hist-title">Promotion History</h1>
+        <PageHeader title="Promotion History" />
 
         <ServerListControls
           searchValue={search}
@@ -177,9 +179,10 @@ export const PromotionHistoryPage = () => {
             <div className="skeleton-line wide" />
             <div className="skeleton-block" />
             <div className="skeleton-block" />
+            <div className="skeleton-block" />
           </div>
         ) : runs.length === 0 ? (
-          <div className="promo-hist-empty">No promotion runs match these filters.</div>
+          <EmptyState title="No promotion runs match these filters." />
         ) : (
           <div className="promo-hist-list">
             {runs.map((run) => (

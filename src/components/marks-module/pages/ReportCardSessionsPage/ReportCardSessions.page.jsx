@@ -16,7 +16,40 @@ import {
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api, { headers, subBaseURL } from "../../utils/api";
 import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import { EmptyState } from "../../components/EmptyState/EmptyState.component";
 import "./ReportCardSessions.styles.css";
+
+// Mirrors the real "Start New Session" form (4 labeled select fields)
+// instead of generic gray bars, so the layout doesn't jump once
+// dropdowns arrive.
+function StartFormSkeleton() {
+  return (
+    <div className="rcs-start-form">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          className={`rcs-form-field ${i === 3 ? "rcs-form-field-wide" : ""}`}
+          key={i}
+        >
+          <div className="rcs-skel rcs-skel-line" style={{ width: 110, height: 12, marginBottom: 8 }} />
+          <div className="rcs-skel rcs-skel-block" style={{ height: 38 }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Mirrors the real session card list (header row + progress rows)
+// instead of a plain "Loading…" line.
+function SessionListSkeleton() {
+  return (
+    <div className="rcs-session-list">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div className="rcs-skel rcs-skel-session-card" key={i} />
+      ))}
+    </div>
+  );
+}
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -327,9 +360,7 @@ export const ReportCardSessionsPage = () => {
 
   return (
     <div className="rcs-page">
-        <div className="rcs-header">
-          <h2 className="rcs-title">Report Card Sessions</h2>
-        </div>
+        <PageHeader title="Report Card Sessions" />
 
         <div className="rcs-start-panel">
           <h3 className="rcs-panel-title">Start New Session</h3>
@@ -346,93 +377,99 @@ export const ReportCardSessionsPage = () => {
             </div>
           )}
 
-          <div className="rcs-start-form">
-            <div className="rcs-form-field">
-              <label>Academic Year</label>
-              <Select
-                placeholder="Select Academic Year"
-                options={academicYears.map((y) => ({ value: y.id, label: y.name }))}
-                value={
-                  academicYears
-                    .map((y) => ({ value: y.id, label: y.name }))
-                    .find((opt) => opt.value === selectedYearId) || null
-                }
-                onChange={(opt) => setSelectedYearId(opt?.value || null)}
-                isDisabled={Boolean(activeSession) || starting}
-                isClearable
-                classNamePrefix="rcs-select"
-              />
-            </div>
+          {loadingInitial ? (
+            <StartFormSkeleton />
+          ) : (
+            <>
+              <div className="rcs-start-form">
+                <div className="rcs-form-field">
+                  <label>Academic Year</label>
+                  <Select
+                    placeholder="Select Academic Year"
+                    options={academicYears.map((y) => ({ value: y.id, label: y.name }))}
+                    value={
+                      academicYears
+                        .map((y) => ({ value: y.id, label: y.name }))
+                        .find((opt) => opt.value === selectedYearId) || null
+                    }
+                    onChange={(opt) => setSelectedYearId(opt?.value || null)}
+                    isDisabled={Boolean(activeSession) || starting}
+                    isClearable
+                    classNamePrefix="rcs-select"
+                  />
+                </div>
 
-            <div className="rcs-form-field">
-              <label>Term</label>
-              <Select
-                placeholder="Select Term"
-                options={TERM_OPTIONS}
-                value={TERM_OPTIONS.find((opt) => opt.value === selectedTerm) || TERM_OPTIONS[0]}
-                onChange={(opt) => setSelectedTerm(opt?.value || "term3")}
-                isDisabled={Boolean(activeSession) || starting}
-                classNamePrefix="rcs-select"
-              />
-            </div>
+                <div className="rcs-form-field">
+                  <label>Term</label>
+                  <Select
+                    placeholder="Select Term"
+                    options={TERM_OPTIONS}
+                    value={TERM_OPTIONS.find((opt) => opt.value === selectedTerm) || TERM_OPTIONS[0]}
+                    onChange={(opt) => setSelectedTerm(opt?.value || "term3")}
+                    isDisabled={Boolean(activeSession) || starting}
+                    classNamePrefix="rcs-select"
+                  />
+                </div>
 
-            <div className="rcs-form-field">
-              <label>Department (narrows class list)</label>
-              <Select
-                placeholder="All Departments"
-                options={(departments || []).map((d) => ({ value: d.id, label: d.name }))}
-                value={
-                  (departments || [])
-                    .map((d) => ({ value: d.id, label: d.name }))
-                    .find((opt) => opt.value === selectedDeptId) || null
-                }
-                onChange={(opt) => setSelectedDeptId(opt?.value || null)}
-                isDisabled={Boolean(activeSession) || starting}
-                isClearable
-                classNamePrefix="rcs-select"
-              />
-            </div>
+                <div className="rcs-form-field">
+                  <label>Department (narrows class list)</label>
+                  <Select
+                    placeholder="All Departments"
+                    options={(departments || []).map((d) => ({ value: d.id, label: d.name }))}
+                    value={
+                      (departments || [])
+                        .map((d) => ({ value: d.id, label: d.name }))
+                        .find((opt) => opt.value === selectedDeptId) || null
+                    }
+                    onChange={(opt) => setSelectedDeptId(opt?.value || null)}
+                    isDisabled={Boolean(activeSession) || starting}
+                    isClearable
+                    classNamePrefix="rcs-select"
+                  />
+                </div>
 
-            <div className="rcs-form-field rcs-form-field-wide">
-              <label>Classes ({selectedClassIds.length} selected)</label>
-              <Select
-                placeholder="Select one or more classes"
-                options={classOptions}
-                value={classOptions.filter((opt) => selectedClassIds.includes(opt.value))}
-                onChange={(opts) => setSelectedClassIds((opts || []).map((o) => o.value))}
-                isDisabled={Boolean(activeSession) || starting}
-                isMulti
-                classNamePrefix="rcs-select"
-              />
-              {filteredClasses.length > 0 && (
-                <button
-                  type="button"
-                  className="rcs-select-all-btn"
-                  onClick={() => setSelectedClassIds(filteredClasses.map((c) => c.id))}
-                  disabled={Boolean(activeSession) || starting}
-                >
-                  Select all {selectedDeptId ? "in department" : "classes"} (
-                  {filteredClasses.length})
-                </button>
-              )}
-            </div>
-          </div>
+                <div className="rcs-form-field rcs-form-field-wide">
+                  <label>Classes ({selectedClassIds.length} selected)</label>
+                  <Select
+                    placeholder="Select one or more classes"
+                    options={classOptions}
+                    value={classOptions.filter((opt) => selectedClassIds.includes(opt.value))}
+                    onChange={(opts) => setSelectedClassIds((opts || []).map((o) => o.value))}
+                    isDisabled={Boolean(activeSession) || starting}
+                    isMulti
+                    classNamePrefix="rcs-select"
+                  />
+                  {filteredClasses.length > 0 && (
+                    <button
+                      type="button"
+                      className="rcs-select-all-btn"
+                      onClick={() => setSelectedClassIds(filteredClasses.map((c) => c.id))}
+                      disabled={Boolean(activeSession) || starting}
+                    >
+                      Select all {selectedDeptId ? "in department" : "classes"} (
+                      {filteredClasses.length})
+                    </button>
+                  )}
+                </div>
+              </div>
 
-          <button
-            className="rcs-start-btn"
-            onClick={handleStartSession}
-            disabled={Boolean(activeSession) || starting || loadingInitial}
-          >
-            {starting ? (
-              <>
-                <FaSpinner className="rcs-spin" /> Starting…
-              </>
-            ) : (
-              <>
-                <FaPlay /> Start Generation
-              </>
-            )}
-          </button>
+              <button
+                className="rcs-start-btn"
+                onClick={handleStartSession}
+                disabled={Boolean(activeSession) || starting || loadingInitial}
+              >
+                {starting ? (
+                  <>
+                    <FaSpinner className="rcs-spin" /> Starting…
+                  </>
+                ) : (
+                  <>
+                    <FaPlay /> Start Generation
+                  </>
+                )}
+              </button>
+            </>
+          )}
         </div>
 
         <div className="rcs-sessions-section">
@@ -457,9 +494,9 @@ export const ReportCardSessionsPage = () => {
           />
 
           {loadingSessions && sessions.length === 0 ? (
-            <div className="rcs-empty-note">Loading sessions…</div>
+            <SessionListSkeleton />
           ) : sessions.length === 0 ? (
-            <div className="rcs-empty-note">No report card sessions match these filters.</div>
+            <EmptyState title="No report card sessions match these filters." />
           ) : (
             <div className="rcs-session-list">
               {sessions.map((session) => (

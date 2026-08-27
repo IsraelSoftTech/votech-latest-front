@@ -20,6 +20,7 @@ import {
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api from "../../utils/api";
 import SideTop from "../../../SideTop";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
 import "./Admin3Dashboard.styles.css";
 
 const PERIOD_OPTIONS = [
@@ -31,24 +32,24 @@ const PERIOD_OPTIONS = [
 
 const STATUS_LABELS = { active: "Active", graduated: "Graduated", withdrawn: "Withdrawn" };
 
-// Not a new palette — these are the app's own existing tokens (SideTop.css's
-// brand navy, and the status-pill colors already shipping on the Students
-// and Promotion History pages), so this dashboard reads as part of the same
-// app instead of introducing colors that only exist here.
+// The exact values from styles/tokens.css (ApexCharts renders to SVG/canvas
+// and can't read CSS custom properties, so these are copied, not var()'d) —
+// navy primary + gold accent, the same two-color identity as every other
+// modernized page, not a separate palette invented for this dashboard.
 const PALETTE = {
-  primary: "#204080", // brand navy — SideTop.css, used 400+ times app-wide
-  primaryTint: "#ebf4ff",
-  accent: "#3b82f6", // secondary blue — already used in Admin.css / ReportCard.styles.css
-  success: "#38a169",
-  successTint: "#f0fff4",
-  danger: "#c53030",
-  dangerTint: "#fdecec",
-  warning: "#b7791f",
+  primary: "#204080", // --vt-primary
+  primaryTint: "#eaefff", // --vt-primary-tint2
+  accent: "#d4af37", // --vt-gold
+  success: "#1f7a4d", // --vt-status-done
+  successTint: "#eaf7f0", // --vt-status-done-tint
+  danger: "#c0392b", // --vt-status-fail
+  dangerTint: "#fdecec", // --vt-status-fail-tint
+  warning: "#b7791f", // matches the amber already used for warning banners app-wide
   warningTint: "#fffaf0",
-  textStrong: "#2d3748",
-  textSoft: "#718096",
-  muted: "#a0aec0",
-  grid: "#edf2f7",
+  textStrong: "#233252", // --vt-ink
+  textSoft: "#66708c", // --vt-ink-soft
+  muted: "#94a3b8", // --vt-muted
+  grid: "#e4e9f7", // --vt-border
 };
 
 const AXIS_LABEL_STYLE = { colors: PALETTE.textSoft, fontSize: "11px" };
@@ -78,23 +79,24 @@ function StatCard({ icon, label, value, sub, tone, onClick }) {
   );
 }
 
-// Combo chart: daily registrations as columns against the left axis,
-// cumulative growth as a smooth line against the right axis — reads at a
-// glance instead of forcing two very different scales onto one line.
+// Two smooth lines (daily registrations against the left axis, cumulative
+// growth against the right) with a soft gradient fill underneath — the
+// same "premium, tinted panel, no hard edges" look as the rest of the app,
+// not the bar+line combo this used to be.
 function TrendChart({ trend }) {
   const categories = trend.map((t) => t.date);
 
   const options = useMemo(
     () => ({
       chart: { ...CHART_BASE, type: "line", toolbar: { show: false }, zoom: { enabled: false } },
-      stroke: { width: [0, 3], curve: "smooth" },
-      plotOptions: { bar: { columnWidth: "60%", borderRadius: 3 } },
-      colors: [PALETTE.accent, PALETTE.primary],
-      fill: {
-        type: ["solid", "gradient"],
-        opacity: [0.85, 1],
-        gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05 },
-      },
+      // Flat solid strokes, no gradient/area fill — matches every other
+      // element in this module (Badge, Button, PageHeader are all flat
+      // colors, no gradients anywhere), and a gradient fill under a plain
+      // "line" series type is a known source of rendering quirks in
+      // ApexCharts, so this also sidesteps that entirely.
+      stroke: { width: [3, 3], curve: "smooth" },
+      colors: [PALETTE.primary, PALETTE.accent],
+      markers: { size: 0, hover: { size: 5 }, strokeWidth: 0 },
       dataLabels: { enabled: false },
       xaxis: {
         categories,
@@ -103,9 +105,11 @@ function TrendChart({ trend }) {
         axisTicks: { show: false },
         tooltip: { enabled: false },
       },
+      // Separate axes so "Registered" (small daily counts) isn't squashed
+      // flat by "Cumulative" (can run into the thousands) sharing one scale.
       yaxis: [
-        { title: { text: "Registered", style: { color: PALETTE.textSoft, fontSize: "11px", fontWeight: 600 } }, labels: { style: AXIS_LABEL_STYLE } },
-        { opposite: true, title: { text: "Cumulative", style: { color: PALETTE.textSoft, fontSize: "11px", fontWeight: 600 } }, labels: { style: AXIS_LABEL_STYLE } },
+        { min: 0, title: { text: "Registered", style: { color: PALETTE.textSoft, fontSize: "11px", fontWeight: 600 } }, labels: { style: AXIS_LABEL_STYLE } },
+        { min: 0, opposite: true, title: { text: "Cumulative", style: { color: PALETTE.textSoft, fontSize: "11px", fontWeight: 600 } }, labels: { style: AXIS_LABEL_STYLE } },
       ],
       grid: { borderColor: PALETTE.grid, strokeDashArray: 4 },
       legend: { position: "top", horizontalAlign: "right", fontSize: "12px", labels: { colors: PALETTE.textSoft }, markers: { radius: 4 } },
@@ -115,7 +119,7 @@ function TrendChart({ trend }) {
   );
 
   const series = [
-    { name: "Registered", type: "column", data: trend.map((t) => t.registered) },
+    { name: "Registered", type: "line", data: trend.map((t) => t.registered) },
     { name: "Cumulative", type: "line", data: trend.map((t) => t.cumulative) },
   ];
 
@@ -256,12 +260,12 @@ function SkeletonPanel({ height = 260, title = true }) {
 function DashboardSkeleton() {
   return (
     <div className="a3d-page">
-      <div className="a3d-header">
+      <div className="a3d-header-skel">
         <div>
-          <div className="a3d-skel a3d-skel-line" style={{ width: 140, height: 26, marginBottom: 8 }} />
-          <div className="a3d-skel a3d-skel-line" style={{ width: 280, height: 14 }} />
+          <div className="a3d-skel a3d-skel-line" style={{ width: 140, height: 24, marginBottom: 8 }} />
+          <div className="a3d-skel a3d-skel-line" style={{ width: 280, height: 12 }} />
         </div>
-        <div className="a3d-skel a3d-skel-line" style={{ width: 210, height: 42, borderRadius: 10 }} />
+        <div className="a3d-skel a3d-skel-line" style={{ width: 210, height: 42, borderRadius: 8 }} />
       </div>
 
       <section className="a3d-section">
@@ -366,20 +370,20 @@ export const Admin3Dashboard = () => {
   return (
     <SideTop>
       <div className="a3d-page">
-        <div className="a3d-header">
-          <div>
-            <h2 className="a3d-title">Dashboard</h2>
-            <p className="a3d-subtitle">Real-time overview of students, classes, promotion, and report cards</p>
-          </div>
-          <Select
-            className="a3d-period-select"
-            classNamePrefix="a3d-select"
-            options={PERIOD_OPTIONS}
-            value={PERIOD_OPTIONS.find((o) => o.value === period)}
-            onChange={(opt) => setPeriod(opt?.value || "all_time")}
-            isSearchable={false}
-          />
-        </div>
+        <PageHeader
+          title="Dashboard"
+          subtitle="Real-time overview of students, classes, promotion, and report cards"
+          actions={
+            <Select
+              className="a3d-period-select"
+              classNamePrefix="a3d-select"
+              options={PERIOD_OPTIONS}
+              value={PERIOD_OPTIONS.find((o) => o.value === period)}
+              onChange={(opt) => setPeriod(opt?.value || "all_time")}
+              isSearchable={false}
+            />
+          }
+        />
 
         {/* ── Student population ── */}
         <section className="a3d-section">

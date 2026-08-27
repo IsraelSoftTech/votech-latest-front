@@ -7,6 +7,8 @@ import api, { headers, subBaseURL } from "../../utils/api";
 import DataTable from "../../components/DataTable/DataTable.component";
 import Modal from "../../components/Modal/Modal.component";
 import { CustomInput, SubmitBtn } from "../../components/Inputs/CustumInputs";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import { EmptyState } from "../../components/EmptyState/EmptyState.component";
 import "./PromotionRequirements.styles.css";
 
 const emptyForm = {
@@ -179,6 +181,13 @@ export const PromotionRequirementsPage = () => {
       setClassSubjectIds(new Set());
     }
 
+    // Orientation classes fan out into multiple departments by definition —
+    // promotion_mode is pinned to "split" for as long as the class is
+    // flagged is_orientation, never carried over from a copy or a stale
+    // saved value. The backend enforces this too, this is just so the
+    // form already reflects reality the moment the modal opens.
+    const isOrientationClass = !!classData?.is_orientation;
+
     const source = copyFrom || getRequirementForClass(row.id);
     if (source) {
       setForm({
@@ -201,11 +210,20 @@ export const PromotionRequirementsPage = () => {
         // Structural flags about this specific class, not the criteria
         // magnitude, so like the subject picks these don't carry over when
         // copying settings into a different class.
-        promotion_mode: copyFrom ? "single" : source.promotion_mode || "single",
+        promotion_mode: isOrientationClass
+          ? "split"
+          : copyFrom
+          ? "single"
+          : source.promotion_mode || "single",
         decision_mode: copyFrom ? "automatic" : source.decision_mode || "automatic",
       });
     } else {
-      setForm({ ...emptyForm, academic_year_id: selectedYear, class_id: row.id });
+      setForm({
+        ...emptyForm,
+        academic_year_id: selectedYear,
+        class_id: row.id,
+        promotion_mode: isOrientationClass ? "split" : emptyForm.promotion_mode,
+      });
     }
 
     setModalOpen(true);
@@ -302,11 +320,7 @@ export const PromotionRequirementsPage = () => {
 
   return (
       <div className="promo-req-page">
-        <div className="promo-req-header">
-          <div className="promo-req-header-left">
-            <h1 className="promo-req-title">Promotion Requirements</h1>
-          </div>
-        </div>
+        <PageHeader title="Promotion Requirements" />
 
         <div className="promo-req-info-card">
           <p>
@@ -358,10 +372,10 @@ export const PromotionRequirementsPage = () => {
         </div>
 
         {!selectedYear ? (
-          <div className="promo-req-empty-state">
-            <h3>Select an academic year</h3>
-            <p>Choose a year above to view and configure promotion requirements.</p>
-          </div>
+          <EmptyState
+            title="Select an academic year"
+            subtitle="Choose a year above to view and configure promotion requirements."
+          />
         ) : (
           <>
             <div className="promo-req-summary-cards">
@@ -446,10 +460,15 @@ export const PromotionRequirementsPage = () => {
             }}
           >
             <div className="promo-req-mode-section">
-              <label className="promo-req-mode-toggle">
+              <label
+                className={`promo-req-mode-toggle ${
+                  modalClass?.is_orientation ? "promo-req-mode-locked" : ""
+                }`}
+              >
                 <input
                   type="checkbox"
                   checked={form.promotion_mode === "split"}
+                  disabled={!!modalClass?.is_orientation}
                   onChange={(e) =>
                     setForm((p) => ({
                       ...p,
@@ -461,6 +480,13 @@ export const PromotionRequirementsPage = () => {
                 departments (e.g. Orientation classes that split into
                 Electrical, Building, Mechanics, etc.)
               </label>
+              {modalClass?.is_orientation && (
+                <p className="promo-req-mode-locked-note">
+                  Checked and locked, {modalClass.name} is an Orientation
+                  class. To change this, turn off "Orientation class" on the
+                  class itself first (Classes page).
+                </p>
+              )}
               {form.promotion_mode === "split" && (
                 <p className="promo-req-mode-warning">
                   When a promotion run reaches this class, the same-department

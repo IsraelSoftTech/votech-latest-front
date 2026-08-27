@@ -4,28 +4,6 @@
     Ubuntu, sans-serif;
 }
 
-.promo-req-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.promo-req-header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.promo-req-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #204080;
-  margin: 0;
-}
-
 .promo-req-skeleton {
   display: flex;
   flex-direction: column;
@@ -125,17 +103,14 @@
 
 .promo-req-summary-card.active {
   border-color: #204080;
-  box-shadow: 0 0 0 2px rgba(32, 64, 128, 0.15);
 }
 
 .promo-req-summary-card.good.active {
   border-color: #38a169;
-  box-shadow: 0 0 0 2px rgba(56, 161, 105, 0.15);
 }
 
 .promo-req-summary-card.warn.active {
   border-color: #dd6b20;
-  box-shadow: 0 0 0 2px rgba(221, 107, 32, 0.15);
 }
 
 .promo-req-summary-icon {
@@ -198,6 +173,26 @@
   cursor: pointer;
 }
 
+.promo-req-mode-toggle.promo-req-mode-locked {
+  cursor: not-allowed;
+  color: var(--vt-ink-soft);
+}
+
+.promo-req-mode-toggle.promo-req-mode-locked input {
+  cursor: not-allowed;
+}
+
+.promo-req-mode-locked-note {
+  margin: -4px 0 0 26px;
+  background: var(--vt-primary-tint2);
+  color: var(--vt-primary);
+  border: 1px solid var(--vt-primary-tint2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 .promo-req-mode-warning {
   margin: -4px 0 0 26px;
   background: #fff4e5;
@@ -207,24 +202,6 @@
   padding: 10px 12px;
   font-size: 0.82rem;
   line-height: 1.5;
-}
-
-.promo-req-empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-  background: #f7f9fc;
-  border-radius: 12px;
-  border: 1px dashed #cbd5e0;
-}
-
-.promo-req-empty-state h3 {
-  margin: 0 0 0.4rem;
-  color: #204080;
-}
-
-.promo-req-empty-state p {
-  margin: 0;
-  color: #718096;
 }
 
 .promo-req-table-container {
@@ -309,16 +286,6 @@
     padding-bottom: 2rem;
   }
 
-  .promo-req-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .promo-req-title {
-    font-size: 1.2rem;
-  }
-
   .promo-req-info-card {
     padding: 0.75rem 0.9rem;
     margin-bottom: 1rem;
@@ -361,10 +328,6 @@
     text-align: center;
   }
 
-  .promo-req-empty-state {
-    padding: 2rem 1rem;
-  }
-
   .promo-req-form-row {
     flex-direction: column;
     gap: 0.8rem;
@@ -388,10 +351,6 @@
 @media (max-width: 480px) {
   .promo-req-page {
     padding: 0.75rem;
-  }
-
-  .promo-req-title {
-    font-size: 1.05rem;
   }
 
   .promo-req-summary-cards {
@@ -420,10 +379,6 @@
 @media (max-width: 320px) {
   .promo-req-page {
     padding: 0.6rem;
-  }
-
-  .promo-req-title {
-    font-size: 0.95rem;
   }
 
   .promo-req-summary-cards {

@@ -1,5 +1,6 @@
+@import "../../styles/tokens.css";
+
 .report-page {
-  font-family: "Times New Roman", serif;
   padding: 20px;
   background: white;
   min-height: 100vh;
@@ -8,31 +9,7 @@
   align-items: center;
 }
 
-.report-page-header {
-  width: 100%;
-  max-width: 950px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.report-page-header h2 {
-  font-size: 24px;
-  color: #204080;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.report-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.action-btn {
+.back-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -42,36 +19,38 @@
   border-radius: 6px;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.back-btn {
-  background-color: #ccc;
-  color: #333;
+  background-color: var(--vt-primary-tint2);
+  color: var(--vt-primary);
 }
 
 .back-btn:hover {
-  background-color: #b3b3b3;
+  background-color: var(--vt-primary);
+  color: #fff;
 }
 
-.print-btn {
-  background-color: #204080;
-  color: white;
+/* Its own class, not the .btn-create borrowed from Subject.styles.css —
+   that class carries a margin-bottom meant for a totally different
+   page's layout (a "Create" button sitting above a table), which was
+   pushing this button out of alignment with Go Back in the same header
+   row. */
+.report-page-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  background-color: var(--vt-primary);
+  color: #fff;
+  transition: background-color 0.2s ease;
 }
 
-.print-btn:hover {
-  background-color: #3a5a9a;
-}
-
-.report-card-container {
-  width: 100%;
-  max-width: 1200px;
-  overflow-x: auto;
-  padding: 10px;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+.report-page-download-btn:hover {
+  background-color: var(--vt-primary-dark);
 }
 
 .report-page-footer {
@@ -114,10 +93,4 @@
     size: A4;
     margin: 0;
   }
-}
-
-.report-page-header-back-n-print-btn {
-  display: flex;
-  align-items: center;
-  gap: 20px;
 }

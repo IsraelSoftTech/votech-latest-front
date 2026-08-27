@@ -1,0 +1,31 @@
+@import "../../styles/tokens.css";
+
+.vt-empty {
+  text-align: center;
+  padding: 2.6rem 1rem;
+  border: 1.5px dashed var(--vt-border);
+  border-radius: 8px;
+  background: var(--vt-primary-tint);
+}
+
+.vt-empty-icon {
+  color: var(--vt-muted);
+  font-size: 1.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.vt-empty-title {
+  margin: 0 0 0.2rem;
+  font-weight: 600;
+  color: var(--vt-ink);
+  font-size: 0.9rem;
+}
+
+.vt-empty-subtitle {
+  font-size: 0.8rem;
+  color: var(--vt-ink-soft);
+}
+
+.vt-empty-action {
+  margin-top: 0.9rem;
+}

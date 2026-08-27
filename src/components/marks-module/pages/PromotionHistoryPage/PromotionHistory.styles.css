@@ -4,22 +4,6 @@
     Ubuntu, sans-serif;
 }
 
-.promo-hist-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #204080;
-  margin: 0 0 1.1rem;
-}
-
-.promo-hist-empty {
-  text-align: center;
-  padding: 3rem 1rem;
-  background: #f7f9fc;
-  border-radius: 12px;
-  border: 1px dashed #cbd5e0;
-  color: #718096;
-}
-
 .promo-hist-list {
   display: flex;
   flex-direction: column;
@@ -394,7 +378,7 @@
   border-radius: 8px;
 }
 .skeleton-line.wide { width: 60%; height: 22px; }
-.skeleton-block { height: 90px; width: 100%; }
+.skeleton-block { height: 58px; width: 100%; border-radius: 10px; }
 @keyframes promo-hist-shimmer {
   0% { background-position: 100% 50%; }
   100% { background-position: 0 50%; }

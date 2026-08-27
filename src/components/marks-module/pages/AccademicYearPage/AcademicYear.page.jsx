@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import SideTop from "../../../SideTop";
 import DataTable from "../../components/DataTable/DataTable.component";
@@ -12,6 +12,9 @@ import {
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
 import Stats from "../../components/Stats/Stats.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import Modal from "../../components/Modal/Modal.component";
+import { DetailGrid, DetailRow } from "../../components/DetailGrid/DetailGrid.component";
 import {
   FaCalendarAlt,
   FaCalendarCheck,
@@ -20,6 +23,7 @@ import {
   FaExclamationTriangle,
   FaExchangeAlt,
   FaUnlockAlt,
+  FaLevelUpAlt,
 } from "react-icons/fa";
 
 // The backend puts the actual reason in response.data.message (see
@@ -40,144 +44,6 @@ const GRANT_DURATIONS = [
   { label: "30 days", hours: 720 },
 ];
 
-// Custom hook to detect mobile
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  return isMobile;
-};
-
-// Academic Year Modal Component (Desktop & Mobile)
-const AcademicYearModal = ({ isOpen, onClose, title, children }) => {
-  const isMobile = useIsMobile();
-  const modalRef = useRef(null);
-  const [startY, setStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      document.body.style.top = `-${window.scrollY}px`;
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  // Touch handlers for mobile swipe to dismiss
-  const handleTouchStart = (e) => {
-    if (!isMobile) return;
-    setStartY(e.touches[0].clientY);
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isMobile || !isDragging) return;
-    const touchY = e.touches[0].clientY;
-    const diff = touchY - startY;
-
-    if (diff > 0) {
-      setCurrentY(diff);
-      if (modalRef.current) {
-        modalRef.current.style.transform = `translateY(${diff}px)`;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isMobile) return;
-    setIsDragging(false);
-
-    if (currentY > 150) {
-      onClose();
-    }
-
-    if (modalRef.current) {
-      modalRef.current.style.transform = "";
-    }
-    setCurrentY(0);
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className={`academic-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        className={`academic-modal-container ${
-          isMobile ? "mobile" : "desktop"
-        }`}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Drag handle - mobile only */}
-        {isMobile && (
-          <div className="academic-modal-drag-handle">
-            <div className="academic-drag-bar"></div>
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="academic-modal-header">
-          <h2 className="academic-modal-title">{title}</h2>
-          <button
-            className="academic-modal-close"
-            onClick={onClose}
-            type="button"
-            aria-label="Close modal"
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="academic-modal-body">{children}</div>
-      </div>
-    </div>
-  );
-};
 
 export const AcademicYear = () => {
   const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
@@ -239,6 +105,15 @@ export const AcademicYear = () => {
   const [revokeTarget, setRevokeTarget] = useState(null);
   const [revokePassword, setRevokePassword] = useState("");
   const [revokeLoading, setRevokeLoading] = useState(false);
+
+  // Carry Forward assignments (Admin1 only)
+  const [carryForwardModalOpen, setCarryForwardModalOpen] = useState(false);
+  const [carryForwardForm, setCarryForwardForm] = useState({
+    target_year_id: null,
+    password: "",
+  });
+  const [carryForwardLoading, setCarryForwardLoading] = useState(false);
+  const [carryForwardResult, setCarryForwardResult] = useState(null);
 
   // Popup shown (in addition to the toast) whenever a blocking/destructive
   // action fails, so the reason is impossible to miss, not just a toast
@@ -628,6 +503,46 @@ export const AcademicYear = () => {
     }
   };
 
+  // ─── Carry Forward assignments ───────────────────────────────────────
+
+  const activeYear = data.find((y) => y.status === "active") || null;
+  const carryForwardTargetYears = data.filter(
+    (y) => y.status !== "active"
+  );
+
+  const openCarryForwardModal = () => {
+    setCarryForwardForm({ target_year_id: null, password: "" });
+    setCarryForwardResult(null);
+    setCarryForwardModalOpen(true);
+  };
+  const closeCarryForwardModal = () => setCarryForwardModalOpen(false);
+
+  const handleCarryForwardSubmit = async (e) => {
+    e.preventDefault();
+    if (!carryForwardForm.target_year_id) {
+      toast.error("Choose which academic year to carry the assignments into.");
+      return;
+    }
+    if (!carryForwardForm.password) {
+      toast.error("Enter your password to confirm this action.");
+      return;
+    }
+    try {
+      setCarryForwardLoading(true);
+      const res = await api.post("/academic-years/carry-forward", carryForwardForm);
+      setCarryForwardResult(res?.data?.data || null);
+      toast.success("Assignments carried forward successfully.");
+    } catch (err) {
+      showActionError(
+        "Can't Carry Forward Assignments",
+        err,
+        "Failed to carry assignments forward."
+      );
+    } finally {
+      setCarryForwardLoading(false);
+    }
+  };
+
   const grantsData = grants.map((g, i) => ({ ...g, sn: i + 1 }));
 
   const grantColumns = [
@@ -672,16 +587,18 @@ export const AcademicYear = () => {
   return (
     <SideTop>
       <div className="academic-year-page">
-        <h2 className="academic-page-title">
-          Academic Years
-          {isReadOnly && (
-            <span className="academic-read-only-badge">
-              <FaLock /> Read Only
-            </span>
-          )}
-        </h2>
+        <PageHeader
+          title="Academic Years"
+          subtitle={
+            isReadOnly ? (
+              <span className="academic-read-only-badge">
+                <FaLock /> Read Only
+              </span>
+            ) : null
+          }
+        />
 
-        <Stats data={stats} />
+        <Stats data={stats} loading={isLoading} skeletonCount={2} />
 
         <div className="academic-toolbar">
           {!isReadOnly && (
@@ -714,6 +631,29 @@ export const AcademicYear = () => {
           deleteRoles={["Admin3"]}
           userRole={role}
         />
+
+        {isAdmin1 && (
+          <div className="academic-grants-section">
+            <div className="academic-toolbar">
+              <h3 className="academic-section-title">
+                <FaLevelUpAlt /> Carry Forward Assignments
+              </h3>
+              <button
+                className="academic-btn-secondary"
+                onClick={openCarryForwardModal}
+                disabled={!activeYear || carryForwardTargetYears.length === 0}
+              >
+                Carry Forward
+              </button>
+            </div>
+            <p className="academic-section-hint">
+              Copies the active year's class-subject-teacher and class
+              master assignments into another year as brand new, independently
+              editable rows. Nothing in the active year is changed, and
+              rows that already exist in the target year are left alone.
+            </p>
+          </div>
+        )}
 
         {isAdmin1 && (
           <div className="academic-grants-section">
@@ -752,48 +692,32 @@ export const AcademicYear = () => {
         )}
 
         {/* Details Modal */}
-        <AcademicYearModal
+        <Modal
           isOpen={!!selectedRow}
           onClose={closeModal}
           title="Academic Year Details"
         >
           {selectedRow && (
-            <div className="academic-year-details">
-              <div className="academic-detail-item">
-                <span className="academic-detail-label">Name</span>
-                <span className="academic-detail-value">
-                  {selectedRow.name}
-                </span>
-              </div>
-
-              <div className="academic-detail-item">
-                <span className="academic-detail-label">Start Date</span>
-                <span className="academic-detail-value">
-                  {selectedRow.start_date}
-                </span>
-              </div>
-
-              <div className="academic-detail-item">
-                <span className="academic-detail-label">End Date</span>
-                <span className="academic-detail-value">
-                  {selectedRow.end_date}
-                </span>
-              </div>
-
-              <div className="academic-detail-item">
-                <span className="academic-detail-label">Status</span>
-                <span
-                  className={`academic-detail-value academic-status-${selectedRow.status.toLowerCase()}`}
-                >
-                  {selectedRow.status}
-                </span>
-              </div>
-            </div>
+            <DetailGrid>
+              <DetailRow label="Name" value={selectedRow.name} />
+              <DetailRow label="Start Date" value={selectedRow.start_date} />
+              <DetailRow label="End Date" value={selectedRow.end_date} />
+              <DetailRow
+                label="Status"
+                value={
+                  <span
+                    className={`academic-status-${selectedRow.status.toLowerCase()}`}
+                  >
+                    {selectedRow.status}
+                  </span>
+                }
+              />
+            </DetailGrid>
           )}
-        </AcademicYearModal>
+        </Modal>
 
         {/* Create Modal */}
-        <AcademicYearModal
+        <Modal
           isOpen={createModalOpen}
           onClose={closeCreateModal}
           title="Create Academic Year"
@@ -833,10 +757,10 @@ export const AcademicYear = () => {
               disabled={createLoading}
             />
           </form>
-        </AcademicYearModal>
+        </Modal>
 
         {/* Edit Modal */}
-        <AcademicYearModal
+        <Modal
           isOpen={editModalOpen}
           onClose={closeEditModal}
           title="Edit Academic Year"
@@ -867,10 +791,10 @@ export const AcademicYear = () => {
               disabled={editLoading}
             />
           </form>
-        </AcademicYearModal>
+        </Modal>
 
         {/* Switch Academic Year Modal */}
-        <AcademicYearModal
+        <Modal
           isOpen={switchModalOpen}
           onClose={closeSwitchModal}
           title="Switch Academic Year"
@@ -990,10 +914,10 @@ export const AcademicYear = () => {
               )}
             </form>
           )}
-        </AcademicYearModal>
+        </Modal>
 
         {/* Grant Access Modal */}
-        <AcademicYearModal
+        <Modal
           isOpen={grantModalOpen}
           onClose={closeGrantModal}
           title="Grant Archived Year Access"
@@ -1126,10 +1050,116 @@ export const AcademicYear = () => {
               disabled={grantLoading}
             />
           </form>
-        </AcademicYearModal>
+        </Modal>
+
+        {/* Carry Forward Modal */}
+        <Modal
+          isOpen={carryForwardModalOpen}
+          onClose={closeCarryForwardModal}
+          title="Carry Forward Assignments"
+        >
+          {!carryForwardResult ? (
+            <form onSubmit={handleCarryForwardSubmit} className="academic-modal-form">
+              <div className="academic-warning-banner">
+                <FaExclamationTriangle />
+                <div>
+                  This copies <strong>{activeYear?.name || "the active year"}</strong>'s
+                  class-subject-teacher and class master assignments into the
+                  year you choose below, as fresh rows for that year. It does
+                  not touch or remove anything in{" "}
+                  {activeYear?.name || "the active year"}.
+                </div>
+              </div>
+
+              <div className="ci-wrapper">
+                <label className="ci-label">
+                  Carry Into <span className="ci-required">*</span>
+                </label>
+                <Select
+                  classNamePrefix="select"
+                  placeholder="Select a target academic year"
+                  options={carryForwardTargetYears.map((y) => ({
+                    value: y.id,
+                    label: `${y.name} (${y.status})`,
+                  }))}
+                  value={
+                    carryForwardForm.target_year_id
+                      ? {
+                          value: carryForwardForm.target_year_id,
+                          label: carryForwardTargetYears.find(
+                            (y) => y.id === carryForwardForm.target_year_id
+                          )?.name,
+                        }
+                      : null
+                  }
+                  onChange={(opt) =>
+                    setCarryForwardForm((prev) => ({
+                      ...prev,
+                      target_year_id: opt?.value || null,
+                    }))
+                  }
+                />
+              </div>
+
+              <CustomInput
+                label="Confirm your password"
+                type="password"
+                name="carryForwardPassword"
+                value={carryForwardForm.password}
+                required
+                onChange={(name, value) =>
+                  setCarryForwardForm((prev) => ({ ...prev, password: value }))
+                }
+                onClear={() =>
+                  setCarryForwardForm((prev) => ({ ...prev, password: "" }))
+                }
+              />
+
+              <SubmitBtn
+                title={carryForwardLoading ? "Carrying Forward..." : "Carry Forward"}
+                disabled={carryForwardLoading}
+              />
+            </form>
+          ) : (
+            <div className="academic-confirm-content">
+              <p className="academic-confirm-text">
+                Carried <strong>{carryForwardResult.source_year?.name}</strong>{" "}
+                forward into{" "}
+                <strong>{carryForwardResult.target_year?.name}</strong>:
+              </p>
+              <DetailGrid>
+                <DetailRow
+                  label="Subject/teacher assignments created"
+                  value={carryForwardResult.class_subjects_created}
+                />
+                <DetailRow
+                  label="Subject/teacher assignments already present (skipped)"
+                  value={carryForwardResult.class_subjects_skipped}
+                />
+                <DetailRow
+                  label="Class master assignments created"
+                  value={carryForwardResult.class_master_assignments_created}
+                />
+                <DetailRow
+                  label="Class master assignments already present (skipped)"
+                  value={carryForwardResult.class_master_assignments_skipped}
+                />
+              </DetailGrid>
+              <div className="academic-confirm-buttons">
+                <button
+                  className="academic-btn-confirm"
+                  type="button"
+                  onClick={closeCarryForwardModal}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
+        </Modal>
 
         {/* Revoke Confirm Modal */}
-        <AcademicYearModal
+        <Modal
           isOpen={!!revokeTarget}
           onClose={closeRevokeConfirm}
           title="Revoke Access Grant"
@@ -1169,12 +1199,12 @@ export const AcademicYear = () => {
               </div>
             </div>
           )}
-        </AcademicYearModal>
+        </Modal>
 
         {/* Action Error Popup, shown alongside the toast whenever a
             blocking/destructive action fails, since a toast alone can be
             missed, especially once a confirm modal has already closed. */}
-        <AcademicYearModal
+        <Modal
           isOpen={!!actionError}
           onClose={() => setActionError(null)}
           title={actionError?.title || "Action Failed"}
@@ -1196,7 +1226,7 @@ export const AcademicYear = () => {
               </div>
             </div>
           )}
-        </AcademicYearModal>
+        </Modal>
       </div>
     </SideTop>
   );

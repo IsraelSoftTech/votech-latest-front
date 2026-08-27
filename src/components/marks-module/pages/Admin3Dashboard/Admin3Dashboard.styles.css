@@ -1,24 +1,24 @@
+@import "../../styles/tokens.css";
+
 .a3d-page {
-  /* Not a new palette — these are the app's existing tokens (SideTop.css's
-     brand navy, and the status-pill colors already shipping on the
-     Students and Promotion History pages). */
-  --a3d-primary: #204080;
-  --a3d-primary-tint: #ebf4ff;
-  --a3d-accent: #3b82f6;
-  --a3d-accent-tint: #eff6ff;
-  --a3d-success: #38a169;
-  --a3d-success-tint: #f0fff4;
-  --a3d-danger: #c53030;
-  --a3d-danger-tint: #fdecec;
+  /* Aliased to the shared tokens (styles/tokens.css) instead of a separate
+     palette, so this dashboard is styled from the same source of truth as
+     every other modernized page rather than drifting on its own. */
+  --a3d-primary: var(--vt-primary);
+  --a3d-primary-tint: var(--vt-primary-tint2);
+  --a3d-accent: var(--vt-gold);
+  --a3d-accent-tint: var(--vt-gold-tint);
+  --a3d-success: var(--vt-status-done);
+  --a3d-success-tint: var(--vt-status-done-tint);
+  --a3d-danger: var(--vt-status-fail);
+  --a3d-danger-tint: var(--vt-status-fail-tint);
   --a3d-warning: #b7791f;
   --a3d-warning-tint: #fffaf0;
-  --a3d-ink: #2d3748;
-  --a3d-ink-soft: #718096;
-  --a3d-muted: #a0aec0;
-  --a3d-border: #e8edf5;
-  --a3d-bg: #f7f9fc;
+  --a3d-ink: var(--vt-ink);
+  --a3d-ink-soft: var(--vt-ink-soft);
+  --a3d-muted: var(--vt-muted);
+  --a3d-border: var(--vt-border);
 
-  background: var(--a3d-bg);
   padding: 1.6rem 1.8rem 3rem;
   max-width: 1360px;
   margin: 0 auto;
@@ -51,14 +51,14 @@
   gap: 1rem;
   background: #fff;
   border: 1px solid var(--a3d-border);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 1.1rem 1.2rem;
 }
 
 .a3d-skel-icon {
   width: 46px;
   height: 46px;
-  border-radius: 12px;
+  border-radius: 8px;
   flex-shrink: 0;
 }
 
@@ -74,27 +74,17 @@
   padding: 3rem 0;
 }
 
-.a3d-header {
+.a3d-header-skel {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 1.6rem;
   flex-wrap: wrap;
   gap: 0.9rem;
-}
-
-.a3d-title {
-  font-size: 1.55rem;
-  font-weight: 800;
-  color: var(--a3d-primary);
-  margin: 0 0 0.25rem;
-  letter-spacing: -0.01em;
-}
-
-.a3d-subtitle {
-  font-size: 0.85rem;
-  color: var(--a3d-ink-soft);
-  margin: 0;
+  background: var(--vt-primary-tint);
+  padding: 1.2rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--a3d-border);
+  margin-bottom: 1.4rem;
 }
 
 .a3d-period-select {
@@ -104,7 +94,6 @@
 .a3d-select__control {
   border-radius: 10px !important;
   border-color: var(--a3d-border) !important;
-  box-shadow: none !important;
   min-height: 42px !important;
 }
 
@@ -144,13 +133,12 @@
   gap: 1rem;
   background: #fff;
   border: 1px solid var(--a3d-border);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 1.1rem 1.2rem;
   text-align: left;
   font: inherit;
   cursor: default;
-  box-shadow: 0 1px 2px rgba(32, 64, 128, 0.04);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
 .a3d-stat-card.clickable {
@@ -159,14 +147,13 @@
 
 .a3d-stat-card.clickable:hover {
   border-color: #c9d9f5;
-  box-shadow: 0 8px 20px rgba(32, 64, 128, 0.1);
   transform: translateY(-1px);
 }
 
 .a3d-stat-icon {
   width: 46px;
   height: 46px;
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,10 +217,9 @@
 .a3d-panel {
   background: #fff;
   border: 1px solid var(--a3d-border);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 1.3rem 1.4rem 1.1rem;
   margin-bottom: 1.1rem;
-  box-shadow: 0 1px 2px rgba(32, 64, 128, 0.04);
 }
 
 .a3d-panel-title {
@@ -260,19 +246,17 @@
   width: 100%;
   background: #fff;
   border: 1px solid var(--a3d-border);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 1.1rem 1.3rem;
   margin-bottom: 1.1rem;
   cursor: pointer;
   text-align: left;
   font: inherit;
-  box-shadow: 0 1px 2px rgba(32, 64, 128, 0.04);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
 .a3d-orientation-card:hover {
   border-color: #c9d9f5;
-  box-shadow: 0 8px 20px rgba(32, 64, 128, 0.1);
 }
 
 .a3d-orientation-gauge {

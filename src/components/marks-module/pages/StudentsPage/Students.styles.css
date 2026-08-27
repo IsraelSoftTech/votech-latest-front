@@ -1,39 +1,22 @@
+@import "../../styles/tokens.css";
+
 .students-page {
   padding: 1.4rem 1.6rem 3rem;
   max-width: 1300px;
   margin: 0 auto;
 }
 
-.students-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.1rem;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-}
-
-.students-title {
-  display: flex;
+.students-title-inner {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #204080;
-  margin: 0;
-}
-
-.students-header-actions {
-  display: flex;
-  gap: 0.7rem;
-  flex-wrap: wrap;
 }
 
 .students-register-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #204080;
+  background: var(--vt-primary);
   color: #fff;
   border: none;
   padding: 0.65rem 1.3rem;
@@ -57,8 +40,8 @@
   align-items: center;
   gap: 8px;
   background: #fff;
-  color: #204080;
-  border: 1px solid #204080;
+  color: var(--vt-primary);
+  border: 1px solid var(--vt-primary);
   padding: 0.65rem 1.3rem;
   border-radius: 10px;
   font-weight: 700;
@@ -93,8 +76,8 @@
   align-items: center;
   gap: 8px;
   background: #fff;
-  color: #204080;
-  border: 1px solid #204080;
+  color: var(--vt-primary);
+  border: 1px solid var(--vt-primary);
   text-decoration: none;
   padding: 0.55rem 1rem;
   border-radius: 9px;
@@ -163,7 +146,7 @@
 }
 
 .students-table th {
-  background: #204080;
+  background: var(--vt-primary);
   color: #fff;
   text-align: left;
   padding: 0.65rem 0.9rem;
@@ -208,6 +191,18 @@
   color: #c53030;
 }
 
+.students-repeating-pill {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: var(--vt-gold-tint);
+  color: var(--vt-gold);
+  border: 1px solid var(--vt-gold-border);
+}
+
 .students-actions-cell {
   display: flex;
   gap: 0.4rem;
@@ -222,7 +217,7 @@
   height: 30px;
   border: 1px solid #e2e8f0;
   background: #fff;
-  color: #204080;
+  color: var(--vt-primary);
   border-radius: 7px;
   cursor: pointer;
 }
@@ -243,4 +238,68 @@
   .students-page {
     padding: 1rem;
   }
+}
+
+/* Delete confirmation */
+.students-delete-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 4px 4px;
+}
+
+.students-delete-confirm-icon {
+  font-size: 2rem;
+  color: #c53030;
+  margin-bottom: 12px;
+}
+
+.students-delete-confirm-text {
+  font-size: 15px;
+  color: #33394a;
+  line-height: 1.5;
+  margin: 0 0 22px;
+}
+
+.students-delete-confirm-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.students-delete-confirm-cancel,
+.students-delete-confirm-danger {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.students-delete-confirm-cancel {
+  background: #eef1f6;
+  color: #33394a;
+}
+
+.students-delete-confirm-cancel:hover:not(:disabled) {
+  background: #e2e6ee;
+}
+
+.students-delete-confirm-danger {
+  background: #c53030;
+  color: #fff;
+}
+
+.students-delete-confirm-danger:hover:not(:disabled) {
+  background: #a52727;
+}
+
+.students-delete-confirm-cancel:disabled,
+.students-delete-confirm-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

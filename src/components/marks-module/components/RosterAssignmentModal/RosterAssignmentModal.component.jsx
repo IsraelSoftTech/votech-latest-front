@@ -11,7 +11,7 @@ const DECISION_LABELS = {
   failed: "Failed / Repeats",
 };
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 5;
 
 // Menu rendered through a portal so it isn't clipped by the modal's own
 // scroll container or the table's, matches the pattern already used
@@ -552,37 +552,39 @@ export const RosterAssignmentModal = ({
           )}
         </div>
 
-        {totalPages > 1 && (
-          <div className="roster-modal-pagination">
-            <button
-              type="button"
-              className="roster-modal-page-btn"
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Prev
-            </button>
-            <span className="roster-modal-page-label">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              type="button"
-              className="roster-modal-page-btn"
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </button>
-          </div>
-        )}
+        <div className="roster-modal-footer">
+          {totalPages > 1 && (
+            <div className="roster-modal-pagination">
+              <button
+                type="button"
+                className="roster-modal-page-btn"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Prev
+              </button>
+              <span className="roster-modal-page-label">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                type="button"
+                className="roster-modal-page-btn"
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </button>
+            </div>
+          )}
 
-        <button
-          type="button"
-          className="roster-modal-done-btn"
-          onClick={onClose}
-        >
-          Done
-        </button>
+          <button
+            type="button"
+            className="roster-modal-done-btn"
+            onClick={onClose}
+          >
+            Done
+          </button>
+        </div>
       </div>
     </Modal>
   );

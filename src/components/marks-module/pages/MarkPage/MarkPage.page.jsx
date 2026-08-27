@@ -5,9 +5,7 @@ import api from "../../utils/api";
 import Select from "react-select";
 import { CustomInput } from "../../components/Inputs/CustumInputs";
 import * as XLSX from "xlsx";
-import { useParams, useNavigate } from "react-router-dom";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaSortAlphaDown,
@@ -26,6 +24,7 @@ import {
 } from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import Modal from "../../components/Modal/Modal.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
 
 // Utility function for string similarity (Levenshtein distance)
 const calculateSimilarity = (str1, str2) => {
@@ -699,9 +698,73 @@ const NameMatchingModal = ({
   );
 };
 
+// Mirrors the real filter row (5 selects) and action buttons instead of
+// generic gray bars, so the layout doesn't jump once dropdowns arrive.
+function MarksFiltersSkeleton() {
+  return (
+    <div className="marks-skel-page">
+      <div className="marks-skel marks-skel-line" style={{ width: 170, height: 16, marginBottom: 20 }} />
+      <div className="marks-filters-row">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="marks-skel marks-skel-block" style={{ height: 38 }} />
+        ))}
+      </div>
+      <div className="marks-buttons-row">
+        <div className="marks-skel marks-skel-block" style={{ width: 160, height: 44 }} />
+        <div className="marks-skel marks-skel-block" style={{ width: 160, height: 44 }} />
+      </div>
+    </div>
+  );
+}
+
+// Mirrors the real table's columns/row count instead of a plain "Loading…"
+// line, so the layout doesn't jump once students arrive.
+function MarksTableSkeleton() {
+  return (
+    <table className="marks-table">
+      <thead>
+        <tr>
+          <th>S/N</th>
+          <th>Student ID</th>
+          <th>Student Name</th>
+          <th>Mark</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <tr key={i}>
+            <td className="desktop-cell">
+              <div className="marks-skel marks-skel-line" style={{ width: 20, height: 14 }} />
+            </td>
+            <td className="desktop-cell">
+              <div className="marks-skel marks-skel-line" style={{ width: 84, height: 14 }} />
+            </td>
+            <td className="desktop-cell">
+              <div className="marks-skel marks-skel-line" style={{ width: "72%", height: 14 }} />
+            </td>
+            <td className="desktop-cell">
+              <div className="marks-skel marks-skel-block" style={{ width: 70, height: 32 }} />
+            </td>
+            <td className="desktop-cell">
+              <div className="marks-skel marks-skel-block" style={{ width: 28, height: 28 }} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export const MarksUploadPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  // Deep-link support (e.g. from the Teacher Dashboard): ?academic_year_id=
+  // &department_id=&class_id=&term_id=&sequence_id= seed the filters below
+  // on first load only, read once here, never touched again — everything
+  // downstream still works exactly as if the admin had picked these by
+  // hand from the dropdowns.
+  const [searchParams] = useSearchParams();
 
   const user = useRestrictTo(
     "Admin1",
@@ -734,13 +797,20 @@ export const MarksUploadPage = () => {
   const [subjectClasses, setSubjectClasses] = useState([]);
   const [subject, setSubject] = useState({});
 
-  // Filter states
+  // Filter states — searchParams.get() always returns a string or null,
+  // but every option value elsewhere in this page (Select onChange,
+  // API responses) is a real number. Coerced to numbers right here, once,
+  // so every downstream `.id === filters.x` comparison just works instead
+  // of needing Number(...) normalization scattered through the file — a
+  // deep link from the Teacher Dashboard was otherwise silently failing
+  // to show as selected (state had the right value, the dropdown just
+  // couldn't match it against the numeric option list).
   const [filters, setFilters] = useState({
-    academic_year_id: null,
-    department_id: null,
-    class_id: null,
-    term_id: null,
-    sequence_id: null,
+    academic_year_id: Number(searchParams.get("academic_year_id")) || null,
+    department_id: Number(searchParams.get("department_id")) || null,
+    class_id: Number(searchParams.get("class_id")) || null,
+    term_id: Number(searchParams.get("term_id")) || null,
+    sequence_id: Number(searchParams.get("sequence_id")) || null,
   });
 
   const [marks, setMarks] = useState([]);
@@ -807,11 +877,13 @@ export const MarksUploadPage = () => {
     async (classId, departmentId, academicYearId) => {
       try {
         const res = await api.get(
-          `/students?class_id=${classId}&specialty_id=${
+          `/students?class_id=${classId}&department_id=${
             departmentId || ""
-          }&academic_year_id=${academicYearId}`
+          }&academic_year_id=${academicYearId}&limit=200`
         );
-        const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+        const list = Array.isArray(res?.data?.data?.students)
+          ? res.data.data.students
+          : [];
         if (isMountedRef.current) {
           setStudents(list);
         }
@@ -2283,10 +2355,10 @@ export const MarksUploadPage = () => {
   return (
     <SideTop>
       <div className="marks-upload-page">
-        <h2 className="marks-page-title">Upload {subject.name} Marks</h2>
+        <PageHeader title={`Upload ${subject.name} Marks`} />
 
         {loadingPage ? (
-          <Skeleton height={35} count={6} style={{ marginBottom: "10px" }} />
+          <MarksFiltersSkeleton />
         ) : (
           <>
             <div>
@@ -2298,6 +2370,7 @@ export const MarksUploadPage = () => {
             <div className="marks-filters-row">
               <div className="marks-filter-select">
                 <Select
+                  classNamePrefix="select"
                   placeholder="Academic Year"
                   options={academicYears.map((y) => ({
                     value: y.id,
@@ -2326,6 +2399,7 @@ export const MarksUploadPage = () => {
 
               <div className="marks-filter-select">
                 <Select
+                  classNamePrefix="select"
                   placeholder="Department"
                   options={departments.map((d) => ({
                     value: d.id,
@@ -2354,6 +2428,7 @@ export const MarksUploadPage = () => {
 
               <div className="marks-filter-select">
                 <Select
+                  classNamePrefix="select"
                   placeholder="Select Class"
                   options={filteredClasses.map((c) => ({
                     value: c.id,
@@ -2382,6 +2457,7 @@ export const MarksUploadPage = () => {
 
               <div className="marks-filter-select">
                 <Select
+                  classNamePrefix="select"
                   placeholder="Select Term"
                   options={filteredTerms.map((t) => ({
                     value: t.id,
@@ -2411,6 +2487,7 @@ export const MarksUploadPage = () => {
 
               <div className="marks-filter-select">
                 <Select
+                  classNamePrefix="select"
                   placeholder="Select Sequence"
                   options={filteredSequences.map((s) => ({
                     value: s.id,
@@ -2539,6 +2616,7 @@ export const MarksUploadPage = () => {
 
               <div className="marks-controls-right">
                 <Select
+                  classNamePrefix="select"
                   className="marks-filter-dropdown"
                   options={[
                     { value: "all", label: "All Students" },
@@ -2605,6 +2683,7 @@ export const MarksUploadPage = () => {
                 </button>
 
                 <Select
+                  classNamePrefix="select"
                   className="marks-per-page-select"
                   options={[
                     { value: 10, label: "Show 10" },
@@ -2660,7 +2739,7 @@ export const MarksUploadPage = () => {
 
             <div className="marks-table-container">
               {loadingTable ? (
-                <Skeleton count={5} height={30} />
+                <MarksTableSkeleton />
               ) : (
                 <table className="marks-table">
                   <thead>

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { FaLayerGroup, FaGraduationCap, FaHistory } from "react-icons/fa";
 import SideTop from "../../../SideTop";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
+import { Tabs } from "../../components/Tabs/Tabs.component";
 import PromotionRequirementsPage from "../PromotionRequirementsPage/PromotionRequirements";
 import PromotionRunPage from "../PromotionRunPage/PromotionRun";
 import PromotionHistoryPage from "../PromotionHistoryPage/PromotionHistory";
@@ -26,19 +27,7 @@ export const PromotionPage = () => {
   return (
     <SideTop>
       <div className="promotion-page">
-        <div className="promotion-tabs">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              className={`promotion-tab ${activeTab === tab.key ? "active" : ""}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <Tabs tabs={TABS} activeKey={activeTab} onChange={setActiveTab} />
 
         <div className="promotion-tab-panel">
           {activeTab === "requirements" && <PromotionRequirementsPage />}

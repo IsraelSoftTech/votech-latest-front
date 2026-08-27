@@ -1,0 +1,42 @@
+@import "../../styles/tokens.css";
+
+.vt-detail-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.vt-detail-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--vt-border);
+}
+
+.vt-detail-row:last-child {
+  border-bottom: none;
+}
+
+.vt-detail-label {
+  font-weight: 600;
+  color: var(--vt-ink-soft);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.vt-detail-value {
+  font-weight: 500;
+  font-size: 0.95rem;
+  word-break: break-word;
+  color: var(--vt-ink);
+}
+
+@media (max-width: 480px) {
+  .vt-detail-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 0;
+  }
+}

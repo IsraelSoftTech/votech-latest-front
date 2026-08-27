@@ -1,17 +1,20 @@
 import React from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { FaFileAlt, FaTable, FaLayerGroup } from "react-icons/fa";
+import { FaFileAlt, FaTable, FaLayerGroup, FaClipboardCheck } from "react-icons/fa";
 import SideTop from "../../../SideTop";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
+import { Tabs } from "../../components/Tabs/Tabs.component";
 import ReportCardHomePage from "../ReportCardHomePage/ReportCardHome.page";
 import ReportCardSessionsPage from "../ReportCardSessionsPage/ReportCardSessions.page";
 import MasterSheetDownloadPage from "../MasterSheetDownloadPage/MasterSheetDownload.page";
+import MarksOverviewPage from "../MarksOverviewPage/MarksOverview.page";
 import "./ReportCards.styles.css";
 
 const TABS = [
   { key: "print", label: "Print Report Cards", icon: <FaFileAlt /> },
   { key: "sessions", label: "Bulk Sessions", icon: <FaTable /> },
   { key: "master-sheets", label: "Master Sheets", icon: <FaLayerGroup /> },
+  { key: "marks-overview", label: "Marks Overview", icon: <FaClipboardCheck /> },
 ];
 
 // Single sidebar entry covering individual printing, bulk generation
@@ -30,35 +33,27 @@ export const ReportCardsPage = () => {
     ? "sessions"
     : searchParams.get("tab") === "master-sheets"
     ? "master-sheets"
+    : searchParams.get("tab") === "marks-overview"
+    ? "marks-overview"
     : "print";
 
   const goToTab = (key) => {
     if (key === "sessions") navigate("/academics/report-cards/sessions");
     else if (key === "master-sheets") navigate("/academics/report-cards?tab=master-sheets");
+    else if (key === "marks-overview") navigate("/academics/report-cards?tab=marks-overview");
     else navigate("/academics/report-cards");
   };
 
   return (
     <SideTop>
       <div className="report-cards-hub-page">
-        <div className="report-cards-hub-tabs">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              className={`report-cards-hub-tab ${activeTab === tab.key ? "active" : ""}`}
-              onClick={() => goToTab(tab.key)}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <Tabs tabs={TABS} activeKey={activeTab} onChange={goToTab} />
 
         <div className="report-cards-hub-panel">
           {activeTab === "print" && <ReportCardHomePage />}
           {activeTab === "sessions" && <ReportCardSessionsPage />}
           {activeTab === "master-sheets" && <MasterSheetDownloadPage />}
+          {activeTab === "marks-overview" && <MarksOverviewPage />}
         </div>
       </div>
     </SideTop>

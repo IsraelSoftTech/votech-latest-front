@@ -1,5 +1,5 @@
 import "./Class.styles.css";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import SideTop from "../../../SideTop";
 import DataTable from "../../components/DataTable/DataTable.component";
 import { toast } from "react-toastify";
@@ -11,152 +11,18 @@ import {
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
 import Stats from "../../components/Stats/Stats.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import Modal from "../../components/Modal/Modal.component";
+import ClassMasterHistoryModal from "../../components/ClassMasterHistoryModal/ClassMasterHistoryModal.component";
 import { useNavigate } from "react-router-dom";
 import {
   FaBan,
   FaCheckCircle,
   FaLayerGroup,
   FaPlus,
-  FaTimes,
   FaUserGraduate,
+  FaHistory,
 } from "react-icons/fa";
-
-// Custom hook to detect mobile
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  return isMobile;
-};
-
-// Class Modal Component (Desktop & Mobile)
-const ClassModal = ({ isOpen, onClose, title, children }) => {
-  const isMobile = useIsMobile();
-  const modalRef = useRef(null);
-  const [startY, setStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      document.body.style.top = `-${window.scrollY}px`;
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  // Touch handlers for mobile swipe to dismiss
-  const handleTouchStart = (e) => {
-    if (!isMobile) return;
-    setStartY(e.touches[0].clientY);
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isMobile || !isDragging) return;
-    const touchY = e.touches[0].clientY;
-    const diff = touchY - startY;
-
-    if (diff > 0) {
-      setCurrentY(diff);
-      if (modalRef.current) {
-        modalRef.current.style.transform = `translateY(${diff}px)`;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isMobile) return;
-    setIsDragging(false);
-
-    if (currentY > 150) {
-      onClose();
-    }
-
-    if (modalRef.current) {
-      modalRef.current.style.transform = "";
-    }
-    setCurrentY(0);
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className={`class-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        className={`class-modal-container ${isMobile ? "mobile" : "desktop"}`}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Drag handle - mobile only */}
-        {isMobile && (
-          <div className="class-modal-drag-handle">
-            <div className="class-drag-bar"></div>
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="class-modal-header">
-          <h2 className="class-modal-title">{title}</h2>
-          <button
-            className="class-modal-close"
-            onClick={onClose}
-            type="button"
-            aria-label="Close modal"
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="class-modal-body">{children}</div>
-      </div>
-    </div>
-  );
-};
 
 export const ClassPage = () => {
   const navigate = useNavigate();
@@ -189,6 +55,7 @@ export const ClassPage = () => {
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [classMasterHistoryRow, setClassMasterHistoryRow] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -521,18 +388,20 @@ export const ClassPage = () => {
   return (
     <SideTop>
       <div className="class-page">
-        <div className="class-page-header">
-          <h2 className="class-page-title">Classes</h2>
-          <button
-            className="class-btn-create class-btn-desktop"
-            onClick={openCreateModal}
-          >
-            <FaPlus />
-            <span>Create Class</span>
-          </button>
-        </div>
+        <PageHeader
+          title="Classes"
+          actions={
+            <button
+              className="class-btn-create class-btn-desktop"
+              onClick={openCreateModal}
+            >
+              <FaPlus />
+              <span>Create Class</span>
+            </button>
+          }
+        />
 
-        <Stats data={stats} />
+        <Stats data={stats} loading={isLoading} skeletonCount={3} />
 
         {/* Mobile FAB */}
         <button
@@ -561,12 +430,31 @@ export const ClassPage = () => {
                 onClick: (row) =>
                   navigate("/admin-student", { state: { class_id: row.id } }),
               },
+              {
+                icon: <FaHistory />,
+                title: "Class Master History (by year)",
+                onClick: (row) => setClassMasterHistoryRow(row),
+              },
             ]}
           />
         </div>
 
+        {/* Class Master History Modal */}
+        <Modal
+          isOpen={!!classMasterHistoryRow}
+          onClose={() => setClassMasterHistoryRow(null)}
+          title={`Class Master History — ${classMasterHistoryRow?.name || ""}`}
+        >
+          {classMasterHistoryRow && (
+            <ClassMasterHistoryModal
+              classItem={classMasterHistoryRow}
+              teachersOptions={teachers}
+            />
+          )}
+        </Modal>
+
         {/* Create Modal */}
-        <ClassModal
+        <Modal
           isOpen={createModalOpen}
           onClose={closeCreateModal}
           title="Create Class"
@@ -672,10 +560,10 @@ export const ClassPage = () => {
               disabled={createLoading}
             />
           </form>
-        </ClassModal>
+        </Modal>
 
         {/* Edit Modal */}
-        <ClassModal
+        <Modal
           isOpen={editModalOpen}
           onClose={closeEditModal}
           title="Edit Class"
@@ -784,10 +672,10 @@ export const ClassPage = () => {
               disabled={editLoading}
             />
           </form>
-        </ClassModal>
+        </Modal>
 
         {/* Details Modal */}
-        <ClassModal
+        <Modal
           isOpen={!!selectedRow}
           onClose={closeModal}
           title="Class Details"
@@ -879,7 +767,7 @@ export const ClassPage = () => {
               </section>
             </div>
           )}
-        </ClassModal>
+        </Modal>
       </div>
     </SideTop>
   );

@@ -16,6 +16,7 @@ import DataTable from "../../components/DataTable/DataTable.component";
 import Modal from "../../components/Modal/Modal.component";
 import { PromotionMoveResults } from "../../components/PromotionMoveResults/PromotionMoveResults.component";
 import { RosterAssignmentModal } from "../../components/RosterAssignmentModal/RosterAssignmentModal.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
 import "./PromotionRun.styles.css";
 
 const CONFIRM_DELAY_SECONDS = 5;
@@ -45,6 +46,28 @@ const formatMoveDestination = (move) => {
   }
   return "Multiple classes/departments";
 };
+
+// promotedClasses only means "there's a non-reversed move for this class"
+// (pending/running/failed all block starting a new one, same as
+// completed) — but "already promoted" as a message is only true once that
+// move has actually finished. A class stuck mid-run or one whose move
+// failed still needs a distinct, honest label, not the same "reverse to
+// redo" text as a genuinely completed one.
+const PROMOTED_STATUS_TEXT = {
+  completed: { short: "already promoted", hint: "Already promoted, reverse on History tab to redo" },
+  running: { short: "promotion in progress", hint: "Currently running — check the History tab" },
+  pending: { short: "queued in active run", hint: "Queued in the active run — check the History tab" },
+  failed: { short: "previous attempt failed", hint: "Previous attempt failed — check the History tab" },
+};
+
+function promotionStatusText(entry) {
+  return (
+    PROMOTED_STATUS_TEXT[entry?.status] || {
+      short: "already has a promotion move",
+      hint: "Already has a promotion move — check the History tab",
+    }
+  );
+}
 
 export const PromotionRunPage = () => {
   useRestrictTo("Admin3");
@@ -599,16 +622,20 @@ export const PromotionRunPage = () => {
 
   return (
     <div className="promo-run-page">
-      <div className="promo-run-header">
-        <h1 className="promo-run-title">
-          <FaGraduationCap /> Run Promotion
-        </h1>
-        {!activeYear && (
-          <span className="promo-run-warning-badge">
-            <FaExclamationTriangle /> No active academic year found
+      <PageHeader
+        title={
+          <span className="promo-run-title-inner">
+            <FaGraduationCap /> Run Promotion
           </span>
-        )}
-      </div>
+        }
+        actions={
+          !activeYear && (
+            <span className="promo-run-warning-badge">
+              <FaExclamationTriangle /> No active academic year found
+            </span>
+          )
+        }
+      />
 
       {step === "setup" && (
         <SetupStep
@@ -872,7 +899,7 @@ const SetupStep = ({
                 options={classes.map((c) => ({
                   value: c.id,
                   label: promotedClasses.has(c.id)
-                    ? `${c.name} (already promoted)`
+                    ? `${c.name} (${promotionStatusText(promotedClasses.get(c.id)).short})`
                     : c.name,
                   isPromoted: promotedClasses.has(c.id),
                 }))}
@@ -894,12 +921,23 @@ const SetupStep = ({
                 classNamePrefix="select"
               />
               {selectedSourceClassId &&
-                promotedClasses.has(selectedSourceClassId) && (
-                  <p className="promo-run-already-promoted-hint">
-                    This class was already promoted out of the active year.
-                    Reverse that move on the History tab first.
-                  </p>
-                )}
+                promotedClasses.has(selectedSourceClassId) &&
+                (() => {
+                  const status = promotedClasses.get(selectedSourceClassId)?.status;
+                  return (
+                    <p className="promo-run-already-promoted-hint">
+                      {status === "completed"
+                        ? "This class was already promoted out of the active year. Reverse that move on the History tab first."
+                        : status === "running"
+                        ? "This class's promotion is currently running. Check the History tab for progress."
+                        : status === "pending"
+                        ? "This class is queued in the active run. Check the History tab for progress."
+                        : status === "failed"
+                        ? "This class's last promotion attempt failed. Check the History tab before retrying."
+                        : "This class already has a promotion move for this academic year. Check the History tab."}
+                    </p>
+                  );
+                })()}
             </div>
 
             {!singleGraduation && !isSplitClass && (
@@ -1084,8 +1122,12 @@ const SetupStep = ({
                 <span className="promo-run-move-source">{cls.name}</span>
                 <span className="promo-run-move-arrow">→</span>
                 {alreadyPromoted ? (
-                  <span className="promo-run-move-already-promoted">
-                    Already promoted, reverse on History tab to redo
+                  <span
+                    className={`promo-run-move-already-promoted promo-run-move-status-${
+                      promotedClasses.get(cls.id)?.status || "unknown"
+                    }`}
+                  >
+                    {promotionStatusText(promotedClasses.get(cls.id)).hint}
                   </span>
                 ) : needsIndividualHandling ? (
                   <div className="promo-run-move-needs-individual">

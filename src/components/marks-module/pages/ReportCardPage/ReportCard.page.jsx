@@ -5,6 +5,8 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 import ReportCard from "../../components/ReportCard/ReportCard.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import { EmptyState } from "../../components/EmptyState/EmptyState.component";
 import "./ReportCardPage.styles.css";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
@@ -102,21 +104,21 @@ export const ReportCardPage = () => {
 
   return (
     <div className="report-page">
-      <header className="report-page-header">
-        <h2>Student Report Card</h2>
-        <div className="report-page-header-back-n-print-btn">
-          <button className="back-btn" onClick={handleGoBack}>
-            <FaArrowLeft /> <span>Go Back</span>
-          </button>
-          <div className="report-actions">
+      <PageHeader
+        title="Student Report Card"
+        actions={
+          <>
+            <button className="back-btn" onClick={handleGoBack}>
+              <FaArrowLeft /> <span>Go Back</span>
+            </button>
             {downloadUrl && (
-              <a className="btn btn-create" href={downloadUrl}>
+              <a className="report-page-download-btn" href={downloadUrl}>
                 <FaDownload /> <span>Download PDF</span>
               </a>
             )}
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <div className="report-card-wrapper">
         <div className="report-card-content">
@@ -132,7 +134,7 @@ export const ReportCardPage = () => {
               <Skeleton height={1000} width={800} style={{ borderRadius: "8px" }} />
             </div>
           ) : !reportCard ? (
-            <p>No report card found</p>
+            <EmptyState title="No report card found" subtitle="Try going back and selecting the student again." />
           ) : (
             <ReportCard data={reportCard} grading={academicBands} />
           )}

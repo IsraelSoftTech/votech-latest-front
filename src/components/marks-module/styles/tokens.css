@@ -1,0 +1,119 @@
+/* Shared design tokens for marks-module — v2 (tinted panels, no shadows).
+   Imported via @import at the top of each component/page stylesheet that
+   uses these variables, matching this codebase's existing plain-CSS
+   convention (no CSS modules / no build-time token injection). */
+:root {
+  --vt-primary: #204080;
+  --vt-primary-tint: #f5f7ff;
+  --vt-primary-tint2: #eaefff;
+  --vt-primary-dark: #183466;
+
+  /* Note: the report card/master sheet PDFs (reportCardPdfGenerator.js,
+     MasterSheet.component.jsx) use #c9a96e for "gold," but only ever as thin
+     table borders and small italic text — never a bold swatch — so it reads
+     as muted tan/champagne, not gold. There's no bolder gold element in
+     those documents to copy, so this uses a standard richer metallic gold
+     instead, which still reads as unmistakably gold next to the navy. */
+  --vt-gold: #d4af37;
+  --vt-gold-tint: #fbf3d9;
+  --vt-gold-border: #e8ce7c;
+
+  --vt-border: #e4e9f7;
+  --vt-ink: #233252;
+  --vt-ink-soft: #66708c;
+  --vt-muted: #94a3b8;
+
+  /* Grading bands — same values already used in reportCardPdfGenerator.js,
+     kept identical here so a "Good" pill means the same color everywhere. */
+  --vt-excellent: #0d5f0d;
+  --vt-vgood: #1a5f1a;
+  --vt-good: #204080;
+  --vt-fairly-good: #b8860b;
+  --vt-average: #d97706;
+  --vt-weak: #cc0000;
+
+  /* Status bands — same values already used on Promotion History's pills. */
+  --vt-status-done: #1f7a4d;
+  --vt-status-done-tint: #eaf7f0;
+  --vt-status-run: #204080;
+  --vt-status-run-tint: #eaf0ff;
+  --vt-status-pending: #66708c;
+  --vt-status-pending-tint: #f2f4f9;
+  --vt-status-fail: #c0392b;
+  --vt-status-fail-tint: #fdecec;
+}
+
+/* ===== Searchable dropdowns (react-select) — colors and border only =====
+   Every page picks its own classNamePrefix ("select", "report-select",
+   "bands-select", "students-select", ...), so about a dozen pages each
+   independently define their own __control/__menu/__option colors and
+   border widths (1px, 1.5px, 2px, gray, navy, all different), and several
+   more never got styled at all and still show react-select's stock gray
+   border + blue focus glow. Targeting the class-name suffixes react-select
+   always generates, regardless of prefix, fixes every instance from this
+   one file instead of touching a dozen pages (which is the point — colors
+   and border size only, nothing about layout, sizing or behavior).
+   !important is required here: these are single attribute selectors,
+   lower specificity than the two-class page-level rules (e.g.
+   ".bands-select .select__control") they need to consistently win over. */
+[class*="__control"] {
+  border-color: var(--vt-border) !important;
+  border-width: 1.5px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+[class*="__control--is-focused"] {
+  border-color: var(--vt-primary) !important;
+}
+
+[class*="__control--is-disabled"] {
+  background-color: var(--vt-primary-tint) !important;
+  border-color: var(--vt-border) !important;
+}
+
+[class*="__menu"] {
+  border: 1.5px solid var(--vt-border) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+[class*="__option--is-selected"] {
+  background-color: var(--vt-primary) !important;
+  color: #fff !important;
+}
+
+[class*="__option--is-focused"]:not([class*="__option--is-selected"]) {
+  background-color: var(--vt-primary-tint2) !important;
+  color: var(--vt-ink) !important;
+}
+
+[class*="__single-value"] {
+  color: var(--vt-ink) !important;
+}
+
+[class*="__placeholder"] {
+  color: var(--vt-muted) !important;
+}
+
+[class*="__indicator-separator"] {
+  background-color: var(--vt-border) !important;
+}
+
+[class*="__dropdown-indicator"],
+[class*="__clear-indicator"] {
+  color: var(--vt-muted) !important;
+}
+
+[class*="__control--is-focused"] [class*="__dropdown-indicator"] {
+  color: var(--vt-primary) !important;
+}
+
+[class*="__multi-value"] {
+  background-color: var(--vt-primary-tint2) !important;
+  border-radius: 6px !important;
+}
+
+[class*="__multi-value__label"] {
+  color: var(--vt-primary) !important;
+}

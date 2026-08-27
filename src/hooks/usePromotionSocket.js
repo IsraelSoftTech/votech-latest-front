@@ -32,6 +32,20 @@ export function usePromotionSocket({
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
 
+  // The socket itself only connects once (see the [] effect below), but
+  // the caller's callbacks close over render-time state (e.g. the current
+  // `run`) and get recreated every render. Without this, the listeners
+  // registered on mount would keep calling the FIRST render's versions
+  // forever — e.g. PromotionRun.jsx's onCompleted closes over `run`,
+  // which is still null on mount, so a stale handler would silently
+  // no-op on every real "run completed" event instead of refreshing.
+  // Refs always hold the latest callback; the stable wrappers below read
+  // through them, so the socket connection itself never needs to reset.
+  const callbacksRef = useRef({});
+  useEffect(() => {
+    callbacksRef.current = { onProgress, onCompleted, onFailed, onInterrupted };
+  });
+
   useEffect(() => {
     const token = sessionStorage.getItem("token") || localStorage.getItem("token");
     if (!token) return undefined;
@@ -49,10 +63,10 @@ export function usePromotionSocket({
     socket.on("disconnect", () => setIsConnected(false));
     socket.on("connect_error", () => setIsConnected(false));
 
-    if (onProgress) socket.on("promotionProgress", onProgress);
-    if (onCompleted) socket.on("promotionRunCompleted", onCompleted);
-    if (onFailed) socket.on("promotionRunFailed", onFailed);
-    if (onInterrupted) socket.on("promotionRunInterrupted", onInterrupted);
+    socket.on("promotionProgress", (...args) => callbacksRef.current.onProgress?.(...args));
+    socket.on("promotionRunCompleted", (...args) => callbacksRef.current.onCompleted?.(...args));
+    socket.on("promotionRunFailed", (...args) => callbacksRef.current.onFailed?.(...args));
+    socket.on("promotionRunInterrupted", (...args) => callbacksRef.current.onInterrupted?.(...args));
 
     return () => {
       socket.disconnect();

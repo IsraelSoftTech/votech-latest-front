@@ -1,0 +1,40 @@
+.rcdm-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rcdm-selector label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #55606e;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.rcdm-download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #204080;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.rcdm-download-btn:hover:not(:disabled) {
+  background: #1a3468;
+}
+
+.rcdm-download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

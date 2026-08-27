@@ -1,0 +1,57 @@
+@import "../../styles/tokens.css";
+
+.ssp-page {
+  padding: 1.4rem 1.6rem 3rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.ssp-panel {
+  background: #fff;
+  border: 1px solid var(--vt-border);
+  border-radius: 10px;
+  padding: 1.4rem;
+  margin-top: 1rem;
+}
+
+.ssp-loading {
+  padding: 2rem 0;
+  text-align: center;
+  color: var(--vt-ink-soft);
+  font-size: 0.9rem;
+}
+
+.ssp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ssp-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--vt-ink-soft);
+  margin-bottom: 0.35rem;
+}
+
+.ssp-field input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--vt-ink);
+  font-family: inherit;
+}
+
+.ssp-field input:focus {
+  outline: none;
+  border-color: var(--vt-primary);
+}
+
+.ssp-actions {
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--vt-border);
+}

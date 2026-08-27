@@ -1,32 +1,22 @@
+@import "../../styles/tokens.css";
+
 .msd-page {
   padding: 1.3rem 0 3rem;
   max-width: 1100px;
   margin: 0 auto;
 }
 
-.msd-panel {
-  background: #fff;
-  border: 1px solid #e8edf5;
-  border-radius: 14px;
-  padding: 1.4rem 1.5rem;
-  box-shadow: 0 2px 10px rgba(32, 64, 128, 0.05);
-}
-
-.msd-panel-title {
-  display: flex;
+.msd-title-inner {
+  display: inline-flex;
   align-items: center;
   gap: 9px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #204080;
-  margin: 0 0 0.4rem;
 }
 
-.msd-panel-subtitle {
-  color: #718096;
-  font-size: 0.88rem;
-  margin: 0 0 1.2rem;
-  line-height: 1.5;
+.msd-panel {
+  background: #fff;
+  border: 1px solid var(--vt-border);
+  border-radius: 14px;
+  padding: 1.4rem 1.5rem;
 }
 
 .msd-form {
@@ -65,7 +55,7 @@
 }
 
 .msd-view-btn {
-  background: #204080;
+  background: var(--vt-primary);
   color: #fff;
 }
 
@@ -75,13 +65,13 @@
 }
 
 .msd-view-btn:not(:disabled):hover {
-  background: #16305f;
+  background: var(--vt-primary-dark);
 }
 
 .msd-download-btn {
   background: #fff;
-  color: #204080;
-  border: 1px solid #204080;
+  color: var(--vt-primary);
+  border: 1px solid var(--vt-primary);
 }
 
 .msd-download-btn:hover {
@@ -91,5 +81,52 @@
 @media (max-width: 720px) {
   .msd-form {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Skeleton loading */
+.msd-skel {
+  background: linear-gradient(90deg, #eef1f6 25%, #e2e8f0 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: msd-shimmer 1.4s ease infinite;
+  border-radius: 6px;
+}
+.msd-skel-line {
+  display: block;
+}
+.msd-skel-block {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+}
+.msd-skel-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+.msd-skel-stat-card {
+  height: 66px;
+  border-radius: 10px;
+}
+.msd-skel-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.msd-skel-table-row {
+  height: 30px;
+  border-radius: 6px;
+}
+.msd-skel-table-row.header {
+  height: 34px;
+}
+@keyframes msd-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .msd-skel {
+    animation: none !important;
   }
 }

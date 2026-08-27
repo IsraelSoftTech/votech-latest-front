@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import {
   FaPlus,
@@ -10,20 +10,30 @@ import {
   FaLayerGroup,
   FaFileDownload,
   FaSpinner,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api, { headers, subBaseURL } from "../../utils/api";
 import SideTop from "../../../SideTop";
 import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
 import { StudentFormModal } from "../../components/StudentFormModal/StudentFormModal.component";
-import { StudentDetailModal } from "../../components/StudentDetailModal/StudentDetailModal.component";
+// Rebuilt into a full page — see StudentDetailPage. Kept here, not
+// deleted, in case this needs reverting.
+// import { StudentDetailModal } from "../../components/StudentDetailModal/StudentDetailModal.component";
 import { OrientationBackfillModal } from "../../components/OrientationBackfillModal/OrientationBackfillModal.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import Modal from "../../components/Modal/Modal.component";
 import "./Students.styles.css";
 
 const STATUS_OPTIONS = [
   { value: "active", label: "Active" },
   { value: "graduated", label: "Graduated" },
   { value: "withdrawn", label: "Withdrawn" },
+];
+
+const REPEATING_OPTIONS = [
+  { value: "true", label: "Repeating" },
+  { value: "false", label: "Not Repeating" },
 ];
 
 const SORT_OPTIONS = [
@@ -89,6 +99,7 @@ function StudentsTableSkeleton() {
 // page talks to the newer /api/v1/students layer instead.
 export const StudentsPage = () => {
   useRestrictTo("Admin3");
+  const navigate = useNavigate();
   const location = useLocation();
   const classFilterFromNav = location.state?.class_id || null;
   const departmentFilterFromNav = location.state?.department_id || null;
@@ -114,6 +125,7 @@ export const StudentsPage = () => {
   );
   const [departmentFilter, setDepartmentFilter] = useState(departmentFilterFromNav);
   const [classFilter, setClassFilter] = useState(classFilterFromNav);
+  const [repeatingFilter, setRepeatingFilter] = useState("");
   const [sortBy, setSortBy] = useState("full_name");
   const [sortDir, setSortDir] = useState("asc");
   const [page, setPage] = useState(1);
@@ -125,6 +137,8 @@ export const StudentsPage = () => {
   const [detailStudent, setDetailStudent] = useState(null);
   const [backfillModalOpen, setBackfillModalOpen] = useState(false);
   const [downloadingClassList, setDownloadingClassList] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const hasOrientationClasses = classes.some((c) => c.is_orientation);
 
@@ -158,6 +172,7 @@ export const StudentsPage = () => {
       if (statusFilter) params.set("status", statusFilter);
       if (departmentFilter) params.set("department_id", departmentFilter);
       if (classFilter) params.set("class_id", classFilter);
+      if (repeatingFilter) params.set("is_repeating", repeatingFilter);
       const res = await api.get(`/students?${params.toString()}`);
       setStudents(res.data.data.students || []);
       setPagination(res.data.data.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 });
@@ -166,7 +181,7 @@ export const StudentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, sortBy, sortDir, search, statusFilter, departmentFilter, classFilter]);
+  }, [page, sortBy, sortDir, search, statusFilter, departmentFilter, classFilter, repeatingFilter]);
 
   useEffect(() => {
     fetchInitialData();
@@ -178,7 +193,7 @@ export const StudentsPage = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter, departmentFilter, classFilter, sortBy, sortDir]);
+  }, [search, statusFilter, departmentFilter, classFilter, repeatingFilter, sortBy, sortDir]);
 
   // Pre-select the department when arriving from "See Students" on the
   // Classes page (class_id only) so the two filters stay consistent
@@ -213,21 +228,36 @@ export const StudentsPage = () => {
     setFormModalOpen(true);
   };
 
-  const handleDelete = async (student, e) => {
+  const handleDelete = (student, e) => {
     e.stopPropagation();
-    if (!window.confirm(`Remove ${student.full_name}? This can be recovered later if needed.`)) return;
+    setDeleteTarget(student);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
-      await api.delete(`/students/${student.id}`);
+      await api.delete(`/students/${deleteTarget.id}`);
       toast.success("Student removed.");
+      setDeleteTarget(null);
       fetchStudents();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to remove student.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
+  // Rebuilt into a full page (StudentDetailPage) — clicking a row now
+  // navigates there instead of opening StudentDetailModal in place. The
+  // modal's own tab logic carried over unchanged; only the chrome around
+  // it (page vs modal) differs. See StudentDetail.page.jsx.
+  // const openDetail = (student) => {
+  //   setDetailStudent(student);
+  //   setDetailModalOpen(true);
+  // };
   const openDetail = (student) => {
-    setDetailStudent(student);
-    setDetailModalOpen(true);
+    navigate(`/admin-student/${student.id}`);
   };
 
   // A plain <a href> download link gives no feedback while the PDF is
@@ -269,25 +299,29 @@ export const StudentsPage = () => {
   return (
     <SideTop>
     <div className="students-page">
-      <div className="students-header">
-        <h2 className="students-title">
-          <FaUserGraduate /> Students
-        </h2>
-        <div className="students-header-actions">
-          {hasOrientationClasses && (
-            <button
-              className="students-backfill-btn"
-              onClick={() => setBackfillModalOpen(true)}
-              disabled={loadingInitial}
-            >
-              <FaLayerGroup /> Backfill Orientation Choices
+      <PageHeader
+        title={
+          <span className="students-title-inner">
+            <FaUserGraduate /> Students
+          </span>
+        }
+        actions={
+          <>
+            {hasOrientationClasses && (
+              <button
+                className="students-backfill-btn"
+                onClick={() => setBackfillModalOpen(true)}
+                disabled={loadingInitial}
+              >
+                <FaLayerGroup /> Backfill Orientation Choices
+              </button>
+            )}
+            <button className="students-register-btn" onClick={handleRegister} disabled={loadingInitial}>
+              <FaPlus /> Register Student
             </button>
-          )}
-          <button className="students-register-btn" onClick={handleRegister} disabled={loadingInitial}>
-            <FaPlus /> Register Student
-          </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="students-filters-row">
         <div className="students-class-filter">
@@ -316,6 +350,16 @@ export const StudentsPage = () => {
             options={classOptions}
             value={classOptions.find((o) => o.value === classFilter) || null}
             onChange={(opt) => setClassFilter(opt?.value || null)}
+            isClearable
+            classNamePrefix="students-select"
+          />
+        </div>
+        <div className="students-class-filter">
+          <Select
+            placeholder="Repeating status..."
+            options={REPEATING_OPTIONS}
+            value={REPEATING_OPTIONS.find((o) => o.value === repeatingFilter) || null}
+            onChange={(opt) => setRepeatingFilter(opt?.value || "")}
             isClearable
             classNamePrefix="students-select"
           />
@@ -384,6 +428,9 @@ export const StudentsPage = () => {
                   <td>{s.sex}</td>
                   <td>
                     <span className={`students-status-pill ${s.status}`}>{s.status}</span>
+                    {s.is_repeating && (
+                      <span className="students-repeating-pill">Repeating</span>
+                    )}
                   </td>
                   <td className="students-actions-cell">
                     <button
@@ -420,12 +467,14 @@ export const StudentsPage = () => {
         onSaved={fetchStudents}
       />
 
+      {/* Rebuilt into a full page — see StudentDetailPage.
       <StudentDetailModal
         isOpen={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
         student={detailStudent}
         academicYearId={detailStudent?.academic_year_id || activeAcademicYearId}
       />
+      */}
 
       <OrientationBackfillModal
         isOpen={backfillModalOpen}
@@ -436,6 +485,45 @@ export const StudentsPage = () => {
         classes={classes}
         departments={departments}
       />
+
+      {/* Delete confirmation — deliberately its own explicit modal, not a
+          native window.confirm(), so this destructive action always gets
+          a real "are you sure" moment naming the exact student, not a
+          dismiss-by-habit browser popup. */}
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => !deleteLoading && setDeleteTarget(null)}
+        title="Remove Student"
+      >
+        {deleteTarget && (
+          <div className="students-delete-confirm">
+            <FaExclamationTriangle className="students-delete-confirm-icon" />
+            <p className="students-delete-confirm-text">
+              Are you sure you want to delete{" "}
+              <strong>{deleteTarget.full_name}</strong>? This data may not be
+              recoverable.
+            </p>
+            <div className="students-delete-confirm-actions">
+              <button
+                type="button"
+                className="students-delete-confirm-cancel"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="students-delete-confirm-danger"
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "Removing..." : "Yes, Delete"}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
     </SideTop>
   );

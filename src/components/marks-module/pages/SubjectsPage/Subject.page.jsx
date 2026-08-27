@@ -8,7 +8,6 @@ import {
   FaUserPlus,
   FaFileAlt,
   FaExclamationCircle,
-  FaTimes,
 } from "react-icons/fa";
 
 import SideTop from "../../../SideTop";
@@ -17,6 +16,9 @@ import api, { subBaseURL, headers } from "../../utils/api";
 import DataTable from "../../components/DataTable/DataTable.component";
 import Stats from "../../components/Stats/Stats.component";
 import AssignCourseModal from "../../components/AssignCourseModal/AssignCourseModal.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import { EmptyState } from "../../components/EmptyState/EmptyState.component";
+import Modal from "../../components/Modal/Modal.component";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import {
   CustomDropdown,
@@ -25,17 +27,41 @@ import {
 } from "../../components/Inputs/CustumInputs";
 import { motion } from "framer-motion";
 
+// A subject can be taught in 30+ classes, whose names already carry their
+// department's name (e.g. "Civil Engineering Certification Level Two CE"),
+// so the joined string DataTable searches against can run to hundreds of
+// characters. Table cells show a short "first few + N more" preview only,
+// search still matches the full underlying string, the full list lives on
+// the subject's own detail page (opened by clicking the row).
+const summarizeList = (joined, max = 2) => {
+  if (!joined || joined === "None") return joined;
+  const items = joined.split(", ");
+  if (items.length <= max) return joined;
+  return `${items.slice(0, max).join(", ")} +${items.length - max} more`;
+};
+
 const SUBJECT_COLUMNS = [
   { label: "S/N", accessor: "sn" },
   { label: "Name", accessor: "name" },
   { label: "Code", accessor: "code" },
   { label: "Coefficient", accessor: "coefficient" },
   { label: "Category", accessor: "category" },
-  { label: "Classes", accessor: "className" },
-  { label: "Teachers", accessor: "teacherName" },
+  {
+    label: "Classes",
+    accessor: "className",
+    render: (row) => summarizeList(row.className),
+  },
+  {
+    label: "Teachers",
+    accessor: "teacherName",
+    render: (row) => summarizeList(row.teacherName),
+  },
   { label: "Assigned", accessor: "isAssigned" },
-  { label: "Departments", accessor: "department" },
-  { label: "Orientation Placement", accessor: "orientationDepartmentName" },
+  {
+    label: "Departments",
+    accessor: "department",
+    render: (row) => summarizeList(row.department),
+  },
 ];
 
 const INITIAL_FORM_STATE = {
@@ -44,143 +70,6 @@ const INITIAL_FORM_STATE = {
   coefficient: 0,
   name: "",
   orientationDepartmentName: "",
-};
-
-// Custom hook to detect mobile
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  return isMobile;
-};
-
-// Modal Component (Desktop & Mobile)
-const SubjectModal = ({ isOpen, onClose, title, children }) => {
-  const isMobile = useIsMobile();
-  const modalRef = useRef(null);
-  const [startY, setStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      document.body.style.top = `-${window.scrollY}px`;
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  // Touch handlers for mobile swipe to dismiss
-  const handleTouchStart = (e) => {
-    if (!isMobile) return;
-    setStartY(e.touches[0].clientY);
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isMobile || !isDragging) return;
-    const touchY = e.touches[0].clientY;
-    const diff = touchY - startY;
-
-    if (diff > 0) {
-      setCurrentY(diff);
-      if (modalRef.current) {
-        modalRef.current.style.transform = `translateY(${diff}px)`;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isMobile) return;
-    setIsDragging(false);
-
-    if (currentY > 150) {
-      onClose();
-    }
-
-    if (modalRef.current) {
-      modalRef.current.style.transform = "";
-    }
-    setCurrentY(0);
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className={`subject-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        className={`subject-modal-container ${isMobile ? "mobile" : "desktop"}`}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Drag handle - mobile only */}
-        {isMobile && (
-          <div className="modal-drag-handle">
-            <div className="drag-bar"></div>
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="subject-modal-header">
-          <h2 className="subject-modal-title">{title}</h2>
-          <button
-            className="subject-modal-close"
-            onClick={onClose}
-            type="button"
-            aria-label="Close modal"
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="subject-modal-body">{children}</div>
-      </div>
-    </div>
-  );
 };
 
 export const SubjectPage = ({ noLayoutWrapper = false }) => {
@@ -198,7 +87,6 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
 
   const [subjects, setSubjects] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
   const [data, setData] = useState([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -409,8 +297,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
 
   const departmentNameOptions = departments.map((d) => d.label);
 
-  const handleRowClick = (row) => setSelectedRow(row);
-  const closeModal = () => setSelectedRow(null);
+  const handleRowClick = (row) => navigate(`/academics/subjects/${row.id}`);
 
   const openCreateModal = () => {
     resetForm();
@@ -536,7 +423,12 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
 
   const extraActions = [
     {
-      icon: <FaUserPlus color="#204080" />,
+      // No hardcoded color here — the icon must inherit from the button's
+      // own CSS (.vt-row-action-extra / :hover) so it switches to white
+      // on hover along with the background. A hardcoded inline color
+      // previously pinned the icon to the same navy as the hover
+      // background, making it disappear on hover.
+      icon: <FaUserPlus />,
       title: "Assign Class & Teacher",
       onClick: (row) => {
         setAssignSubject(row);
@@ -545,7 +437,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
       roles: ["Admin3"],
     },
     {
-      icon: <FaFileAlt color="#204080" />,
+      icon: <FaFileAlt />,
       title: "Fill in marks",
       onClick: (row) => navigate(`/academics/mark-upload/${row.id}`),
     },
@@ -554,16 +446,22 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
   const content = (
     <>
       <div className="subject-page-container">
-        <h2 className="page-title">
-          {user.role === "Admin3"
-            ? "All Subjects To Mr Vitalis"
-            : "Subjects Assigned to You"}
-        </h2>
-        {user.role === "Admin3" && <Stats data={data} />}
+        <PageHeader
+          title={
+            user.role === "Admin3"
+              ? "All Subjects To Mr Vitalis"
+              : "Subjects Assigned to You"
+          }
+          actions={
+            user.role === "Admin3" && (
+              <button className="btn btn-create" onClick={openCreateModal}>
+                Create Subject
+              </button>
+            )
+          }
+        />
         {user.role === "Admin3" && (
-          <button className="btn btn-create" onClick={openCreateModal}>
-            Create Subject
-          </button>
+          <Stats data={data} loading={isLoading} skeletonCount={3} />
         )}
         {isLoading || subjects.length > 0 ? (
           <DataTable
@@ -591,7 +489,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
       </div>
 
       {/* Create Modal */}
-      <SubjectModal
+      <Modal
         isOpen={createModalOpen}
         onClose={closeCreateModal}
         title="Create Subject"
@@ -651,10 +549,10 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
             disabled={createLoading}
           />
         </form>
-      </SubjectModal>
+      </Modal>
 
       {/* Edit Modal */}
-      <SubjectModal
+      <Modal
         isOpen={editModalOpen}
         onClose={closeEditModal}
         title="Edit Academic Subject"
@@ -714,70 +612,10 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
             disabled={editLoading}
           />
         </form>
-      </SubjectModal>
-
-      {/* Details Modal */}
-      <SubjectModal
-        isOpen={!!selectedRow}
-        onClose={closeModal}
-        title="Subject Details"
-      >
-        {selectedRow && (
-          <div className="subject-details">
-            <div className="details-grid">
-              <div className="detail-item">
-                <span className="label">Name</span>
-                <span className="value">{selectedRow.name || "N/A"}</span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Code</span>
-                <span className="value">{selectedRow.code || "N/A"}</span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Coefficient</span>
-                <span className="value">
-                  {selectedRow.coefficient ?? "N/A"}
-                </span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Category</span>
-                <span className="value text-capitalize">
-                  {selectedRow.category || "N/A"}
-                </span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Assigned</span>
-                <span className="value">{selectedRow.isAssigned}</span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Classes</span>
-                <span className="value">{selectedRow.className || "None"}</span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Teachers</span>
-                <span className="value">
-                  {selectedRow.teacherName || "None"}
-                </span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Departments</span>
-                <span className="value">
-                  {selectedRow.department || "None"}
-                </span>
-              </div>
-              <div className="detail-item">
-                <span className="label">Orientation Placement Department</span>
-                <span className="value">
-                  {selectedRow.orientationDepartmentName || "None"}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-      </SubjectModal>
+      </Modal>
 
       {/* Assign Modal */}
-      <SubjectModal
+      <Modal
         isOpen={assignModalOpen}
         onClose={closeAssignModal}
         title={`Assign ${assignSubject?.name || "Subject"}`}
@@ -789,7 +627,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
           subject={assignSubject}
           onUpdate={fetchSubjects}
         />
-      </SubjectModal>
+      </Modal>
     </>
   );
 
@@ -803,15 +641,12 @@ function NoSubjectsAssigned() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 30 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="no-subjects-container"
     >
-      <FaExclamationCircle className="no-subjects-icon" />
-      <h2>No Subjects Assigned</h2>
-      <p>
-        Sorry, you have no subjects assigned to you at the moment. <br />
-        If you expected to have subjects, please contact system admins or apply
-        to be assigned a subject.
-      </p>
+      <EmptyState
+        icon={<FaExclamationCircle />}
+        title="No Subjects Assigned"
+        subtitle="Sorry, you have no subjects assigned to you at the moment. If you expected to have subjects, please contact system admins or apply to be assigned a subject."
+      />
     </motion.div>
   );
 }

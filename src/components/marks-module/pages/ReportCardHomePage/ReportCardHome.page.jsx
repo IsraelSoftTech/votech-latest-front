@@ -3,8 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import api, { headers, subBaseURL } from "../../utils/api";
 import Select from "react-select";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import { EmptyState } from "../../components/EmptyState/EmptyState.component";
+import { Button } from "../../components/Button/Button.component";
 import {
   FaDownload,
   FaLock,
@@ -41,6 +42,63 @@ const useIsMobile = () => {
   return isMobile;
 };
 
+// Mirrors the real filter card (title + the same select boxes) instead of
+// generic gray bars, so the layout doesn't jump once dropdowns arrive.
+function FiltersSkeleton() {
+  return (
+    <div className="report-filters-section">
+      <div className="report-skel report-skel-line" style={{ width: 140, height: 18, marginBottom: 16 }} />
+      <div className="report-filters-row">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div className="report-form-select" key={i}>
+            <div className="report-skel report-skel-line" style={{ width: 90, height: 12 }} />
+            <div className="report-skel report-skel-block" style={{ height: 38 }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Mirrors the real table's columns/row count instead of a plain "Loading…"
+// line, so the layout doesn't jump once students arrive.
+function StudentsTableSkeleton() {
+  return (
+    <table className="report-students-table">
+      <thead>
+        <tr>
+          <th>S/N</th>
+          <th>Student ID</th>
+          <th>Student Name</th>
+          <th>Generate Report Card</th>
+          <th>Transcript</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <tr key={i}>
+            <td>
+              <div className="report-skel report-skel-line" style={{ width: 20, height: 14 }} />
+            </td>
+            <td>
+              <div className="report-skel report-skel-line" style={{ width: 84, height: 14 }} />
+            </td>
+            <td>
+              <div className="report-skel report-skel-line" style={{ width: "72%", height: 14 }} />
+            </td>
+            <td>
+              <div className="report-skel report-skel-block" style={{ width: 160, height: 32 }} />
+            </td>
+            <td>
+              <div className="report-skel report-skel-block" style={{ width: 110, height: 32 }} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 const ReportCardHomePage = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -69,6 +127,10 @@ const ReportCardHomePage = () => {
 
   // Sort state
   const [sortConfig, setSortConfig] = useState({ key: "name", order: "asc" });
+
+  // Transcript download — per-row, tracks which student's PDF is in
+  // flight so only that row's button shows a spinner/disables.
+  const [transcriptDownloadingId, setTranscriptDownloadingId] = useState(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -173,9 +235,9 @@ const ReportCardHomePage = () => {
     setLoadingTable(true);
     try {
       const res = await api.get(
-        `/students?class_id=${class_id}&specialty_id=${department_id}&academic_year_id=${academic_year_id}`
+        `/students?class_id=${class_id}&department_id=${department_id}&academic_year_id=${academic_year_id}&limit=200`
       );
-      setStudents(res.data.data || []);
+      setStudents(res.data.data?.students || []);
     } catch (err) {
       toast.error("Failed to fetch students.");
     } finally {
@@ -229,6 +291,37 @@ const ReportCardHomePage = () => {
         },
       },
     });
+  };
+
+  // ── Transcript download ──
+  // Any student, any status — deliberately not gated on the term/class
+  // filters above, a transcript spans every year the student ever
+  // attended, not just whichever one is currently selected in the filter.
+  const handleDownloadTranscript = async (student) => {
+    setTranscriptDownloadingId(student.id);
+    try {
+      const res = await api.get(`/students/${student.id}/transcript/pdf`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(student.full_name ?? student.name ?? "student").replace(/\s+/g, "_")}-transcript.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      // responseType "blob" means an error body arrives as an opaque Blob,
+      // not parsed JSON — there is no usable err.response.data.message
+      // here, same reasoning as MarksOverview.page.jsx's PDF download.
+      toast.error(
+        "Failed to generate transcript. This student may have no recorded marks yet."
+      );
+    } finally {
+      setTranscriptDownloadingId(null);
+    }
   };
 
   // ── Search handlers ──
@@ -378,19 +471,19 @@ const ReportCardHomePage = () => {
   // ═══════════════════════════════════════════════════════════════
   return (
     <div className="report-card-home-page">
-        <div className="report-card-header">
-          <h2 className="report-card-title">
-            Print Individual Report Cards
-            {isReadOnly && (
+        <PageHeader
+          title="Print Individual Report Cards"
+          actions={
+            isReadOnly ? (
               <span className="report-read-only-badge">
                 <FaLock /> {!isMobile && "Read Only"}
               </span>
-            )}
-          </h2>
-        </div>
+            ) : null
+          }
+        />
 
         {loadingPage ? (
-          <Skeleton height={35} count={6} style={{ marginBottom: "10px" }} />
+          <FiltersSkeleton />
         ) : (
           <>
             {/* ── FILTER ROW ── */}
@@ -619,16 +712,15 @@ const ReportCardHomePage = () => {
             {/* ── Action Buttons ── */}
             {!isReadOnly && (
               <div className="report-actions-section">
-                <button
-                  className="report-btn report-btn-download"
+                <Button
+                  variant="primary"
+                  icon={<FaDownload />}
                   disabled={!isFilterReady}
-                  aria-disabled={!isFilterReady}
                   onClick={navigateToSessions}
                   title="Generate report cards for one or more classes safely in the background"
                 >
-                  <FaDownload />
-                  <span>Bulk Generate Report Cards</span>
-                </button>
+                  Bulk Generate Report Cards
+                </Button>
               </div>
             )}
 
@@ -639,15 +731,15 @@ const ReportCardHomePage = () => {
               </h3>
               <div className="report-students-table-wrapper">
                 {loadingTable ? (
-                  <Skeleton count={5} height={30} />
+                  <StudentsTableSkeleton />
                 ) : paginatedStudents.length === 0 ? (
-                  <div className="report-empty-state">
-                    {searchTerm || selectedStudentId ? (
-                      <p>No students found matching your search</p>
-                    ) : (
-                      <p>No students found. Please adjust your filters.</p>
-                    )}
-                  </div>
+                  <EmptyState
+                    title={
+                      searchTerm || selectedStudentId
+                        ? "No students found matching your search"
+                        : "No students found. Please adjust your filters."
+                    }
+                  />
                 ) : (
                   <table className="report-students-table">
                     <thead>
@@ -656,6 +748,7 @@ const ReportCardHomePage = () => {
                         <th>Student ID</th>
                         <th>Student Name</th>
                         <th>Generate Report Card</th>
+                        <th>Transcript</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -699,6 +792,19 @@ const ReportCardHomePage = () => {
                                   View Only
                                 </span>
                               )}
+                            </td>
+                            <td>
+                              <Button
+                                variant="secondary"
+                                icon={<FaFileAlt />}
+                                disabled={transcriptDownloadingId === s.id}
+                                onClick={() => handleDownloadTranscript(s)}
+                                title="Download this student's full multi-year transcript"
+                              >
+                                {transcriptDownloadingId === s.id
+                                  ? "Preparing..."
+                                  : "Transcript"}
+                              </Button>
                             </td>
                           </tr>
                         );

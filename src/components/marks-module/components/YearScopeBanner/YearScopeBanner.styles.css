@@ -1,0 +1,52 @@
+.year-scope-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  background: #f8f9fb;
+  border: 1px solid #e2e5ea;
+  border-radius: 8px;
+}
+
+.year-scope-select-wrap {
+  min-width: 220px;
+}
+
+.year-scope-select-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #55606e;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.year-scope-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.year-scope-status svg {
+  flex-shrink: 0;
+}
+
+.year-scope-status--editable {
+  background: #eaf7ee;
+  color: #1e7a3a;
+  border: 1px solid #cdeed8;
+}
+
+.year-scope-status--readonly {
+  background: #fdeeee;
+  color: #a13030;
+  border: 1px solid #f6d3d3;
+}

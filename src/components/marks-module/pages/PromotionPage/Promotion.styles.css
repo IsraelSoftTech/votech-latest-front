@@ -4,41 +4,8 @@
     Ubuntu, sans-serif;
 }
 
-.promotion-tabs {
-  display: flex;
-  gap: 0.4rem;
-  border-bottom: 2px solid #e8edf5;
-  margin-bottom: 0;
-  overflow-x: auto;
-}
-
-.promotion-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0.7rem 1.1rem;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: #718096;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.promotion-tab:hover {
-  color: #204080;
-}
-
-.promotion-tab.active {
-  color: #204080;
-  border-bottom-color: #204080;
-}
-
 .promotion-tab-panel {
-  margin: 0 -1.5rem;
+  margin: 1.1rem -1.5rem 0;
 }
 
 .promotion-tab-panel .promo-req-page,
@@ -47,21 +14,12 @@
   padding-top: 1.3rem;
 }
 
-.promotion-tabs::-webkit-scrollbar {
-  height: 3px;
-}
-
 @media (max-width: 768px) {
   .promotion-page {
     padding: 1rem 1rem 0;
   }
   .promotion-tab-panel {
-    margin: 0 -1rem;
-  }
-  .promotion-tab {
-    padding: 0.6rem 0.85rem;
-    font-size: 0.85rem;
-    gap: 6px;
+    margin: 1.1rem -1rem 0;
   }
 }
 
@@ -70,17 +28,6 @@
     padding: 0.75rem 0.75rem 0;
   }
   .promotion-tab-panel {
-    margin: 0 -0.75rem;
-  }
-  .promotion-tab {
-    padding: 0.55rem 0.7rem;
-    font-size: 0.8rem;
-  }
-}
-
-@media (max-width: 320px) {
-  .promotion-tab {
-    padding: 0.5rem 0.55rem;
-    font-size: 0.75rem;
+    margin: 1.1rem -0.75rem 0;
   }
 }

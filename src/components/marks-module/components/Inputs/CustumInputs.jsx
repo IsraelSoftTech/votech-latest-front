@@ -336,7 +336,7 @@ export const CustomDatePicker = ({
                     setCurrentYear((y) => y + 1);
                   }}
                   className="ci-btn"
-                  title="Next Month"
+                  title="Next Year"
                 >
                   »
                 </button>

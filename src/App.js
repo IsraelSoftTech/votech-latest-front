@@ -18,6 +18,7 @@ import Admin2Dash from "./components/Admin2Dash.jsx";
 // import below.
 // import AdminStudents from "./components/AdminStudent.jsx";
 import { StudentsPage } from "./components/marks-module/pages/StudentsPage/Students.page";
+import { StudentDetailPage } from "./components/marks-module/pages/StudentDetailPage/StudentDetail.page";
 import { Admin3Dashboard } from "./components/marks-module/pages/Admin3Dashboard/Admin3Dashboard.page";
 import AdminTeachers from "./components/AdminTeacher.jsx";
 import AdminClass from "./components/AdminClass.jsx";
@@ -47,6 +48,7 @@ import Marks from "./components/Marks.jsx";
 import TimeTable from "./components/TimeTable.jsx";
 import { AcademicYear } from "./components/marks-module/pages/AccademicYearPage/AcademicYear.page";
 import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subject.page";
+import { SubjectDetailPage } from "./components/marks-module/pages/SubjectDetailPage/SubjectDetail.page";
 import { ClassPage } from "./components/marks-module/pages/ClassPage/Class.page";
 import { AcademicBandsPage } from "./components/marks-module/pages/AcademicBandsPage/AcademicBands";
 import { PromotionPage } from "./components/marks-module/pages/PromotionPage/Promotion";
@@ -67,7 +69,11 @@ import DiscEvents from "./components/DiscEvents.jsx";
 import SideTop from "./components/SideTop.jsx";
 
 // Teacher / Dean / Psycho / Events
-import TeacherDash from "./components/TeacherDash";
+// Rebuilt on the reliable ClassSubject/class_master relations instead of
+// fuzzy teacher-record name-matching, see TeacherDashboardPage.
+// import TeacherDash from "./components/TeacherDash";
+import TeacherDashboardPage from "./components/marks-module/pages/TeacherDashboardPage/TeacherDashboard.page";
+import SchoolSettingsPage from "./components/marks-module/pages/SchoolSettingsPage/SchoolSettings.page";
 import TeacherMessage from "./components/TeacherMessage.jsx";
 import Dean from "./components/Dean.jsx";
 import DeanMessage from "./components/DeanMessage.jsx";
@@ -217,6 +223,10 @@ function App() {
         />
         {/* <Route path="/admin-student" element={<AdminStudents />} /> */}
         <Route path="/admin-student" element={<StudentsPage />} />
+        {/* Full-page replacement for StudentDetailModal — clicking a row on
+            the Students list now navigates here instead of opening a modal.
+            See StudentDetail.page.jsx for what carried over. */}
+        <Route path="/admin-student/:id" element={<StudentDetailPage />} />
         <Route path="/admin-teacher" element={<AdminTeachers />} />
         <Route path="/admin-class" element={<AdminClass />} />
         <Route path="/admin-finance" element={<Finance />} />
@@ -225,6 +235,7 @@ function App() {
         <Route path="/admin-messages/:userId" element={<UserChat />} />
         <Route path="/admin-idcards" element={<ID />} />
         <Route path="/admin-users" element={<Users />} />
+        <Route path="/admin-school-settings" element={<SchoolSettingsPage />} />
         <Route path="/monitor-users" element={<MonitorUsers />} />
 
         {/* Fees & Payroll */}
@@ -351,7 +362,8 @@ function App() {
         <Route path="/discipline-events" element={<DiscEvents />} />
 
         {/* Teacher / Dean */}
-        <Route path="/teacher-dashboard" element={<TeacherDash />} />
+        {/* <Route path="/teacher-dashboard" element={<TeacherDash />} /> */}
+        <Route path="/teacher-dashboard" element={<TeacherDashboardPage />} />
         <Route path="/teacher-messages" element={<TeacherMessage />} />
         <Route path="/teacher-messages/:userId" element={<TeacherMessage />} />
         <Route path="/teacher-lesson-plans" element={<LessonPlan />} />
@@ -392,6 +404,7 @@ function App() {
         {/* Academics - marks-module pages */}
         <Route path="/academics/academic-years" element={<AcademicYear />} />
         <Route path="/academics/subjects" element={<SubjectsWithDisciplineLayout />} />
+        <Route path="/academics/subjects/:id" element={<SubjectDetailPage />} />
         <Route path="/academics/classes" element={<ClassPage />} />
         <Route path="/academics/bands" element={<AcademicBandsPage />} />
         <Route path="/academics/promotion" element={<PromotionPage />} />

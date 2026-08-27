@@ -1,3 +1,5 @@
+@import "../../styles/tokens.css";
+
 /* ===== BACKDROP ===== */
 .clean-modal-backdrop {
   position: fixed;
@@ -24,7 +26,8 @@
 .clean-modal-container {
   position: relative;
   background: #ffffff;
-  border-radius: 16px;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 12px;
   width: 60vw;
   max-width: 800px;
   min-width: 300px;
@@ -54,8 +57,7 @@
   padding: 0.5rem 0.7rem 0.5rem;
   max-height: 95vh;
   min-height: 30vh;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
-  touch-action: none; /* Prevent scroll interference during drag */
+  touch-action: none; /* Prevent scroll interference during drag; border comes from the base .clean-modal-container rule */
 }
 
 /* ===== DRAG HANDLE ===== */
@@ -91,8 +93,10 @@
   width: 100%;
   overflow-y: auto;
   max-height: calc(90vh - 4rem);
-  /* padding-right: 0.5rem; */
+  padding-right: 4px;
   -webkit-overflow-scrolling: touch; /* Smooth iOS scrolling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--vt-border) transparent;
 }
 
 .clean-modal-container.mobile .clean-modal-scroll {
@@ -100,26 +104,26 @@
   padding: 0 0.25rem;
 }
 
-/* Custom scrollbars */
+/* Thin, muted, mostly-invisible scrollbar — present when you need it,
+   never competing with the content for attention. */
 .clean-modal-scroll::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .clean-modal-scroll::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border-radius: 4px;
+  background: transparent;
 }
 
 .clean-modal-scroll::-webkit-scrollbar-thumb {
-  background: #204080;
-  border-radius: 4px;
+  background: var(--vt-border);
+  border-radius: 999px;
 }
 
-.clean-modal-scroll::-webkit-scrollbar-thumb:hover {
-  background: #102040;
+.clean-modal-scroll:hover::-webkit-scrollbar-thumb {
+  background: var(--vt-muted);
 }
 
-/* Mobile thin scrollbar */
+/* Mobile thinner scrollbar */
 .clean-modal-container.mobile .clean-modal-scroll::-webkit-scrollbar {
   width: 4px;
 }
@@ -130,28 +134,23 @@
   top: -1rem;
   right: -3rem;
   background: #ffffff;
-  border: none;
+  border: 1.5px solid var(--vt-border);
   border-radius: 50%;
   width: 30px;
   height: 30px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  color: #555;
+  color: var(--vt-ink-soft);
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 1rem;
-  transition: color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition: color 0.15s ease, border-color 0.15s ease;
   z-index: 10;
 }
 
 .clean-modal-close-btn:hover {
-  opacity: 0.8;
-  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.2);
-}
-
-.clean-modal-close-btn:active {
-  transform: scale(0.95);
+  color: var(--vt-primary);
+  border-color: var(--vt-primary);
 }
 
 /* Mobile close button - top right inside modal */
@@ -161,13 +160,13 @@
   right: 1rem;
   width: 36px;
   height: 36px;
-  background: #f3f4f6;
-  box-shadow: none;
-  color: #374151;
+  background: var(--vt-primary-tint);
+  color: var(--vt-ink-soft);
 }
 
 .clean-modal-container.mobile .clean-modal-close-btn:hover {
-  background: #e5e7eb;
+  background: var(--vt-primary-tint2);
+  color: var(--vt-primary);
 }
 
 /* ===== TITLE ===== */
@@ -178,7 +177,7 @@
   font-size: 1.2rem;
   text-align: center;
   width: 100%;
-  color: #222222;
+  color: var(--vt-primary);
 }
 
 .clean-modal-container.mobile .clean-modal-title {

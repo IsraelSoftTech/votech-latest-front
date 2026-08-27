@@ -179,11 +179,6 @@ export default function SideTop({ children }) {
             icon: <FaChalkboard />,
           },
           {
-            label: "Report Cards",
-            path: "/academics/report-cards",
-            icon: <FaBookOpen />,
-          },
-          {
             label: "Subjects",
             path: "/academics/subjects",
             icon: <FaChalkboardTeacher />,
@@ -210,6 +205,11 @@ export default function SideTop({ children }) {
         label: "Counselling Cases",
         icon: <FaClipboardList />,
         path: "/admin-counselling-cases",
+      },
+      {
+        label: "School Settings",
+        icon: <FaCog />,
+        path: "/admin-school-settings",
       },
     ];
   } else if (authUser?.role === "Admin2") {
