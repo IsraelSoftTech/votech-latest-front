@@ -1,0 +1,305 @@
+@import "../../styles/tokens.css";
+
+.students-page {
+  padding: 1.4rem 1.6rem 3rem;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.students-title-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.students-register-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--vt-primary);
+  color: #fff;
+  border: none;
+  padding: 0.65rem 1.3rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.students-register-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.students-register-btn:not(:disabled):hover {
+  background: #16305f;
+}
+
+.students-backfill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: var(--vt-primary);
+  border: 1px solid var(--vt-primary);
+  padding: 0.65rem 1.3rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.students-backfill-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.students-backfill-btn:not(:disabled):hover {
+  background: #f5f9ff;
+}
+
+.students-filters-row {
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.students-class-filter {
+  max-width: 320px;
+  flex: 1 1 260px;
+}
+
+.students-classlist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: var(--vt-primary);
+  border: 1px solid var(--vt-primary);
+  text-decoration: none;
+  padding: 0.55rem 1rem;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.students-classlist-btn:hover:not(:disabled) {
+  background: #f5f9ff;
+}
+
+.students-classlist-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.students-spin {
+  animation: students-spin-anim 0.9s linear infinite;
+}
+
+@keyframes students-spin-anim {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.students-table-wrap {
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.students-empty {
+  padding: 2.5rem 0;
+  text-align: center;
+  color: #a0aec0;
+  font-size: 0.88rem;
+}
+
+.students-skel {
+  background: linear-gradient(90deg, #eef1f6 25%, #f6f8fb 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: students-shimmer 1.4s ease infinite;
+  border-radius: 4px;
+}
+
+@keyframes students-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.students-table th {
+  background: var(--vt-primary);
+  color: #fff;
+  text-align: left;
+  padding: 0.65rem 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.students-table td {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid #f1f4f9;
+}
+
+.students-row {
+  cursor: pointer;
+}
+
+.students-row:hover {
+  background: #f8fafc;
+}
+
+.students-status-pill {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.students-status-pill.active {
+  background: #f0fff4;
+  color: #2f855a;
+}
+
+.students-status-pill.graduated {
+  background: #ebf4ff;
+  color: #2b6cb0;
+}
+
+.students-status-pill.withdrawn {
+  background: #fdecec;
+  color: #c53030;
+}
+
+.students-repeating-pill {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: var(--vt-gold-tint);
+  color: var(--vt-gold);
+  border: 1px solid var(--vt-gold-border);
+}
+
+.students-actions-cell {
+  display: flex;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.students-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: var(--vt-primary);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.students-icon-btn:hover {
+  background: #f5f9ff;
+}
+
+.students-icon-btn.danger {
+  color: #c53030;
+}
+
+.students-icon-btn.danger:hover {
+  background: #fdecec;
+}
+
+@media (max-width: 720px) {
+  .students-page {
+    padding: 1rem;
+  }
+}
+
+/* Delete confirmation */
+.students-delete-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 4px 4px;
+}
+
+.students-delete-confirm-icon {
+  font-size: 2rem;
+  color: #c53030;
+  margin-bottom: 12px;
+}
+
+.students-delete-confirm-text {
+  font-size: 15px;
+  color: #33394a;
+  line-height: 1.5;
+  margin: 0 0 22px;
+}
+
+.students-delete-confirm-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.students-delete-confirm-cancel,
+.students-delete-confirm-danger {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.students-delete-confirm-cancel {
+  background: #eef1f6;
+  color: #33394a;
+}
+
+.students-delete-confirm-cancel:hover:not(:disabled) {
+  background: #e2e6ee;
+}
+
+.students-delete-confirm-danger {
+  background: #c53030;
+  color: #fff;
+}
+
+.students-delete-confirm-danger:hover:not(:disabled) {
+  background: #a52727;
+}
+
+.students-delete-confirm-cancel:disabled,
+.students-delete-confirm-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -34,7 +34,6 @@ import {
   FaCalendar,
   FaLayerGroup,
   FaBookOpen,
-  FaTable,
   FaExclamationTriangle,
   FaWarehouse,
   FaLock,
@@ -43,11 +42,13 @@ import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
 import "./SideTop.css";
 import api from "../services/api";
+import config from "../config";
 import {
   useActiveYear,
 } from "../context/ActiveYearContext";
 import NotificationBell from "./NotificationBell";
 import MessageIcon from "./MessageIcon";
+import AcademicJobNotificationBell from "./AcademicJobNotificationBell";
 
 export default function SideTop({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -69,6 +70,7 @@ export default function SideTop({ children }) {
     isViewingArchived: isViewingArchivedYear,
     clearViewingYearFilter,
   } = useActiveYear();
+  const [activePromotionRun, setActivePromotionRun] = useState(false);
 
   // Added: local active tab to prevent undefined reference and allow visual highlight if needed
   const [activeTab, setActiveTab] = useState(null);
@@ -85,6 +87,61 @@ export default function SideTop({ children }) {
 
   // Added: derive unread flag to avoid undefined reference
   const hasUnread = unreadMessageCount > 0;
+
+  // Simple sidebar indicator for an in-progress promotion cycle or report
+  // card generation session, Admin3 only, since that's the only role that
+  // can see these pages at all. Lightweight periodic check, not a live
+  // socket subscription (the Run Promotion / Report Card Sessions pages
+  // themselves handle live progress).
+  useEffect(() => {
+    if (authUser?.role !== "Admin3") return undefined;
+    let cancelled = false;
+
+    const checkActiveRun = async () => {
+      try {
+        const token =
+          sessionStorage.getItem("token") || localStorage.getItem("token");
+        // limit=5 is enough — both lists sort newest-first and the
+        // report-card watchdog auto-fails anything stale within 15
+        // minutes, so an active run/session is always near the top.
+        const [promoRes, sessionRes] = await Promise.all([
+          fetch(`${config.API_V1_URL}/promotions/runs?limit=5`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${config.API_V1_URL}/report-card-sessions?limit=5`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+        let active = false;
+        if (promoRes.ok) {
+          const body = await promoRes.json();
+          const runs = body?.data?.runs || [];
+          active =
+            active ||
+            runs.some((r) => r.status === "pending" || r.status === "running");
+        }
+        if (sessionRes.ok) {
+          const body = await sessionRes.json();
+          const sessions = body?.data?.sessions || [];
+          active =
+            active ||
+            sessions.some(
+              (s) => s.status === "pending" || s.status === "running"
+            );
+        }
+        if (!cancelled) setActivePromotionRun(active);
+      } catch (err) {
+        // Non-critical indicator, fail silently.
+      }
+    };
+
+    checkActiveRun();
+    const interval = setInterval(checkActiveRun, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [authUser?.role]);
 
   // Track if the user has manually toggled a submenu to prevent auto-override
   const userToggledRef = useRef(false);
@@ -124,9 +181,9 @@ export default function SideTop({ children }) {
         icon: <FaGraduationCap />,
         submenu: [
           {
-            label: "Subjects",
-            path: "/academics/subjects",
-            icon: <FaChalkboardTeacher />,
+            label: "Academic Bands",
+            path: "/academics/bands",
+            icon: <FaLayerGroup />,
           },
           {
             label: "Classes",
@@ -134,20 +191,10 @@ export default function SideTop({ children }) {
             icon: <FaChalkboard />,
           },
           {
-            label: "Academic Bands",
-            path: "/academics/bands",
-            icon: <FaLayerGroup />,
+            label: "Subjects",
+            path: "/academics/subjects",
+            icon: <FaChalkboardTeacher />,
           },
-          {
-            label: "Report Cards",
-            path: "/academics/report-cards",
-            icon: <FaBookOpen />,
-          },
-          // {
-          //   label: "Master Sheets",
-          //   path: "/academics/master-sheets",
-          //   icon: <FaTable />,
-          // },
         ],
       },
       {
@@ -170,6 +217,11 @@ export default function SideTop({ children }) {
         label: "Counselling Cases",
         icon: <FaClipboardList />,
         path: "/admin-counselling-cases",
+      },
+      {
+        label: "School Settings",
+        icon: <FaCog />,
+        path: "/admin-school-settings",
       },
     ];
   } else if (authUser?.role === "Admin2") {
@@ -252,9 +304,9 @@ export default function SideTop({ children }) {
         icon: <FaGraduationCap />,
         submenu: [
           {
-            label: "Subjects",
-            path: "/academics/subjects",
-            icon: <FaChalkboardTeacher />,
+            label: "Academic Bands",
+            path: "/academics/bands",
+            icon: <FaLayerGroup />,
           },
           {
             label: "Classes",
@@ -262,20 +314,20 @@ export default function SideTop({ children }) {
             icon: <FaChalkboard />,
           },
           {
-            label: "Academic Bands",
-            path: "/academics/bands",
-            icon: <FaLayerGroup />,
+            label: "Promotion",
+            path: "/academics/promotion",
+            icon: <FaGraduationCap />,
           },
           {
             label: "Report Cards",
             path: "/academics/report-cards",
             icon: <FaBookOpen />,
           },
-          // {
-          //   label: "Master Sheets",
-          //   path: "/academics/master-sheets",
-          //   icon: <FaTable />,
-          // },
+          {
+            label: "Subjects",
+            path: "/academics/subjects",
+            icon: <FaChalkboardTeacher />,
+          },
         ],
       },
       { label: "Monitor Users", icon: <FaUsers />, path: "/monitor-users" },
@@ -838,6 +890,22 @@ export default function SideTop({ children }) {
                 >
                   <span className="icon">{item.icon}</span>
 
+                  {item.label === "Accademics" && activePromotionRun && (
+                    <span
+                      title="A promotion run or report card session is in progress"
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        width: 10,
+                        height: 10,
+                        background: "#dd6b20",
+                        borderRadius: "50%",
+                        display: "inline-block",
+                      }}
+                    />
+                  )}
+
                   {item.label === "Messages" && hasUnread && (
                     <span
                       style={{
@@ -1030,6 +1098,7 @@ export default function SideTop({ children }) {
               count={upcomingEventsCount}
               onClick={handleBellClick}
             />
+            <AcademicJobNotificationBell />
             <div className="header-logo-mobile">
               <img src={logo} alt="logo" className="header-logo-mobile-img" />
             </div>

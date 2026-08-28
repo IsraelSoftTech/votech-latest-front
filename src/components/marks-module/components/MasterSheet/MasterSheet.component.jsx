@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import "./mastersheet.css";
-import { FaDownload, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { FaDownload, FaChevronDown, FaChevronUp, FaSpinner } from "react-icons/fa";
 
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
@@ -14,7 +14,7 @@ pdfMake.vfs =
 
 // Brand + table colors
 const BRAND_BLUE = "#204080";
-const BRAND_GOLD = "#c9a96e";
+const BRAND_GOLD = "#d4af37"; // matches --vt-gold in styles/tokens.css
 const HEADER_BG1 = "#eaf0fb";
 const HEADER_BG2 = "#f1f4fb";
 const COEF_BG = "#fbf6ea";
@@ -153,6 +153,7 @@ export default function MasterSheet({ data = [], term = "annual" }) {
         <div className="ms-controls-right">
           {pdfGenerating && (
             <div className="ms-pdf-status">
+              <FaSpinner className="ms-spin" />
               Generating PDF… {pdfProgress.current}/{pdfProgress.total} rows —
               grab a coffee ☕
             </div>
@@ -171,7 +172,7 @@ export default function MasterSheet({ data = [], term = "annual" }) {
             onClick={handleDownloadPDF}
             disabled={pdfGenerating}
           >
-            <FaDownload />
+            {pdfGenerating ? <FaSpinner className="ms-spin" /> : <FaDownload />}
             <span className="ms-btn-text">
               {pdfGenerating ? "Working…" : "Download PDF"}
             </span>
@@ -316,14 +317,18 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                       const subjScores = st.subjects[s.code] || null;
                       return subjectSubcolumns.map((sub, si, arr) => {
                         const val = getSubjectValue(subjScores, sub.key);
+                        const missing = isMissingSeqScore(sub.key, val);
                         return (
                           <td
                             key={`${st.studentId}-${s.code}-${sub.key}`}
                             className={`ms-cell ${
                               sub.key === "coef" ? "ms-coef" : ""
-                            } ${si === arr.length - 1 ? "ms-block-end" : ""}`}
+                            } ${si === arr.length - 1 ? "ms-block-end" : ""} ${
+                              missing ? "ms-cell-missing" : ""
+                            }`}
+                            title={missing ? "No mark entered yet" : undefined}
                           >
-                            {fmt(val)}
+                            {missing ? "—" : fmt(val)}
                           </td>
                         );
                       });
@@ -398,23 +403,25 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                                   {s.code} — {s.title}
                                 </div>
                                 <div className="ms-mobile-subject-scores">
-                                  {subjectSubcolumns.map((sub) => (
-                                    <div
-                                      key={sub.key}
-                                      className={`ms-mobile-score-item ${
-                                        sub.key === "coef" ? "coef" : ""
-                                      }`}
-                                    >
-                                      <span className="ms-mobile-score-label">
-                                        {sub.label}
-                                      </span>
-                                      <span className="ms-mobile-score-value">
-                                        {fmt(
-                                          getSubjectValue(subjScores, sub.key)
-                                        )}
-                                      </span>
-                                    </div>
-                                  ))}
+                                  {subjectSubcolumns.map((sub) => {
+                                    const val = getSubjectValue(subjScores, sub.key);
+                                    const missing = isMissingSeqScore(sub.key, val);
+                                    return (
+                                      <div
+                                        key={sub.key}
+                                        className={`ms-mobile-score-item ${
+                                          sub.key === "coef" ? "coef" : ""
+                                        } ${missing ? "ms-cell-missing" : ""}`}
+                                      >
+                                        <span className="ms-mobile-score-label">
+                                          {sub.label}
+                                        </span>
+                                        <span className="ms-mobile-score-value">
+                                          {missing ? "—" : fmt(val)}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             );
@@ -438,23 +445,25 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                                   {s.code} — {s.title}
                                 </div>
                                 <div className="ms-mobile-subject-scores">
-                                  {subjectSubcolumns.map((sub) => (
-                                    <div
-                                      key={sub.key}
-                                      className={`ms-mobile-score-item ${
-                                        sub.key === "coef" ? "coef" : ""
-                                      }`}
-                                    >
-                                      <span className="ms-mobile-score-label">
-                                        {sub.label}
-                                      </span>
-                                      <span className="ms-mobile-score-value">
-                                        {fmt(
-                                          getSubjectValue(subjScores, sub.key)
-                                        )}
-                                      </span>
-                                    </div>
-                                  ))}
+                                  {subjectSubcolumns.map((sub) => {
+                                    const val = getSubjectValue(subjScores, sub.key);
+                                    const missing = isMissingSeqScore(sub.key, val);
+                                    return (
+                                      <div
+                                        key={sub.key}
+                                        className={`ms-mobile-score-item ${
+                                          sub.key === "coef" ? "coef" : ""
+                                        } ${missing ? "ms-cell-missing" : ""}`}
+                                      >
+                                        <span className="ms-mobile-score-label">
+                                          {sub.label}
+                                        </span>
+                                        <span className="ms-mobile-score-value">
+                                          {missing ? "—" : fmt(val)}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             );
@@ -478,23 +487,25 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                                   {s.code} — {s.title}
                                 </div>
                                 <div className="ms-mobile-subject-scores">
-                                  {subjectSubcolumns.map((sub) => (
-                                    <div
-                                      key={sub.key}
-                                      className={`ms-mobile-score-item ${
-                                        sub.key === "coef" ? "coef" : ""
-                                      }`}
-                                    >
-                                      <span className="ms-mobile-score-label">
-                                        {sub.label}
-                                      </span>
-                                      <span className="ms-mobile-score-value">
-                                        {fmt(
-                                          getSubjectValue(subjScores, sub.key)
-                                        )}
-                                      </span>
-                                    </div>
-                                  ))}
+                                  {subjectSubcolumns.map((sub) => {
+                                    const val = getSubjectValue(subjScores, sub.key);
+                                    const missing = isMissingSeqScore(sub.key, val);
+                                    return (
+                                      <div
+                                        key={sub.key}
+                                        className={`ms-mobile-score-item ${
+                                          sub.key === "coef" ? "coef" : ""
+                                        } ${missing ? "ms-cell-missing" : ""}`}
+                                      >
+                                        <span className="ms-mobile-score-label">
+                                          {sub.label}
+                                        </span>
+                                        <span className="ms-mobile-score-value">
+                                          {missing ? "—" : fmt(val)}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             );
@@ -1636,6 +1647,13 @@ function fmt(v) {
   const n = typeof v === "number" ? v : parseFloat(v);
   if (isNaN(n)) return String(v);
   return Number.isInteger(n) ? String(n) : (Math.round(n * 10) / 10).toFixed(1);
+}
+
+// Only flag a raw sequence mark (S1, S2, ...) as missing — computed
+// columns (term averages, coef) are legitimately blank until enough
+// sequences are in, that's not a data-entry gap to chase a teacher over.
+function isMissingSeqScore(subKey, val) {
+  return subKey.startsWith("seq") && (val === "" || val == null);
 }
 
 function computeClassStats(students = [], term = "annual") {

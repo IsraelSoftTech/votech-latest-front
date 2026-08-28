@@ -1,26 +1,30 @@
+@import "../../styles/tokens.css";
+
 :root {
   --bg: #ffffff;
   --bg-elev: #ffffff;
-  --input-bg: #fafbfc;
-  --muted: #6b7280;
-  --border: #d1d5db;
-  --accent: #1e3a8a;
-  --accent-hover: #1e3a8a;
-  --accent-light: #eff6ff;
-  --danger: #dc2626;
-  --success: #16a34a;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.04);
-  --hover-bg: #f3f4f6;
-  --focus-ring: #1e3a8a;
-  --focus-ring-offset: rgba(59, 130, 246, 0.15);
-  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
+  --input-bg: var(--vt-primary-tint);
+  --muted: var(--vt-muted);
+  --border: var(--vt-border);
+  --accent: var(--vt-primary);
+  --accent-hover: var(--vt-primary-dark);
+  --accent-light: var(--vt-primary-tint2);
+  --danger: #c0392b;
+  --success: var(--vt-status-done);
+  /* No shadows anywhere in this module — elevation comes from a border
+     and a background-tint change only. Every box-shadow below is either
+     one of these (now none) or was hardcoded and has been removed. */
+  --shadow: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-inner: none;
+  --hover-bg: var(--vt-primary-tint2);
+  --focus-ring: var(--vt-primary);
+  --focus-ring-offset: transparent;
+  --transition: 0.15s ease;
+  --transition-fast: 0.12s ease;
+  --text-primary: var(--vt-ink);
+  --text-secondary: var(--vt-ink-soft);
 }
 
 /* Component-scoped base */
@@ -33,19 +37,19 @@
 .ci-wrapper {
   width: 100%;
   text-align: left;
-  --control-h: 52px;
-  --radius: 12px;
-  --pad-x: 16px;
-  --pad-clear: 48px;
+  --control-h: 46px;
+  --radius: 8px;
+  --pad-x: 14px;
+  --pad-clear: 42px;
 }
 
 .ci-label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 10px;
-  letter-spacing: -0.02em;
+  color: var(--accent);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
   line-height: 1.3;
 }
 
@@ -58,17 +62,14 @@
 /* Field container + states */
 .ci-field {
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
-/* Enhanced focus states */
+/* Focus states — border-color change only, no glow/lift */
 .ci-field.focused .ci-input,
 .ci-field.focused .ci-select {
   border-color: var(--focus-ring);
   background: #ffffff;
-  /* box-shadow: 0 0 0 4px var(--focus-ring-offset),
-    0 4px 12px rgba(37, 99, 235, 0.1); */
-  transform: translateY(-1px);
 }
 
 /* Error state */
@@ -77,20 +78,17 @@
 .ci-input[aria-invalid="true"],
 .ci-select[aria-invalid="true"] {
   border-color: var(--danger);
-  background: rgba(220, 38, 38, 0.04);
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+  background: #fdf2f1;
 }
 
 .ci-wrapper.has-error .ci-field.focused .ci-input,
 .ci-wrapper.has-error .ci-field.focused .ci-select {
   border-color: var(--danger);
-  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15),
-    0 4px 12px rgba(220, 38, 38, 0.12);
 }
 
 .ci-error {
-  margin-top: 8px;
-  font-size: 13px;
+  margin-top: 6px;
+  font-size: 12.5px;
   line-height: 1.4;
   color: var(--danger);
   font-weight: 500;
@@ -101,7 +99,7 @@
 
 .ci-error::before {
   content: "⚠";
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* Disabled state */
@@ -119,29 +117,26 @@
   width: 100%;
   height: var(--control-h);
   padding: 0 var(--pad-clear) 0 var(--pad-x);
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 450;
   color: var(--text-primary);
-  border: 2px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius);
   background: var(--input-bg);
-  box-shadow: var(--shadow-inner);
-  transition: all var(--transition);
+  transition: border-color var(--transition), background var(--transition);
   outline: none;
   letter-spacing: -0.01em;
 }
 
 .ci-input:hover:not(:disabled):not(:focus),
 .ci-select:hover:not(:disabled):not([aria-expanded="true"]) {
-  border-color: #9ca3af;
-  background: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  border-color: var(--accent);
 }
 
 /* Placeholder */
 .ci-input::placeholder {
   color: var(--muted);
-  opacity: 0.6;
+  opacity: 0.8;
   font-weight: 400;
 }
 
@@ -157,23 +152,23 @@
 /* Clear button */
 .ci-clear {
   position: absolute;
-  right: 12px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  background: #e5e7eb;
-  padding: 7px;
-  border-radius: 7px;
+  background: #e4e9f7;
+  padding: 6px;
+  border-radius: 6px;
   cursor: pointer;
   color: var(--text-secondary);
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 }
 
 .ci-field:hover .ci-clear,
@@ -185,11 +180,6 @@
 .ci-clear:hover {
   color: #ffffff;
   background: var(--text-secondary);
-  transform: translateY(-50%) scale(1.05);
-}
-
-.ci-clear:active {
-  transform: translateY(-50%) scale(0.95);
 }
 
 /* Select (button-like control) */
@@ -233,20 +223,19 @@
   position: absolute;
   left: 0;
   right: 0;
-  margin-top: 8px;
+  margin-top: 6px;
   background: #ffffff;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
   z-index: 100;
   max-height: 320px;
   overflow-y: auto;
-  padding: 6px;
+  padding: 5px;
   list-style: none;
 }
 
 .ci-dropdown::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 
 .ci-dropdown::-webkit-scrollbar-track {
@@ -255,22 +244,21 @@
 }
 
 .ci-dropdown::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--border);
   border-radius: 10px;
-  border: 2px solid #ffffff;
 }
 
 .ci-dropdown::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: var(--muted);
 }
 
 .ci-option {
-  padding: 12px 14px;
-  font-size: 15px;
+  padding: 10px 12px;
+  font-size: 14px;
   color: var(--text-primary);
   cursor: pointer;
-  transition: all var(--transition-fast);
-  border-radius: 8px;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  border-radius: 6px;
   font-weight: 450;
   list-style: none;
   letter-spacing: -0.01em;
@@ -279,19 +267,16 @@
 .ci-option:hover {
   background: var(--accent-light);
   color: var(--accent);
-  transform: translateX(2px);
 }
 
 .ci-option.active {
   background: var(--accent);
   color: #ffffff;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  font-weight: 600;
 }
 
 .ci-option.active:hover {
   background: var(--accent-hover);
-  transform: translateX(0);
 }
 
 /* Calendar popover */
@@ -299,85 +284,79 @@
   position: absolute;
   left: 0;
   right: 0;
-  margin-top: 8px;
+  margin-top: 6px;
   background: #ffffff;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
-  box-shadow: var(--shadow-lg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
   z-index: 110;
-  padding: 20px;
-  min-width: 300px;
+  padding: 16px;
+  min-width: 280px;
 }
 
 .ci-cal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  gap: 8px;
+  margin-bottom: 16px;
+  gap: 6px;
 }
 
 .ci-cal-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--text-primary);
-  min-width: 130px;
+  color: var(--accent);
+  min-width: 120px;
   text-align: center;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .ci-btn {
   border: none;
   background: var(--input-bg);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
   color: var(--text-secondary);
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
 }
 
 .ci-btn:hover {
   background: var(--accent-light);
   color: var(--accent);
-  transform: scale(1.05);
-}
-
-.ci-btn:active {
-  transform: scale(0.95);
 }
 
 .ci-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  gap: 4px;
 }
 
 .ci-cal-day {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-secondary);
   text-align: center;
-  padding: 10px 0;
+  padding: 8px 0;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .ci-cal-cell {
-  height: 40px;
-  border: none;
-  border-radius: 8px;
+  height: 36px;
+  border: 1.5px solid transparent;
+  border-radius: 7px;
   background: transparent;
   cursor: pointer;
-  transition: all var(--transition-fast);
-  font-size: 14px;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
   display: flex;
@@ -388,23 +367,16 @@
 .ci-cal-cell.clickable:hover {
   background: var(--accent-light);
   color: var(--accent);
-  transform: scale(1.08);
-}
-
-.ci-cal-cell.clickable:active {
-  transform: scale(0.95);
 }
 
 .ci-cal-cell.today {
-  background: var(--accent);
-  color: #ffffff;
+  border-color: var(--accent);
+  color: var(--accent);
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
 .ci-cal-cell.today:hover {
-  background: var(--accent-hover);
-  transform: scale(1.08);
+  background: var(--accent-light);
 }
 
 .ci-cal-cell.empty {
@@ -412,60 +384,30 @@
   cursor: default;
 }
 
-/* Submit button */
+/* Submit button — flat navy, no gradient/shimmer/shadow/lift */
 .submit-btn {
-  background: linear-gradient(
-    135deg,
-    var(--accent) 0%,
-    var(--accent-hover) 100%
-  );
+  background: var(--accent);
   color: #ffffff;
   border: none;
   width: 100%;
-  padding: 16px 24px;
-  border-radius: 12px;
-  font-size: 16px;
+  padding: 13px 22px;
+  border-radius: 8px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition);
-  margin-top: 12px;
+  transition: background var(--transition);
+  margin-top: 10px;
   user-select: none;
   letter-spacing: -0.01em;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25),
-    0 2px 4px rgba(37, 99, 235, 0.15);
-  position: relative;
-  overflow: hidden;
 }
 
-.submit-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: left 0.5s;
+.submit-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
 }
 
-.submit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35),
-    0 4px 8px rgba(37, 99, 235, 0.2);
-}
-
-.submit-btn:hover::before {
-  left: 100%;
-}
-
-.submit-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+.submit-btn:disabled {
+  background: #b9c2d6;
+  cursor: not-allowed;
 }
 
 /* Remove number input spinners */
@@ -510,78 +452,4 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* Dark theme */
-[data-theme="dark"] .ci-wrapper,
-.dark .ci-wrapper {
-  --bg: #0f172a;
-  --bg-elev: #1e293b;
-  --input-bg: #1e293b;
-  --muted: #64748b;
-  --border: #334155;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-light: rgba(59, 130, 246, 0.1);
-  --danger: #ef4444;
-  --hover-bg: rgba(255, 255, 255, 0.05);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.6),
-    0 10px 10px -5px rgba(0, 0, 0, 0.4);
-  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-  --focus-ring: #3b82f6;
-  --focus-ring-offset: rgba(59, 130, 246, 0.25);
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-}
-
-[data-theme="dark"] .ci-input:disabled,
-[data-theme="dark"] .ci-select:disabled,
-.dark .ci-input:disabled,
-.dark .ci-select:disabled {
-  background: #1e293b;
-  opacity: 0.6;
-}
-
-[data-theme="dark"] .ci-dropdown,
-[data-theme="dark"] .ci-calendar,
-.dark .ci-dropdown,
-.dark .ci-calendar {
-  background: #1e293b;
-  border-color: #334155;
-}
-
-[data-theme="dark"] .ci-dropdown::-webkit-scrollbar-thumb,
-.dark .ci-dropdown::-webkit-scrollbar-thumb {
-  background: #475569;
-  border-color: #1e293b;
-}
-
-[data-theme="dark"] .ci-dropdown::-webkit-scrollbar-thumb:hover,
-.dark .ci-dropdown::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-[data-theme="dark"] .ci-clear,
-.dark .ci-clear {
-  background: #334155;
-}
-
-[data-theme="dark"] .ci-clear:hover,
-.dark .ci-clear:hover {
-  background: #475569;
-}
-
-[data-theme="dark"] .ci-btn,
-.dark .ci-btn {
-  background: #334155;
-}
-
-[data-theme="dark"] .ci-input:hover:not(:disabled):not(:focus),
-[data-theme="dark"] .ci-select:hover:not(:disabled):not([aria-expanded="true"]),
-.dark .ci-input:hover:not(:disabled):not(:focus),
-.dark .ci-select:hover:not(:disabled):not([aria-expanded="true"]) {
-  background: #0f172a;
-  border-color: #475569;
 }

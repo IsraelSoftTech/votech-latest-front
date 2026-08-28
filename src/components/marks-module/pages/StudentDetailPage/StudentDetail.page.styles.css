@@ -1,0 +1,147 @@
+.sdp-page {
+  padding: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.sdp-loading {
+  padding: 3rem 0;
+  text-align: center;
+  color: #77808f;
+  font-size: 15px;
+}
+
+.sdp-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #204080;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 0;
+  margin-bottom: 1rem;
+}
+
+.sdp-back-btn:hover {
+  text-decoration: underline;
+}
+
+.sdp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #eceef2;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.sdp-identity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sdp-name {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1a1f2b;
+}
+
+.sdp-sub {
+  font-size: 13px;
+  color: #77808f;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sdp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sdp-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #dde1e8;
+  background: #f8f9fb;
+  color: #33394a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.sdp-action-btn:hover {
+  background: #eef1f6;
+}
+
+.sdp-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sdp-action-btn.sdp-danger {
+  background: #fdeeee;
+  border-color: #f6d3d3;
+  color: #c53030;
+}
+
+.sdp-action-btn.sdp-danger:hover {
+  background: #fbdcdc;
+}
+
+@media (max-width: 720px) {
+  .sdp-page {
+    padding: 1rem;
+  }
+  .sdp-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Tab loading skeleton — shaped like the finished tab, not plain text */
+@keyframes sdpShimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.sdp-skel {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eef1f6 25%, #f6f8fb 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: sdpShimmer 1.4s ease infinite;
+}
+
+.sdp-skel-bar {
+  display: inline-block;
+}
+
+.sdp-skel-photo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sdp-skeleton .sdm-table td {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}

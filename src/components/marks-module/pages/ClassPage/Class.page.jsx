@@ -1,5 +1,5 @@
 import "./Class.styles.css";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import SideTop from "../../../SideTop";
 import DataTable from "../../components/DataTable/DataTable.component";
 import { toast } from "react-toastify";
@@ -11,152 +11,21 @@ import {
   SubmitBtn,
 } from "../../components/Inputs/CustumInputs";
 import Stats from "../../components/Stats/Stats.component";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import Modal from "../../components/Modal/Modal.component";
+import ClassMasterHistoryModal from "../../components/ClassMasterHistoryModal/ClassMasterHistoryModal.component";
+import { useNavigate } from "react-router-dom";
 import {
   FaBan,
   FaCheckCircle,
   FaLayerGroup,
   FaPlus,
-  FaTimes,
+  FaUserGraduate,
+  FaHistory,
 } from "react-icons/fa";
 
-// Custom hook to detect mobile
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  return isMobile;
-};
-
-// Class Modal Component (Desktop & Mobile)
-const ClassModal = ({ isOpen, onClose, title, children }) => {
-  const isMobile = useIsMobile();
-  const modalRef = useRef(null);
-  const [startY, setStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      document.body.style.top = `-${window.scrollY}px`;
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  // Touch handlers for mobile swipe to dismiss
-  const handleTouchStart = (e) => {
-    if (!isMobile) return;
-    setStartY(e.touches[0].clientY);
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isMobile || !isDragging) return;
-    const touchY = e.touches[0].clientY;
-    const diff = touchY - startY;
-
-    if (diff > 0) {
-      setCurrentY(diff);
-      if (modalRef.current) {
-        modalRef.current.style.transform = `translateY(${diff}px)`;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isMobile) return;
-    setIsDragging(false);
-
-    if (currentY > 150) {
-      onClose();
-    }
-
-    if (modalRef.current) {
-      modalRef.current.style.transform = "";
-    }
-    setCurrentY(0);
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className={`class-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        className={`class-modal-container ${isMobile ? "mobile" : "desktop"}`}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Drag handle - mobile only */}
-        {isMobile && (
-          <div className="class-modal-drag-handle">
-            <div className="class-drag-bar"></div>
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="class-modal-header">
-          <h2 className="class-modal-title">{title}</h2>
-          <button
-            className="class-modal-close"
-            onClick={onClose}
-            type="button"
-            aria-label="Close modal"
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="class-modal-body">{children}</div>
-      </div>
-    </div>
-  );
-};
-
 export const ClassPage = () => {
+  const navigate = useNavigate();
   const capitalizeWords = (str) =>
     str
       .split("_")
@@ -169,6 +38,7 @@ export const ClassPage = () => {
     { label: "Department", accessor: "department" },
     { label: "Class Master", accessor: "classMaster" },
     { label: "Status", accessor: "suspended" },
+    { label: "Orientation", accessor: "orientationLabel" },
     { label: "Tuition Fee", accessor: "tuition_fee" },
     { label: "PTA Fee", accessor: "pta_fee" },
     { label: "Total Fee", accessor: "total_fee" },
@@ -185,6 +55,7 @@ export const ClassPage = () => {
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [classMasterHistoryRow, setClassMasterHistoryRow] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -198,6 +69,7 @@ export const ClassPage = () => {
     pta_fee: "",
     total_fee: "",
     suspended: "",
+    is_orientation: false,
   });
 
   function transformClassForm(form) {
@@ -248,6 +120,7 @@ export const ClassPage = () => {
       pta_fee: "",
       total_fee: "",
       suspended: "",
+      is_orientation: false,
     });
     setFormErrors({});
   };
@@ -269,6 +142,7 @@ export const ClassPage = () => {
               ? el.classMaster?.name || el.classMaster.username
               : "-",
             suspended: el.suspended ? "Suspended" : "Active",
+            orientationLabel: el.is_orientation ? "Yes" : "No",
             registration_fee: el.registration_fee
               ? Number(el.registration_fee).toLocaleString("fr-CM")
               : "-",
@@ -437,6 +311,18 @@ export const ClassPage = () => {
     }
   };
 
+  // A class whose name says "orientation" but isn't flagged as one would
+  // silently never trigger the six-choice registration flow or the
+  // promotion restriction — a soft nudge here, not a hard block, since a
+  // class named e.g. "Orientation Committee" legitimately isn't one.
+  const confirmOrientationNameMismatch = () => {
+    if (form.is_orientation) return true;
+    if (!form.name?.toLowerCase().includes("orientation")) return true;
+    return window.confirm(
+      `"${form.name}" looks like an orientation class, but "Orientation class" isn't checked. Continue without it?`
+    );
+  };
+
   // Form handlers
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
@@ -446,6 +332,7 @@ export const ClassPage = () => {
       toast.error(Object.values(errors)[0]);
       return;
     }
+    if (!confirmOrientationNameMismatch()) return;
     createClass();
   };
 
@@ -457,6 +344,7 @@ export const ClassPage = () => {
       toast.error(Object.values(errors)[0]);
       return;
     }
+    if (!confirmOrientationNameMismatch()) return;
     editClass();
   };
 
@@ -474,6 +362,7 @@ export const ClassPage = () => {
       pta_fee: row.pta_fee,
       total_fee: row.total_fee,
       suspended: row.suspended === "Suspended",
+      is_orientation: !!row.is_orientation,
     });
     setEditModalOpen(true);
   };
@@ -499,18 +388,20 @@ export const ClassPage = () => {
   return (
     <SideTop>
       <div className="class-page">
-        <div className="class-page-header">
-          <h2 className="class-page-title">Classes</h2>
-          <button
-            className="class-btn-create class-btn-desktop"
-            onClick={openCreateModal}
-          >
-            <FaPlus />
-            <span>Create Class</span>
-          </button>
-        </div>
+        <PageHeader
+          title="Classes"
+          actions={
+            <button
+              className="class-btn-create class-btn-desktop"
+              onClick={openCreateModal}
+            >
+              <FaPlus />
+              <span>Create Class</span>
+            </button>
+          }
+        />
 
-        <Stats data={stats} />
+        <Stats data={stats} loading={isLoading} skeletonCount={3} />
 
         {/* Mobile FAB */}
         <button
@@ -532,11 +423,38 @@ export const ClassPage = () => {
             onRowClick={handleRowClick}
             warnDelete={() => {}}
             filterCategories={filters}
+            extraActions={[
+              {
+                icon: <FaUserGraduate />,
+                title: "See Students",
+                onClick: (row) =>
+                  navigate("/admin-student", { state: { class_id: row.id } }),
+              },
+              {
+                icon: <FaHistory />,
+                title: "Class Master History (by year)",
+                onClick: (row) => setClassMasterHistoryRow(row),
+              },
+            ]}
           />
         </div>
 
+        {/* Class Master History Modal */}
+        <Modal
+          isOpen={!!classMasterHistoryRow}
+          onClose={() => setClassMasterHistoryRow(null)}
+          title={`Class Master History — ${classMasterHistoryRow?.name || ""}`}
+        >
+          {classMasterHistoryRow && (
+            <ClassMasterHistoryModal
+              classItem={classMasterHistoryRow}
+              teachersOptions={teachers}
+            />
+          )}
+        </Modal>
+
         {/* Create Modal */}
-        <ClassModal
+        <Modal
           isOpen={createModalOpen}
           onClose={closeCreateModal}
           title="Create Class"
@@ -587,6 +505,24 @@ export const ClassPage = () => {
               )}
             </div>
 
+            <div className="class-form-group class-checkbox-group">
+              <label className="class-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={!!form.is_orientation}
+                  onChange={(e) =>
+                    handleUpdateForm("is_orientation", e.target.checked)
+                  }
+                />
+                This is an Orientation class (Form One)
+              </label>
+              <p className="class-checkbox-hint">
+                Registration will capture six ranked department choices for
+                students in this class, and promotion will only offer
+                classes in a student's chosen departments as destinations.
+              </p>
+            </div>
+
             {/* Fees */}
             <div className="class-fees-section">
               <h4 className="class-section-title">Fee Structure</h4>
@@ -624,10 +560,10 @@ export const ClassPage = () => {
               disabled={createLoading}
             />
           </form>
-        </ClassModal>
+        </Modal>
 
         {/* Edit Modal */}
-        <ClassModal
+        <Modal
           isOpen={editModalOpen}
           onClose={closeEditModal}
           title="Edit Class"
@@ -678,6 +614,24 @@ export const ClassPage = () => {
               )}
             </div>
 
+            <div className="class-form-group class-checkbox-group">
+              <label className="class-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={!!form.is_orientation}
+                  onChange={(e) =>
+                    handleUpdateForm("is_orientation", e.target.checked)
+                  }
+                />
+                This is an Orientation class (Form One)
+              </label>
+              <p className="class-checkbox-hint">
+                Registration will capture six ranked department choices for
+                students in this class, and promotion will only offer
+                classes in a student's chosen departments as destinations.
+              </p>
+            </div>
+
             <div className="class-fees-section">
               <h4 className="class-section-title">Fee Structure</h4>
               <div className="class-fees-grid">
@@ -718,10 +672,10 @@ export const ClassPage = () => {
               disabled={editLoading}
             />
           </form>
-        </ClassModal>
+        </Modal>
 
         {/* Details Modal */}
-        <ClassModal
+        <Modal
           isOpen={!!selectedRow}
           onClose={closeModal}
           title="Class Details"
@@ -813,7 +767,7 @@ export const ClassPage = () => {
               </section>
             </div>
           )}
-        </ClassModal>
+        </Modal>
       </div>
     </SideTop>
   );

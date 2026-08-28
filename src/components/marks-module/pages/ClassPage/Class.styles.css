@@ -1,3 +1,5 @@
+@import "../../styles/tokens.css";
+
 /* ============================================= */
 /* BASE STYLES - DESKTOP */
 /* ============================================= */
@@ -7,22 +9,8 @@
   max-width: 100%;
 }
 
-.class-page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.class-page-title {
-  font-size: 28px;
-  margin: 0;
-  color: #333;
-  font-weight: 600;
-}
-
 .class-btn-create {
-  background-color: #204080;
+  background-color: var(--vt-primary);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -31,16 +19,14 @@
   font-size: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .class-btn-create:hover {
-  background-color: #163060;
+  background-color: var(--vt-primary-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .class-btn-create:active {
@@ -53,129 +39,6 @@
 
 .class-table-container {
   margin-top: 20px;
-}
-
-/* ============================================= */
-/* MODAL - DESKTOP STYLES */
-/* ============================================= */
-
-.class-modal-overlay.desktop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 20px;
-  animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.class-modal-container.desktop {
-  background: white;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 700px;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.class-modal-container.desktop .class-modal-drag-handle {
-  display: none;
-}
-
-.class-modal-header {
-  padding: 24px 24px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.class-modal-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #204080;
-  margin: 0;
-  flex: 1;
-  padding-right: 16px;
-}
-
-.class-modal-close {
-  background: #f3f4f6;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #6b7280;
-  font-size: 18px;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.class-modal-close:hover {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.class-modal-close:active {
-  transform: scale(0.95);
-}
-
-.class-modal-body {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.class-modal-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.class-modal-body::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 4px;
-}
-
-.class-modal-body::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
-}
-
-.class-modal-body::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
 }
 
 /* Modal Form */
@@ -198,6 +61,37 @@
   font-size: 14px;
 }
 
+.class-checkbox-group {
+  background: #f8f9ff;
+  border: 1px solid #e8edf5;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.class-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--vt-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.class-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--vt-primary);
+  cursor: pointer;
+}
+
+.class-checkbox-hint {
+  margin: 6px 0 0 24px;
+  font-size: 12.5px;
+  color: #718096;
+  line-height: 1.4;
+}
+
 .class-form-error {
   color: #dc3545;
   font-size: 13px;
@@ -216,8 +110,7 @@
 }
 
 .class-react-select .class-select__control--is-focused {
-  border-color: #204080;
-  box-shadow: 0 0 0 1px #204080;
+  border-color: var(--vt-primary);
 }
 
 .class-fees-section {
@@ -227,7 +120,7 @@
 .class-section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #204080;
+  color: var(--vt-primary);
   margin-bottom: 16px;
   padding-bottom: 8px;
   border-bottom: 2px solid #f0f0f0;
@@ -278,7 +171,7 @@
 }
 
 .class-status-badge.active {
-  background-color: #204080;
+  background-color: var(--vt-primary);
 }
 
 .class-status-badge.suspended {
@@ -303,7 +196,6 @@
   background: #f7f8fa;
   padding: 16px;
   border-radius: 12px;
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .class-info-label {
@@ -325,14 +217,13 @@
   background: #fefefe;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .class-fee-title {
   margin: 0 0 16px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #204080;
+  color: var(--vt-primary);
 }
 
 .class-fee-list {
@@ -355,7 +246,7 @@
 
 .class-fee-value {
   font-weight: 600;
-  color: #204080;
+  color: var(--vt-primary);
 }
 
 .class-fee-item.class-fee-total {
@@ -381,14 +272,6 @@
     padding-bottom: 80px; /* Space for FAB */
   }
 
-  .class-page-header {
-    margin-bottom: 16px;
-  }
-
-  .class-page-title {
-    font-size: 22px;
-  }
-
   /* Hide desktop button, show FAB */
   .class-btn-desktop {
     display: none;
@@ -406,119 +289,11 @@
     align-items: center;
     justify-content: center;
     z-index: 999;
-    box-shadow: 0 4px 12px rgba(32, 64, 128, 0.4);
     font-size: 20px;
   }
 
   .class-btn-mobile-fab:active {
     transform: scale(0.95);
-  }
-
-  /* Mobile Modal Overlay */
-  .class-modal-overlay.mobile {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    z-index: 9999;
-    padding: 0;
-    animation: fadeIn 0.3s ease-out;
-  }
-
-  /* Mobile Modal Container */
-  .class-modal-container.mobile {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: 100%;
-    max-height: 92vh;
-    background: white;
-    border-radius: 24px 24px 0 0;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    overscroll-behavior: contain;
-  }
-
-  @keyframes slideUpMobile {
-    from {
-      transform: translateY(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  /* Drag Handle */
-  .class-modal-drag-handle {
-    display: flex;
-    justify-content: center;
-    padding: 12px 0 8px;
-    cursor: grab;
-    flex-shrink: 0;
-  }
-
-  .class-modal-drag-handle:active {
-    cursor: grabbing;
-  }
-
-  .class-drag-bar {
-    width: 40px;
-    height: 5px;
-    background: #d1d5db;
-    border-radius: 3px;
-    transition: background 0.2s ease;
-  }
-
-  .class-modal-drag-handle:active .class-drag-bar {
-    background: #9ca3af;
-  }
-
-  /* Mobile Header */
-  .class-modal-container.mobile .class-modal-header {
-    padding: 4px 20px 16px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  }
-
-  .class-modal-container.mobile .class-modal-title {
-    font-size: 18px;
-    font-weight: 600;
-  }
-
-  .class-modal-container.mobile .class-modal-close {
-    width: 32px;
-    height: 32px;
-    background: #f3f4f6;
-    font-size: 16px;
-  }
-
-  .class-modal-container.mobile .class-modal-close:active {
-    background: #e5e7eb;
-    transform: scale(0.92);
-  }
-
-  /* Mobile Body */
-  .class-modal-container.mobile .class-modal-body {
-    padding: 20px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .class-modal-container.mobile .class-modal-body::-webkit-scrollbar {
-    width: 4px;
   }
 
   /* Mobile Form */
@@ -613,48 +388,12 @@
     padding: 10px;
   }
 
-  .class-page-title {
-    font-size: 20px;
-  }
-
   .class-btn-mobile-fab {
     width: 52px;
     height: 52px;
     bottom: 16px;
     right: 16px;
     font-size: 18px;
-  }
-
-  .class-modal-container.mobile {
-    max-height: 94vh;
-    border-radius: 20px 20px 0 0;
-  }
-
-  .class-modal-drag-handle {
-    padding: 10px 0 6px;
-  }
-
-  .class-drag-bar {
-    width: 36px;
-    height: 4px;
-  }
-
-  .class-modal-container.mobile .class-modal-header {
-    padding: 4px 16px 14px;
-  }
-
-  .class-modal-container.mobile .class-modal-title {
-    font-size: 17px;
-  }
-
-  .class-modal-container.mobile .class-modal-close {
-    width: 30px;
-    height: 30px;
-    font-size: 15px;
-  }
-
-  .class-modal-container.mobile .class-modal-body {
-    padding: 16px;
   }
 
   .class-modal-form {
@@ -684,37 +423,10 @@
     padding: 8px;
   }
 
-  .class-page-title {
-    font-size: 18px;
-  }
-
   .class-btn-mobile-fab {
     width: 50px;
     height: 50px;
     font-size: 17px;
-  }
-
-  .class-modal-container.mobile {
-    max-height: 95vh;
-    border-radius: 18px 18px 0 0;
-  }
-
-  .class-modal-container.mobile .class-modal-header {
-    padding: 4px 14px 12px;
-  }
-
-  .class-modal-container.mobile .class-modal-title {
-    font-size: 16px;
-  }
-
-  .class-modal-container.mobile .class-modal-close {
-    width: 28px;
-    height: 28px;
-    font-size: 14px;
-  }
-
-  .class-modal-container.mobile .class-modal-body {
-    padding: 14px;
   }
 
   .class-modal-form {
@@ -735,33 +447,6 @@
 
   .class-fee-item.class-fee-total {
     font-size: 14px;
-  }
-}
-
-/* ============================================= */
-/* ACCESSIBILITY & PERFORMANCE */
-/* ============================================= */
-
-.class-modal-close:focus-visible {
-  outline: 2px solid #204080;
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .class-modal-overlay,
-  .class-modal-container {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-@media (prefers-contrast: high) {
-  .class-modal-header {
-    border-bottom-width: 2px;
-  }
-
-  .class-modal-close {
-    border: 1px solid currentColor;
   }
 }
 

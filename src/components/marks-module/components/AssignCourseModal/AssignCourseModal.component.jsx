@@ -4,6 +4,8 @@ import Select from "react-select";
 import PropTypes from "prop-types";
 import api from "../../utils/api";
 import { toast } from "react-toastify";
+import { useYearScope } from "../../../../hooks/useYearScope";
+import { YearScopeBanner } from "../YearScopeBanner/YearScopeBanner.component";
 
 export default function AssignCourseModal({
   departmentsOptions,
@@ -17,13 +19,22 @@ export default function AssignCourseModal({
   const [selectedClasses, setSelectedClasses] = useState([]);
   const [teacherAssignments, setTeacherAssignments] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Assignments are year-scoped now (a teacher change this year no
+  // longer overwrites last year's record). The banner lets the user pick
+  // any year to VIEW; saving/unassigning is only allowed while that year
+  // is editable (active, or an archived year the user has a live grant
+  // for) — matches the backend's own assertYearWritable check exactly.
+  const yearScope = useYearScope();
+  const { selectedYearId: activeYearId, isEditable } = yearScope;
 
   useEffect(() => {
-    if (!subject) return;
+    if (!subject || !activeYearId) return;
 
     const fetchExistingSubjectClasses = async () => {
       try {
-        const res = await api.get(`/class-subjects?subject_id=${subject.id}`);
+        const res = await api.get(
+          `/class-subjects?subject_id=${subject.id}&academic_year_id=${activeYearId}`
+        );
         const existing = res.data.data || [];
 
         // Prefill departments
@@ -64,7 +75,7 @@ export default function AssignCourseModal({
 
     fetchExistingSubjectClasses();
     setStep(1);
-  }, [subject, departmentsOptions, classesOptions, teachersOptions]);
+  }, [subject, activeYearId, departmentsOptions, classesOptions, teachersOptions]);
 
   const handleAssignTeacher = (classId, teacher) => {
     setTeacherAssignments((prev) => ({
@@ -78,6 +89,14 @@ export default function AssignCourseModal({
       toast.error("No subject selected");
       return;
     }
+    if (!activeYearId) {
+      toast.error("Couldn't determine the active academic year.");
+      return;
+    }
+    if (!isEditable) {
+      toast.error("This academic year is read-only. You cannot save changes to it.");
+      return;
+    }
     const payload = [];
 
     for (const cls of selectedClasses) {
@@ -87,6 +106,7 @@ export default function AssignCourseModal({
         return;
       }
       payload.push({
+        academic_year_id: activeYearId,
         class_id: Number(cls.value),
         subject_id: Number(subject.id),
         department_id: Number(cls.department?.id || 0),
@@ -131,6 +151,14 @@ export default function AssignCourseModal({
       toast.error("No subject selected to unassign.");
       return;
     }
+    if (!activeYearId) {
+      toast.error("Couldn't determine the active academic year.");
+      return;
+    }
+    if (!isEditable) {
+      toast.error("This academic year is read-only. You cannot unassign from it.");
+      return;
+    }
 
     const confirm = window.confirm(
       `Are you sure you want to completely unassign the subject "${subject.name}" from all classes? This cannot be undone.`
@@ -139,7 +167,7 @@ export default function AssignCourseModal({
 
     try {
       setIsSubmitting(true);
-      await api.post("/class-subjects/unassign", { subject_id: subject.id });
+      await api.post("/class-subjects/unassign", { subject_id: subject.id, academic_year_id: activeYearId });
       toast.success(
         `Subject "${subject.name}" has been unassigned from all classes.`
       );
@@ -161,6 +189,8 @@ export default function AssignCourseModal({
 
   return (
     <div className="assign-course-modal">
+      <YearScopeBanner yearScope={yearScope} />
+
       {/* Stepper */}
       <div className="stepper">
         {["Departments", "Classes", "Teachers", "Review"].map((label, i) => (
@@ -177,6 +207,7 @@ export default function AssignCourseModal({
             <label>Select Departments</label>
             <Select
               isMulti
+              isDisabled={!isEditable}
               options={departmentsOptions}
               value={selectedDepartments}
               onChange={setSelectedDepartments}
@@ -193,6 +224,7 @@ export default function AssignCourseModal({
           <label>Select Classes</label>
           <Select
             isMulti
+            isDisabled={!isEditable}
             options={formattedClasses}
             value={selectedClasses}
             onChange={setSelectedClasses}
@@ -214,6 +246,7 @@ export default function AssignCourseModal({
                 <div className="subject-teacher">
                   <label>{subject?.name || "Subject"}</label>
                   <Select
+                    isDisabled={!isEditable}
                     options={teachersOptions}
                     value={teacherAssignments[cls.value] || null}
                     onChange={(teacher) =>
@@ -279,7 +312,7 @@ export default function AssignCourseModal({
           <button
             onClick={handleSave}
             className="btn-success"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isEditable}
           >
             {isSubmitting ? "Saving..." : "Save"}
           </button>
@@ -287,7 +320,12 @@ export default function AssignCourseModal({
         <button
           className="btn btn-danger-assign"
           onClick={handleUnassign}
-          title="Completely unassign this subject from all classes/teachers"
+          disabled={!isEditable}
+          title={
+            isEditable
+              ? "Completely unassign this subject from all classes/teachers"
+              : "This academic year is read-only"
+          }
         >
           Unassign Completely
         </button>

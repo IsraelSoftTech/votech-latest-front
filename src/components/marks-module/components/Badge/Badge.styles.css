@@ -1,0 +1,60 @@
+@import "../../styles/tokens.css";
+
+.vt-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Status tones */
+.vt-badge-good {
+  color: var(--vt-status-done);
+  background: var(--vt-status-done-tint);
+}
+.vt-badge-info {
+  color: var(--vt-status-run);
+  background: var(--vt-status-run-tint);
+}
+.vt-badge-neutral {
+  color: var(--vt-status-pending);
+  background: var(--vt-status-pending-tint);
+}
+.vt-badge-bad {
+  color: var(--vt-status-fail);
+  background: var(--vt-status-fail-tint);
+}
+.vt-badge-warn {
+  color: var(--vt-fairly-good);
+  background: var(--vt-gold-tint);
+}
+
+/* Grade bands (via the `grade` prop) — prefixed to avoid colliding with
+   the status tones above, which use unrelated colors for the same words
+   (e.g. status "good" is green/done, grade "good" is navy). */
+.vt-badge-grade-excellent {
+  color: var(--vt-excellent);
+  background: #eaf6ea;
+}
+.vt-badge-grade-vgood {
+  color: var(--vt-vgood);
+  background: #eef7ee;
+}
+.vt-badge-grade-good {
+  color: var(--vt-good);
+  background: var(--vt-primary-tint);
+}
+.vt-badge-grade-fairlygood {
+  color: var(--vt-fairly-good);
+  background: var(--vt-gold-tint);
+}
+.vt-badge-grade-average {
+  color: var(--vt-average);
+  background: #fdf3e6;
+}
+.vt-badge-grade-weak {
+  color: var(--vt-weak);
+  background: #fdecec;
+}

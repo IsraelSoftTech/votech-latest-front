@@ -1,130 +1,125 @@
-/* Flat, clean palette */
-:root {
-  --accent-1: #204080; /* primary blue */
-  --accent-3: #1a5f1a; /* deep green */
-  --accent-2: #f59e0b; /* golden brown */
-  --card-bg: #ffffff;
-  --border: #e5e9f2; /* light neutral border */
-  --title: #475569; /* slate-ish neutral */
-  --value: #1f2937; /* near-black */
-}
+@import "../../styles/tokens.css";
 
-/* Responsive grid */
-.stats-grid {
+/* Prefixed vt- like every other shared component in this module — plain
+   names like ".stat-card" collide with several unrelated legacy pages
+   (Marks.css, AdminCounsellingCases.css, AdminDisciplineCases.css,
+   UserEvents.css all define their own ".stat-card" with shadows/hover
+   lifts), and since this app has no CSS-module scoping, whichever one
+   loads last in the bundle wins and bleeds into this component. */
+.vt-stats-grid {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
-  margin: 2rem 0rem;
+  margin: 1.4rem 0;
 }
 
-/* Card */
-.stat-card {
-  --accent: var(--accent-1);
-  position: relative;
+.vt-stat-card {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  min-height: 68px;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1.5px solid var(--vt-border);
   border-radius: 10px;
-  font-family: "Arial", sans-serif;
-  transition: border-color 0.18s ease, background-color 0.18s ease;
-  cursor: pointer;
-  box-shadow: unset !important;
 }
 
-.stat-card:hover {
-  /* border-color: var(--accent); */
-  background-color: #fafbff; /* subtle, flat hover */
-}
-
-/* Flat accent bar (no gradient) */
-.stat-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 8px;
-  right: 8px;
-  height: 3px;
-  border-radius: 3px;
-  background: var(--accent);
-}
-
-/* Icon (flat, outlined, tinted by accent) */
-.stat-icon {
+.vt-stat-icon {
   width: 40px;
   height: 40px;
   border-radius: 8px;
   display: grid;
   place-items: center;
-  color: var(--accent);
   flex: 0 0 40px;
+  background: var(--vt-primary-tint2);
+  color: var(--vt-primary);
 }
 
-/* Text */
-.stat-content {
+.vt-stat-content {
   min-width: 0;
   line-height: 1.2;
 }
 
-.stat-title {
-  font-size: 11px;
-  color: var(--title);
+.vt-stat-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--vt-ink-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.stat-value {
-  margin-top: 2px;
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--value);
+.vt-stat-value {
+  margin-top: 3px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--vt-ink);
   line-height: 1.1;
 }
 
-/* Alternating accents (flat colors) */
-.stats-grid .stat-card:nth-child(3n + 1) {
-  --accent: var(--accent-1);
+/* Tone — inferred from the icon (checkmark = good, X/ban = needs
+   attention), everything else stays neutral navy. */
+.vt-stat-card.tone-good .vt-stat-icon {
+  background: var(--vt-status-done-tint);
+  color: var(--vt-status-done);
 }
-.stats-grid .stat-card:nth-child(3n + 2) {
-  --accent: var(--accent-2);
-}
-.stats-grid .stat-card:nth-child(3n + 3) {
-  --accent: var(--accent-3);
-}
-
-.stat-icon svg {
-  fill: currentColor !important; /* override any gradients */
-  color: var(--accent) !important; /* flat accent color */
-  background: none !important;
-  border: none !important;
-  font-size: 2rem;
+.vt-stat-card.tone-good .vt-stat-value {
+  color: var(--vt-status-done);
 }
 
-.stat-icon {
-  background: none;
-  padding: 0;
-  border: none;
+.vt-stat-card.tone-warn .vt-stat-icon {
+  background: var(--vt-status-fail-tint);
+  color: var(--vt-status-fail);
+}
+.vt-stat-card.tone-warn .vt-stat-value {
+  color: var(--vt-status-fail);
 }
 
-/* Mobile tweaks */
+/* Skeleton — one solid shimmer block per card, matching every other
+   loading state in the module, sized identically to the real card so
+   nothing shifts once data arrives. */
+.vt-stat-skel {
+  background: linear-gradient(90deg, #eef1f6 25%, #e2e8f0 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: vt-stats-shimmer 1.4s ease infinite;
+  border-radius: 10px;
+}
+.vt-stat-skel-card {
+  height: 68px;
+  width: 100%;
+}
+@keyframes vt-stats-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-stat-skel {
+    animation: none !important;
+  }
+}
+
 @media (max-width: 480px) {
-  .stats-grid {
+  .vt-stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 10px;
   }
-  .stat-title {
-    font-size: 10px;
+  .vt-stat-title {
+    font-size: 0.7rem;
   }
-  .stat-value {
-    font-size: 20px;
+  .vt-stat-value {
+    font-size: 1.25rem;
   }
-  .stat-icon {
+  .vt-stat-icon {
     width: 36px;
     height: 36px;
     flex-basis: 36px;
+  }
+  .vt-stat-card {
+    min-height: 64px;
+  }
+  .vt-stat-skel-card {
+    height: 64px;
   }
 }

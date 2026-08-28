@@ -1,0 +1,32 @@
+@import "../../styles/tokens.css";
+
+.vt-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  background: var(--vt-primary-tint);
+  padding: 1.2rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--vt-border);
+  margin-bottom: 1.4rem;
+}
+
+.vt-page-header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--vt-primary);
+  margin: 0 0 0.2rem;
+}
+
+.vt-page-header-subtitle {
+  font-size: 0.8rem;
+  color: var(--vt-ink-soft);
+}
+
+.vt-page-header-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}

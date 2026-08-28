@@ -1,0 +1,70 @@
+.class-master-history-editor {
+  margin-bottom: 20px;
+}
+
+.class-master-history-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #33394a;
+  margin-bottom: 6px;
+}
+
+.class-master-history-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.class-master-history-select {
+  flex: 1;
+}
+
+.class-master-history-save {
+  white-space: nowrap;
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.class-master-history-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.class-master-history-list h4 {
+  font-size: 13px;
+  margin: 0 0 8px;
+  color: #33394a;
+}
+
+.class-master-history-hint {
+  font-size: 13px;
+  color: #77808f;
+}
+
+.class-master-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.class-master-history-table th,
+.class-master-history-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eceef2;
+}
+
+.class-master-history-table th {
+  color: #77808f;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.class-master-history-table tr.is-selected td {
+  background: #f0f4ff;
+  font-weight: 600;
+}

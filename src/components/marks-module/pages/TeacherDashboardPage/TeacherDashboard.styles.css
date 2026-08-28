@@ -1,0 +1,281 @@
+@import "../../styles/tokens.css";
+
+.tcd-page {
+  padding: 1.4rem 1.6rem 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.tcd-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.2rem 0;
+}
+
+.tcd-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid var(--vt-border);
+  border-radius: 10px;
+  padding: 1.1rem 1.2rem;
+}
+
+.tcd-stat-card.tcd-clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.tcd-stat-card.tcd-clickable:hover {
+  border-color: var(--vt-primary);
+  transform: translateY(-1px);
+}
+
+.tcd-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  background: var(--vt-primary-tint2);
+  color: var(--vt-primary);
+}
+
+.tcd-stat-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.tcd-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--vt-ink);
+  letter-spacing: -0.01em;
+}
+
+.tcd-stat-label {
+  font-size: 0.78rem;
+  color: var(--vt-ink-soft);
+  font-weight: 600;
+}
+
+.tcd-section {
+  margin-top: 1.8rem;
+}
+
+.tcd-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--vt-primary);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--vt-border);
+}
+
+/* Class Master Of */
+.tcd-master-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.tcd-master-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--vt-gold-tint);
+  border: 1px solid var(--vt-gold-border);
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  min-width: 180px;
+}
+
+.tcd-master-name {
+  font-weight: 700;
+  color: var(--vt-ink);
+  font-size: 0.9rem;
+}
+
+.tcd-master-count {
+  font-size: 0.76rem;
+  color: var(--vt-ink-soft);
+}
+
+/* My Classes */
+.tcd-class-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.tcd-class-card {
+  background: #fff;
+  border: 1px solid var(--vt-border);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tcd-class-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tcd-class-name {
+  font-weight: 700;
+  color: var(--vt-ink);
+  font-size: 0.95rem;
+}
+
+.tcd-master-badge {
+  background: var(--vt-gold-tint);
+  color: var(--vt-gold);
+  border: 1px solid var(--vt-gold-border);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.tcd-class-students {
+  font-size: 0.8rem;
+  color: var(--vt-ink-soft);
+}
+
+.tcd-class-subjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+.tcd-subject-pill {
+  background: var(--vt-primary-tint2);
+  color: var(--vt-primary);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.tcd-subject-pill:hover {
+  background: var(--vt-primary);
+  color: #fff;
+}
+
+/* Marks I Still Owe */
+.tcd-owed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tcd-owed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid var(--vt-border);
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.tcd-owed-row:hover {
+  border-color: var(--vt-primary);
+}
+
+.tcd-see-more-btn {
+  margin-top: 0.6rem;
+  background: none;
+  border: none;
+  color: var(--vt-primary);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0.3rem 0;
+}
+
+.tcd-see-more-btn:hover {
+  text-decoration: underline;
+}
+
+.tcd-owed-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--vt-ink);
+}
+
+.tcd-owed-pill {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.tcd-owed-pill.tcd-tone-not_started {
+  background: var(--vt-status-fail-tint);
+  color: var(--vt-status-fail);
+}
+
+.tcd-owed-pill.tcd-tone-partial {
+  background: var(--vt-gold-tint);
+  color: var(--vt-fairly-good);
+}
+
+/* Skeleton */
+.tcd-skel {
+  background: linear-gradient(90deg, #eef1f6 25%, #f6f8fb 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: tcd-shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+@keyframes tcd-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.tcd-skel-header {
+  height: 56px;
+  margin-bottom: 1.2rem;
+}
+
+.tcd-skel-stat {
+  height: 76px;
+  border-radius: 10px;
+}
+
+.tcd-skel-block {
+  border-radius: 10px;
+}
+
+@media (max-width: 720px) {
+  .tcd-page {
+    padding: 1rem;
+  }
+}

@@ -6,14 +6,14 @@ import React, {
   startTransition,
 } from "react";
 import Select from "react-select";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../../utils/api";
 import MasterSheet from "../../components/MasterSheet/MasterSheet.component";
 import SideTop from "../../../SideTop";
-import { FaArrowLeft } from "react-icons/fa";
+import { EmptyState } from "../../components/EmptyState/EmptyState.component";
+import { FaArrowLeft, FaTable } from "react-icons/fa";
+import "./MasterSheet.page.styles.css";
 
 const TERM_OPTIONS = [
   { value: "term1", label: "First Term" },
@@ -21,6 +21,36 @@ const TERM_OPTIONS = [
   { value: "term3", label: "Third Term" },
   { value: "annual", label: "Annual" },
 ];
+
+// Mirrors the real MasterSheet card (meta row + wide spreadsheet table)
+// instead of one flat gray box, so the layout doesn't jump once the
+// (often large, chunk-loaded) roster finishes arriving.
+function MasterSheetSkeleton() {
+  const dataCols = 8;
+  return (
+    <div className="msp-skel-card">
+      <div className="msp-skel-meta">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="msp-skel msp-skel-chip" />
+        ))}
+      </div>
+      <div className="msp-skel-table-wrapper">
+        <div className="msp-skel-row msp-skel-header-row">
+          {Array.from({ length: 3 + dataCols }).map((_, i) => (
+            <div key={i} className="msp-skel msp-skel-th" />
+          ))}
+        </div>
+        {Array.from({ length: 12 }).map((_, r) => (
+          <div key={r} className="msp-skel-row">
+            {Array.from({ length: 3 + dataCols }).map((_, i) => (
+              <div key={i} className="msp-skel msp-skel-td" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function extractIds(state = {}) {
   const ids = state?.ids || {};
@@ -207,14 +237,16 @@ const MasterSheetPage = () => {
   if (!ready) {
     return (
       <SideTop>
-        <div style={{ padding: 16 }}>
-          <div style={{ marginBottom: 12 }}>
-            <button onClick={() => navigate(-1)} className="btn btn-secondary">
-              ← Go Back
+        <div className="msp-page">
+          <div className="msp-controls">
+            <button onClick={() => navigate(-1)} className="back-btn">
+              <FaArrowLeft /> <span>Go Back</span>
             </button>
           </div>
-          <h3>Missing filters</h3>
-          <p>Please return and select Academic Year, Department, and Class.</p>
+          <EmptyState
+            title="Missing filters"
+            subtitle="Please return and select Academic Year, Department, and Class."
+          />
         </div>
       </SideTop>
     );
@@ -222,75 +254,56 @@ const MasterSheetPage = () => {
 
   return (
     <SideTop>
-      <div style={{ padding: 16 }}>
-        <div
-          //   style={{ maxWidth: 320, marginBottom: 12 }}
-          className="master-sheet-btns"
-        >
+      <div className="msp-page">
+        <div className="msp-controls">
           <button className="back-btn" onClick={() => navigate(-1)}>
             <FaArrowLeft /> <span>Go Back</span>
           </button>
 
-          <div style={{ marginBottom: "20px" }}>
-            <Select
-              placeholder="Select term to load…"
-              options={TERM_OPTIONS}
-              value={termValue}
-              onChange={(opt) => setSelectedTerm(opt?.value || null)}
-              menuPortalTarget={document.body}
-              styles={{
-                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-              }}
-            />
-          </div>
+          <Select
+            className="msp-term-select"
+            placeholder="Select term to load…"
+            options={TERM_OPTIONS}
+            value={termValue}
+            onChange={(opt) => setSelectedTerm(opt?.value || null)}
+            menuPortalTarget={document.body}
+            styles={{
+              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+            }}
+          />
         </div>
 
         {loading && (
           <div style={{ marginTop: 8 }}>
-            <div style={{ marginBottom: 8, fontSize: 13, color: "#6b7280" }}>
+            <div className="msp-loading-note">
               Loaded {loadedCount} of {totalCount}
-              {chunking ? " — rendering…" : ""}
+              {chunking ? ", rendering…" : ""}
             </div>
-            <Skeleton height={1200} count={1} style={{ marginBottom: 8 }} />
+            <MasterSheetSkeleton />
           </div>
         )}
 
         {!loading && error && (
-          <div
-            className="master-sheet-error"
-            style={{
-              padding: 12,
-              border: "1px solid #fecaca",
-              background: "#fff1f2",
-              borderRadius: 8,
-            }}
-          >
-            <h4 style={{ marginTop: 0, marginBottom: 6, color: "#991b1b" }}>
-              Error Loading Master Sheet
-            </h4>
-            <p style={{ marginTop: 0 }}>{error}</p>
-            <button onClick={handleRetry} className="btn btn-danger">
+          <div className="msp-error">
+            <h4>Error Loading Master Sheet</h4>
+            <p>{error}</p>
+            <button onClick={handleRetry} className="msp-retry-btn">
               Try Again
             </button>
           </div>
         )}
 
         {!loading && !error && !selectedTerm && (
-          <div
-            style={{
-              padding: 12,
-              border: "1px solid #e5e7eb",
-              borderRadius: 8,
-            }}
-          >
-            <p>Please select a term to load the master sheet.</p>
-          </div>
+          <EmptyState
+            icon={<FaTable />}
+            title="Select a term to load the master sheet"
+          />
         )}
 
         {!loading && selectedTerm && totalCount > 0 && (
-          <div style={{ marginBottom: 8, fontSize: 13, color: "#6b7280" }}>
+          <div className="msp-loading-note">
             Loaded {loadedCount} of {totalCount}
-            {chunking ? " — rendering…" : ""}
+            {chunking ? ", rendering…" : ""}
           </div>
         )}
 
@@ -303,9 +316,7 @@ const MasterSheetPage = () => {
         )}
 
         {!loading && !error && selectedTerm && totalCount === 0 && (
-          <div className="master-sheet-empty">
-            <p>No student data available for {selectedTerm}</p>
-          </div>
+          <EmptyState title={`No student data available for ${selectedTerm}`} />
         )}
       </div>
     </SideTop>

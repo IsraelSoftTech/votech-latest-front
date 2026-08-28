@@ -8,6 +8,9 @@ import api, { headers, subBaseURL } from "../../utils/api";
 import DataTable from "../../components/DataTable/DataTable.component";
 import Modal from "../../components/Modal/Modal.component";
 import { CustomInput, SubmitBtn } from "../../components/Inputs/CustumInputs";
+import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import { EmptyState } from "../../components/EmptyState/EmptyState.component";
+import { DetailGrid, DetailRow } from "../../components/DetailGrid/DetailGrid.component";
 import "./AcademicBands.styles.css";
 
 export const AcademicBandsPage = () => {
@@ -33,6 +36,7 @@ export const AcademicBandsPage = () => {
 
   // Loading states
   const [isLoading, setIsLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   // Modal states
@@ -79,6 +83,7 @@ export const AcademicBandsPage = () => {
       toast.error("Failed to load data");
     } finally {
       setIsLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -354,30 +359,47 @@ export const AcademicBandsPage = () => {
     ? classes.filter((c) => c.department_id === form.department_id)
     : [];
 
+  if (initialLoading) {
+    return (
+      <SideTop>
+        <div className="academic-bands-refactored">
+          <div className="bands-skeleton">
+            <div className="skeleton-line wide" />
+            <div className="skeleton-block short" />
+            <div className="skeleton-line" />
+            <div className="skeleton-block" />
+          </div>
+        </div>
+      </SideTop>
+    );
+  }
+
   return (
     <SideTop>
       <div className="academic-bands-refactored">
         {/* Header */}
-        <div className="bands-header">
-          <div className="bands-header-left">
-            <h1 className="bands-title">Academic Performance Bands</h1>
-            {isReadOnly && (
+        <PageHeader
+          title="Academic Performance Bands"
+          subtitle={
+            isReadOnly ? (
               <span className="bands-readonly-badge">
                 <FaLock /> Read Only
               </span>
-            )}
-          </div>
-          {!isReadOnly && (
-            <button
-              className="bands-create-btn bands-create-desktop"
-              onClick={handleCreateNew}
-              disabled={!selectedYear}
-            >
-              <FaPlus />
-              <span>Create Bands</span>
-            </button>
-          )}
-        </div>
+            ) : null
+          }
+          actions={
+            !isReadOnly && (
+              <button
+                className="bands-create-btn bands-create-desktop"
+                onClick={handleCreateNew}
+                disabled={!selectedYear}
+              >
+                <FaPlus />
+                <span>Create Bands</span>
+              </button>
+            )
+          }
+        />
 
         {/* Info Card */}
         <div className="bands-info-card">
@@ -445,13 +467,11 @@ export const AcademicBandsPage = () => {
 
         {/* Instructions */}
         {!selectedYear && (
-          <div className="bands-empty-state">
-            <div className="empty-state-icon">
-              <FaCopy color="#20408" className="facopy-2" />
-            </div>
-            <h3>Get Started</h3>
-            <p>Select an academic year above to view and manage bands</p>
-          </div>
+          <EmptyState
+            icon={<FaCopy className="facopy-2" />}
+            title="Get Started"
+            subtitle="Select an academic year above to view and manage bands"
+          />
         )}
 
         {/* Table */}
@@ -472,7 +492,7 @@ export const AcademicBandsPage = () => {
                   ? []
                   : [
                       {
-                        icon: <FaCopy color="#20408" className="facopy-2" />,
+                        icon: <FaCopy className="facopy-2" />,
                         title: "Copy Bands",
                         onClick: handleCopy,
                       },
@@ -506,25 +526,20 @@ export const AcademicBandsPage = () => {
           {selectedClassDetails && (
             <div className="bands-details-modal">
               <div className="bands-details-info">
-                <div className="bands-detail-item">
-                  <span className="bands-detail-label">Class:</span>
-                  <span className="bands-detail-value">
-                    {selectedClassDetails.name}
-                  </span>
-                </div>
-                <div className="bands-detail-item">
-                  <span className="bands-detail-label">Department:</span>
-                  <span className="bands-detail-value">
-                    {selectedClassDetails.department}
-                  </span>
-                </div>
-                <div className="bands-detail-item">
-                  <span className="bands-detail-label">Academic Year:</span>
-                  <span className="bands-detail-value">
-                    {academicYears.find((y) => y.id === selectedYear)?.name ||
-                      "N/A"}
-                  </span>
-                </div>
+                <DetailGrid>
+                  <DetailRow label="Class" value={selectedClassDetails.name} />
+                  <DetailRow
+                    label="Department"
+                    value={selectedClassDetails.department}
+                  />
+                  <DetailRow
+                    label="Academic Year"
+                    value={
+                      academicYears.find((y) => y.id === selectedYear)?.name ||
+                      "N/A"
+                    }
+                  />
+                </DetailGrid>
               </div>
 
               {selectedClassDetails.hasBands ? (
@@ -574,31 +589,27 @@ export const AcademicBandsPage = () => {
                           closeDetailsModal();
                         }}
                       >
-                        <FaCopy color="#20408" /> Copy to Another Class
+                        <FaCopy /> Copy to Another Class
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="bands-details-empty">
-                  <div className="bands-details-empty-icon">
-                    {" "}
-                    <FaCopy color="#20408" className="facopy-2" />
-                  </div>
-                  <h4>No Academic Bands Available</h4>
-                  <p>
-                    This class doesn't have any performance bands configured
-                    yet.
-                  </p>
-                  {!isReadOnly && (
-                    <button
-                      className="bands-details-btn bands-details-btn-create"
-                      onClick={handleCreateFromDetails}
-                    >
-                      <FaPlus /> Create Bands
-                    </button>
-                  )}
-                </div>
+                <EmptyState
+                  icon={<FaCopy className="facopy-2" />}
+                  title="No Academic Bands Available"
+                  subtitle="This class doesn't have any performance bands configured yet."
+                  action={
+                    !isReadOnly && (
+                      <button
+                        className="bands-details-btn bands-details-btn-create"
+                        onClick={handleCreateFromDetails}
+                      >
+                        <FaPlus /> Create Bands
+                      </button>
+                    )
+                  }
+                />
               )}
             </div>
           )}

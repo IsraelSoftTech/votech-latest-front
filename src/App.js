@@ -12,7 +12,14 @@ import Signup from "./components/Signup";
 // Admin / Core
 import Admin from "./components/Admin.jsx";
 import Admin2Dash from "./components/Admin2Dash.jsx";
-import AdminStudents from "./components/AdminStudent.jsx";
+// Rebuilt into src/components/marks-module/pages/StudentsPage — kept here,
+// commented out, so restoring the old page is uncommenting two lines
+// (this import + the /admin-student route below), see StudentsPage
+// import below.
+// import AdminStudents from "./components/AdminStudent.jsx";
+import { StudentsPage } from "./components/marks-module/pages/StudentsPage/Students.page";
+import { StudentDetailPage } from "./components/marks-module/pages/StudentDetailPage/StudentDetail.page";
+import { Admin3Dashboard } from "./components/marks-module/pages/Admin3Dashboard/Admin3Dashboard.page";
 import AdminTeachers from "./components/AdminTeacher.jsx";
 import AdminClass from "./components/AdminClass.jsx";
 import Finance from "./components/Finance.jsx";
@@ -43,11 +50,13 @@ import Marks from "./components/Marks.jsx";
 import TimeTable from "./components/TimeTable.jsx";
 
 import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subject.page";
+import { SubjectDetailPage } from "./components/marks-module/pages/SubjectDetailPage/SubjectDetail.page";
 import { ClassPage } from "./components/marks-module/pages/ClassPage/Class.page";
 import { AcademicBandsPage } from "./components/marks-module/pages/AcademicBandsPage/AcademicBands";
+import { PromotionPage } from "./components/marks-module/pages/PromotionPage/Promotion";
 import { MarksUploadPage } from "./components/marks-module/pages/MarkPage/MarkPage.page";
-import ReportCardHome from "./components/marks-module/pages/ReportCardHomePage/ReportCardHome.page";
 import { ReportCardPage } from "./components/marks-module/pages/ReportCardPage/ReportCard.page";
+import { ReportCardsPage } from "./components/marks-module/pages/ReportCardsPage/ReportCards.page";
 
 // Discipline / Attendance / Counseling
 import DisciplineSideTop from "./components/DisciplineSideTop";
@@ -61,7 +70,11 @@ import DiscEvents from "./components/DiscEvents.jsx";
 import SideTop from "./components/SideTop.jsx";
 
 // Teacher / Dean / Psycho / Events
-import TeacherDash from "./components/TeacherDash";
+// Rebuilt on the reliable ClassSubject/class_master relations instead of
+// fuzzy teacher-record name-matching, see TeacherDashboardPage.
+// import TeacherDash from "./components/TeacherDash";
+import TeacherDashboardPage from "./components/marks-module/pages/TeacherDashboardPage/TeacherDashboard.page";
+import SchoolSettingsPage from "./components/marks-module/pages/SchoolSettingsPage/SchoolSettings.page";
 import TeacherMessage from "./components/TeacherMessage.jsx";
 import Dean from "./components/Dean.jsx";
 import DeanMessage from "./components/DeanMessage.jsx";
@@ -201,10 +214,19 @@ function App() {
         {/* Admin / Core */}
         <Route
           path="/admin"
-          element={authUser?.role === "Admin2" ? <Admin2Dash /> : <Admin />}
+          element={
+            authUser?.role === "Admin2" ? (
+              <Admin2Dash />
+            ) : authUser?.role === "Admin3" ? (
+              <Admin3Dashboard />
+            ) : (
+              <Admin />
+            )
+          }
         />
         <Route path="/admin-academic-years" element={<AcademicYearManagement />} />
-        <Route path="/admin-student" element={<AdminStudents />} />
+        <Route path="/admin-student" element={<StudentsPage />} />
+        <Route path="/admin-student/:id" element={<StudentDetailPage />} />
         <Route path="/admin-teacher" element={<AdminTeachers />} />
         <Route path="/admin-class" element={<AdminClass />} />
         <Route path="/admin-finance" element={<Finance />} />
@@ -213,6 +235,7 @@ function App() {
         <Route path="/admin-messages/:userId" element={<UserChat />} />
         <Route path="/admin-idcards" element={<StudentIdCards />} />
         <Route path="/admin-users" element={<Users />} />
+        <Route path="/admin-school-settings" element={<SchoolSettingsPage />} />
         <Route path="/monitor-users" element={<MonitorUsers />} />
 
         {/* Fees & Payroll */}
@@ -336,7 +359,8 @@ function App() {
         <Route path="/discipline-events" element={<DiscEvents />} />
 
         {/* Teacher / Dean */}
-        <Route path="/teacher-dashboard" element={<TeacherDash />} />
+        {/* <Route path="/teacher-dashboard" element={<TeacherDash />} /> */}
+        <Route path="/teacher-dashboard" element={<TeacherDashboardPage />} />
         <Route path="/teacher-messages" element={<TeacherMessage />} />
         <Route path="/teacher-messages/:userId" element={<TeacherMessage />} />
         <Route path="/teacher-lesson-plans" element={<LessonPlan />} />
@@ -380,13 +404,23 @@ function App() {
           element={<Navigate to="/admin-academic-years" replace />}
         />
         <Route path="/academics/subjects" element={<SubjectsWithDisciplineLayout />} />
+        <Route path="/academics/subjects/:id" element={<SubjectDetailPage />} />
         <Route path="/academics/classes" element={<ClassPage />} />
         <Route path="/academics/bands" element={<AcademicBandsPage />} />
+        <Route path="/academics/promotion" element={<PromotionPage />} />
         <Route
           path="/academics/mark-upload/:id"
           element={<MarksUploadPage />}
         />
-        <Route path="/academics/report-cards" element={<ReportCardHome />} />
+        <Route path="/academics/report-cards" element={<ReportCardsPage />} />
+        <Route
+          path="/academics/report-cards/sessions"
+          element={<ReportCardsPage />}
+        />
+        <Route
+          path="/academics/report-cards/sessions/:id"
+          element={<ReportCardsPage />}
+        />
         <Route path="/academics/report-card/:id" element={<ReportCardPage />} />
         <Route path="/academics/master-sheets" element={<MasterSheetPage />} />
         <Route path="/test/report/card" element={<ReportCard />} />

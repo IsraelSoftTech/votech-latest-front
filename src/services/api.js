@@ -108,6 +108,11 @@ class ApiService {
         if (data.user) {
           this.user = data.user;
           sessionStorage.setItem("authUser", JSON.stringify(data.user));
+          // App.jsx's authUser state is only read once on mount; without this,
+          // navigate('/admin') right after login renders with the stale (null)
+          // authUser and falls through to the wrong dashboard until a hard
+          // refresh remounts App and re-reads sessionStorage.
+          window.dispatchEvent(new Event("authUserChanged"));
         }
         return data;
       }

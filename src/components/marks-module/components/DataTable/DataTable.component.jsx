@@ -1,146 +1,22 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
-import { FaEdit, FaTrash, FaTimes } from "react-icons/fa";
+import React, { useState, useMemo, useEffect } from "react";
+import { FaEdit, FaTrash, FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 import "./DataTable.styles.css";
 import { CustomDropdown, CustomInput } from "../Inputs/CustumInputs";
+import Modal from "../Modal/Modal.component";
+import { Button } from "../Button/Button.component";
 
-// Custom hook to detect mobile
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
+// Delays applying a fast-changing value (e.g. a search input) until it's
+// been stable for `delay`ms, so filtering a large table doesn't re-run on
+// every keystroke.
+function useDebouncedValue(value, delay = 300) {
+  const [debounced, setDebounced] = useState(value);
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  return isMobile;
-};
-
-// DataTable Modal Component (Desktop & Mobile)
-const DataTableModal = ({ isOpen, onClose, title, children }) => {
-  const isMobile = useIsMobile();
-  const modalRef = useRef(null);
-  const [startY, setStartY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      document.body.style.top = `-${window.scrollY}px`;
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
-
-  // Touch handlers for mobile swipe to dismiss
-  const handleTouchStart = (e) => {
-    if (!isMobile) return;
-    setStartY(e.touches[0].clientY);
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isMobile || !isDragging) return;
-    const touchY = e.touches[0].clientY;
-    const diff = touchY - startY;
-
-    if (diff > 0) {
-      setCurrentY(diff);
-      if (modalRef.current) {
-        modalRef.current.style.transform = `translateY(${diff}px)`;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isMobile) return;
-    setIsDragging(false);
-
-    if (currentY > 150) {
-      onClose();
-    }
-
-    if (modalRef.current) {
-      modalRef.current.style.transform = "";
-    }
-    setCurrentY(0);
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className={`datatable-modal-overlay ${isMobile ? "mobile" : "desktop"}`}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        className={`datatable-modal-container ${
-          isMobile ? "mobile" : "desktop"
-        }`}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Drag handle - mobile only */}
-        {isMobile && (
-          <div className="datatable-modal-drag-handle">
-            <div className="datatable-drag-bar"></div>
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="datatable-modal-header">
-          <h2 className="datatable-modal-title">{title}</h2>
-          <button
-            className="datatable-modal-close"
-            onClick={onClose}
-            type="button"
-            aria-label="Close modal"
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="datatable-modal-body">{children}</div>
-      </div>
-    </div>
-  );
-};
 
 const DataTable = ({
   columns,
@@ -152,6 +28,10 @@ const DataTable = ({
   limit = 10,
   warnDelete,
   filterCategories = [],
+  // Independent, AND-combined dropdown filters, each matching one field
+  // exactly rather than filterCategories' loose any-column substring
+  // match: [{ key, label, accessor, options: [{value, label}] }]
+  filters = [],
   extraActions = [],
   editRoles,
   deleteRoles,
@@ -161,9 +41,12 @@ const DataTable = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [fieldFilters, setFieldFilters] = useState({});
   const [expandedCells, setExpandedCells] = useState({});
+  const [sort, setSort] = useState({ accessor: null, direction: null }); // direction: 'asc' | 'desc' | null
 
-  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
+  const normalizedSearchTerm = debouncedSearchTerm.trim().toLowerCase();
 
   const filteredData = useMemo(() => {
     let filtered = data;
@@ -177,6 +60,15 @@ const DataTable = ({
       );
     }
 
+    for (const f of filters) {
+      const selected = fieldFilters[f.key];
+      if (selected && selected !== "All") {
+        filtered = filtered.filter(
+          (row) => String(row[f.accessor]) === String(selected)
+        );
+      }
+    }
+
     if (normalizedSearchTerm) {
       filtered = filtered.filter((row) =>
         columns.some(({ accessor }) =>
@@ -186,11 +78,40 @@ const DataTable = ({
     }
 
     return filtered;
-  }, [data, normalizedSearchTerm, filterCategory, columns]);
+  }, [data, normalizedSearchTerm, filterCategory, fieldFilters, filters, columns]);
 
-  const totalPages = Math.ceil(filteredData.length / limit);
+  const sortedData = useMemo(() => {
+    if (!sort.accessor || !sort.direction) return filteredData;
+    const { accessor, direction } = sort;
+    const copy = [...filteredData];
+    copy.sort((a, b) => {
+      const av = a[accessor];
+      const bv = b[accessor];
+      const aNum = Number(av);
+      const bNum = Number(bv);
+      const bothNumeric =
+        av !== null && av !== undefined && av !== "" &&
+        bv !== null && bv !== undefined && bv !== "" &&
+        !isNaN(aNum) && !isNaN(bNum);
+      const cmp = bothNumeric
+        ? aNum - bNum
+        : String(av ?? "").localeCompare(String(bv ?? ""));
+      return direction === "asc" ? cmp : -cmp;
+    });
+    return copy;
+  }, [filteredData, sort]);
+
+  const toggleSort = (accessor) => {
+    setSort((prev) => {
+      if (prev.accessor !== accessor) return { accessor, direction: "asc" };
+      if (prev.direction === "asc") return { accessor, direction: "desc" };
+      return { accessor: null, direction: null };
+    });
+  };
+
+  const totalPages = Math.ceil(sortedData.length / limit);
   const startIndex = (currentPage - 1) * limit;
-  const paginatedData = filteredData.slice(startIndex, startIndex + limit);
+  const paginatedData = sortedData.slice(startIndex, startIndex + limit);
 
   const openDeleteModal = (row) => setDeleteTarget(row);
   const closeDeleteModal = () => setDeleteTarget(null);
@@ -203,7 +124,7 @@ const DataTable = ({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterCategory]);
+  }, [searchTerm, filterCategory, fieldFilters]);
 
   // Toggle expanded state for a cell
   const toggleExpanded = (rowId, accessor) => {
@@ -249,14 +170,49 @@ const DataTable = ({
             />
           </div>
         )}
+
+        {filters.map((f) => (
+          <div className="table-search" key={f.key}>
+            <CustomDropdown
+              label={f.label}
+              value={fieldFilters[f.key] || ""}
+              onChange={(_, val) =>
+                setFieldFilters((prev) => ({ ...prev, [f.key]: val }))
+              }
+              options={["All", ...f.options]}
+              name={f.key}
+            />
+          </div>
+        ))}
       </div>
 
       <div className="table-scroll-container">
         <table className="data-table">
           <thead>
             <tr>
-              {columns.map(({ label, accessor }) => (
-                <th key={accessor}>{label}</th>
+              {columns.map(({ label, accessor, sortable }) => (
+                <th
+                  key={accessor}
+                  className={sortable === false ? "" : "sortable-col"}
+                  onClick={sortable === false ? undefined : () => toggleSort(accessor)}
+                >
+                  <span className="th-content">
+                    {label}
+                    {sortable !== false && (
+                      <span className="sort-icon">
+                        {sort.accessor === accessor ? (
+                          sort.direction === "asc" ? (
+                            <FaSortUp />
+                          ) : (
+                            <FaSortDown />
+                          )
+                        ) : (
+                          <FaSort className="sort-icon-idle" />
+                        )}
+                      </span>
+                    )}
+                  </span>
+                </th>
               ))}
               <th>Actions</th>
             </tr>
@@ -304,7 +260,7 @@ const DataTable = ({
                     </td>
                   </tr>
                 ))
-            ) : filteredData.length === 0 ? (
+            ) : sortedData.length === 0 ? (
               <tr className="no-data-row">
                 <td colSpan={columns.length + 1} className="no-data">
                   No data at the moment
@@ -314,25 +270,25 @@ const DataTable = ({
               paginatedData.map((row) => (
                 <tr key={row.id} className="table-row data-row">
                   {/* Desktop cells */}
-                  {columns.map(({ accessor, label }) => (
+                  {columns.map(({ accessor, label, render }) => (
                     <td
                       key={accessor}
                       data-label={label}
                       className="cell-truncate desktop-cell"
-                      title={row[accessor] || ""}
+                      title={render ? "" : row[accessor] || ""}
                       onClick={() => onRowClick && onRowClick(row)}
                     >
-                      {row[accessor]}
+                      {render ? render(row) : row[accessor]}
                     </td>
                   ))}
                   <td
                     className="desktop-cell"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="action-buttons">
+                    <div className="vt-row-actions">
                       {(!editRoles || editRoles.includes(userRole)) && (
                         <button
-                          className="btn btn-edit"
+                          className="vt-row-action-btn vt-row-action-edit"
                           onClick={() => onEdit(row)}
                           title="Edit"
                           type="button"
@@ -343,7 +299,7 @@ const DataTable = ({
 
                       {(!deleteRoles || deleteRoles.includes(userRole)) && (
                         <button
-                          className="btn btn-delete"
+                          className="vt-row-action-btn vt-row-action-delete"
                           onClick={() => {
                             if (warnDelete) warnDelete();
                             openDeleteModal(row);
@@ -356,11 +312,12 @@ const DataTable = ({
                       )}
 
                       {extraActions.map(
-                        ({ icon, title, onClick, roles }, idx) =>
-                          (!roles || roles.includes(userRole)) && (
+                        ({ icon, title, onClick, roles, isVisible }, idx) =>
+                          (!roles || roles.includes(userRole)) &&
+                          (!isVisible || isVisible(row)) && (
                             <button
                               key={idx}
-                              className="btn btn-extra"
+                              className="vt-row-action-btn vt-row-action-extra"
                               onClick={() => onClick(row)}
                               title={title}
                               type="button"
@@ -379,7 +336,16 @@ const DataTable = ({
                       onClick={() => onRowClick && onRowClick(row)}
                     >
                       <div className="card-body">
-                        {columns.map(({ accessor, label }) => {
+                        {columns.map(({ accessor, label, render }) => {
+                          if (render) {
+                            return (
+                              <div key={accessor} className="card-row">
+                                {label && <span className="row-label">{label}</span>}
+                                <div className="row-value-wrapper">{render(row)}</div>
+                              </div>
+                            );
+                          }
+
                           const cellKey = `${row.id}-${accessor}`;
                           const isExpanded = expandedCells[cellKey];
                           const textValue = row[accessor] || "-";
@@ -450,8 +416,9 @@ const DataTable = ({
                           )}
 
                           {extraActions.map(
-                            ({ icon, title, onClick, roles }, idx) =>
-                              (!roles || roles.includes(userRole)) && (
+                            ({ icon, title, onClick, roles, isVisible }, idx) =>
+                              (!roles || roles.includes(userRole)) &&
+                              (!isVisible || isVisible(row)) && (
                                 <button
                                   key={idx}
                                   className="btn-mobile btn-extra-mobile"
@@ -541,11 +508,7 @@ const DataTable = ({
       )}
 
       {/* Delete Modal */}
-      <DataTableModal
-        isOpen={!!deleteTarget}
-        onClose={closeDeleteModal}
-        title="Confirm Delete"
-      >
+      <Modal isOpen={!!deleteTarget} onClose={closeDeleteModal} title="Confirm Delete">
         {deleteTarget && (
           <div className="datatable-delete-content">
             <p className="delete-resource-text">
@@ -553,22 +516,16 @@ const DataTable = ({
               <strong>{deleteTarget.name}</strong>?
             </p>
             <div className="datatable-modal-buttons">
-              <button
-                className="datatable-btn datatable-btn-cancel"
-                onClick={closeDeleteModal}
-              >
+              <Button variant="secondary" onClick={closeDeleteModal}>
                 Cancel
-              </button>
-              <button
-                className="datatable-btn datatable-btn-delete"
-                onClick={confirmDelete}
-              >
+              </Button>
+              <Button variant="danger" onClick={confirmDelete}>
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
         )}
-      </DataTableModal>
+      </Modal>
     </div>
   );
 };
