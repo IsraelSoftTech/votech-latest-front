@@ -82,13 +82,11 @@ export default function MasterSheet({ data = [], term = "annual" }) {
       : "Annual";
 
   const allSubjects = useMemo(
-    () => [
-      ...subjects.general,
-      ...subjects.professional,
-      ...subjects.practical,
-    ],
+    () => [...subjects.general, ...subjects.professional, ...subjects.practical],
     [subjects]
   );
+
+ 
 
   const handleDownloadPDF = async () => {
     try {
@@ -959,119 +957,193 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
       administration,
     } = prepared;
 
-    const typedSubjects = [
-      ...(subjects.general || []).map((s) => ({ ...s, _type: "general" })),
-      ...(subjects.professional || []).map((s) => ({
-        ...s,
-        _type: "professional",
-      })),
-      ...(subjects.practical || []).map((s) => ({ ...s, _type: "practical" })),
-    ];
+    // Max subject columns per PDF page (keep subject subcols together)
+    const MAX_SUBJECT_COLS_PER_PAGE = 15;
+    const SUBCOLS_PER_SUBJECT = subjectSubcolumns.length;
 
-    const flatCols = [];
-    (typedSubjects || []).forEach((s) => {
-      (subjectSubcolumns || []).forEach((sub) => {
-        flatCols.push({
-          code: s.code,
-          title: s.title,
-          type: s._type,
+    // Build flat list of all subject columns with type info
+    const allSubjectCols = [];
+
+    // General subjects
+    (subjects.general || []).forEach((subject) => {
+      subjectSubcolumns.forEach((sub) => {
+        allSubjectCols.push({
+          code: subject.code,
+          title: subject.title,
+          type: "general",
+          typeLabel: "General Subjects",
           subKey: sub.key,
           subLabel: sub.label,
         });
       });
     });
 
-    const MAX_SUBCOLS_FIRST = 20;
-    const MAX_SUBCOLS_MIDDLE = 34;
-    const MAX_SUBCOLS_LAST = Math.max(16, 30 - (totalsColumns?.length || 0));
+    // Professional subjects
+    (subjects.professional || []).forEach((subject) => {
+      subjectSubcolumns.forEach((sub) => {
+        allSubjectCols.push({
+          code: subject.code,
+          title: subject.title,
+          type: "professional",
+          typeLabel: "Professional Subjects",
+          subKey: sub.key,
+          subLabel: sub.label,
+        });
+      });
+    });
 
-    const chunks = [];
-    if (!flatCols.length) {
-      chunks.push([]);
-    } else {
-      let start = 0;
-      const firstTake = Math.min(MAX_SUBCOLS_FIRST, flatCols.length);
-      chunks.push(flatCols.slice(start, start + firstTake));
-      start += firstTake;
+    // Practical subjects
+    (subjects.practical || []).forEach((subject) => {
+      subjectSubcolumns.forEach((sub) => {
+        allSubjectCols.push({
+          code: subject.code,
+          title: subject.title,
+          type: "practical",
+          typeLabel: "Practical Subjects",
+          subKey: sub.key,
+          subLabel: sub.label,
+        });
+      });
+    });
 
-      while (start < flatCols.length) {
-        const remaining = flatCols.length - start;
-        const isLast = remaining <= MAX_SUBCOLS_LAST;
-        const take = isLast
-          ? remaining
-          : Math.min(MAX_SUBCOLS_MIDDLE, remaining);
-        chunks.push(flatCols.slice(start, start + take));
-        start += take;
+    console.log(`📊 Total subject columns: ${allSubjectCols.length}`);
+
+    // ✅ Chunk into pages of max 15 columns each
+    // Keep subject subcols together (don't split a subject across pages)
+    const pages = [];
+    let currentPage = [];
+    let currentColCount = 0;
+
+    let i = 0;
+    while (i < allSubjectCols.length) {
+      const currentSubjectCode = allSubjectCols[i].code;
+      
+      // Get all subcols for this subject
+      const subjectCols = [];
+      while (i < allSubjectCols.length && allSubjectCols[i].code === currentSubjectCode) {
+        subjectCols.push(allSubjectCols[i]);
+        i++;
+      }
+
+      // Check if adding this subject exceeds limit
+      if (currentColCount + subjectCols.length > MAX_SUBJECT_COLS_PER_PAGE && currentPage.length > 0) {
+        // Save current page and start new one
+        pages.push([...currentPage]);
+        currentPage = [...subjectCols];
+        currentColCount = subjectCols.length;
+      } else {
+        // Add to current page
+        currentPage.push(...subjectCols);
+        currentColCount += subjectCols.length;
       }
     }
 
-    const lastIdx = Math.max(0, chunks.length - 1);
-    const slices = chunks.map((cols, idx) => ({
-      cols,
-      includeLeft: idx === 0,
-      includeTotals: idx === lastIdx && (totalsColumns?.length || 0) > 0,
-    }));
+    // Don't forget the last page
+    if (currentPage.length > 0) {
+      pages.push(currentPage);
+    }
 
+    // Handle empty case
+    if (pages.length === 0) {
+      pages.push([]);
+    }
+
+    const totalPages = pages.length;
+    console.log(`📄 PDF will have ${totalPages} page(s)`);
+    pages.forEach((page, idx) => {
+      const types = [...new Set(page.map(c => c.type))];
+      console.log(`  Page ${idx + 1}: ${page.length} columns (${types.join(', ')})`);
+    });
+
+    // ✅ Build slices for each page
+    const slices = pages.map((cols, pageIdx) => {
+      // Get unique types on this page
+      const typesOnPage = [...new Set(cols.map(c => c.typeLabel))];
+      const label = typesOnPage.join(" + ");
+
+      return {
+        cols,
+        label,
+        includeLeft: true, // ✅ Always include S/N, ID, Name
+        includeTotals: pageIdx === totalPages - 1 && (totalsColumns?.length || 0) > 0,
+        pageNum: pageIdx + 1,
+        totalPages,
+      };
+    });
+
+    // ✅ Build headers for each slice
     const headersBySlice = slices.map((slice) =>
       buildHeaderRowsForSlice(
         slice.cols,
         slice.includeLeft,
         slice.includeTotals,
-        totalsColumns
+        totalsColumns,
+        slice.label
       )
     );
 
+    // ✅ Build body rows for each slice
     const bodyRowsBySlice = slices.map(() => []);
     const totalRows = students.length;
     const ROW_BATCH = 200;
-    let idx = 0;
+    let rowIdx = 0;
 
     const processBatch = () => {
-      const end = Math.min(idx + ROW_BATCH, totalRows);
+      const end = Math.min(rowIdx + ROW_BATCH, totalRows);
 
-      for (let i = idx; i < end; i++) {
+      for (let i = rowIdx; i < end; i++) {
         const st = students[i];
 
         slices.forEach((slice, sIdx) => {
           const row = [];
 
+          // ✅ Student info (always included)
           if (slice.includeLeft) {
             row.push({
               text: String(i + 1),
               alignment: "center",
-              noWrap: true,
+              noWrap: false,
               color: "#000",
+              fillColor: "#f5f5f5",
+              bold: true,
             });
             row.push({
-              text: String(st.studentId),
+              text: String(st.studentId || ""),
               alignment: "center",
-              noWrap: true,
+              noWrap: false,
               color: "#000",
+              fillColor: "#f5f5f5",
             });
             row.push({
-              text: st.name,
+              text: String(st.name || ""),
               alignment: "left",
-              noWrap: true,
+              noWrap: false,
               color: "#000",
+              fillColor: "#f5f5f5",
             });
           }
 
+          // ✅ Subject columns for this page
           slice.cols.forEach((col) => {
             const subjScores = st.subjects?.[col.code] || {};
             const raw = getSubjectRaw(subjScores, col.subKey);
             const color = valueColor(col.subKey, raw);
+            
             const cell = {
               text: fmt(raw),
               alignment: "center",
-              noWrap: true,
+              noWrap: false,
               color,
             };
+            
             if (String(col.subKey).toLowerCase() === "coef") {
               cell.fillColor = COEF_BG;
             }
+            
             row.push(cell);
           });
 
+          // ✅ Totals (only on last page)
           if (slice.includeTotals) {
             (totalsColumns || []).forEach((c) => {
               const raw = getTotalsRaw(st, c.key, selectedTerm);
@@ -1079,8 +1151,9 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
               row.push({
                 text: fmt(raw),
                 alignment: "center",
-                noWrap: true,
+                noWrap: false,
                 color,
+                bold: true,
               });
             });
           }
@@ -1090,250 +1163,331 @@ function buildDocDefinitionSequentialLandscapeNoRepeat(
       }
 
       onProgress?.(end, totalRows);
-      idx = end;
+      rowIdx = end;
 
-      if (idx < totalRows) {
+      if (rowIdx < totalRows) {
         setTimeout(processBatch, 0);
       } else {
-        const termLabel =
-          selectedTerm === "term1"
-            ? "First Term"
-            : selectedTerm === "term2"
-            ? "Second Term"
-            : selectedTerm === "term3"
-            ? "Third Term"
-            : "Annual";
-
-        const content = [];
-
-        content.push({
-          text: `Master Sheet — ${termLabel}`,
-          alignment: "center",
-          bold: true,
-          color: BRAND_BLUE,
-          fontSize: 14,
-          margin: [0, 0, 0, 4],
-        });
-
-        content.push({
-          columns: [
-            {
-              text: `School: ${prepared.metadata.schoolName}`,
-              bold: true,
-              fontSize: 12,
-            },
-            {
-              text: `Department: ${prepared.metadata.departmentName}`,
-              bold: true,
-              fontSize: 12,
-              color: BRAND_BLUE,
-              alignment: "center",
-            },
-            {
-              text: `Class: ${prepared.metadata.className}`,
-              bold: true,
-              fontSize: 12,
-              color: BRAND_BLUE,
-              alignment: "center",
-            },
-            {
-              text: `Academic Year: ${prepared.metadata.academicYear}`,
-              bold: true,
-              fontSize: 12,
-              alignment: "right",
-            },
-          ],
-          margin: [0, 0, 0, 6],
-        });
-
-        const layoutForSlice = (slice) => {
-          const leftCount = slice.includeLeft ? 3 : 0;
-          const groupBreaks = new Set();
-          if (slice.includeTotals)
-            groupBreaks.add(leftCount + slice.cols.length);
-          let span = 0;
-          for (let i = 0; i < slice.cols.length; i++) {
-            span++;
-            const next = slice.cols[i + 1];
-            if (!next || next.code !== slice.cols[i].code) {
-              groupBreaks.add(leftCount + span);
-            }
-          }
-          return {
-            fillColor: (rowIndex) => {
-              if (rowIndex === 0) return HEADER_BG1;
-              if (rowIndex === 1) return HEADER_BG1;
-              if (rowIndex === 2) return HEADER_BG2;
-              return (rowIndex - 3) % 2 === 0 ? ZEBRA_BG : null;
-            },
-            hLineWidth: () => 0.5,
-            vLineWidth: (i) => (groupBreaks.has(i) ? 2 : 0.5),
-            hLineColor: () => "#000",
-            vLineColor: (i) => (groupBreaks.has(i) ? BRAND_GOLD : "#000"),
-            paddingTop: () => 1,
-            paddingBottom: () => 1,
-            paddingLeft: () => 1,
-            paddingRight: () => 1,
-          };
-        };
-
-        const computeWidths = (slice) => {
-          const widths = [];
-          if (slice.includeLeft) widths.push("auto", "auto", "auto");
-          for (let k = 0; k < slice.cols.length; k++) widths.push("*");
-          if (slice.includeTotals) {
-            for (let t = 0; t < (totalsColumns?.length || 0); t++)
-              widths.push("auto");
-          }
-          if (!widths.includes("*")) widths[widths.length - 1] = "*";
-          return widths;
-        };
-
-        slices.forEach((slice, sIdx) => {
-          const [groupRow, codeRow, subRow] = headersBySlice[sIdx];
-          const widths = computeWidths(slice);
-          content.push({
-            pageBreak: sIdx > 0 ? "before" : undefined,
-            margin: [0, 0, 0, 0],
-            table: {
-              headerRows: 3,
-              widths,
-              body: [groupRow, codeRow, subRow, ...bodyRowsBySlice[sIdx]],
-            },
-            layout: layoutForSlice(slice),
-          });
-        });
-
-        if (stats) {
-          content.push({
-            margin: [0, 4, 0, 0],
-            table: {
-              widths: ["*", "*", "*"],
-              body: [
-                [
-                  {
-                    text: `Class Average: ${fmt(stats.classAverage)}`,
-                    alignment: "left",
-                    bold: true,
-                  },
-                  {
-                    text: `Highest: ${fmt(stats.highestAverage)}`,
-                    alignment: "center",
-                  },
-                  {
-                    text: `Lowest: ${fmt(stats.lowestAverage)}`,
-                    alignment: "right",
-                  },
-                ],
-              ],
-            },
-            layout: "noBorders",
-          });
-        }
-        if (administration) {
-          content.push({
-            margin: [0, 8, 0, 0],
-            table: {
-              widths: ["*", "*"],
-              body: [
-                [
-                  {
-                    text: "Class Master",
-                    bold: true,
-                    alignment: "center",
-                    color: BRAND_BLUE,
-                  },
-                  {
-                    text: "Principal",
-                    bold: true,
-                    alignment: "center",
-                    color: BRAND_BLUE,
-                  },
-                ],
-                [
-                  {
-                    text: administration.classMaster?.toUpperCase() || "—",
-                    margin: [0, 12, 0, 0],
-                    alignment: "center",
-                    decoration: "overline",
-                  },
-                  {
-                    text: administration.principal?.toUpperCase() || "—",
-                    margin: [0, 12, 0, 0],
-                    alignment: "center",
-                    decoration: "overline",
-                  },
-                ],
-              ],
-            },
-            layout: { hLineWidth: () => 0, vLineWidth: () => 0 },
-          });
-        }
-
-        const docDefinition = {
-          compress: true,
-          pageSize: { width: 841.89, height: 595.28 },
-          pageOrientation: "landscape",
-          pageMargins: [6, 6, 6, 6],
-          defaultStyle: { fontSize: 8.5, lineHeight: 1.12 },
-          content,
-          styles: {
-            thCenter: { bold: true, alignment: "center" },
-            thSmall: { bold: true, fontSize: 8, alignment: "center" },
-          },
-        };
-
-        resolve(docDefinition);
+        // ✅ Build final document
+        buildFinalDocument();
       }
+    };
+
+    const buildFinalDocument = () => {
+      const termLabel =
+        selectedTerm === "term1"
+          ? "First Term"
+          : selectedTerm === "term2"
+          ? "Second Term"
+          : selectedTerm === "term3"
+          ? "Third Term"
+          : "Annual";
+
+      const content = [];
+
+      // ✅ Layout function
+      const layoutForSlice = (slice) => {
+        const leftCount = slice.includeLeft ? 3 : 0;
+        const groupBreaks = new Set();
+
+        // Break after student info
+        groupBreaks.add(leftCount);
+
+        // Break between subjects
+        let colPos = 0;
+        for (let i = 0; i < slice.cols.length; i++) {
+          colPos++;
+          const next = slice.cols[i + 1];
+          if (!next || next.code !== slice.cols[i].code) {
+            groupBreaks.add(leftCount + colPos);
+          }
+        }
+
+        // Break before totals
+        if (slice.includeTotals) {
+          groupBreaks.add(leftCount + slice.cols.length);
+        }
+
+        return {
+          fillColor: (rowIndex) => {
+            if (rowIndex === 0) return HEADER_BG1;
+            if (rowIndex === 1) return HEADER_BG1;
+            if (rowIndex === 2) return HEADER_BG2;
+            return (rowIndex - 3) % 2 === 0 ? ZEBRA_BG : null;
+          },
+          hLineWidth: () => 0.5,
+          vLineWidth: (i) => (groupBreaks.has(i) ? 1.5 : 0.5),
+          hLineColor: () => "#bbb",
+          vLineColor: (i) => (groupBreaks.has(i) ? BRAND_GOLD : "#ddd"),
+          paddingTop: () => 2,
+          paddingBottom: () => 2,
+          paddingLeft: () => 2,
+          paddingRight: () => 2,
+        };
+      };
+
+      // ✅ Width calculator
+      const computeWidths = (slice) => {
+        const widths = [];
+
+        // Student info columns (fixed widths)
+        if (slice.includeLeft) {
+          widths.push(30);  // S/N
+          widths.push(80);  // Student ID
+          widths.push(115);  // Name
+        }
+
+        // Subject columns (auto-fit remaining space)
+        const subjectColCount = slice.cols.length;
+        const totalsColCount = slice.includeTotals ? totalsColumns.length : 0;
+        
+        // Calculate available width
+        const pageWidth = 841.89 - 12; // A4 landscape minus margins
+        const studentInfoWidth = 175;
+        const totalsWidth = totalsColCount * 50;
+        const availableForSubjects = pageWidth - studentInfoWidth - totalsWidth;
+        
+        const colWidth = Math.max(30, Math.min(50, Math.floor(availableForSubjects / subjectColCount)));
+        
+        for (let k = 0; k < subjectColCount; k++) {
+          widths.push(colWidth);
+        }
+
+        // Totals columns
+        if (slice.includeTotals) {
+          for (let t = 0; t < totalsColCount; t++) {
+            widths.push(50);
+          }
+        }
+
+        return widths;
+      };
+
+      // ✅ Generate each page
+      slices.forEach((slice, sIdx) => {
+        const [groupRow, codeRow, subRow] = headersBySlice[sIdx];
+        const widths = computeWidths(slice);
+        const isFirstPage = sIdx === 0;
+        
+
+        // Page header
+        if (isFirstPage) {
+          // Full header on first page
+          content.push({
+            text: `Master Sheet — ${termLabel}`,
+            alignment: "center",
+            bold: true,
+            color: BRAND_BLUE,
+            fontSize: 14,
+            margin: [0, 0, 0, 4],
+          });
+
+          content.push({
+            columns: [
+              {
+                text: `School: ${metadata.schoolName}`,
+                bold: true,
+                fontSize: 10,
+              },
+              {
+                text: `Department: ${metadata.departmentName}`,
+                bold: true,
+                fontSize: 10,
+                color: BRAND_BLUE,
+                alignment: "center",
+              },
+              {
+                text: `Class: ${metadata.className}`,
+                bold: true,
+                fontSize: 10,
+                color: BRAND_BLUE,
+                alignment: "center",
+              },
+              {
+                text: `Academic Year: ${metadata.academicYear}`,
+                bold: true,
+                fontSize: 10,
+                alignment: "right",
+              },
+            ],
+            margin: [0, 0, 0, 6],
+          });
+        } else {
+          // Continuation header on other pages
+          content.push({
+            pageBreak: "before",
+            columns: [
+              {
+                text: `Master Sheet — ${termLabel}`,
+                bold: true,
+                fontSize: 12,
+                color: BRAND_BLUE,
+              },
+              {
+                text: slice.label,
+                bold: true,
+                fontSize: 10,
+                alignment: "center",
+              },
+              {
+                text: `Page ${slice.pageNum} of ${slice.totalPages}`,
+                fontSize: 10,
+                alignment: "right",
+              },
+            ],
+            margin: [0, 0, 0, 6],
+          });
+        }
+
+        // ✅ Add table
+        content.push({
+          margin: [0, 0, 0, 0],
+          table: {
+            headerRows: 3,
+            widths,
+            body: [groupRow, codeRow, subRow, ...bodyRowsBySlice[sIdx]],
+          },
+          layout: layoutForSlice(slice),
+        });
+      });
+
+      // ✅ Statistics (after last table, same page if fits)
+      if (stats) {
+        content.push({
+          margin: [0, 10, 0, 0],
+          table: {
+            widths: ["*", "*", "*"],
+            body: [
+              [
+                {
+                  text: `Class Average: ${fmt(stats.classAverage)}`,
+                  alignment: "center",
+                  bold: true,
+                  fontSize: 11,
+                },
+                {
+                  text: `Highest Average: ${fmt(stats.highestAverage)}`,
+                  alignment: "center",
+                  fontSize: 11,
+                },
+                {
+                  text: `Lowest Average: ${fmt(stats.lowestAverage)}`,
+                  alignment: "center",
+                  fontSize: 11,
+                },
+              ],
+            ],
+          },
+          layout: "noBorders",
+        });
+      }
+
+      // ✅ Signatures
+      if (administration) {
+        content.push({
+          margin: [0, 20, 0, 0],
+          table: {
+            widths: ["*", "*"],
+            body: [
+              [
+                {
+                  text: "Class Master",
+                  bold: true,
+                  alignment: "center",
+                  color: BRAND_BLUE,
+                  fontSize: 11,
+                },
+                {
+                  text: "Principal",
+                  bold: true,
+                  alignment: "center",
+                  color: BRAND_BLUE,
+                  fontSize: 11,
+                },
+              ],
+              [
+                {
+                  text: administration.classMaster?.toUpperCase() || "—",
+                  margin: [0, 25, 0, 0],
+                  alignment: "center",
+                  decoration: "overline",
+                  fontSize: 10,
+                },
+                {
+                  text: administration.principal?.toUpperCase() || "—",
+                  margin: [0, 25, 0, 0],
+                  alignment: "center",
+                  decoration: "overline",
+                  fontSize: 10,
+                },
+              ],
+            ],
+          },
+          layout: { hLineWidth: () => 0, vLineWidth: () => 0 },
+        });
+      }
+
+      // ✅ Final document definition
+      const docDefinition = {
+        compress: true,
+        pageSize: { width: 841.89, height: 595.28 }, // A4 Landscape
+        pageOrientation: "landscape",
+        pageMargins: [6, 6, 6, 6],
+        defaultStyle: { fontSize: 8, lineHeight: 1.1 },
+        content,
+        styles: {
+          thCenter: { bold: true, alignment: "center", fontSize: 8 },
+          thSmall: { bold: true, fontSize: 7, alignment: "center" },
+        },
+      };
+
+      resolve(docDefinition);
     };
 
     setTimeout(processBatch, 0);
   });
 }
-
 function buildHeaderRowsForSlice(
   chunkCols,
   includeLeft,
   includeTotals,
-  totalsColumns
+  totalsColumns,
+  groupLabel = "Subjects"
 ) {
-  const row0 = [];
-  const row1 = [];
-  const row2 = [];
+  const row0 = []; // Group headers
+  const row1 = []; // Subject codes
+  const row2 = []; // Subcolumn labels (S1, S2, Avg, Coef)
 
   const leftCount = includeLeft ? 3 : 0;
-  const genSpan = chunkCols.filter((c) => c.type === "general").length;
-  const proSpan = chunkCols.filter((c) => c.type === "professional").length;
-  const praSpan = chunkCols.filter((c) => c.type === "practical").length;
+  const subjectSpan = chunkCols.length;
   const totSpan = includeTotals ? totalsColumns?.length || 0 : 0;
 
-  const pushGroup = (text, span) => {
-    row0.push({
+  // ✅ Helper to add colspan cells
+  const pushGroup = (text, span, targetRow) => {
+    if (span <= 0) return;
+    targetRow.push({
       text,
       style: "thCenter",
       fillColor: HEADER_BG1,
       colSpan: span,
     });
-    for (let i = 1; i < span; i++)
-      row0.push({ text: "", fillColor: HEADER_BG1 });
+    for (let i = 1; i < span; i++) {
+      targetRow.push({ text: "", fillColor: HEADER_BG1 });
+    }
   };
 
-  if (leftCount > 0) pushGroup("Student Info", leftCount);
-  if (genSpan > 0) pushGroup("General Subjects", genSpan);
-  if (proSpan > 0) pushGroup("Professional Courses", proSpan);
-  if (praSpan > 0) pushGroup("Practical Subjects", praSpan);
-  if (totSpan > 0) pushGroup("Totals", totSpan);
+  if (leftCount > 0) pushGroup("Student Info", leftCount, row0);
+  if (subjectSpan > 0) pushGroup(groupLabel, subjectSpan, row0);
+  if (totSpan > 0) pushGroup("Totals", totSpan, row0);
 
+  // ✅ ROW 1: Student info labels + Subject codes with colspan
   if (includeLeft) {
     row1.push({ text: "S/N", style: "thCenter", fillColor: HEADER_BG1 });
-    row1.push({ text: "Student ID", style: "thCenter", fillColor: HEADER_BG1 });
-    row1.push({
-      text: "Student Name",
-      style: "thCenter",
-      fillColor: HEADER_BG1,
-    });
+    row1.push({ text: "Matricule", style: "thCenter", fillColor: HEADER_BG1 });
+    row1.push({ text: "Student Name", style: "thCenter", fillColor: HEADER_BG1 });
   }
 
+  // Add subject codes (each subject spans its subcols)
   let i = 0;
   while (i < chunkCols.length) {
     const subj = chunkCols[i];
@@ -1349,23 +1503,25 @@ function buildHeaderRowsForSlice(
       fillColor: HEADER_BG1,
       colSpan: span,
     });
-    for (let k = 1; k < span; k++)
+    for (let k = 1; k < span; k++) {
       row1.push({ text: "", fillColor: HEADER_BG1 });
+    }
   }
 
+  // Totals headers
   if (includeTotals && totalsColumns?.length) {
     totalsColumns.forEach((c) => {
       row1.push({ text: c.label, style: "thCenter", fillColor: HEADER_BG1 });
     });
   }
 
+  // ✅ ROW 2: Empty for student info + Subcolumn labels
   if (includeLeft) {
-    row2.push(
-      { text: "", fillColor: HEADER_BG2 },
-      { text: "", fillColor: HEADER_BG2 },
-      { text: "", fillColor: HEADER_BG2 }
-    );
+    row2.push({ text: "", fillColor: HEADER_BG2,  alignment: "center", });
+    row2.push({ text: "", fillColor: HEADER_BG2,  alignment: "center", });
+    row2.push({ text: "", fillColor: HEADER_BG2,  alignment: "center", });
   }
+
   chunkCols.forEach((col) => {
     row2.push({
       text: col.subLabel,
@@ -1374,10 +1530,11 @@ function buildHeaderRowsForSlice(
       fillColor: HEADER_BG2,
     });
   });
+
   if (includeTotals && totalsColumns?.length) {
-    for (let t = 0; t < totalsColumns.length; t++) {
+    totalsColumns.forEach(() => {
       row2.push({ text: "", fillColor: HEADER_BG2 });
-    }
+    });
   }
 
   return [row0, row1, row2];
