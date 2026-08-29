@@ -3,6 +3,7 @@ import { FaPlus, FaEdit, FaTrash, FaEye, FaCheck, FaTimes, FaDownload } from 're
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
+import './LessonPlan.css';
 
 
 export default function LessonPlan({ noLayoutWrapper = false }) {
@@ -31,6 +32,11 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [classes, setClasses] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
 
   useEffect(() => {
     fetchUserRole();
@@ -40,6 +46,29 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
     if (userRole) {
       fetchLessonPlans();
     }
+  }, [userRole, filterClass, filterDepartment]);
+
+  useEffect(() => {
+    if (!userRole || userRole !== 'Admin3') return undefined;
+    const timer = setTimeout(() => fetchLessonPlans(), 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (userRole !== 'Admin3') return;
+    const loadFilterOptions = async () => {
+      try {
+        const [classList, specialtyList] = await Promise.all([
+          api.getClasses(),
+          api.getSpecialties(),
+        ]);
+        setClasses(Array.isArray(classList) ? classList : []);
+        setSpecialties(Array.isArray(specialtyList) ? specialtyList : []);
+      } catch (err) {
+        console.error('Failed to load lesson plan filters:', err);
+      }
+    };
+    loadFilterOptions();
   }, [userRole]);
 
   const fetchUserRole = async () => {
@@ -55,12 +84,20 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
     try {
       setLoading(true);
       let plans;
-      if (userRole === 'Admin1' || userRole === 'Admin4') {
-        plans = await api.getAllLessonPlans();
+      const filters = {
+        search: searchTerm.trim() || undefined,
+        class: filterClass || undefined,
+        department: filterDepartment || undefined,
+      };
+
+      if (userRole === 'Admin3') {
+        plans = await api.getAllLessonPlans(filters);
+      } else if (userRole === 'Admin1' || userRole === 'Admin4') {
+        plans = await api.getAllLessonPlans(filters);
       } else {
         plans = await api.getMyLessonPlans();
       }
-      setLessonPlans(plans);
+      setLessonPlans(Array.isArray(plans) ? plans : []);
     } catch (err) {
       setError('Failed to fetch lesson plans');
     } finally {
@@ -187,6 +224,61 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
     setTimeout(() => setSuccess(''), 3000);
   };
 
+  const resolveFileUrl = (fileUrl) => {
+    if (!fileUrl) return null;
+    if (fileUrl.startsWith('http')) return fileUrl;
+    const isDevelopment = process.env.NODE_ENV === 'development' ||
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1';
+    const apiUrl = process.env.REACT_APP_API_URL || (isDevelopment
+      ? 'http://localhost:5000'
+      : 'https://api.votechs7academygroup.com');
+    return `${apiUrl}${fileUrl}`;
+  };
+
+  const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownload = async (plan) => {
+    try {
+      setError('');
+      const meta = await api.downloadLessonPlan(plan.id);
+      const url = resolveFileUrl(meta.file_url || plan.file_url);
+      if (!url) {
+        setError('No file available for download');
+        return;
+      }
+      const filename = meta.file_name || `${(plan.title || 'lesson_plan').replace(/[^a-z0-9_\-\s]/gi, '_')}.pdf`;
+      const resp = await fetch(url, { mode: 'cors' }).catch(() => null);
+      if (resp && resp.ok) {
+        const blob = await resp.blob();
+        downloadBlob(blob, filename);
+        setSuccess('Lesson plan downloaded');
+      } else {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setSuccess('Download started');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to download lesson plan');
+    }
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
   const handleViewFile = fileUrl => {
     // If it's already a full URL (FTP), use it directly
     if (fileUrl && fileUrl.startsWith('http')) {
@@ -219,8 +311,10 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
 
   const isAdmin4 = userRole === 'Admin4';
   const isAdmin1 = userRole === 'Admin1';
-  const canUpload = !(isAdmin4 || isAdmin1); // Admin1 and Admin4 cannot upload
+  const isAdmin3 = userRole === 'Admin3';
+  const canUpload = !(isAdmin4 || isAdmin1 || isAdmin3);
   const canReview = isAdmin4;
+  const isDownloadOnly = isAdmin3;
 
   const content = (
     <div className="lesson-plan-container">
@@ -229,6 +323,7 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
         {error && <div className="error-message">{error}</div>}
 
         {/* Dashboard Cards */}
+        {!isDownloadOnly && (
         <div className="lesson-plan-cards">
           <div className="lesson-plan-card">
             <div className="count">{lessonPlans.length}</div>
@@ -251,11 +346,25 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
             </>
           )}
         </div>
+        )}
+
+        {isDownloadOnly && (
+          <div className="lesson-plan-cards">
+            <div className="lesson-plan-card">
+              <div className="count">{lessonPlans.length}</div>
+              <div className="desc">Approved Lesson Plans</div>
+            </div>
+          </div>
+        )}
 
         {/* Header with Upload Button */}
         <div className="lesson-plan-header">
           <h2>
-            {isAdmin1 || isAdmin4 ? 'All Lesson Plans' : 'My Lesson Plans'}
+            {isDownloadOnly
+              ? 'Approved Lesson Plans'
+              : isAdmin1 || isAdmin4
+                ? 'All Lesson Plans'
+                : 'My Lesson Plans'}
           </h2>
           {canUpload && (
             <button 
@@ -267,45 +376,96 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
           )}
         </div>
 
+        {isDownloadOnly && (
+          <div className="lesson-plan-filters">
+            <div className="filter-group">
+              <label>Class:</label>
+              <select
+                value={filterClass}
+                onChange={(e) => setFilterClass(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">All Classes</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>{cls.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Department:</label>
+              <select
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">All Departments</option>
+                {specialties.map((spec) => (
+                  <option key={spec.id} value={spec.id}>{spec.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="search-group">
+              <input
+                type="text"
+                placeholder="Search by title, teacher, or filename..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Lesson Plans Table */}
         <div className="lesson-plan-table-wrapper">
           {loading ? (
             <div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>
           ) : lessonPlans.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
-              {isAdmin1 || isAdmin4 ? 'No lesson plans submitted yet.' : 'No lesson plans uploaded yet.'}
+              {isDownloadOnly
+                ? 'No approved lesson plans match your filters.'
+                : isAdmin1 || isAdmin4
+                  ? 'No lesson plans submitted yet.'
+                  : 'No lesson plans uploaded yet.'}
             </div>
           ) : (
             <table className="lesson-plan-table">
               <thead>
                 <tr>
                   <th>Title</th>
+                  {isDownloadOnly && <th>Class</th>}
+                  {isDownloadOnly && <th>Department</th>}
                   <th>Period Type</th>
-                  <th>Status</th>
+                  {!isDownloadOnly && <th>Status</th>}
                   <th>Submitted</th>
-                  {(isAdmin1 || isAdmin4) && <th>Submitted By</th>}
+                  {(isAdmin1 || isAdmin4 || isDownloadOnly) && <th>Submitted By</th>}
                   {(isAdmin1 || isAdmin4) && <th>Role</th>}
                   {(isAdmin1 || isAdmin4) && <th>Review Status</th>}
-                  <th>View</th>
-                  {!isAdmin1 && <th>Actions</th>}
+                  {!isDownloadOnly && <th>View</th>}
+                  {!isAdmin1 && !isDownloadOnly && <th>Actions</th>}
+                  {isDownloadOnly && <th>Download</th>}
                 </tr>
               </thead>
               <tbody>
                 {lessonPlans.map((plan) => (
                   <tr key={plan.id}>
                     <td className="title-cell"><span className="title-text">{plan.title}</span></td>
+                    {isDownloadOnly && <td>{plan.class_label || plan.class_name || '—'}</td>}
+                    {isDownloadOnly && <td>{plan.department_name || '—'}</td>}
                     <td>
                       <span className={`period-type-badge period-${plan.period_type}`}>
                         {plan.period_type}
                       </span>
                     </td>
+                    {!isDownloadOnly && (
                     <td>
                       <span className={`status-badge status-${plan.status}`}>
                         {plan.status}
                       </span>
                     </td>
+                    )}
                     <td>{formatDate(plan.submitted_at)}</td>
-                    {(isAdmin1 || isAdmin4) && (
+                    {(isAdmin1 || isAdmin4 || isDownloadOnly) && (
                       <td>{plan.teacher_name || plan.teacher_username || 'Unknown User'}</td>
                     )}
                     {(isAdmin1 || isAdmin4) && (
@@ -318,6 +478,7 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
                         </span>
                       </td>
                     )}
+                    {!isDownloadOnly && (
                     <td className="actions">
                       <button 
                         className="action-btn view" 
@@ -328,7 +489,19 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
                         <FaEye />
                       </button>
                     </td>
-                    {!isAdmin1 && (
+                    )}
+                    {isDownloadOnly && (
+                      <td className="actions">
+                        <button
+                          className="action-btn view"
+                          onClick={() => handleDownload(plan)}
+                          title="Download PDF"
+                        >
+                          <FaDownload />
+                        </button>
+                      </td>
+                    )}
+                    {!isAdmin1 && !isDownloadOnly && (
                       <td className="actions">
                         <button 
                           className="action-btn view" 
@@ -385,7 +558,7 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
         </div>
 
         {/* Upload Modal */}
-        {showUploadModal && (
+        {showUploadModal && canUpload && (
           <div className="lesson-plan-modal-overlay" onClick={() => setShowUploadModal(false)}>
             <div className="lesson-plan-modal-content" onClick={e => e.stopPropagation()}>
               <button className="lesson-plan-modal-close" onClick={() => setShowUploadModal(false)}>×</button>
@@ -447,7 +620,7 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
         )}
 
         {/* Edit Modal */}
-        {showEditModal && selectedPlan && (
+        {showEditModal && selectedPlan && canUpload && (
           <div className="lesson-plan-modal-overlay" onClick={() => setShowEditModal(false)}>
             <div className="lesson-plan-modal-content" onClick={e => e.stopPropagation()}>
               <button className="lesson-plan-modal-close" onClick={() => setShowEditModal(false)}>×</button>
@@ -508,7 +681,7 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
         )}
 
         {/* Review Modal */}
-        {showReviewModal && selectedPlan && (
+        {showReviewModal && selectedPlan && canReview && (
           <div className="lesson-plan-modal-overlay" onClick={() => setShowReviewModal(false)}>
             <div className="review-modal-content" onClick={e => e.stopPropagation()}>
               <button className="lesson-plan-modal-close" onClick={() => setShowReviewModal(false)}>×</button>

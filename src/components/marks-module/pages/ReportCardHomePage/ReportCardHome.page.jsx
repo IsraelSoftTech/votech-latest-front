@@ -527,7 +527,7 @@ const ReportCardHomePage = () => {
                         academic_year_id: opt?.value || null,
                       }))
                     }
-                    isDisabled={showDownloadModal || masterSheetLoading || isYearSelectionLocked}
+                    isDisabled={loadingPage || loadingTable || isYearSelectionLocked}
                     isClearable={!isYearSelectionLocked}
                     className="report-react-select"
                     classNamePrefix="report-select"

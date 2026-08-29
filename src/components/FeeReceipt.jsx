@@ -6,13 +6,49 @@ import html2canvas from 'html2canvas';
 import logoImage from '../assets/logo.png';
 
 const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentProp = null, showPrintButton = true }, ref) => {
+  const currentPaymentFromReceipt = receipt?.paidAmount != null && receipt?.paidType
+    ? { amount: receipt.paidAmount, fee_type: receipt.paidType, paid_at: new Date().toISOString() }
+    : null;
+  const currentPayment = currentPaymentProp || currentPaymentFromReceipt;
+
+  const resolvedReceiptRef = React.useMemo(() => {
+    if (!receipt) return '';
+    const generateRef = () => {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const y = String(now.getFullYear()).slice(-2);
+      const m = pad(now.getMonth() + 1);
+      const d = pad(now.getDate());
+      const hh = pad(now.getHours());
+      const mm = pad(now.getMinutes());
+      const ss = pad(now.getSeconds());
+      const rand = Math.random().toString(36).toUpperCase().slice(2, 6);
+      const sid = (receipt.student?.student_id || 'STD').replace(/[^A-Z0-9]/gi, '').slice(-6).toUpperCase();
+      return `VTA-${y}${m}${d}${hh}${mm}${ss}-${sid}-${rand}`;
+    };
+    const getOrCreateRefForPayment = (paymentId) => {
+      try {
+        const key = 'receiptRefByPaymentId';
+        const raw = localStorage.getItem(key);
+        const map = raw ? JSON.parse(raw) : {};
+        if (map[paymentId]) return map[paymentId];
+        const newRef = generateRef();
+        map[paymentId] = newRef;
+        localStorage.setItem(key, JSON.stringify(map));
+        return newRef;
+      } catch {
+        return generateRef();
+      }
+    };
+    if (currentPayment && currentPayment.id) {
+      return getOrCreateRefForPayment(currentPayment.id);
+    }
+    return generateRef();
+  }, [receipt, currentPayment]);
+
   if (!receipt) return null;
 
   const { student, balance, transactions = [], discountApplied = false, discountRate = 0, paidAmount, paidType } = receipt;
-  // Support StudentFeeDetails format: paidAmount + paidType when currentPayment not passed
-  const currentPayment = currentPaymentProp || (paidAmount != null && paidType
-    ? { amount: paidAmount, fee_type: paidType, paid_at: new Date().toISOString() }
-    : null);
   const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
   
   // Function to convert number to words
@@ -62,12 +98,7 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
     }
   };
 
-  const resolvedReceiptRef = React.useMemo(() => {
-    if (currentPayment && currentPayment.id) {
-      return getOrCreateRefForPayment(currentPayment.id);
-    }
-    return generateRef();
-  }, [currentPayment]);
+  // resolvedReceiptRef is computed above (before early return)
 
   // Calculate amounts (respect discount)
   let paid, total, left, status;

@@ -180,7 +180,7 @@ export default function DisciplineCases() {
   };
 
   const handleDeleteCase = async (caseId) => {
-    if (!confirm('Are you sure you want to delete this case?')) return;
+    if (!window.confirm('Are you sure you want to delete this case?')) return;
 
     setLoading(true);
     try {

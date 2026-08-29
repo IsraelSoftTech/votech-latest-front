@@ -27,25 +27,33 @@ function computePeriodStartMinutes(index, startTime, periodsPerDay, periodDurati
 }
 
 const TimeTableReport = forwardRef(({ data }, ref) => {
-  if (!data) return null;
-  const {
-    classes,
-    subjects,
-    timetable,
-    dayLabels,
-    periodsPerDay,
-    periodDurationMin,
-    breakPeriodIndexes,
-    breakDurationMin,
-    startTime,
-    getClassName,
-    getSubjectName,
-    formatTeacherName,
-    reportScopeAll,
-  } = data;
-
   const containerRef = useRef(null);
   const classRefs = useRef({});
+
+  const classes = data?.classes ?? [];
+  const subjects = data?.subjects ?? [];
+  const timetable = data?.timetable ?? {};
+  const dayLabels = data?.dayLabels ?? [];
+  const periodsPerDay = data?.periodsPerDay ?? 0;
+  const periodDurationMin = data?.periodDurationMin ?? 0;
+  const breakPeriodIndexes = data?.breakPeriodIndexes ?? [];
+  const breakDurationMin = data?.breakDurationMin ?? 0;
+  const startTime = data?.startTime ?? '08:00';
+  const getClassName = data?.getClassName ?? ((c) => c?.name ?? '');
+  const getSubjectName = data?.getSubjectName ?? ((s) => s?.name ?? '');
+  const formatTeacherName = data?.formatTeacherName ?? ((t) => t ?? '');
+  const reportScopeAll = data?.reportScopeAll ?? false;
+
+  const hasGridFor = (cid) => !!(timetable && (timetable[cid] || timetable[String(cid)]));
+  const getGridFor = (cid) => {
+    const t = timetable[cid] || timetable[String(cid)];
+    return t?.grid || [];
+  };
+
+  const classList = useMemo(
+    () => (reportScopeAll ? classes : classes.filter((c) => hasGridFor(c.id))),
+    [classes, reportScopeAll, timetable]
+  );
 
   const downloadPDF = async () => {
     try {
@@ -79,15 +87,9 @@ const TimeTableReport = forwardRef(({ data }, ref) => {
     }
   };
 
-  const hasGridFor = (cid) => !!(timetable && (timetable[cid] || timetable[String(cid)]));
-  const getGridFor = (cid) => {
-    const t = timetable[cid] || timetable[String(cid)];
-    return t?.grid || [];
-  };
-
-  const classList = useMemo(() => (reportScopeAll ? classes : classes.filter(c => hasGridFor(c.id))), [classes, reportScopeAll, timetable]);
-
   React.useImperativeHandle(ref, () => ({ downloadPDF }));
+
+  if (!data) return null;
 
   return (
     <div ref={containerRef} style={{ background: '#fff', padding: 16, color: '#111827' }}>

@@ -166,15 +166,6 @@ function GenderDonut({ byGender }) {
 }
 
 function DistributionBarChart({ title, rows, nameKey, onRowClick, color }) {
-  if (!rows.length) {
-    return (
-      <div className="a3d-panel">
-        <h4 className="a3d-panel-title">{title}</h4>
-        <p className="a3d-empty">No data for this period.</p>
-      </div>
-    );
-  }
-
   const categories = rows.map((r) => r[nameKey]);
   const data = rows.map((r) => r.count);
   const height = Math.max(200, rows.length * 40 + 40);
@@ -200,6 +191,15 @@ function DistributionBarChart({ title, rows, nameKey, onRowClick, color }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [categories.join("|"), color]
   );
+
+  if (!rows.length) {
+    return (
+      <div className="a3d-panel">
+        <h4 className="a3d-panel-title">{title}</h4>
+        <p className="a3d-empty">No data for this period.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="a3d-panel a3d-chart-clickable">

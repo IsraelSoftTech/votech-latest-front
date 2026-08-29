@@ -23,6 +23,10 @@ export default function DeanLessonPlan() {
   const [userRole, setUserRole] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [classes, setClasses] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
 
   useEffect(() => {
     fetchUserRole();
@@ -32,7 +36,31 @@ export default function DeanLessonPlan() {
     if (userRole) {
       fetchLessonPlans();
     }
-  }, [userRole]);
+  }, [userRole, filterStatus, filterClass, filterDepartment]);
+
+  useEffect(() => {
+    if (!userRole) return undefined;
+    const timer = setTimeout(() => {
+      fetchLessonPlans();
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        const [classList, specialtyList] = await Promise.all([
+          api.getClasses(),
+          api.getSpecialties(),
+        ]);
+        setClasses(Array.isArray(classList) ? classList : []);
+        setSpecialties(Array.isArray(specialtyList) ? specialtyList : []);
+      } catch (err) {
+        console.error('Failed to load lesson plan filters:', err);
+      }
+    };
+    loadFilterOptions();
+  }, []);
 
   const fetchUserRole = async () => {
     try {
@@ -64,6 +92,13 @@ export default function DeanLessonPlan() {
       setLoading(true);
       let lessonPlans = [];
       let lessons = [];
+
+      const filters = {
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        search: searchTerm.trim() || undefined,
+        class: filterClass || undefined,
+        department: filterDepartment || undefined,
+      };
       
       // Fetch both lesson plans (uploaded files) and lessons (created content)
       if (userRole === 'Admin1' || userRole === 'Admin4' || userRole === 'Dean') {
@@ -71,7 +106,7 @@ export default function DeanLessonPlan() {
         
         // Fetch uploaded lesson plans (PDFs)
         try {
-          lessonPlans = await api.getAllLessonPlans();
+          lessonPlans = await api.getAllLessonPlans(filters);
           console.log('🔍 DeanLessonPlan: getAllLessonPlans() returned:', lessonPlans);
         } catch (err) {
           console.error('🔍 DeanLessonPlan: Error fetching lesson plans:', err);
@@ -79,7 +114,7 @@ export default function DeanLessonPlan() {
         
         // Fetch created lessons (content-based)
         try {
-          lessons = await api.getAllLessons();
+          lessons = await api.getAllLessons(filters);
           console.log('🔍 DeanLessonPlan: getAllLessons() returned:', lessons);
         } catch (err) {
           console.error('🔍 DeanLessonPlan: Error fetching lessons:', err);
@@ -427,13 +462,19 @@ export default function DeanLessonPlan() {
     });
   };
 
-  // Filter lesson plans based on search and status
-  const filteredPlans = lessonPlans.filter(plan => {
-    const matchesSearch = plan.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (plan.teacher_name && plan.teacher_name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = filterStatus === 'all' || plan.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  // Server-side filtering for Admin4/Dean dashboard; client-side for teachers
+  const filteredPlans = showDashboard
+    ? lessonPlans
+    : lessonPlans.filter((plan) => {
+        const matchesSearch =
+          !searchTerm ||
+          plan.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (plan.teacher_name &&
+            plan.teacher_name.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesStatus =
+          filterStatus === 'all' || plan.status === filterStatus;
+        return matchesSearch && matchesStatus;
+      });
 
   const isDean = userRole === 'Dean';
   const isAdmin1 = userRole === 'Admin1';
@@ -551,6 +592,38 @@ export default function DeanLessonPlan() {
         {showDashboard && (
           <div className="lesson-plan-filters">
             <div className="filter-group">
+              <label>Class:</label>
+              <select
+                value={filterClass}
+                onChange={(e) => setFilterClass(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">All Classes</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Department:</label>
+              <select
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">All Departments</option>
+                {specialties.map((spec) => (
+                  <option key={spec.id} value={spec.id}>
+                    {spec.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
               <label>Filter by Status:</label>
               <select 
                 value={filterStatus} 
@@ -567,7 +640,7 @@ export default function DeanLessonPlan() {
             <div className="search-group">
               <input
                 type="text"
-                placeholder="Search by title or teacher name..."
+                placeholder="Search by title, teacher, subject, or filename..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="search-input"
@@ -631,6 +704,8 @@ export default function DeanLessonPlan() {
                   <tr>
                     <th>Title</th>
                     <th>Type</th>
+                    <th>Class</th>
+                    <th>Department</th>
                     <th>Content</th>
                     <th>Period</th>
                     <th>Status</th>
@@ -655,6 +730,8 @@ export default function DeanLessonPlan() {
                           {plan.type === 'file' ? 'File' : 'Content'}
                         </span>
                       </td>
+                      <td>{plan.class_label || plan.class_name || '—'}</td>
+                      <td>{plan.department_name || '—'}</td>
                       <td>
                         <span className="content-cell">
                           {plan.type === 'file' ? (
@@ -765,6 +842,16 @@ export default function DeanLessonPlan() {
                                 <FaTrash />
                               </button>
                             </>
+                          )}
+
+                          {plan.status === 'approved' && plan.type === 'file' && plan.file_url && (
+                            <button
+                              className="action-btn view"
+                              onClick={() => handleDownloadSingle(plan)}
+                              title="Download"
+                            >
+                              <FaDownload />
+                            </button>
                           )}
                         </div>
                       </td>

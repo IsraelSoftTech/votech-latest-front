@@ -53,6 +53,14 @@ export default function MasterSheet({ data = [], term = "annual" }) {
     [prepared?.students, term]
   );
 
+  const allSubjects = useMemo(
+    () =>
+      prepared
+        ? [...prepared.subjects.general, ...prepared.subjects.professional, ...prepared.subjects.practical]
+        : [],
+    [prepared]
+  );
+
   if (!prepared) {
     return (
       <div className="ms-wrapper">
@@ -80,11 +88,6 @@ export default function MasterSheet({ data = [], term = "annual" }) {
       : term === "term3"
       ? "Third Term"
       : "Annual";
-
-  const allSubjects = useMemo(
-    () => [...subjects.general, ...subjects.professional, ...subjects.practical],
-    [subjects]
-  );
 
  
 

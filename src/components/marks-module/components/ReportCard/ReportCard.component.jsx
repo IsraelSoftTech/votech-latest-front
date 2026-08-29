@@ -669,7 +669,7 @@ export default function ReportCard({
       // Multiple measurement attempts for accuracy
       const measure = () => {
         // Force layout recalculation
-        el.offsetHeight;
+        void el.offsetHeight; // force layout recalculation
 
         const rect = el.getBoundingClientRect();
         const naturalHeight = Math.max(

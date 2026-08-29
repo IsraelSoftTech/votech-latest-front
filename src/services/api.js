@@ -1692,6 +1692,22 @@ class ApiService {
 
   // === Lesson Plans API ===
 
+  _normalizeLessonPlanList(data) {
+    if (Array.isArray(data)) return data;
+    return data?.items || data?.data || [];
+  }
+
+  _lessonPlanQueryString(filters = {}) {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && String(value).trim() !== "") {
+        params.append(key, value);
+      }
+    });
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
+  }
+
   async uploadLessonPlan(formData) {
     const authHeaders = this.getAuthHeaders();
     const headers = {};
@@ -1716,14 +1732,17 @@ class ApiService {
     return await response.json();
   }
 
-  async getAllLessonPlans() {
-    console.log("🔍 API: getAllLessonPlans() called");
+  async getAllLessonPlans(filters = {}) {
+    console.log("🔍 API: getAllLessonPlans() called", filters);
     console.log("🔍 API: API_URL:", API_URL);
     console.log("🔍 API: Auth headers:", this.getAuthHeaders());
 
-    const response = await fetch(`${API_URL}/lesson-plans/all`, {
+    const response = await fetch(
+      `${API_URL}/lesson-plans/all${this._lessonPlanQueryString(filters)}`,
+      {
       headers: this.getAuthHeaders(),
-    });
+      }
+    );
 
     console.log("🔍 API: Response status:", response.status);
     console.log("🔍 API: Response ok:", response.ok);
@@ -1735,8 +1754,20 @@ class ApiService {
     }
 
     const data = await response.json();
-    console.log("🔍 API: getAllLessonPlans() returning data:", data);
-    return data;
+    const items = this._normalizeLessonPlanList(data);
+    console.log("🔍 API: getAllLessonPlans() returning data:", items);
+    return items;
+  }
+
+  async downloadLessonPlan(id) {
+    const response = await fetch(`${API_URL}/lesson-plans/${id}/download`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to download lesson plan");
+    }
+    return await response.json();
   }
 
   async updateLessonPlan(id, formData) {
@@ -1815,12 +1846,16 @@ class ApiService {
     return await response.json();
   }
 
-  async getAllLessons() {
-    const response = await fetch(`${API_URL}/lessons/all`, {
+  async getAllLessons(filters = {}) {
+    const response = await fetch(
+      `${API_URL}/lessons/all${this._lessonPlanQueryString(filters)}`,
+      {
       headers: this.getAuthHeaders(),
-    });
+      }
+    );
     if (!response.ok) throw new Error("Failed to fetch all lessons");
-    return await response.json();
+    const data = await response.json();
+    return this._normalizeLessonPlanList(data);
   }
 
   async updateLesson(id, lessonData) {

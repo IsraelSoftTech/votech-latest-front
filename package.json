@@ -35,11 +35,17 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.28.6",
-    "eslint": "^9.33.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
     "install": "^0.13.0",
     "npm": "^11.5.2",
     "typescript": "^5.4.5"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
   "scripts": {
     "start": "react-scripts start",
