@@ -53,7 +53,7 @@ export default function MasterSheet({ data = [], term = "annual" }) {
     [prepared?.students, term]
   );
 
-  const allSubjects = useMemo(
+  const combinedSubjects = useMemo(
     () =>
       prepared
         ? [...prepared.subjects.general, ...prepared.subjects.professional, ...prepared.subjects.practical]
@@ -88,8 +88,6 @@ export default function MasterSheet({ data = [], term = "annual" }) {
       : term === "term3"
       ? "Third Term"
       : "Annual";
-
- 
 
   const handleDownloadPDF = async () => {
     try {
@@ -288,7 +286,7 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                   <th className="ms-sticky-col" />
                   <th className="ms-sticky-col" />
 
-                  {[...allSubjects].map((s, idx) =>
+                  {[...combinedSubjects].map((s, idx) =>
                     subjectSubcolumns.map((sub) => (
                       <th
                         key={`${s.code}-${sub.key}-${idx}`}
@@ -316,7 +314,7 @@ export default function MasterSheet({ data = [], term = "annual" }) {
                     <td className="ms-sticky-col">{st.studentId}</td>
                     <td className="ms-sticky-col ms-name">{st.name}</td>
 
-                    {[...allSubjects].map((s) => {
+                    {[...combinedSubjects].map((s) => {
                       const subjScores = st.subjects[s.code] || null;
                       return subjectSubcolumns.map((sub, si, arr) => {
                         const val = getSubjectValue(subjScores, sub.key);
@@ -788,7 +786,7 @@ async function buildA4CompactPDF(prepared, selectedTerm, stats, onProgress) {
   // SUBJECT BREAKDOWN PAGES
   // ============================================================
 
-  const allSubjects = [
+  const breakdownSubjects = [
     ...subjects.general.map((s) => ({ ...s, _type: "General" })),
     ...subjects.professional.map((s) => ({ ...s, _type: "Professional" })),
     ...subjects.practical.map((s) => ({ ...s, _type: "Practical" })),
@@ -797,8 +795,8 @@ async function buildA4CompactPDF(prepared, selectedTerm, stats, onProgress) {
   // Group subjects for pages (2-3 subjects per page depending on columns)
   const subjectsPerPage = selectedTerm === "annual" ? 2 : 3;
 
-  for (let i = 0; i < allSubjects.length; i += subjectsPerPage) {
-    const pageSubjects = allSubjects.slice(i, i + subjectsPerPage);
+  for (let i = 0; i < breakdownSubjects.length; i += subjectsPerPage) {
+    const pageSubjects = breakdownSubjects.slice(i, i + subjectsPerPage);
 
     content.push({ text: "", pageBreak: "before" });
 

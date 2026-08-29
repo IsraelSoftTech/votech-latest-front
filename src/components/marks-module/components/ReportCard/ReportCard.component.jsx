@@ -668,14 +668,12 @@ export default function ReportCard({
 
       // Multiple measurement attempts for accuracy
       const measure = () => {
-        // Force layout recalculation
-        void el.offsetHeight; // force layout recalculation
-
+        const layoutHeight = el.offsetHeight;
         const rect = el.getBoundingClientRect();
         const naturalHeight = Math.max(
           rect.height,
           el.scrollHeight,
-          el.offsetHeight
+          layoutHeight
         );
 
         let scale = printableHeightPx / naturalHeight;

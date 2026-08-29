@@ -68,38 +68,6 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
   
   const rate = discountApplied ? Math.max(0, Math.min(100, parseFloat(discountRate) || 0)) / 100 : 0;
 
-  // Generate/resolve a unique receipt reference
-  const generateRef = () => {
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const y = String(now.getFullYear()).slice(-2);
-    const m = pad(now.getMonth() + 1);
-    const d = pad(now.getDate());
-    const hh = pad(now.getHours());
-    const mm = pad(now.getMinutes());
-    const ss = pad(now.getSeconds());
-    const rand = Math.random().toString(36).toUpperCase().slice(2, 6);
-    const sid = (student?.student_id || 'STD').replace(/[^A-Z0-9]/gi, '').slice(-6).toUpperCase();
-    return `VTA-${y}${m}${d}${hh}${mm}${ss}-${sid}-${rand}`;
-  };
-
-  const getOrCreateRefForPayment = (paymentId) => {
-    try {
-      const key = 'receiptRefByPaymentId';
-      const raw = localStorage.getItem(key);
-      const map = raw ? JSON.parse(raw) : {};
-      if (map[paymentId]) return map[paymentId];
-      const newRef = generateRef();
-      map[paymentId] = newRef;
-      localStorage.setItem(key, JSON.stringify(map));
-      return newRef;
-    } catch {
-      return generateRef();
-    }
-  };
-
-  // resolvedReceiptRef is computed above (before early return)
-
   // Calculate amounts (respect discount)
   let paid, total, left, status;
   
