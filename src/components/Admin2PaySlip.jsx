@@ -487,8 +487,6 @@ export default function Admin2PaySlip({ authUser }) {
                       <FaSort className="admin2-payslip-sort-icon" />
                     </th>
                     <th className="admin2-payslip-table-header-cell">Contact</th>
-                    <th className="admin2-payslip-table-header-cell">Classes</th>
-                    <th className="admin2-payslip-table-header-cell">Subjects</th>
                     <th 
                       className="admin2-payslip-table-header-cell admin2-payslip-sortable"
                       onClick={() => handleSort('amount')}
@@ -522,8 +520,6 @@ export default function Admin2PaySlip({ authUser }) {
                         </div>
                       </td>
                       <td className="admin2-payslip-table-cell">{salary.contact}</td>
-                      <td className="admin2-payslip-table-cell">{salary.classes}</td>
-                      <td className="admin2-payslip-table-cell">{salary.subjects}</td>
                       <td className="admin2-payslip-table-cell admin2-payslip-amount-cell">
                         <span className="admin2-payslip-amount">{formatCurrency(salary.amount)}</span>
                       </td>

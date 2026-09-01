@@ -75,7 +75,7 @@ export default function PsycoDash({ initialTab }) {
         }
         setCaseStats(Object.entries(statsMap).map(([type, count]) => ({ type, count })));
         // 6. Lesson plans
-        const plans = await api.getMyLessonPlans();
+        const { items: plans } = await api.getMyLessonPlans({ limit: 50 });
         setLessonPlans(Array.isArray(plans) ? plans : []);
         // 7. Messages
         if (authUser && authUser.id) {

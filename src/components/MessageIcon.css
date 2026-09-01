@@ -38,11 +38,12 @@
   position: absolute;
   top: -2px;
   right: -2px;
-  width: 16px;
+  min-width: 16px;
   height: 16px;
-  background: #007bff;
+  padding: 0 4px;
+  background: #dc2626;
   border: 2px solid white;
-  border-radius: 50%;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,7 +52,7 @@
 }
 
 .badge-number {
-  color: white;
+  color: #ffffff;
   font-size: 10px;
   font-weight: bold;
   line-height: 1;
@@ -76,8 +77,9 @@
   }
   
   .message-badge {
-    width: 13px;
+    min-width: 13px;
     height: 13px;
+    padding: 0 3px;
     top: -1px;
     right: -1px;
     border-width: 1.5px;
@@ -104,8 +106,9 @@
   }
   
   .message-badge {
-    width: 11px;
+    min-width: 11px;
     height: 11px;
+    padding: 0 2px;
     top: -1px;
     right: -1px;
     border-width: 1px;
@@ -132,8 +135,9 @@
   }
   
   .message-badge {
-    width: 10px;
+    min-width: 10px;
     height: 10px;
+    padding: 0 2px;
     top: -1px;
     right: -1px;
     border-width: 1px;

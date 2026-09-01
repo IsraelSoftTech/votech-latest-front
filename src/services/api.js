@@ -902,6 +902,29 @@ class ApiService {
     return await response.json();
   }
 
+  async getStudentFeeDiscount(studentId) {
+    const response = await fetch(`${API_URL}/fees/discount/${studentId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async setStudentFeeDiscount(studentId, { discount_amount, reason }) {
+    const response = await fetch(`${API_URL}/fees/discount/${studentId}`, {
+      method: "PUT",
+      headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ discount_amount, reason }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getStudentsWithDiscounts() {
+    const response = await fetch(`${API_URL}/fees/students-with-discounts`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
   async payStudentFee({ student_id, class_id, fee_type, amount }) {
     const response = await fetch(`${API_URL}/fees`, {
       method: "POST",
@@ -985,7 +1008,8 @@ class ApiService {
       body: JSON.stringify({ receiver_id, content }),
     });
     if (!response.ok) throw new Error("Failed to send message");
-    return await response.json();
+    const data = await response.json();
+    return data.data || data;
   }
 
   async sendMessageWithFile(receiver_id, content, file) {
@@ -1012,7 +1036,8 @@ class ApiService {
       );
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data.data || data;
   }
 
   // Group chat methods
@@ -1132,6 +1157,14 @@ class ApiService {
     return await response.json();
   }
 
+  async getUnreadCountsBySender() {
+    const response = await fetch(`${API_URL}/messages/unread/count`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) return [];
+    return await response.json();
+  }
+
   // Get all users for chat (all roles)
   async getAllUsersForChat() {
     const response = await fetch(`${API_URL}/users/all-chat`, {
@@ -1150,29 +1183,55 @@ class ApiService {
     return await response.json();
   }
 
-  // Get total unread message count across all chats
+  // Total unread (direct + group) for the logged-in user
   async getTotalUnreadCount() {
     try {
+      const response = await fetch(`${API_URL}/messages/unread/total`, {
+        headers: this.getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return parseInt(data.total, 10) || 0;
+      }
+    } catch (error) {
+      console.warn("unread/total unavailable, using fallback:", error);
+    }
+
+    // Fallback for older backend: sum direct + group client-side
+    try {
       const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+      let directTotal = 0;
+      try {
+        const unreadRows = await this.getUnreadCountsBySender();
+        directTotal = (Array.isArray(unreadRows) ? unreadRows : []).reduce(
+          (sum, row) => sum + (parseInt(row.unread_count, 10) || 0),
+          0
+        );
+      } catch (_) {
+        /* ignore */
+      }
+
+      let groupTotal = 0;
       const groups = await this.getGroups();
-      if (!Array.isArray(groups) || groups.length === 0) return 0;
-      // Compute unread for groups by fetching messages and counting unread ones per group
-      const limited = groups.slice(0, 20); // safety limit
-      const counts = await Promise.all(
-        limited.map(async (g) => {
-          try {
-            const msgs = await this.getGroupMessages(g.id);
-            if (!Array.isArray(msgs)) return 0;
-            const unread = msgs.filter(
-              (m) => !m.read_at && String(m.sender_id) !== String(authUser?.id)
-            ).length;
-            return unread;
-          } catch (e) {
-            return 0;
-          }
-        })
-      );
-      return counts.reduce((a, b) => a + (parseInt(b) || 0), 0);
+      if (Array.isArray(groups) && groups.length > 0) {
+        const limited = groups.slice(0, 20);
+        const counts = await Promise.all(
+          limited.map(async (g) => {
+            try {
+              const msgs = await this.getGroupMessages(g.id);
+              if (!Array.isArray(msgs)) return 0;
+              return msgs.filter(
+                (m) => !m.read_at && String(m.sender_id) !== String(authUser?.id)
+              ).length;
+            } catch (e) {
+              return 0;
+            }
+          })
+        );
+        groupTotal = counts.reduce((a, b) => a + (parseInt(b, 10) || 0), 0);
+      }
+
+      return directTotal + groupTotal;
     } catch (error) {
       console.error("Error getting total unread count:", error);
       return 0;
@@ -1599,16 +1658,6 @@ class ApiService {
     return await response.json();
   }
 
-  async updateAssetCategory(id, data) {
-    const response = await fetch(`${API_URL}/asset-categories/${id}`, {
-      method: "PUT",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error("Failed to update asset category");
-    return await response.json();
-  }
-
   // Update asset category
   async updateAssetCategory(id, assetCategoryData) {
     try {
@@ -1674,6 +1723,113 @@ class ApiService {
     return await response.json();
   }
 
+  // === Debts API (Point 4A) ===
+
+  async getDebts(params = {}) {
+    const queryString = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      )
+    ).toString();
+    const url = queryString
+      ? `${API_URL}/debts?${queryString}`
+      : `${API_URL}/debts`;
+    const response = await fetch(url, { headers: this.getAuthHeaders() });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to fetch debts");
+    }
+    return await response.json();
+  }
+
+  async getDebtsSummary(params = {}) {
+    const queryString = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      )
+    ).toString();
+    const url = queryString
+      ? `${API_URL}/debts/summary?${queryString}`
+      : `${API_URL}/debts/summary`;
+    const response = await fetch(url, { headers: this.getAuthHeaders() });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to fetch debt summary");
+    }
+    return await response.json();
+  }
+
+  async getDebt(id) {
+    const response = await fetch(`${API_URL}/debts/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to fetch debt record");
+    }
+    return await response.json();
+  }
+
+  async createDebt(data) {
+    const response = await fetch(`${API_URL}/debts`, {
+      method: "POST",
+      headers: {
+        ...this.getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to create debt record");
+    }
+    return await response.json();
+  }
+
+  async updateDebt(id, data) {
+    const response = await fetch(`${API_URL}/debts/${id}`, {
+      method: "PUT",
+      headers: {
+        ...this.getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to update debt record");
+    }
+    return await response.json();
+  }
+
+  async recordDebtPayment(id, data) {
+    const response = await fetch(`${API_URL}/debts/${id}/payment`, {
+      method: "PATCH",
+      headers: {
+        ...this.getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to record payment");
+    }
+    return await response.json();
+  }
+
+  async deleteDebt(id) {
+    const response = await fetch(`${API_URL}/debts/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to delete debt record");
+    }
+    return await response.json();
+  }
+
   async getDepartments() {
     const response = await fetch(`${API_URL}/departments`, {
       headers: this.getAuthHeaders(),
@@ -1695,6 +1851,15 @@ class ApiService {
   _normalizeLessonPlanList(data) {
     if (Array.isArray(data)) return data;
     return data?.items || data?.data || [];
+  }
+
+  _parsePaginatedResponse(data, defaultLimit = 15) {
+    const items = this._normalizeLessonPlanList(data);
+    const total = Number(data?.total ?? items.length);
+    const page = Number(data?.page ?? 1);
+    const limit = Number(data?.limit ?? (items.length || defaultLimit));
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    return { items, total, page, limit, totalPages };
   }
 
   _lessonPlanQueryString(filters = {}) {
@@ -1724,12 +1889,16 @@ class ApiService {
     return await response.json();
   }
 
-  async getMyLessonPlans() {
-    const response = await fetch(`${API_URL}/lesson-plans/my`, {
+  async getMyLessonPlans(filters = {}) {
+    const response = await fetch(
+      `${API_URL}/lesson-plans/my${this._lessonPlanQueryString(filters)}`,
+      {
       headers: this.getAuthHeaders(),
-    });
+      }
+    );
     if (!response.ok) throw new Error("Failed to fetch lesson plans");
-    return await response.json();
+    const data = await response.json();
+    return this._parsePaginatedResponse(data, filters.limit || 15);
   }
 
   async getAllLessonPlans(filters = {}) {
@@ -1754,9 +1923,9 @@ class ApiService {
     }
 
     const data = await response.json();
-    const items = this._normalizeLessonPlanList(data);
-    console.log("🔍 API: getAllLessonPlans() returning data:", items);
-    return items;
+    const parsed = this._parsePaginatedResponse(data, filters.limit || 15);
+    console.log("🔍 API: getAllLessonPlans() returning data:", parsed);
+    return parsed;
   }
 
   async downloadLessonPlan(id) {
@@ -1838,12 +2007,16 @@ class ApiService {
     return await response.json();
   }
 
-  async getMyLessons() {
-    const response = await fetch(`${API_URL}/lessons/my`, {
+  async getMyLessons(filters = {}) {
+    const response = await fetch(
+      `${API_URL}/lessons/my${this._lessonPlanQueryString(filters)}`,
+      {
       headers: this.getAuthHeaders(),
-    });
+      }
+    );
     if (!response.ok) throw new Error("Failed to fetch my lessons");
-    return await response.json();
+    const data = await response.json();
+    return this._parsePaginatedResponse(data, filters.limit || 15);
   }
 
   async getAllLessons(filters = {}) {
@@ -1855,7 +2028,7 @@ class ApiService {
     );
     if (!response.ok) throw new Error("Failed to fetch all lessons");
     const data = await response.json();
-    return this._normalizeLessonPlanList(data);
+    return this._parsePaginatedResponse(data, filters.limit || 15);
   }
 
   async updateLesson(id, lessonData) {
@@ -2160,15 +2333,24 @@ class ApiService {
     }
   }
 
-  async updateSalary(userId, amount) {
+  async updateSalary(userId, amount, month, year) {
     try {
+      const body = { userId, amount };
+      if (typeof month === "number") {
+        body.monthNumber = month;
+      } else if (month) {
+        body.month = month;
+      }
+      if (year != null) {
+        body.year = year;
+      }
       const response = await fetch(`${API_URL}/salary/update`, {
         method: "POST",
         headers: {
           ...this.getAuthHeaders(),
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId, amount }),
+        body: JSON.stringify(body),
       });
       return this.handleResponse(response);
     } catch (error) {
@@ -2177,11 +2359,15 @@ class ApiService {
     }
   }
 
-  async markSalaryAsPaid(salaryId) {
+  async markSalaryAsPaid(salaryId, userId = null) {
     try {
       const response = await fetch(`${API_URL}/salary/mark-paid/${salaryId}`, {
         method: "PUT",
-        headers: this.getAuthHeaders(),
+        headers: {
+          ...this.getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userId ? { userId } : {}),
       });
       return this.handleResponse(response);
     } catch (error) {

@@ -24,7 +24,7 @@ const MessageIcon = ({ count = 0, onClick, className = '' }) => {
         {/* Unread message badge */}
         {count > 0 && (
           <div className="message-badge">
-            <span className="badge-number">{count}</span>
+            <span className="badge-number">{count > 99 ? '99+' : count}</span>
           </div>
         )}
       </div>

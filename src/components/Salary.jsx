@@ -20,6 +20,8 @@ export default function Salary({ authUser }) {
   const [loading, setLoading] = useState(true);
   const [editingSalary, setEditingSalary] = useState(null);
   const [salaryAmount, setSalaryAmount] = useState('');
+  const [editMonth, setEditMonth] = useState(new Date().getMonth() + 1);
+  const [editYear, setEditYear] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   
   // Get permissions
@@ -166,8 +168,36 @@ export default function Salary({ authUser }) {
   };
 
   const handleEditSalary = (application) => {
+    const monthIndex = application.salary_month
+      ? [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December',
+        ].indexOf(application.salary_month)
+      : -1;
+    const monthNumber = monthIndex >= 0 ? monthIndex + 1 : new Date().getMonth() + 1;
+    const yearValue = application.salary_year || getAcademicYearStart();
+
+    if (application.salary_status === 'paid') {
+      showMessage(
+        'Payslip Locked',
+        `Salary for ${getMonthName(monthNumber)} ${yearValue} is already paid. Undo payment before changing the amount.`,
+        'warning'
+      );
+      return;
+    }
+
     setEditingSalary(application.application_id);
-    setSalaryAmount(application.salary_amount.toString());
+    setSalaryAmount(application.salary_amount > 0 ? application.salary_amount.toString() : '');
+    setEditMonth(monthNumber);
+    setEditYear(yearValue);
+  };
+
+  const getSalaryRecordForEdit = (application, monthNumber, yearValue) => {
+    const monthName = getMonthName(monthNumber);
+    if (!application.all_salary_records) return null;
+    return application.all_salary_records.find(
+      (record) => record.month === monthName && Number(record.year) === Number(yearValue)
+    );
   };
 
   const handleSaveSalary = async (application) => {
@@ -177,19 +207,34 @@ export default function Salary({ authUser }) {
         return;
       }
 
+      const yearValue = editYear || getAcademicYearStart();
+      const monthName = getMonthName(editMonth);
+      const targetRecord = getSalaryRecordForEdit(application, editMonth, yearValue);
+
+      if (targetRecord?.paid === true) {
+        showMessage(
+          'Payslip Locked',
+          `Salary for ${monthName} ${yearValue} is already paid and cannot be changed.`,
+          'warning'
+        );
+        return;
+      }
+
       await api.updateSalary(
         application.applicant_id,
-        parseFloat(salaryAmount)
+        parseFloat(salaryAmount),
+        editMonth,
+        yearValue
       );
 
-      setSuccessMessage('success');
+      setSuccessMessage(`Salary updated for ${monthName} ${yearValue} only.`);
       setEditingSalary(null);
       setSalaryAmount('');
+      setEditMonth(new Date().getMonth() + 1);
+      setEditYear(null);
       
-      // Refresh data
       await fetchData();
       
-      // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
@@ -202,6 +247,8 @@ export default function Salary({ authUser }) {
   const handleCancelEdit = () => {
     setEditingSalary(null);
     setSalaryAmount('');
+    setEditMonth(new Date().getMonth() + 1);
+    setEditYear(null);
   };
 
   const handleUndoPaid = async (application) => {
@@ -493,6 +540,26 @@ export default function Salary({ authUser }) {
           showMessage('No Salary Record', `No salary record found for ${selectedApplication.applicant_name} for ${selectedMonthName} ${academicYearStart}. Please set a salary amount first.`, 'warning');
           return;
         }
+
+        if (!salaryRecord.user_id) {
+          await api.updateSalary(
+            selectedApplication.applicant_id,
+            parseFloat(payForm.salaryAmount),
+            payForm.month,
+            parseInt(academicYearStart, 10)
+          );
+          const refreshed = await api.getApprovedApplications();
+          const refreshedApp = refreshed.find(
+            (app) => app.applicant_id === selectedApplication.applicant_id
+          );
+          if (refreshedApp?.all_salary_records) {
+            salaryRecord = refreshedApp.all_salary_records.find(
+              (record) =>
+                record.month === selectedMonthName &&
+                Number(record.year) === parseInt(academicYearStart, 10)
+            );
+          }
+        }
         if (salaryRecord.paid === true) {
           showMessage('Already Paid', `Salary for ${selectedApplication.applicant_name} for ${selectedMonthName} ${academicYearStart} has already been paid.`, 'warning');
           return;
@@ -511,7 +578,10 @@ export default function Salary({ authUser }) {
             if (paidEditTarget && paidEditTarget.salaryId) {
               await api.editPaidSalary(paidEditTarget.salaryId, { monthNumber: payForm.month, year: parseInt(academicYearStart) });
             } else {
-              await api.markSalaryAsPaid(salaryRecord.id);
+              await api.markSalaryAsPaid(
+                salaryRecord.id,
+                selectedApplication.applicant_id
+              );
             }
 
             setSuccessMessage('success');
@@ -814,7 +884,32 @@ export default function Salary({ authUser }) {
                       <td className="salary-table-cell salary-amount-cell">
                         {editingSalary === app.application_id ? (
                           <div className="salary-edit-container">
+                            <p className="salary-edit-warning">
+                              This change affects {getMonthName(editMonth)} {editYear || getAcademicYearStart()} only.
+                            </p>
                             <div className="salary-edit-row">
+                              <select
+                                className="salary-edit-select"
+                                value={editMonth}
+                                onChange={(e) => {
+                                  const nextMonth = parseInt(e.target.value, 10);
+                                  setEditMonth(nextMonth);
+                                  const record = getSalaryRecordForEdit(
+                                    app,
+                                    nextMonth,
+                                    editYear || getAcademicYearStart()
+                                  );
+                                  if (record?.amount > 0) {
+                                    setSalaryAmount(String(record.amount));
+                                  }
+                                }}
+                              >
+                                {months.map((m) => (
+                                  <option key={m.value} value={m.value}>
+                                    {m.label}
+                                  </option>
+                                ))}
+                              </select>
                               <input
                                 type="number"
                                 value={salaryAmount}
@@ -892,7 +987,8 @@ export default function Salary({ authUser }) {
                               <button
                                 className="salary-action-btn salary-edit-btn"
                                 onClick={() => handleEditSalary(app)}
-                                title="Edit Salary"
+                                title={app.salary_status === 'paid' ? 'Paid month is locked' : 'Edit Salary'}
+                                disabled={app.salary_status === 'paid'}
                               >
                                 <FaEdit />
                               </button>
@@ -1072,7 +1168,7 @@ export default function Salary({ authUser }) {
                         <tr key={rec.id} className="salary-table-row">
                           <td className="salary-table-cell">{rec.month}</td>
                           <td className="salary-table-cell">{rec.year}</td>
-                          <td className="salary-table-cell">{formatCurrency(parseFloat(rec.amount || 0))}</td>
+                          <td className="salary-table-cell">{formatCurrency(parseFloat(rec.payslip_amount ?? rec.amount ?? 0))}</td>
                           <td className="salary-table-cell">{rec.paid_at ? new Date(rec.paid_at).toLocaleString() : ''}</td>
                           <td className="salary-table-cell">
                             {!isReadOnly && (

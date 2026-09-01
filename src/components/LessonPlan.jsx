@@ -1,9 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaCheck, FaTimes, FaDownload } from 'react-icons/fa';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaEye,
+  FaCheck,
+  FaTimes,
+  FaDownload,
+  FaFileAlt,
+  FaClock,
+  FaCheckCircle,
+  FaTimesCircle,
+} from 'react-icons/fa';
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
+import { PageHeader } from './marks-module/components/PageHeader/PageHeader.component';
+import Stats from './marks-module/components/Stats/Stats.component';
+import './marks-module/components/PageHeader/PageHeader.styles.css';
+import './marks-module/components/Stats/Stats.styles.css';
 import './LessonPlan.css';
+import LessonPlanPagination from './LessonPlanPagination';
+
+const PAGE_SIZE = 15;
 
 
 export default function LessonPlan({ noLayoutWrapper = false }) {
@@ -37,22 +56,29 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [classes, setClasses] = useState([]);
   const [specialties, setSpecialties] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [admin3Tab, setAdmin3Tab] = useState('mine'); // 'mine' | 'approved'
 
   useEffect(() => {
     fetchUserRole();
   }, []);
 
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [userRole, filterClass, filterDepartment, debouncedSearch, admin3Tab]);
+
+  useEffect(() => {
     if (userRole) {
       fetchLessonPlans();
     }
-  }, [userRole, filterClass, filterDepartment]);
-
-  useEffect(() => {
-    if (!userRole || userRole !== 'Admin3') return undefined;
-    const timer = setTimeout(() => fetchLessonPlans(), 350);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [userRole, filterClass, filterDepartment, debouncedSearch, page, admin3Tab]);
 
   useEffect(() => {
     if (userRole !== 'Admin3') return;
@@ -83,21 +109,30 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
   const fetchLessonPlans = async () => {
     try {
       setLoading(true);
-      let plans;
       const filters = {
-        search: searchTerm.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
         class: filterClass || undefined,
         department: filterDepartment || undefined,
+        page: String(page),
+        limit: String(PAGE_SIZE),
       };
 
-      if (userRole === 'Admin3') {
-        plans = await api.getAllLessonPlans(filters);
+      let result;
+      if (userRole === 'Admin3' && admin3Tab === 'mine') {
+        result = await api.getMyLessonPlans(filters);
+      } else if (userRole === 'Admin3' && admin3Tab === 'approved') {
+        result = await api.getAllLessonPlans(filters);
       } else if (userRole === 'Admin1' || userRole === 'Admin4') {
-        plans = await api.getAllLessonPlans(filters);
+        result = await api.getAllLessonPlans(filters);
       } else {
-        plans = await api.getMyLessonPlans();
+        result = await api.getMyLessonPlans(filters);
       }
-      setLessonPlans(Array.isArray(plans) ? plans : []);
+
+      setLessonPlans(Array.isArray(result.items) ? result.items : []);
+      setPagination({
+        total: result.total ?? 0,
+        totalPages: result.totalPages ?? 1,
+      });
     } catch (err) {
       setError('Failed to fetch lesson plans');
     } finally {
@@ -312,160 +347,229 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
   const isAdmin4 = userRole === 'Admin4';
   const isAdmin1 = userRole === 'Admin1';
   const isAdmin3 = userRole === 'Admin3';
-  const canUpload = !(isAdmin4 || isAdmin1 || isAdmin3);
+  const canUpload = !(isAdmin4 || isAdmin1);
   const canReview = isAdmin4;
-  const isDownloadOnly = isAdmin3;
+  const isApprovedLibrary = isAdmin3 && admin3Tab === 'approved';
+  const isMyUploadsView = isAdmin3 && admin3Tab === 'mine';
+
+  const pageTitle = isAdmin3
+    ? admin3Tab === 'mine'
+      ? 'My Lesson Plans'
+      : 'Approved Lesson Plans'
+    : isAdmin1 || isAdmin4
+      ? 'All Lesson Plans'
+      : 'My Lesson Plans';
+
+  const pageSubtitle = isAdmin3
+    ? admin3Tab === 'mine'
+      ? 'Upload lesson plans for Admin4 review — track pending, approved, and rejected status'
+      : 'Browse and download lesson plans that Admin4 has approved'
+    : isAdmin1 || isAdmin4
+      ? 'View and manage lesson plans submitted across the school'
+      : 'Upload and track your lesson planning documents';
+
+  const statsData = useMemo(() => {
+    if (isApprovedLibrary) {
+      return [
+        { title: 'Approved Plans', value: pagination.total, icon: FaCheckCircle },
+        { title: 'Downloadable Files', value: lessonPlans.filter((p) => p.file_url).length, icon: FaDownload },
+      ];
+    }
+    if (isAdmin3) {
+      return [
+        { title: 'My Submissions', value: pagination.total, icon: FaFileAlt },
+        { title: 'Pending Review', value: getStatusCount('pending'), icon: FaClock },
+        { title: 'Approved', value: getStatusCount('approved'), icon: FaCheckCircle },
+        { title: 'Rejected', value: getStatusCount('rejected'), icon: FaTimesCircle },
+      ];
+    }
+    const items = [
+      { title: 'Submitted', value: pagination.total, icon: FaFileAlt },
+      { title: 'Pending Review', value: getStatusCount('pending'), icon: FaClock },
+    ];
+    if (!isAdmin4) {
+      items.push(
+        { title: 'Approved', value: getStatusCount('approved'), icon: FaCheckCircle },
+        { title: 'Rejected', value: getStatusCount('rejected'), icon: FaTimesCircle }
+      );
+    }
+    return items;
+  }, [lessonPlans, isApprovedLibrary, isAdmin3, isAdmin4, pagination.total]);
 
   const content = (
-    <div className="lesson-plan-container">
-        {/* Success/Error Messages */}
+    <div className="lesson-plan-page">
         {success && <SuccessMessage message={success} />}
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="lp-alert lp-alert-error">{error}</div>}
 
-        {/* Dashboard Cards */}
-        {!isDownloadOnly && (
-        <div className="lesson-plan-cards">
-          <div className="lesson-plan-card">
-            <div className="count">{lessonPlans.length}</div>
-            <div className="desc">Submitted Lesson Plans</div>
-          </div>
-          <div className="lesson-plan-card">
-            <div className="count">{getStatusCount('pending')}</div>
-            <div className="desc">Pending Review</div>
-          </div>
-          {!isAdmin4 && (
+        <PageHeader
+          title={pageTitle}
+          subtitle={pageSubtitle}
+          actions={
             <>
-              <div className="lesson-plan-card">
-                <div className="count">{getStatusCount('approved')}</div>
-                <div className="desc">Approved Plans</div>
-              </div>
-              <div className="lesson-plan-card">
-                <div className="count">{getStatusCount('rejected')}</div>
-                <div className="desc">Rejected Plans</div>
-              </div>
+              {canUpload && (
+                <button
+                  type="button"
+                  className="lp-btn-primary"
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  <FaPlus /> Upload Plan
+                </button>
+              )}
             </>
-          )}
-        </div>
-        )}
+          }
+        />
 
-        {isDownloadOnly && (
-          <div className="lesson-plan-cards">
-            <div className="lesson-plan-card">
-              <div className="count">{lessonPlans.length}</div>
-              <div className="desc">Approved Lesson Plans</div>
-            </div>
-          </div>
-        )}
-
-        {/* Header with Upload Button */}
-        <div className="lesson-plan-header">
-          <h2>
-            {isDownloadOnly
-              ? 'Approved Lesson Plans'
-              : isAdmin1 || isAdmin4
-                ? 'All Lesson Plans'
-                : 'My Lesson Plans'}
-          </h2>
-          {canUpload && (
-            <button 
-              className="upload-plan-btn" 
-              onClick={() => setShowUploadModal(true)}
+        {isAdmin3 && (
+          <div className="lp-view-tabs" role="tablist" aria-label="Lesson plan views">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={admin3Tab === 'mine'}
+              className={`lp-view-tab${admin3Tab === 'mine' ? ' active' : ''}`}
+              onClick={() => setAdmin3Tab('mine')}
             >
-              <FaPlus /> Upload Plan
+              My Uploads
             </button>
-          )}
-        </div>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={admin3Tab === 'approved'}
+              className={`lp-view-tab${admin3Tab === 'approved' ? ' active' : ''}`}
+              onClick={() => setAdmin3Tab('approved')}
+            >
+              Approved Library
+            </button>
+          </div>
+        )}
 
-        {isDownloadOnly && (
-          <div className="lesson-plan-filters">
-            <div className="filter-group">
-              <label>Class:</label>
-              <select
-                value={filterClass}
-                onChange={(e) => setFilterClass(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All Classes</option>
-                {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>{cls.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="filter-group">
-              <label>Department:</label>
-              <select
-                value={filterDepartment}
-                onChange={(e) => setFilterDepartment(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All Departments</option>
-                {specialties.map((spec) => (
-                  <option key={spec.id} value={spec.id}>{spec.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="search-group">
-              <input
-                type="text"
-                placeholder="Search by title, teacher, or filename..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
+        <Stats
+          data={statsData}
+          loading={loading && lessonPlans.length === 0}
+          skeletonCount={isApprovedLibrary ? 2 : isAdmin4 ? 2 : 4}
+        />
+
+        {isApprovedLibrary && (
+          <div className="lp-toolbar">
+            <div className="lp-filter-grid">
+              <div className="lp-filter-field">
+                <label htmlFor="lp-admin3-class">Class</label>
+                <select
+                  id="lp-admin3-class"
+                  value={filterClass}
+                  onChange={(e) => setFilterClass(e.target.value)}
+                >
+                  <option value="">All Classes</option>
+                  {classes.map((cls) => (
+                    <option key={cls.id} value={cls.id}>{cls.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="lp-filter-field">
+                <label htmlFor="lp-admin3-dept">Department</label>
+                <select
+                  id="lp-admin3-dept"
+                  value={filterDepartment}
+                  onChange={(e) => setFilterDepartment(e.target.value)}
+                >
+                  <option value="">All Departments</option>
+                  {specialties.map((spec) => (
+                    <option key={spec.id} value={spec.id}>{spec.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="lp-filter-field lp-search-field">
+                <label htmlFor="lp-admin3-search">Search</label>
+                <input
+                  id="lp-admin3-search"
+                  type="text"
+                  placeholder="Title, teacher, or filename…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* Lesson Plans Table */}
+        <div className="lp-panel">
+          <div className="lp-panel-head">
+            <h3 className="lp-panel-title">
+              {isApprovedLibrary
+                ? 'Approved Plans'
+                : isMyUploadsView
+                  ? 'My Uploads'
+                  : 'Lesson Plans'}
+            </h3>
+            <span className="lp-panel-meta">
+              {loading
+                ? 'Loading…'
+                : pagination.total > 0
+                  ? `${pagination.total} record(s) total`
+                  : '0 record(s)'}
+            </span>
+          </div>
+          <div className="lp-table-scroll">
         <div className="lesson-plan-table-wrapper">
           {loading ? (
-            <div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>
+            <div className="loading-state">
+              <div className="loading-spinner" />
+              <p>Loading lesson plans…</p>
+            </div>
           ) : lessonPlans.length === 0 ? (
-            <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
-              {isDownloadOnly
-                ? 'No approved lesson plans match your filters.'
-                : isAdmin1 || isAdmin4
-                  ? 'No lesson plans submitted yet.'
-                  : 'No lesson plans uploaded yet.'}
+            <div className="empty-state">
+              <FaFileAlt className="empty-icon" />
+              <h3>No lesson plans found</h3>
+              <p>
+                {isApprovedLibrary
+                  ? 'No approved lesson plans match your filters.'
+                  : isAdmin1 || isAdmin4
+                    ? 'No lesson plans submitted yet.'
+                    : 'No lesson plans uploaded yet.'}
+              </p>
             </div>
           ) : (
             <table className="lesson-plan-table">
               <thead>
                 <tr>
                   <th>Title</th>
-                  {isDownloadOnly && <th>Class</th>}
-                  {isDownloadOnly && <th>Department</th>}
+                  {isApprovedLibrary && <th>Class</th>}
+                  {isApprovedLibrary && <th>Department</th>}
                   <th>Period Type</th>
-                  {!isDownloadOnly && <th>Status</th>}
+                  {!isApprovedLibrary && <th>Status</th>}
+                  {!isApprovedLibrary && isMyUploadsView && <th>Admin Comment</th>}
                   <th>Submitted</th>
-                  {(isAdmin1 || isAdmin4 || isDownloadOnly) && <th>Submitted By</th>}
+                  {(isAdmin1 || isAdmin4 || isApprovedLibrary) && <th>Submitted By</th>}
                   {(isAdmin1 || isAdmin4) && <th>Role</th>}
                   {(isAdmin1 || isAdmin4) && <th>Review Status</th>}
-                  {!isDownloadOnly && <th>View</th>}
-                  {!isAdmin1 && !isDownloadOnly && <th>Actions</th>}
-                  {isDownloadOnly && <th>Download</th>}
+                  {!isApprovedLibrary && !isAdmin1 && <th>Actions</th>}
+                  {isApprovedLibrary && <th>Download</th>}
                 </tr>
               </thead>
               <tbody>
                 {lessonPlans.map((plan) => (
                   <tr key={plan.id}>
                     <td className="title-cell"><span className="title-text">{plan.title}</span></td>
-                    {isDownloadOnly && <td>{plan.class_label || plan.class_name || '—'}</td>}
-                    {isDownloadOnly && <td>{plan.department_name || '—'}</td>}
+                    {isApprovedLibrary && <td>{plan.class_label || plan.class_name || '—'}</td>}
+                    {isApprovedLibrary && <td>{plan.department_name || '—'}</td>}
                     <td>
                       <span className={`period-type-badge period-${plan.period_type}`}>
                         {plan.period_type}
                       </span>
                     </td>
-                    {!isDownloadOnly && (
+                    {!isApprovedLibrary && (
                     <td>
                       <span className={`status-badge status-${plan.status}`}>
                         {plan.status}
                       </span>
                     </td>
                     )}
+                    {!isApprovedLibrary && isMyUploadsView && (
+                      <td className="lp-comment-cell">
+                        {plan.admin_comment || '—'}
+                      </td>
+                    )}
                     <td>{formatDate(plan.submitted_at)}</td>
-                    {(isAdmin1 || isAdmin4 || isDownloadOnly) && (
+                    {(isAdmin1 || isAdmin4 || isApprovedLibrary) && (
                       <td>{plan.teacher_name || plan.teacher_username || 'Unknown User'}</td>
                     )}
                     {(isAdmin1 || isAdmin4) && (
@@ -478,19 +582,7 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
                         </span>
                       </td>
                     )}
-                    {!isDownloadOnly && (
-                    <td className="actions">
-                      <button 
-                        className="action-btn view" 
-                        onClick={() => handleViewFile(plan.file_url)}
-                        title="View PDF"
-                        aria-label="View lesson plan"
-                      >
-                        <FaEye />
-                      </button>
-                    </td>
-                    )}
-                    {isDownloadOnly && (
+                    {isApprovedLibrary && (
                       <td className="actions">
                         <button
                           className="action-btn view"
@@ -501,7 +593,7 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
                         </button>
                       </td>
                     )}
-                    {!isAdmin1 && !isDownloadOnly && (
+                    {!isAdmin1 && !isApprovedLibrary && (
                       <td className="actions">
                         <button 
                           className="action-btn view" 
@@ -555,6 +647,16 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
               </tbody>
             </table>
           )}
+        </div>
+        <LessonPlanPagination
+          page={page}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+          loading={loading}
+        />
+          </div>
         </div>
 
         {/* Upload Modal */}

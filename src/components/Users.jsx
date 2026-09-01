@@ -26,6 +26,7 @@ export default function Users() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [createSuccess, setCreateSuccess] = useState('');
   const [createError, setCreateError] = useState('');
@@ -36,7 +37,10 @@ export default function Users() {
   // Get user role
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const isAdmin1 = authUser?.role === 'Admin1';
+  const isAdmin2 = authUser?.role === 'Admin2';
   const isAdmin3 = authUser?.role === 'Admin3';
+  const canChangePassword = isAdmin2;
+  const canFullManageUsers = isAdmin3;
 
   useEffect(() => {
     fetchUsers();
@@ -65,6 +69,7 @@ export default function Users() {
       password: '',
       role: user.role
     });
+    setShowEditPassword(false);
     setModalOpen(true);
   }
 
@@ -78,8 +83,16 @@ export default function Users() {
     setEditLoading(true);
     setEditSuccess('');
     try {
-      // Only send password when user wants to change it (non-empty)
       const payload = { ...editForm };
+      if (isAdmin2) {
+        if (!payload.password || !String(payload.password).trim()) {
+          alert('Please enter a new password.');
+          setEditLoading(false);
+          return;
+        }
+      } else {
+        delete payload.password;
+      }
       if (!payload.password || !String(payload.password).trim()) {
         delete payload.password;
       }
@@ -87,7 +100,11 @@ export default function Users() {
       setModalOpen(false);
       setEditUser(null);
       await fetchUsers();
-      setEditSuccess(`User "${editForm.name || editForm.username}" updated successfully!`);
+      setEditSuccess(
+        isAdmin2
+          ? `Password updated for "${editForm.name || editForm.username}".`
+          : `User "${editForm.name || editForm.username}" updated successfully!`
+      );
       setTimeout(() => setEditSuccess(''), 4000);
     } catch (err) {
       setEditSuccess('');
@@ -226,7 +243,7 @@ export default function Users() {
         <div className="users-table-container">
           {editSuccess && <SuccessMessage message={editSuccess} type="success" onClose={() => setEditSuccess('')} />}
           <div className="users-table-header">
-            <h2>All Users</h2>
+            <h2>{isAdmin2 ? 'User Passwords' : 'All Users'}</h2>
             <div className="users-header-actions">
               <div className="users-search-wrapper">
                 <FaSearch className="users-search-icon" />
@@ -281,12 +298,17 @@ export default function Users() {
                     <td>••••••••</td>
                     <td>{user.role}</td>
                     <td style={{ display: 'flex', gap: 8 }}>
-                      {/* Only show edit for Admin3, else show all actions */}
-                      {user.role === 'Admin3' ? (
+                      {(canFullManageUsers || canChangePassword) && (
                         <button
                           className="users-action-btn"
-                          aria-label="Edit"
-                          data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}
+                          aria-label={isAdmin2 ? 'Change password' : 'Edit'}
+                          data-tooltip={
+                            isAdmin1
+                              ? 'Not allowed for Admin1'
+                              : isAdmin2
+                                ? 'Change password'
+                                : 'Edit'
+                          }
                           onClick={() => handleEdit(user)}
                           type="button"
                           disabled={isAdmin1}
@@ -294,19 +316,9 @@ export default function Users() {
                         >
                           <FaEdit />
                         </button>
-                      ) : (
+                      )}
+                      {canFullManageUsers && user.role !== 'Admin3' && (
                         <>
-                          <button
-                            className="users-action-btn"
-                            aria-label="Edit"
-                            data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : 'Edit'}
-                            onClick={() => handleEdit(user)}
-                            type="button"
-                            disabled={isAdmin1}
-                            style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
-                          >
-                            <FaEdit />
-                          </button>
                           <button
                             className="users-action-btn delete"
                             aria-label="Delete"
@@ -341,38 +353,67 @@ export default function Users() {
         {modalOpen && (
           <div className="users-modal-overlay" onClick={() => !editLoading && setModalOpen(false)}>
             <div className="users-modal" onClick={e => e.stopPropagation()}>
-              <h3>Edit User</h3>
+              <h3>{isAdmin2 ? 'Change Password' : 'Edit User'}</h3>
               <form onSubmit={handleEditSubmit} className="users-edit-form">
-                <label>Full Name</label>
-                <input name="name" value={typeof editForm.name === 'string' ? editForm.name : ''} onChange={handleEditChange} placeholder="Enter Full Name" />
-                <label>Username</label>
-                <input name="username" value={editForm.username} onChange={handleEditChange} placeholder="Enter Username" />
-                <label>Email</label>
-                <input name="email" type="email" value={editForm.email} onChange={handleEditChange} placeholder="Enter Email" />
-                <label>Phone Number</label>
-                <input name="contact" type="tel" value={editForm.contact} onChange={handleEditChange} placeholder="Enter Phone Number" />
-                <label>Gender</label>
-                <select name="gender" value={editForm.gender} onChange={handleEditChange} className="users-edit-select">
-                  <option value="">Select</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-                <label>Password <span className="users-edit-hint">(leave blank to keep current)</span></label>
-                <input name="password" value={editForm.password} onChange={handleEditChange} type="password" placeholder="Optional" />
-                <label>Account Type</label>
-                <select name="role" value={editForm.role} onChange={handleEditChange} className="users-edit-select">
-                  <option value="Admin1">Admin1</option>
-                  <option value="Admin2">Admin2</option>
-                  <option value="Admin3">Admin3</option>
-                  <option value="Admin4">Admin4</option>
-                  <option value="Teacher">Teacher</option>
-                  <option value="Discipline">Discipline</option>
-                  <option value="Psychosocialist">Psychosocialist</option>
-                </select>
+                {isAdmin2 ? (
+                  <>
+                    <p className="users-edit-readonly">
+                      <strong>{editForm.name || editForm.username}</strong>
+                      <span> ({editForm.username}) · {editForm.role}</span>
+                    </p>
+                    <label>New Password *</label>
+                    <div className="users-password-field">
+                      <input
+                        name="password"
+                        value={editForm.password}
+                        onChange={handleEditChange}
+                        type={showEditPassword ? 'text' : 'password'}
+                        placeholder="Enter new password"
+                        required
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        className="users-password-toggle"
+                        onClick={() => setShowEditPassword(v => !v)}
+                        aria-label={showEditPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showEditPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <label>Full Name</label>
+                    <input name="name" value={typeof editForm.name === 'string' ? editForm.name : ''} onChange={handleEditChange} placeholder="Enter Full Name" />
+                    <label>Username</label>
+                    <input name="username" value={editForm.username} onChange={handleEditChange} placeholder="Enter Username" />
+                    <label>Email</label>
+                    <input name="email" type="email" value={editForm.email} onChange={handleEditChange} placeholder="Enter Email" />
+                    <label>Phone Number</label>
+                    <input name="contact" type="tel" value={editForm.contact} onChange={handleEditChange} placeholder="Enter Phone Number" />
+                    <label>Gender</label>
+                    <select name="gender" value={editForm.gender} onChange={handleEditChange} className="users-edit-select">
+                      <option value="">Select</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                    <label>Account Type</label>
+                    <select name="role" value={editForm.role} onChange={handleEditChange} className="users-edit-select">
+                      <option value="Admin1">Admin1</option>
+                      <option value="Admin2">Admin2</option>
+                      <option value="Admin3">Admin3</option>
+                      <option value="Admin4">Admin4</option>
+                      <option value="Teacher">Teacher</option>
+                      <option value="Discipline">Discipline</option>
+                      <option value="Psychosocialist">Psychosocialist</option>
+                    </select>
+                  </>
+                )}
                 <div className="users-edit-actions">
                   <button type="submit" className="users-action-btn users-save-btn" disabled={isAdmin1 || editLoading} style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}>
-                    {editLoading ? 'Saving...' : (isAdmin1 ? 'Not allowed for Admin1' : 'Save Changes')}
+                    {editLoading ? 'Saving...' : (isAdmin1 ? 'Not allowed for Admin1' : isAdmin2 ? 'Update Password' : 'Save Changes')}
                   </button>
                   <button type="button" className="users-action-btn" onClick={() => setModalOpen(false)} disabled={editLoading}>Cancel</button>
                 </div>

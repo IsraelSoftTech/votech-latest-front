@@ -37,6 +37,7 @@ import {
   FaExclamationTriangle,
   FaWarehouse,
   FaLock,
+  FaHandHoldingUsd,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
@@ -173,6 +174,7 @@ export default function SideTop({ children }) {
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       { label: "Monitor Users", icon: <FaUsers />, path: "/monitor-users" },
       { label: "Fee", icon: <FaMoneyBill />, path: "/admin-fee" },
+      { label: "Debts", icon: <FaHandHoldingUsd />, path: "/admin-debts" },
       { label: "Salary", icon: <FaFileInvoiceDollar />, path: "/admin-salary" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       // { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
@@ -239,6 +241,7 @@ export default function SideTop({ children }) {
         icon: <FaBookOpen />,
       },
       { label: "Fee", icon: <FaCreditCard />, path: "/admin-fee" },
+      { label: "Debts", icon: <FaHandHoldingUsd />, path: "/admin-debts" },
       { label: "Salary", icon: <FaFileInvoiceDollar />, path: "/admin-salary" },
       {
         label: "Pay Slip",
@@ -262,6 +265,11 @@ export default function SideTop({ children }) {
         path: "/admin-lesson-plans",
       },
       { label: "Events", icon: <FaCalendarAlt />, path: "/my-events" },
+      {
+        label: "User Passwords",
+        icon: <FaUsers />,
+        path: "/admin-users",
+      },
     ];
   } else if (authUser?.role === "Admin3") {
     menuItems = [
@@ -281,6 +289,7 @@ export default function SideTop({ children }) {
       },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
+      { label: "Debts", icon: <FaHandHoldingUsd />, path: "/admin-debts" },
       { label: "ID Cards", icon: <FaIdCard />, path: "/admin-idcards" },
       {
         label: "Student Attendance",

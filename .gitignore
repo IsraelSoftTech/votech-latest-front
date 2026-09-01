@@ -9,7 +9,8 @@
 /coverage
 
 # production
-
+# Source maps are 20–40MB each and cause GitHub HTTPS push timeouts
+/build/**/*.map
 
 # misc
 .DS_Store

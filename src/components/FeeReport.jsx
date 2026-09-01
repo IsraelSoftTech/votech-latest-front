@@ -4,6 +4,7 @@ import { FaDownload } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 
 import logoImage from '../assets/logo.png';
+import { getFeeStatusLabel } from '../utils/feeStatus';
 
 const FeeReport = React.forwardRef(({ report }, ref) => {
   if (!report) return null;
@@ -59,8 +60,8 @@ const FeeReport = React.forwardRef(({ report }, ref) => {
         yPos = margin + 35;
       };
 
-      // Column widths (7 columns: S/N, ID, Name, Expected, Paid, Owed, %)
-      const colWidths = [15, 28, 65, 42, 42, 42, 22];
+      // Column widths (8 columns: S/N, ID, Name, Expected, Paid, Owed, Status, %)
+      const colWidths = [12, 24, 55, 38, 38, 38, 28, 20];
       const tableStartX = margin;
       const tableWidth = pageWidth - (margin * 2);
       const totalColWidth = colWidths.reduce((sum, w) => sum + w, 0);
@@ -131,7 +132,7 @@ const FeeReport = React.forwardRef(({ report }, ref) => {
           const textStr = String(text);
           
           // Center align for S/N and percentage columns
-          const align = (colIndex === 0 || colIndex === 6) ? 'center' : 'left';
+          const align = (colIndex === 0 || colIndex === 7) ? 'center' : 'left';
           
           // Truncate long text if needed
           let displayText = textStr;
@@ -160,7 +161,7 @@ const FeeReport = React.forwardRef(({ report }, ref) => {
       addHeader(pdf);
 
       // Draw table header
-      drawRow(pdf, ['S/N', 'Student ID', 'Student Name', 'Expected Fees (XAF)', 'Paid Fees (XAF)', 'Owed Fees (XAF)', '% Paid'], true);
+      drawRow(pdf, ['S/N', 'Student ID', 'Student Name', 'Expected (XAF)', 'Paid (XAF)', 'Owed (XAF)', 'Status', '% Paid'], true);
 
       // Draw table rows
       report.students.forEach((student, index) => {
@@ -171,6 +172,7 @@ const FeeReport = React.forwardRef(({ report }, ref) => {
           student.expectedFees.toLocaleString(),
           student.paidFees.toLocaleString(),
           student.owedFees.toLocaleString(),
+          student.statusLabel || getFeeStatusLabel(student.paymentStatus),
           student.expectedFees > 0 ? `${Math.round((student.paidFees / student.expectedFees) * 100)}%` : '0%'
         ];
         
@@ -228,6 +230,7 @@ const FeeReport = React.forwardRef(({ report }, ref) => {
               <th>Expected Fees (XAF)</th>
               <th>Paid Fees (XAF)</th>
               <th>Owed Fees (XAF)</th>
+              <th>Status</th>
               <th>% Paid</th>
             </tr>
           </thead>
@@ -240,6 +243,7 @@ const FeeReport = React.forwardRef(({ report }, ref) => {
                 <td>{student.expectedFees.toLocaleString()}</td>
                 <td>{student.paidFees.toLocaleString()}</td>
                 <td>{student.owedFees.toLocaleString()}</td>
+                <td>{student.statusLabel || getFeeStatusLabel(student.paymentStatus)}</td>
                 <td>{student.expectedFees > 0 ? Math.round((student.paidFees / student.expectedFees) * 100) : 0}%</td>
               </tr>
             ))}

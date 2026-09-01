@@ -1,7 +1,6 @@
 // App.jsx — merged (duplicates removed; second app's data preferred on conflicts)
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import Loader from "./components/Loader";
@@ -26,7 +25,6 @@ import Finance from "./components/Finance.jsx";
 import Specialty from "./components/Specialty.jsx";
 import Message from "./components/Message.jsx";
 import UserChat from "./components/UserChat";
-import ComingSoon from "./components/ComingSoon.jsx";
 import StudentIdCards from "./components/StudentIdCards.jsx";
 import StudentAttendance from "./components/StudentAttendance.jsx";
 import AcademicYearManagement from "./components/AcademicYearManagement.jsx";
@@ -83,9 +81,9 @@ import DeanLessonPlan from "./components/DeanLessonPlan.jsx";
 import UserEvents from "./components/UserEvents";
 
 // Misc
-import Reports from "./components/Reports.jsx";
 import ReportInventory from "./components/ReportInventory.jsx";
 import ReportFinances from "./components/ReportFinances.jsx";
+import Debts from "./components/Debts.jsx";
 import PropertyEquipment from "./components/PropertyEquipment.jsx";
 import GroupChat from "./components/GroupChat";
 import PsycoDash from "./components/PsycoDash.jsx";
@@ -139,7 +137,6 @@ function App() {
   const [showLoader, setShowLoader] = React.useState(true);
   const [showPoweredBy, setShowPoweredBy] = React.useState(false);
   const [authUser, setAuthUser] = React.useState(null);
-  const [authLoading, setAuthLoading] = React.useState(true);
 
   React.useEffect(() => {
     const timer1 = setTimeout(() => setShowPoweredBy(true), 1500); // show text after 1.5s
@@ -167,8 +164,6 @@ function App() {
       } catch (error) {
         console.error("App: Error parsing auth user:", error);
         setAuthUser(null);
-      } finally {
-        setAuthLoading(false);
       }
     };
 
@@ -230,6 +225,7 @@ function App() {
         <Route path="/admin-teacher" element={<AdminTeachers />} />
         <Route path="/admin-class" element={<AdminClass />} />
         <Route path="/admin-finance" element={<Finance />} />
+        <Route path="/admin-debts" element={<Debts />} />
         <Route path="/admin-specialty" element={<Specialty />} />
         <Route path="/admin-messages" element={<Message />} />
         <Route path="/admin-messages/:userId" element={<UserChat />} />
@@ -291,6 +287,7 @@ function App() {
 
         <Route path="/discipline-messages" element={<DiscMessage />} />
         <Route path="/discipline-messages/:userId" element={<DiscUserChat />} />
+        <Route path="/discipline-group-messages/:groupId" element={<DiscMessage />} />
         <Route
           path="/discipline-students"
           element={
@@ -363,10 +360,12 @@ function App() {
         <Route path="/teacher-dashboard" element={<TeacherDashboardPage />} />
         <Route path="/teacher-messages" element={<TeacherMessage />} />
         <Route path="/teacher-messages/:userId" element={<TeacherMessage />} />
+        <Route path="/teacher-group-messages/:groupId" element={<TeacherMessage />} />
         <Route path="/teacher-lesson-plans" element={<LessonPlan />} />
         <Route path="/dean" element={<Dean />} />
         <Route path="/dean-messages" element={<DeanMessage />} />
         <Route path="/dean-messages/:userId" element={<DeanMessage />} />
+        <Route path="/dean-group-messages/:groupId" element={<DeanMessage />} />
         <Route path="/dean-events" element={<DeanEvent />} />
         <Route path="/my-events" element={<UserEvents />} />
         <Route path="/dean-operations" element={<Dean />} />

@@ -1,9 +1,30 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaCheck, FaTimes, FaDownload, FaFileAlt, FaClock, FaFolderOpen } from 'react-icons/fa';
+import {
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaEye,
+  FaCheck,
+  FaTimes,
+  FaDownload,
+  FaFileAlt,
+  FaClock,
+  FaFolderOpen,
+  FaCheckCircle,
+  FaTimesCircle,
+} from 'react-icons/fa';
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
+import { PageHeader } from './marks-module/components/PageHeader/PageHeader.component';
+import Stats from './marks-module/components/Stats/Stats.component';
+import './marks-module/components/PageHeader/PageHeader.styles.css';
+import './marks-module/components/Stats/Stats.styles.css';
 import './LessonPlan.css';
+import LessonPlanPagination from './LessonPlanPagination';
+
+const PAGE_SIZE = 15;
+const MERGE_FETCH_LIMIT = 500;
 
 export default function DeanLessonPlan() {
   const [lessonPlans, setLessonPlans] = useState([]);
@@ -27,24 +48,27 @@ export default function DeanLessonPlan() {
   const [filterDepartment, setFilterDepartment] = useState('');
   const [classes, setClasses] = useState([]);
   const [specialties, setSpecialties] = useState([]);
+  const [page, setPage] = useState(1);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   useEffect(() => {
     fetchUserRole();
   }, []);
 
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [userRole, filterStatus, filterClass, filterDepartment, debouncedSearch]);
+
+  useEffect(() => {
     if (userRole) {
       fetchLessonPlans();
     }
-  }, [userRole, filterStatus, filterClass, filterDepartment]);
-
-  useEffect(() => {
-    if (!userRole) return undefined;
-    const timer = setTimeout(() => {
-      fetchLessonPlans();
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [userRole, filterStatus, filterClass, filterDepartment, debouncedSearch]);
 
   useEffect(() => {
     const loadFilterOptions = async () => {
@@ -95,9 +119,11 @@ export default function DeanLessonPlan() {
 
       const filters = {
         status: filterStatus !== 'all' ? filterStatus : undefined,
-        search: searchTerm.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
         class: filterClass || undefined,
         department: filterDepartment || undefined,
+        page: '1',
+        limit: String(MERGE_FETCH_LIMIT),
       };
       
       // Fetch both lesson plans (uploaded files) and lessons (created content)
@@ -106,7 +132,8 @@ export default function DeanLessonPlan() {
         
         // Fetch uploaded lesson plans (PDFs)
         try {
-          lessonPlans = await api.getAllLessonPlans(filters);
+          const plansResult = await api.getAllLessonPlans(filters);
+          lessonPlans = plansResult.items || [];
           console.log('🔍 DeanLessonPlan: getAllLessonPlans() returned:', lessonPlans);
         } catch (err) {
           console.error('🔍 DeanLessonPlan: Error fetching lesson plans:', err);
@@ -114,7 +141,8 @@ export default function DeanLessonPlan() {
         
         // Fetch created lessons (content-based)
         try {
-          lessons = await api.getAllLessons(filters);
+          const lessonsResult = await api.getAllLessons(filters);
+          lessons = lessonsResult.items || [];
           console.log('🔍 DeanLessonPlan: getAllLessons() returned:', lessons);
         } catch (err) {
           console.error('🔍 DeanLessonPlan: Error fetching lessons:', err);
@@ -124,7 +152,8 @@ export default function DeanLessonPlan() {
         
         // Fetch user's lesson plans (PDFs)
         try {
-          lessonPlans = await api.getMyLessonPlans();
+          const plansResult = await api.getMyLessonPlans(filters);
+          lessonPlans = plansResult.items || [];
           console.log('🔍 DeanLessonPlan: getMyLessonPlans() returned:', lessonPlans);
         } catch (err) {
           console.error('🔍 DeanLessonPlan: Error fetching my lesson plans:', err);
@@ -132,7 +161,8 @@ export default function DeanLessonPlan() {
         
         // Fetch user's lessons (content-based)
         try {
-          lessons = await api.getMyLessons();
+          const lessonsResult = await api.getMyLessons(filters);
+          lessons = lessonsResult.items || [];
           console.log('🔍 DeanLessonPlan: getMyLessons() returned:', lessons);
         } catch (err) {
           console.error('🔍 DeanLessonPlan: Error fetching my lessons:', err);
@@ -462,6 +492,13 @@ export default function DeanLessonPlan() {
     });
   };
 
+  const isDean = userRole === 'Dean';
+  const isAdmin1 = userRole === 'Admin1';
+  const isAdmin4 = userRole === 'Admin4';
+  const canUpload = !isAdmin4 && !isDean; // Only Admin4 and Dean cannot upload, Admin1 can upload
+  const canReview = isDean || isAdmin4; // Dean and Admin4 can review
+  const showDashboard = isDean || isAdmin4; // Show enhanced dashboard for both Dean and Admin4
+
   // Server-side filtering for Admin4/Dean dashboard; client-side for teachers
   const filteredPlans = showDashboard
     ? lessonPlans
@@ -476,217 +513,174 @@ export default function DeanLessonPlan() {
         return matchesSearch && matchesStatus;
       });
 
-  const isDean = userRole === 'Dean';
-  const isAdmin1 = userRole === 'Admin1';
-  const isAdmin4 = userRole === 'Admin4';
-  const canUpload = !isAdmin4 && !isDean; // Only Admin4 and Dean cannot upload, Admin1 can upload
-  const canReview = isDean || isAdmin4; // Dean and Admin4 can review
-  const showDashboard = isDean || isAdmin4; // Show enhanced dashboard for both Dean and Admin4
+  const totalRecords = filteredPlans.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
+  const paginatedPlans = filteredPlans.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const pageTitle = isDean
+    ? 'Dean Lesson Plan Management'
+    : isAdmin4
+      ? 'Admin Lesson Plan Management'
+      : 'Lesson Plans';
+
+  const pageSubtitle = showDashboard
+    ? 'Review, filter, and manage submitted lesson plans by class and department'
+    : 'Manage your lesson planning documents';
+
+  const statsData = useMemo(
+    () => [
+      { title: showDashboard ? 'Total Submitted' : 'Submitted', value: lessonPlans.length, icon: FaFileAlt },
+      { title: 'Pending Review', value: getStatusCount('pending'), icon: FaClock },
+      { title: 'Approved', value: getStatusCount('approved'), icon: FaCheckCircle },
+      { title: 'Rejected', value: getStatusCount('rejected'), icon: FaTimesCircle },
+    ],
+    [lessonPlans, showDashboard]
+  );
+
+  const downloadableApprovedCount = approvedPlans.filter(
+    (p) => p.type === 'file' && p.file_url
+  ).length;
 
   return (
     <SideTop>
-      <div className="lesson-plan-container">
-        {/* Success/Error Messages */}
+      <div className="lesson-plan-page">
         {success && <SuccessMessage message={success} />}
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="lp-alert lp-alert-error">{error}</div>}
 
-        {/* Enhanced Dashboard Cards for Dean */}
-        {showDashboard && (
-          <div className="lesson-plan-stats-grid">
-            <div className="lesson-plan-stat-card total">
-              <div className="stat-icon">
-                <FaFileAlt />
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{lessonPlans.length}</div>
-                <div className="stat-label">Total Submitted</div>
-                <div className="stat-sublabel">All lesson plans</div>
-              </div>
-            </div>
-            
-            <div className="lesson-plan-stat-card pending">
-              <div className="stat-icon">
-                <FaClock />
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{getStatusCount('pending')}</div>
-                <div className="stat-label">Pending Review</div>
-                <div className="stat-sublabel">Awaiting approval</div>
-              </div>
-            </div>
-            
-            <div className="lesson-plan-stat-card approved">
-              <div className="stat-icon">
-                <FaCheck />
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{getStatusCount('approved')}</div>
-                <div className="stat-label">Approved</div>
-                <div className="stat-sublabel">Ready for use</div>
-              </div>
-            </div>
-            
-            <div className="lesson-plan-stat-card rejected">
-              <div className="stat-icon">
-                <FaTimes />
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{getStatusCount('rejected')}</div>
-                <div className="stat-label">Rejected</div>
-                <div className="stat-sublabel">Need revision</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Standard Dashboard Cards for Others */}
-        {!showDashboard && (
-          <div className="lesson-plan-cards">
-            <div className="lesson-plan-card">
-              <div className="count">{lessonPlans.length}</div>
-              <div className="desc">Submitted Lesson Plans</div>
-            </div>
-            <div className="lesson-plan-card">
-              <div className="count">{getStatusCount('pending')}</div>
-              <div className="desc">Pending Review</div>
-            </div>
-            {(
-              <>
-                <div className="lesson-plan-card">
-                  <div className="count">{getStatusCount('approved')}</div>
-                  <div className="desc">Approved Plans</div>
-                </div>
-                <div className="lesson-plan-card">
-                  <div className="count">{getStatusCount('rejected')}</div>
-                  <div className="desc">Rejected Plans</div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Header with Actions */}
-        <div className="lesson-plan-header">
-          <div className="header-left">
-            <h2>
-              {isDean ? 'Dean Lesson Plan Management' : isAdmin4 ? 'Admin Lesson Plan Management' : 'Lesson Plans'}
-            </h2>
-            <p className="header-subtitle">
-              {showDashboard ? 'Review and manage all submitted lesson plans' : 'Manage your lesson planning documents'}
-            </p>
-          </div>
-          
-          <div className="header-actions">
-            {canUpload && (
-              <button 
-                className="action-btn upload-btn" 
-                onClick={() => setShowUploadModal(true)}
-              >
-                <FaPlus /> Upload Plan
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Filters and Search - Only for Dean/Admin4 */}
-        {showDashboard && (
-          <div className="lesson-plan-filters">
-            <div className="filter-group">
-              <label>Class:</label>
-              <select
-                value={filterClass}
-                onChange={(e) => setFilterClass(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All Classes</option>
-                {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>Department:</label>
-              <select
-                value={filterDepartment}
-                onChange={(e) => setFilterDepartment(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All Departments</option>
-                {specialties.map((spec) => (
-                  <option key={spec.id} value={spec.id}>
-                    {spec.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>Filter by Status:</label>
-              <select 
-                value={filterStatus} 
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="filter-select"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-            
-            <div className="search-group">
-              <input
-                type="text"
-                placeholder="Search by title, teacher, subject, or filename..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Approved Lesson Plans Folder (single folder UI) */}
-        {showDashboard && (
-          <div className="lesson-plan-approved-folder">
-            <div className="approved-folder-header">
-              <div>
-                <h3>Approved Lesson Plans Archive</h3>
-                <p>Every plan you approve appears here automatically for quick access.</p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <button 
-                  className="approved-folder-icon-btn" 
-                  onClick={() => setShowApprovedModal(true)}
-                  title="Open approved lesson plans"
-                >
-                  <FaFolderOpen />
-                </button>
-                <span className="approved-count">{approvedPlans.length} stored</span>
-              </div>
-            </div>
-            <div className="approved-folder-body">
-              {approvedPlans.length === 0 && (
-                <div className="approved-empty-state">
-                  <FaFileAlt />
-                  <p>No approved lesson plans yet.</p>
-                </div>
+        <PageHeader
+          title={pageTitle}
+          subtitle={pageSubtitle}
+          actions={
+            <>
+              {showDashboard && (
+                <>
+                  <button
+                    type="button"
+                    className="lp-btn-secondary"
+                    onClick={() => setShowApprovedModal(true)}
+                    title="Open approved lesson plans archive"
+                  >
+                    <FaFolderOpen /> Archive ({approvedPlans.length})
+                  </button>
+                  <button
+                    type="button"
+                    className="lp-btn-secondary"
+                    onClick={handleSaveAllApproved}
+                    disabled={savingAll || downloadableApprovedCount === 0}
+                  >
+                    <FaDownload />
+                    {savingAll
+                      ? `Downloading ${saveProgress.current}/${saveProgress.total}…`
+                      : 'Download All Approved'}
+                  </button>
+                </>
               )}
+              {canUpload && (
+                <button
+                  type="button"
+                  className="lp-btn-primary"
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  <FaPlus /> Upload Plan
+                </button>
+              )}
+            </>
+          }
+        />
+
+        <Stats data={statsData} loading={loading && lessonPlans.length === 0} skeletonCount={4} />
+
+        {showDashboard && (
+          <div className="lp-toolbar">
+            <div className="lp-filter-grid">
+              <div className="lp-filter-field">
+                <label htmlFor="lp-filter-class">Class</label>
+                <select
+                  id="lp-filter-class"
+                  value={filterClass}
+                  onChange={(e) => setFilterClass(e.target.value)}
+                >
+                  <option value="">All Classes</option>
+                  {classes.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="lp-filter-field">
+                <label htmlFor="lp-filter-dept">Department</label>
+                <select
+                  id="lp-filter-dept"
+                  value={filterDepartment}
+                  onChange={(e) => setFilterDepartment(e.target.value)}
+                >
+                  <option value="">All Departments</option>
+                  {specialties.map((spec) => (
+                    <option key={spec.id} value={spec.id}>
+                      {spec.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="lp-filter-field">
+                <label htmlFor="lp-filter-status">Status</label>
+                <select
+                  id="lp-filter-status"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              <div className="lp-filter-field lp-search-field">
+                <label htmlFor="lp-filter-search">Search</label>
+                <input
+                  id="lp-filter-search"
+                  type="text"
+                  placeholder="Title, teacher, subject, or filename…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* Lesson Plans Table */}
+        <div className="lp-panel">
+          <div className="lp-panel-head">
+            <h3 className="lp-panel-title">Lesson Plans</h3>
+            <span className="lp-panel-meta">
+              {loading
+                ? 'Loading…'
+                : totalRecords > 0
+                  ? `${totalRecords} record(s) total`
+                  : '0 record(s)'}
+            </span>
+          </div>
+          <div className="lp-table-scroll">
         <div className="lesson-plan-table-wrapper">
           {loading ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
               <p>Loading lesson plans...</p>
             </div>
-          ) : filteredPlans.length === 0 ? (
+          ) : paginatedPlans.length === 0 ? (
             <div className="empty-state">
               <FaFileAlt className="empty-icon" />
               <h3>No lesson plans found</h3>
@@ -718,7 +712,7 @@ export default function DeanLessonPlan() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPlans.map((plan) => (
+                  {paginatedPlans.map((plan) => (
                     <tr key={plan.id} className={`table-row ${plan.status}`}>
                       <td className="title-cell">
                         <div className="title-content">
@@ -861,6 +855,16 @@ export default function DeanLessonPlan() {
               </table>
             </div>
           )}
+        </div>
+        <LessonPlanPagination
+          page={page}
+          totalPages={totalPages}
+          total={totalRecords}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+          loading={loading}
+        />
+          </div>
         </div>
 
         {/* Upload Modal */}

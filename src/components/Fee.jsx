@@ -9,6 +9,7 @@ import FeeReport from './FeeReport';
 import FeeReceipt from './FeeReceipt';
 import { usePermissions } from '../hooks/usePermissions';
 import { FaEdit, FaPrint, FaMoneyBillWave, FaEye, FaDownload, FaLock, FaHistory } from 'react-icons/fa';
+import { getFeeStatusLabel, getFeeStatusColors, isFeeSettled } from '../utils/feeStatus';
 
 export default function Fee() {
   const location = useLocation();
@@ -50,21 +51,12 @@ export default function Fee() {
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState({ className: '', classId: '', backendResponse: null });
   
-  // Discount state
+  // Per-student discount (persisted via API — Point 4C)
   const [discountModalOpen, setDiscountModalOpen] = useState(false);
-  const [discountRate, setDiscountRate] = useState(() => {
-    const saved = localStorage.getItem('globalFeeDiscountRate');
-    const parsed = saved ? parseFloat(saved) : 0;
-    return isNaN(parsed) ? 0 : Math.max(0, Math.min(100, parsed));
-  });
-  const [discountApplies, setDiscountApplies] = useState(() => {
-    try {
-      const raw = localStorage.getItem('feeDiscountApplies');
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [discountEditStudent, setDiscountEditStudent] = useState(null);
+  const [discountEditAmount, setDiscountEditAmount] = useState('');
+  const [discountEditReason, setDiscountEditReason] = useState('');
+  const [discountSaving, setDiscountSaving] = useState(false);
   
   // Receipt modal state
   const [receiptData, setReceiptData] = useState(null);
@@ -124,25 +116,86 @@ export default function Fee() {
     });
   }, []);
 
-  // Persist discount configs whenever they change
-  useEffect(() => {
-    try { localStorage.setItem('globalFeeDiscountRate', String(discountRate || 0)); } catch {}
-  }, [discountRate]);
-  useEffect(() => {
-    try { localStorage.setItem('feeDiscountApplies', JSON.stringify(discountApplies || {})); } catch {}
-  }, [discountApplies]);
+  // Calculate student fee statistics (uses backend summary when available)
+  const getStudentFeeStats = (studentId) => {
+    const feeStats = studentFeeDetails[studentId];
+    if (!feeStats) return null;
 
-  // Helper: compute discounted totals for table display (UI only)
-  const getDiscountedTotals = (studentId) => {
-    const base = getStudentFeeStats(studentId);
-    if (!base) return null;
-    const applies = !!discountApplies[studentId];
-    const rate = (parseFloat(discountRate) || 0) / 100;
-    if (!applies || rate <= 0) return base;
-    const discountedExpected = Math.max(0, Math.round(base.totalExpected * (1 - rate)));
-    const totalPaid = base.totalPaid;
-    const discountedBalance = Math.max(0, discountedExpected - totalPaid);
-    return { ...base, totalExpected: discountedExpected, totalBalance: discountedBalance };
+    if (feeStats.summary) {
+      const s = feeStats.summary;
+      return {
+        baseFee: s.baseFee || 0,
+        discountAmount: s.discountAmount || 0,
+        discountReason: s.discountReason || null,
+        totalExpected: s.netExpected || 0,
+        totalPaid: s.totalPaid || 0,
+        totalBalance: s.totalBalance || 0,
+        status: s.status || 'unknown',
+      };
+    }
+
+    const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
+    let totalExpected = 0;
+    let totalPaid = 0;
+    let totalBalance = 0;
+
+    feeTypes.forEach(type => {
+      const expected = parseFloat(feeStats.student?.[type.toLowerCase() + '_fee']) || 0;
+      const balance = feeStats.balance?.[type] || 0;
+      const paid = Math.max(0, expected - balance);
+      totalExpected += expected;
+      totalPaid += paid;
+      totalBalance += balance;
+    });
+
+    return {
+      baseFee: totalExpected,
+      discountAmount: 0,
+      discountReason: null,
+      totalExpected,
+      totalPaid,
+      totalBalance,
+      status: 'unknown',
+    };
+  };
+
+  const openDiscountModal = (student) => {
+    const stats = getStudentFeeStats(student.id);
+    setDiscountEditStudent(student);
+    setDiscountEditAmount(String(stats?.discountAmount || 0));
+    setDiscountEditReason(stats?.discountReason || '');
+    setDiscountModalOpen(true);
+  };
+
+  const handleSaveStudentDiscount = async () => {
+    if (!discountEditStudent) return;
+    const amount = Math.max(0, parseFloat(String(discountEditAmount).replace(/,/g, '')) || 0);
+    setDiscountSaving(true);
+    try {
+      const result = await api.setStudentFeeDiscount(discountEditStudent.id, {
+        discount_amount: amount,
+        reason: discountEditReason.trim() || null,
+      });
+      if (result?.feeStats) {
+        setStudentFeeDetails(prev => ({
+          ...prev,
+          [discountEditStudent.id]: result.feeStats,
+        }));
+      } else {
+        const refreshed = await api.getStudentFeeStats(discountEditStudent.id);
+        setStudentFeeDetails(prev => ({ ...prev, [discountEditStudent.id]: refreshed }));
+      }
+      setDiscountModalOpen(false);
+      setDiscountEditStudent(null);
+      setSuccessMessage(result?.warning ? `Discount saved. ${result.warning}` : 'Discount saved successfully.');
+      setTimeout(() => setSuccessMessage(''), 4000);
+      updateTotals().catch(() => {});
+    } catch (error) {
+      console.error('Error saving discount:', error);
+      alert(error.message || 'Failed to save discount.');
+    } finally {
+      setDiscountSaving(false);
+    }
   };
 
   // Update totals - single fast API call
@@ -231,50 +284,11 @@ export default function Fee() {
     }
   }, [totalPages, currentPage]);
 
-  // Calculate student fee statistics
-  const getStudentFeeStats = (studentId) => {
-    const feeStats = studentFeeDetails[studentId];
-    if (!feeStats) return null;
-    
-    const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
-    let totalExpected = 0;
-    let totalPaid = 0;
-    let totalBalance = 0;
-    
-    feeTypes.forEach(type => {
-      // Get expected amount from student's class fees
-      const expected = parseFloat(feeStats.student?.[type.toLowerCase() + '_fee']) || 0;
-      // Calculate paid amount: expected - balance
-      const balance = feeStats.balance?.[type] || 0;
-      const paid = Math.max(0, expected - balance);
-      
-      totalExpected += expected;
-      totalPaid += paid;
-      totalBalance += balance;
-    });
-    
-    return {
-      totalExpected,
-      totalPaid,
-      totalBalance,
-      feeTypes: feeTypes.map(type => ({
-        type,
-        expected: feeStats.balance?.[type] || 0,
-        paid: feeStats.paid?.[type] || 0,
-        balance: (feeStats.balance?.[type] || 0) - (feeStats.paid?.[type] || 0)
-      }))
-    };
-  };
 
   // Get student status
   const getStudentStatus = (studentId) => {
     const stats = getStudentFeeStats(studentId);
-    if (!stats) return 'Unknown';
-    
-    if (stats.totalBalance === 0 && stats.totalPaid > 0) return 'Completed';
-    if (stats.totalPaid > 0 && stats.totalBalance > 0) return 'Partial';
-    if (stats.totalPaid === 0 && stats.totalBalance > 0) return 'Pending';
-    return 'No Fees';
+    return stats ? getFeeStatusLabel(stats.status) : 'Unknown';
   };
 
   // Handle pay fee
@@ -350,9 +364,9 @@ export default function Fee() {
         setReceiptData({
           student: stats.student,
           balance: stats.balance,
+          summary: stats.summary,
           transactions: transactions,
-          discountApplied: !!discountApplies[student.id],
-          discountRate: parseFloat(discountRate) || 0
+          discountAmount: stats.summary?.discountAmount || 0,
         });
         setReceiptModalOpen(true);
       }
@@ -372,10 +386,10 @@ export default function Fee() {
         setReceiptData({
           student: stats.student,
           balance: stats.balance,
+          summary: stats.summary,
           currentPayment: payment,
           transactions: transactions,
-          discountApplied: !!discountApplies[student.id],
-          discountRate: parseFloat(discountRate) || 0
+          discountAmount: stats.summary?.discountAmount || 0,
         });
         setReceiptModalOpen(true);
       }
@@ -424,7 +438,6 @@ export default function Fee() {
         setClassStatsLoading(true);
         setClassStatsError('');
         try {
-          const feeTypes = ['Registration','Bus','Tuition','Internship','Remedial','PTA'];
           const inClass = students.filter(s => (s.class_name || s.class || '') === selectedClassName);
           // fetch missing details for students in class
           const missing = inClass.filter(s => !studentFeeDetails[s.id]);
@@ -448,30 +461,45 @@ export default function Fee() {
           const currentDetails = (sid) => (detailsMap[sid] || {});
           const mapped = inClass.map(s => {
             const details = currentDetails(s.id);
+            const summary = details.summary;
             const row = {
               id: s.id,
               student_id: s.student_id,
               name: s.full_name,
               full_name: s.full_name,
             };
-            let totalPaid = 0;
-            let totalBalance = 0;
-            let totalExpected = 0;
+            const feeTypes = ['Registration','Bus','Tuition','Internship','Remedial','PTA'];
             feeTypes.forEach(t => {
-              const expected = details && details.student ? (parseFloat(details.student?.[t.toLowerCase() + '_fee']) || 0) : 0;
-              const balance = details && details.balance ? (details.balance?.[t] || 0) : expected;
+              const expected = details?.student
+                ? (parseFloat(details.student?.[t.toLowerCase() + '_fee']) || 0)
+                : 0;
+              const balance = details?.balance ? (details.balance?.[t] || 0) : expected;
               const paid = Math.max(0, expected - balance);
               row[t] = paid;
               row[`${t}_expected`] = expected;
               row[`${t}_balance`] = balance;
-              totalPaid += paid;
-              totalBalance += balance;
-              totalExpected += expected;
             });
-            row.Expected = totalExpected;
-            row.Total = totalPaid;
-            row.Balance = totalBalance;
-            row.Status = totalBalance === 0 && totalPaid > 0 ? 'Paid' : totalPaid > 0 ? 'Partial' : 'Unpaid';
+            if (summary) {
+              row.Expected = summary.netExpected || 0;
+              row.Total = summary.totalPaid || 0;
+              row.Balance = summary.totalBalance || 0;
+              row.feeStatus = summary.status || 'unknown';
+              row.Status = getFeeStatusLabel(summary.status);
+            } else {
+              let totalPaid = 0;
+              let totalBalance = 0;
+              let totalExpected = 0;
+              feeTypes.forEach(t => {
+                totalPaid += row[t] || 0;
+                totalBalance += row[`${t}_balance`] || 0;
+                totalExpected += row[`${t}_expected`] || 0;
+              });
+              row.Expected = totalExpected;
+              row.Total = totalPaid;
+              row.Balance = totalBalance;
+              row.feeStatus = 'unknown';
+              row.Status = 'Unknown';
+            }
             return row;
           });
           // Sort alphabetically by name (trim + case-insensitive) for consistent display and print
@@ -500,9 +528,6 @@ export default function Fee() {
       return;
     }
 
-    const feeTypes = ['Registration','Bus','Tuition','Internship','Remedial','PTA'];
-
-    // Calculate totals using the same mapped classStats rows shown in the modal
     const totalStudents = classStats.length;
     const totalExpected = classStats.reduce((sum, s) => sum + (s.Expected || 0), 0);
     const totalPaid = classStats.reduce((sum, s) => sum + (s.Total || 0), 0);
@@ -515,25 +540,16 @@ export default function Fee() {
       const nameB = String(b?.name || b?.full_name || '').trim().toLowerCase();
       return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
     });
-    const students = sortedStats.map(s => {
-      const expectedFees = s.Expected || 0;
-      const paidFees = s.Total || 0;
-      const owedFees = s.Balance || 0;
-      
-      let paymentStatus = 'uncompleted';
-      if (owedFees === 0) paymentStatus = 'completed';
-      else if (paidFees > 0) paymentStatus = 'partial';
-      
-      return {
-        id: s.id || Math.random().toString(),
-        student_id: s.student_id || 'N/A',
-        full_name: s.name || s.full_name,
-        expectedFees,
-        paidFees,
-        owedFees,
-        paymentStatus
-      };
-    });
+    const students = sortedStats.map(s => ({
+      id: s.id || Math.random().toString(),
+      student_id: s.student_id || 'N/A',
+      full_name: s.name || s.full_name,
+      expectedFees: s.Expected || 0,
+      paidFees: s.Total || 0,
+      owedFees: s.Balance || 0,
+      paymentStatus: s.feeStatus || 'unknown',
+      statusLabel: s.Status || getFeeStatusLabel(s.feeStatus),
+    }));
 
     // We removed the type breakdown from the report per your request
     const feeBreakdown = [];
@@ -649,13 +665,13 @@ export default function Fee() {
         setReceiptData({
           student: refreshed.student,
           balance: refreshed.balance,
+          summary: refreshed.summary,
           currentPayment: {
             amount: delta,
             fee_type: payType,
             paid_at: new Date().toISOString()
           },
-          discountApplied: !!discountApplies[selectedStudent.id],
-          discountRate: parseFloat(discountRate) || 0
+          discountAmount: refreshed.summary?.discountAmount || 0,
         });
         setReceiptModalOpen(true);
       }
@@ -774,29 +790,6 @@ export default function Fee() {
             <span style={{ fontSize: '16px' }}>🔄</span>
             {studentsLoading ? 'Refreshing...' : 'Refresh'}
           </button>
-          {!isReadOnly && (
-            <button
-              onClick={() => setDiscountModalOpen(true)}
-              style={{
-                background: '#6c757d',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                fontSize: '17px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'background 0.2s'
-              }}
-              title="Set discount rate"
-            >
-              <span style={{ fontSize: '16px' }}>💸</span>
-              Discount
-            </button>
-          )}
         </div>
         {searchLoading && <div style={{ textAlign: 'center', color: '#888', marginTop: 12 }}>Searching...</div>}
         {searchError && <div style={{ textAlign: 'center', color: '#e53e3e', marginTop: 12 }}>{searchError}</div>}
@@ -874,10 +867,11 @@ export default function Fee() {
                     <tr style={{ background: '#204080', color: '#fff' }}>
                       <th style={{ padding: '16px 12px', textAlign: 'left', fontSize: '14px', fontWeight: 600 }}>Student</th>
                       <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Class</th>
-                      <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Total Expected</th>
+                      <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Base Fee</th>
+                      <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Discount</th>
+                      <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Net Due</th>
                       <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Total Paid</th>
                       <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Balance</th>
-                      <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Discount {typeof discountRate === 'number' && discountRate > 0 ? `( ${discountRate}% )` : ''}</th>
                       <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Status</th>
                       {!isAdmin1 && (
                         <th style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600 }}>Actions</th>
@@ -886,16 +880,10 @@ export default function Fee() {
               </thead>
               <tbody>
                     {paginatedStudents.map((student, index) => {
-                      const baseStats = getStudentFeeStats(student.id);
-                      const feeStats = getDiscountedTotals(student.id) || baseStats;
-                      const status = (() => {
-                        if (!feeStats) return 'Unknown';
-                        if (feeStats.totalBalance === 0 && feeStats.totalPaid > 0) return 'Completed';
-                        if (feeStats.totalPaid > 0 && feeStats.totalBalance > 0) return 'Partial';
-                        if (feeStats.totalPaid === 0 && feeStats.totalBalance > 0) return 'Pending';
-                        return 'No Fees';
-                      })();
-                      const applied = !!discountApplies[student.id];
+                      const feeStats = getStudentFeeStats(student.id);
+                      const statusKey = feeStats?.status || 'unknown';
+                      const statusLabel = getFeeStatusLabel(statusKey);
+                      const statusColors = getFeeStatusColors(statusKey);
                   
                   return (
                         <tr key={student.id} style={{ 
@@ -909,6 +897,34 @@ export default function Fee() {
                           <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
                             {student.class_name || student.class || 'N/A'}
                           </td>
+                          <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#555' }}>
+                            {feeStats ? feeStats.baseFee.toLocaleString() : '0'} XAF
+                          </td>
+                          <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
+                            {!isReadOnly ? (
+                              <button
+                                type="button"
+                                onClick={() => openDiscountModal(student)}
+                                style={{
+                                  background: feeStats?.discountAmount > 0 ? '#e8f5e9' : '#f3f4f6',
+                                  color: '#204080',
+                                  border: '1px solid #cbd5e1',
+                                  borderRadius: 6,
+                                  padding: '6px 10px',
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                }}
+                                title="Set individualized discount"
+                              >
+                                {(feeStats?.discountAmount || 0).toLocaleString()} XAF
+                              </button>
+                            ) : (
+                              <span style={{ fontSize: 12, color: '#777' }}>
+                                {(feeStats?.discountAmount || 0).toLocaleString()} XAF
+                              </span>
+                            )}
+                          </td>
                           <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#1976d2' }}>
                             {feeStats ? feeStats.totalExpected.toLocaleString() : '0'} XAF
                           </td>
@@ -919,34 +935,15 @@ export default function Fee() {
                             {feeStats ? feeStats.totalBalance.toLocaleString() : '0'} XAF
                           </td>
                           <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
-                            {!isReadOnly ? (
-                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={applied}
-                                  onChange={e => {
-                                    const checked = e.target.checked;
-                                    setDiscountApplies(prev => ({ ...prev, [student.id]: checked }));
-                                  }}
-                                />
-                                <span style={{ fontSize: 12, color: '#555' }}>{applied ? 'Apply' : 'No'}</span>
-                              </label>
-                            ) : (
-                              <span style={{ fontSize: 12, color: '#777' }}>{applied ? 'Yes' : 'No'}</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '16px 12px', textAlign: 'center', fontSize: '14px' }}>
                             <span style={{
                               padding: '4px 8px',
                               borderRadius: '4px',
                               fontSize: '12px',
                               fontWeight: 600,
-                              color: '#fff',
-                              background: status === 'Completed' ? '#2ecc71' : 
-                                         status === 'Partial' ? '#ffc107' : 
-                                         status === 'Pending' ? '#e53e3e' : '#6c757d'
+                              color: statusColors.color,
+                              background: statusColors.background,
                             }}>
-                              {status}
+                              {statusLabel}
                             </span>
                       </td>
                           {!isAdmin1 && (
@@ -1008,7 +1005,7 @@ export default function Fee() {
                                 >
                                   <FaHistory size={12} />
                                 </button>
-                                {status === 'Completed' && !isReadOnly && (
+                                {isFeeSettled(statusKey) && !isReadOnly && (
                                   <button
                                     onClick={() => handleGenerateReceipt(student)}
                                     style={{
@@ -1365,6 +1362,7 @@ export default function Fee() {
                               return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
                             })
                             .map((s,idx)=>{
+                              const statusColors = getFeeStatusColors(s.feeStatus);
                               return (
                                 <tr key={s.name+idx}>
                                   <td>{idx+1}</td>
@@ -1378,7 +1376,7 @@ export default function Fee() {
                                   <td>{(s.PTA||0).toLocaleString()}</td>
                                   <td>{(s.Total||0).toLocaleString()}</td>
                                   <td>{(s.Balance||0).toLocaleString()}</td>
-                                  <td style={{color:s.Status==='Paid'?'#2ecc71':'#e53e3e',fontWeight:700}}>{s.Status}</td>
+                                  <td style={{color:statusColors.background,fontWeight:700}}>{s.Status}</td>
                                 </tr>
                               );
                             })}
@@ -1721,44 +1719,62 @@ export default function Fee() {
          </div>
        )}
  
-       {/* Discount Modal */}
-       {discountModalOpen && !isReadOnly && (
-         <div className="discount-modal-overlay" onClick={() => setDiscountModalOpen(false)}>
+       {/* Per-student discount modal */}
+       {discountModalOpen && !isReadOnly && discountEditStudent && (
+         <div className="discount-modal-overlay" onClick={() => !discountSaving && setDiscountModalOpen(false)}>
            <div className="discount-modal-content" onClick={e => e.stopPropagation()}>
              <button 
                className="text-button close-btn black-x always-visible" 
-               onClick={() => setDiscountModalOpen(false)} 
+               onClick={() => !discountSaving && setDiscountModalOpen(false)} 
                style={{ position: 'absolute', top: 10, right: 20, zIndex: 10000, color: '#111', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}
                aria-label="Close"
              >
                &#10005;
              </button>
-             <h2 style={{ marginTop: 4, marginBottom: 12 }}>Set Discount</h2>
-             <p style={{ color: '#666', marginBottom: 16 }}>Choose a discount rate to apply to selected students.</p>
-             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
-               {[5,10,15,20,25,30].map(p => (
-                 <button key={p} onClick={() => setDiscountRate(p)} style={{ border: '1px solid #1976d2', background: '#eaf6ff', color: '#204080', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>{p}%</button>
-               ))}
-             </div>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
+             <h2 style={{ marginTop: 4, marginBottom: 8 }}>Student Discount</h2>
+             <p style={{ color: '#666', marginBottom: 16 }}>
+               {discountEditStudent.full_name} — set a fixed discount amount (XAF) for the active academic year.
+             </p>
+             <div style={{ textAlign: 'left', marginBottom: 12 }}>
+               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#204080', marginBottom: 6 }}>
+                 Discount amount (XAF)
+               </label>
                <input
                  type="number"
                  min="0"
-                 max="100"
-                 step="0.01"
-                 value={discountRate}
-                 onChange={e => {
-                   const v = parseFloat(e.target.value);
-                   setDiscountRate(isNaN(v) ? 0 : Math.max(0, Math.min(100, v)));
-                 }}
-                 style={{ width: 120, textAlign: 'right', border: '1.5px solid #204080', borderRadius: 7, padding: '8px 10px', fontSize: 16, color: '#204080' }}
+                 step="1"
+                 value={discountEditAmount}
+                 onChange={e => setDiscountEditAmount(e.target.value)}
+                 style={{ width: '100%', textAlign: 'right', border: '1.5px solid #204080', borderRadius: 7, padding: '10px 12px', fontSize: 16, color: '#204080' }}
                />
-               <span style={{ fontWeight: 700, color: '#204080' }}>%</span>
              </div>
-             <div style={{ fontSize: 13, color: '#555', marginBottom: 14 }}>Current rate will affect Total Expected and Balance for checked students.</div>
+             <div style={{ textAlign: 'left', marginBottom: 16 }}>
+               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#204080', marginBottom: 6 }}>
+                 Reason (optional)
+               </label>
+               <input
+                 type="text"
+                 value={discountEditReason}
+                 onChange={e => setDiscountEditReason(e.target.value)}
+                 placeholder="e.g. sibling discount, hardship"
+                 style={{ width: '100%', border: '1.5px solid #cbd5e1', borderRadius: 7, padding: '10px 12px', fontSize: 14 }}
+               />
+             </div>
              <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-               <button onClick={() => { setDiscountModalOpen(false); setSuccessMessage(`Discount rate set to ${parseFloat(discountRate) || 0}%`); setTimeout(()=>setSuccessMessage(''), 3000); }} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 7, padding: '10px 18px', fontWeight: 700, cursor: 'pointer' }}>Save</button>
-               <button onClick={() => { setDiscountRate(0); setSuccessMessage('Discount rate cleared'); setTimeout(()=>setSuccessMessage(''), 3000); }} style={{ background: '#eee', color: '#333', border: '1px solid #ddd', borderRadius: 7, padding: '10px 18px', cursor: 'pointer' }}>Clear Rate</button>
+               <button
+                 disabled={discountSaving}
+                 onClick={handleSaveStudentDiscount}
+                 style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 7, padding: '10px 18px', fontWeight: 700, cursor: discountSaving ? 'not-allowed' : 'pointer', opacity: discountSaving ? 0.7 : 1 }}
+               >
+                 {discountSaving ? 'Saving...' : 'Save Discount'}
+               </button>
+               <button
+                 disabled={discountSaving}
+                 onClick={() => { setDiscountEditAmount('0'); setDiscountEditReason(''); }}
+                 style={{ background: '#eee', color: '#333', border: '1px solid #ddd', borderRadius: 7, padding: '10px 18px', cursor: 'pointer' }}
+               >
+                 Clear
+               </button>
              </div>
            </div>
          </div>

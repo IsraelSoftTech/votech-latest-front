@@ -4,6 +4,7 @@ import { FaDownload, FaPrint } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logoImage from '../assets/logo.png';
+import { getFeeStatusLabel } from '../utils/feeStatus';
 
 const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentProp = null, showPrintButton = true }, ref) => {
   const currentPaymentFromReceipt = receipt?.paidAmount != null && receipt?.paidType
@@ -48,8 +49,9 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
 
   if (!receipt) return null;
 
-  const { student, balance, transactions = [], discountApplied = false, discountRate = 0, paidAmount, paidType } = receipt;
+  const { student, balance, transactions = [], summary, discountAmount = 0, paidAmount, paidType } = receipt;
   const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
+  const flatDiscount = summary?.discountAmount ?? (parseFloat(discountAmount) || 0);
   
   // Function to convert number to words
   const numberToWords = (num) => {
@@ -66,32 +68,32 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
     return 'Number too large';
   };
   
-  const rate = discountApplied ? Math.max(0, Math.min(100, parseFloat(discountRate) || 0)) / 100 : 0;
+  const baseTotal = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
+  const netTotal = Math.max(0, baseTotal - flatDiscount);
 
-  // Calculate amounts (respect discount)
+  // Calculate amounts (respect flat discount on total)
   let paid, total, left, status;
   
   if (currentPayment) {
-    // Show only the current payment amount
     paid = currentPayment.amount || 0;
-    const baseTotal = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
-    total = Math.round(baseTotal * (1 - rate));
-    const baseLeft = feeTypes.reduce((sum, type) => sum + (balance[type] || 0), 0);
-    // If discount applies, recompute left as discounted total minus paid-to-date overall
-    if (rate > 0) {
-      const totalPaidToDate = feeTypes.reduce((sum, type) => sum + ((parseFloat(student[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)), 0);
-      left = Math.max(0, total - totalPaidToDate);
-    } else {
-      left = baseLeft;
-    }
+    total = netTotal;
+    const totalPaidToDate = feeTypes.reduce(
+      (sum, type) => sum + ((parseFloat(student[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)),
+      0
+    );
+    left = Math.max(0, total - totalPaidToDate);
     status = 'Payment Received';
   } else {
-    const basePaid = feeTypes.reduce((sum, type) => sum + ((parseFloat(student[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)), 0);
-    const baseTotal = feeTypes.reduce((sum, type) => sum + (parseFloat(student[type.toLowerCase() + '_fee']) || 0), 0);
-    total = Math.round(baseTotal * (1 - rate));
+    const basePaid = feeTypes.reduce(
+      (sum, type) => sum + ((parseFloat(student[type.toLowerCase() + '_fee']) || 0) - (balance[type] || 0)),
+      0
+    );
+    total = netTotal;
     paid = basePaid;
     left = Math.max(0, total - paid);
-    status = left <= 0 ? 'Completed' : 'Uncompleted';
+    status = getFeeStatusLabel(
+      summary?.status || (left <= 0 && paid > 0 ? 'paid' : paid > 0 ? 'partial' : 'unpaid')
+    );
   }
 
   // Get last payment for each fee type (excluding current payment)
@@ -326,8 +328,8 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
           Received <strong>{paid.toLocaleString()} XAF</strong> on {new Date(currentPayment ? currentPayment.paid_at : new Date()).toLocaleDateString()}
           {currentPayment && ` – ${currentPayment.fee_type}`}
         </p>
-        {discountApplied && rate > 0 && (
-          <p className="statement-text" style={{ color: '#204080' }}>Discount: {Math.round(rate * 100)}%</p>
+        {flatDiscount > 0 && (
+          <p className="statement-text" style={{ color: '#204080' }}>Discount: {flatDiscount.toLocaleString()} XAF</p>
         )}
         <p className="amount-in-words">Amount in words: {numberToWords(paid)} XAF</p>
       </div>
@@ -369,20 +371,18 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
             <tbody>
               {feeTypes.map(type => {
                 const expectedFee = parseFloat(student[type.toLowerCase() + '_fee']) || 0;
-                const discountedExpected = Math.round(expectedFee * (1 - rate));
                 const balanceOwed = balance[type] || 0;
                 const amountPaid = expectedFee - balanceOwed;
-                const discountedBalance = Math.max(0, discountedExpected - amountPaid);
-                const pctBase = discountedExpected > 0 ? discountedExpected : expectedFee;
+                const pctBase = expectedFee;
                 const pctPaid = pctBase > 0 ? Math.round((amountPaid / pctBase) * 100) : 0;
                 const percentage = pctBase > 0 ? `${pctPaid}%` : '-';
                 
                 return (
                   <tr key={type}>
                     <td className="fee-type-name">{type}</td>
-                    <td className="fee-expected">{(discountApplied && rate > 0 ? discountedExpected : expectedFee).toLocaleString()}</td>
+                    <td className="fee-expected">{expectedFee.toLocaleString()}</td>
                     <td className="fee-paid">{amountPaid.toLocaleString()}</td>
-                    <td className="fee-balance">{(discountApplied && rate > 0 ? discountedBalance : balanceOwed).toLocaleString()}</td>
+                    <td className="fee-balance">{balanceOwed.toLocaleString()}</td>
                     <td className={`fee-percentage ${pctBase > 0 ? (amountPaid >= pctBase ? 'completed' : amountPaid > 0 ? 'partial' : 'pending') : 'no-fee'}`}>
                       {percentage}
                     </td>
@@ -400,7 +400,17 @@ const FeeReceipt = React.forwardRef(({ receipt, currentPayment: currentPaymentPr
         <table className="summary-table">
           <tbody>
             <tr>
-              <td className="summary-label">OVERALL EXPECTED</td>
+              <td className="summary-label">BASE FEE</td>
+              <td className="summary-value">{baseTotal.toLocaleString()} XAF</td>
+            </tr>
+            {flatDiscount > 0 && (
+              <tr>
+                <td className="summary-label">DISCOUNT</td>
+                <td className="summary-value">-{flatDiscount.toLocaleString()} XAF</td>
+              </tr>
+            )}
+            <tr>
+              <td className="summary-label">NET DUE</td>
               <td className="summary-value">{total.toLocaleString()} XAF</td>
             </tr>
             <tr>

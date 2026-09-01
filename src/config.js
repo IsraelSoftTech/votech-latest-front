@@ -4,7 +4,6 @@ const ENV = process.env.REACT_APP_NODE_ENV || "production";
 
 const isDevelopment = ENV === "development";
 const isDesktop = ENV === "desktop";
-const isProduction = ENV === "production";
 
 const apiBase = isDevelopment
   ? process.env.REACT_APP_API_URL_DEV

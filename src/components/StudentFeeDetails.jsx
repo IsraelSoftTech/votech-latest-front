@@ -5,6 +5,7 @@ import api from '../services/api';
 import './Fee.css';
 import './StudentFeeDetails.css';
 import FeeReceipt from './FeeReceipt';
+import { getFeeStatusLabel, isFeeSettled } from '../utils/feeStatus';
 
 function getAcademicYear() {
   // Academic year starts 2025/2026, changes every 9 months
@@ -48,15 +49,25 @@ export default function StudentFeeDetails() {
     s = studentFeeStats.student;
     balance = studentFeeStats.balance;
     feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
-    const paidPerType = feeTypes.map(type => {
-      const expected = safeNum(s[type.toLowerCase() + '_fee']);
-      const leftAmt = safeNum(balance[type]);
-      return Math.max(0, expected - leftAmt);
-    });
-    paid = paidPerType.reduce((sum, v) => sum + v, 0);
-    total = feeTypes.reduce((sum, type) => sum + safeNum(s[type.toLowerCase() + '_fee']), 0);
-    left = Math.max(0, total - paid);
-    status = total > 0 && paid >= total - 0.0001 ? 'Completed' : 'Uncompleted';
+    const summary = studentFeeStats.summary;
+    if (summary) {
+      paid = summary.totalPaid || 0;
+      total = summary.netExpected || 0;
+      left = summary.totalBalance || 0;
+      status = getFeeStatusLabel(summary.status);
+    } else {
+      const paidPerType = feeTypes.map(type => {
+        const expected = safeNum(s[type.toLowerCase() + '_fee']);
+        const leftAmt = safeNum(balance[type]);
+        return Math.max(0, expected - leftAmt);
+      });
+      paid = paidPerType.reduce((sum, v) => sum + v, 0);
+      total = feeTypes.reduce((sum, type) => sum + safeNum(s[type.toLowerCase() + '_fee']), 0);
+      left = Math.max(0, total - paid);
+      status = paid > 0 && left > 0
+        ? getFeeStatusLabel('partial')
+        : (left <= 0 && paid > 0 ? getFeeStatusLabel('paid') : getFeeStatusLabel('unpaid'));
+    }
   }
 
   // When payType changes, set payAmount to the remaining balance for that type
@@ -149,6 +160,8 @@ export default function StudentFeeDetails() {
       setReceipt({
         student: stats.student,
         balance: stats.balance,
+        summary: stats.summary,
+        discountAmount: stats.summary?.discountAmount || 0,
         paidAmount: parseFloat(payAmount),
         paidType: payType,
       });
@@ -175,6 +188,26 @@ export default function StudentFeeDetails() {
           {receipt && <FeeReceipt ref={receiptRef} receipt={receipt} />}
         </div>
         <h2 style={{marginBottom:18}}>Student Fee Details</h2>
+        {studentFeeStats.summary && (
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Base Fee</div>
+              <div style={{ fontWeight: 700, color: '#204080' }}>{(studentFeeStats.summary.baseFee || 0).toLocaleString()} XAF</div>
+            </div>
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Discount</div>
+              <div style={{ fontWeight: 700, color: '#166534' }}>{(studentFeeStats.summary.discountAmount || 0).toLocaleString()} XAF</div>
+            </div>
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Net Due</div>
+              <div style={{ fontWeight: 700, color: '#1d4ed8' }}>{(studentFeeStats.summary.netExpected || 0).toLocaleString()} XAF</div>
+            </div>
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Balance</div>
+              <div style={{ fontWeight: 700, color: '#b91c1c' }}>{(studentFeeStats.summary.totalBalance || 0).toLocaleString()} XAF</div>
+            </div>
+          </div>
+        )}
         <table className="fee-stats-table">
           <thead>
             <tr>
@@ -198,17 +231,19 @@ export default function StudentFeeDetails() {
               ))}
               <td>{paid.toLocaleString()} XAF</td>
               <td>{left.toLocaleString()} XAF</td>
-              <td className={status === 'Completed' ? 'status-completed' : 'status-uncompleted'}>{status}</td>
+              <td className={isFeeSettled(studentFeeStats.summary?.status) ? 'status-completed' : 'status-uncompleted'}>{status}</td>
             </tr>
           </tbody>
         </table>
         <div className="fee-pay-btn-row" style={{display:'flex',gap:12,alignItems:'center'}}>
-          {status === 'Completed' ? (
+          {isFeeSettled(studentFeeStats.summary?.status) ? (
             <>
               <button className="text-button no-hover" onClick={() => {
                 setReceipt({
                   student: s,
-                  balance: balance
+                  balance: balance,
+                  summary: studentFeeStats.summary,
+                  discountAmount: studentFeeStats.summary?.discountAmount || 0,
                 });
                 setReceiptModalOpen(true);
               }}>View/Print Receipt</button>
@@ -220,7 +255,7 @@ export default function StudentFeeDetails() {
               <button className="text-button no-hover" onClick={() => navigate('/admin-fee')}>Back</button>
             </>
           )}
-          {receipt && status !== 'Completed' && (
+          {receipt && !isFeeSettled(studentFeeStats.summary?.status) && (
             <button className="text-button no-hover" onClick={() => setReceiptModalOpen(true)}>View Receipt</button>
           )}
         </div>

@@ -1,0 +1,304 @@
+/* Debts — extends Admin2 finance / ReportFinances styling */
+
+.debts-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.debts-toolbar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.debts-toolbar-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.debts-toolbar-group input,
+.debts-toolbar-group select {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.debts-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.debts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.debts-btn-primary {
+  color: #fff;
+  background: #204080;
+}
+
+.debts-btn-primary:hover {
+  background: #163366;
+}
+
+.debts-btn-success {
+  color: #fff;
+  background: #16a34a;
+}
+
+.debts-btn-success:hover {
+  background: #15803d;
+}
+
+.debts-btn-secondary {
+  color: #204080;
+  background: #e8eef6;
+  border: 1px solid #cbd5e1;
+}
+
+.debts-btn-secondary:hover {
+  background: #dbeafe;
+}
+
+.debts-btn-danger {
+  color: #fff;
+  background: #dc2626;
+}
+
+.debts-btn-danger:hover {
+  background: #b91c1c;
+}
+
+.debts-btn-sm {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.debts-actions-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.debts-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.debts-status-open {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.debts-status-partial {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.debts-status-paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.debts-status-written_off {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.debts-alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.debts-alert-success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.debts-alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.debts-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+}
+
+.debts-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.debts-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.debts-modal-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #204080;
+}
+
+.debts-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: #64748b;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.debts-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.debts-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.debts-form-row label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.debts-form-row input,
+.debts-form-row select,
+.debts-form-row textarea {
+  padding: 9px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.debts-form-row textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.debts-readonly-field {
+  background: #f1f5f9;
+  color: #334155;
+  cursor: not-allowed;
+}
+
+.debts-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.debts-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.debts-cards-row {
+  margin-bottom: 8px;
+}
+
+.debts-cards-row .card.we-owe {
+  background: #e53e3e;
+  color: #fff;
+}
+
+.debts-cards-row .card.owed-to-us {
+  background: #1b3a4b;
+  color: #fff;
+}
+
+.debts-cards-row .card.open-debts {
+  background: #204080;
+  color: #fff;
+}
+
+.debts-cards-row .card .icon {
+  color: inherit;
+}
+
+@media (max-width: 768px) {
+  .debts-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .debts-toolbar-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .debts-toolbar-actions .debts-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .debts-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .debts-toolbar,
+  .debts-toolbar-actions,
+  .debts-actions-cell,
+  .rf-tabs,
+  .debts-btn {
+    display: none !important;
+  }
+}

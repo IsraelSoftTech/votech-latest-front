@@ -1,7 +1,316 @@
+@import "./marks-module/styles/tokens.css";
+
+/* Full-width page shell — matches academic-year-page layout */
+.lesson-plan-page {
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
 .lesson-plan-container {
   padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Toolbar & filters */
+.lp-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.lp-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.lp-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lp-filter-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--vt-ink-soft);
+}
+
+.lp-filter-field select,
+.lp-filter-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fff;
+  color: var(--vt-ink);
+  box-sizing: border-box;
+}
+
+.lp-filter-field select:focus,
+.lp-filter-field input:focus {
+  outline: none;
+  border-color: var(--vt-primary);
+  box-shadow: 0 0 0 3px var(--vt-primary-tint2);
+}
+
+.lp-search-field {
+  grid-column: 1 / -1;
+}
+
+.lp-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--vt-primary);
+  color: #fff;
+  border: none;
+  padding: 11px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+.lp-btn-primary:hover:not(:disabled) {
+  background-color: var(--vt-primary-dark);
+  transform: translateY(-1px);
+}
+
+.lp-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lp-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: var(--vt-primary);
+  border: 1.5px solid var(--vt-primary);
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+.lp-btn-secondary:hover:not(:disabled) {
+  background: var(--vt-primary-tint);
+}
+
+.lp-btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.lp-read-only-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.lp-view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+}
+
+.lp-view-tab {
+  padding: 10px 18px;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--vt-ink-soft);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lp-view-tab:hover {
+  border-color: var(--vt-primary);
+  color: var(--vt-primary);
+}
+
+.lp-view-tab.active {
+  background: var(--vt-primary);
+  border-color: var(--vt-primary);
+  color: #fff;
+}
+
+.lp-comment-cell {
+  max-width: 200px;
+  font-size: 0.85rem;
+  color: var(--vt-ink-soft);
+  word-break: break-word;
+}
+
+/* Data panel */
+.lp-panel {
+  background: #fff;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.lp-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--vt-primary-tint);
+  border-bottom: 1px solid var(--vt-border);
+}
+
+.lp-panel-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--vt-primary);
+}
+
+.lp-panel-meta {
+  font-size: 0.82rem;
+  color: var(--vt-ink-soft);
+  font-weight: 500;
+}
+
+.lp-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lp-alert {
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.lp-alert-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+/* Pagination */
+.lp-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--vt-border);
+  background: #fff;
+}
+
+.lp-pagination-summary {
+  font-size: 0.85rem;
+  color: var(--vt-ink-soft);
+  font-weight: 500;
+}
+
+.lp-pagination-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.lp-pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  background: #fff;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--vt-ink);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.lp-pagination-btn:hover:not(:disabled) {
+  border-color: var(--vt-primary);
+  color: var(--vt-primary);
+}
+
+.lp-pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lp-pagination-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.lp-pagination-number {
+  min-width: 40px;
+  padding: 9px 12px;
+  background: #fff;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--vt-ink);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lp-pagination-number:hover:not(:disabled) {
+  border-color: var(--vt-primary);
+  color: var(--vt-primary);
+}
+
+.lp-pagination-number.active {
+  background: var(--vt-primary);
+  border-color: var(--vt-primary);
+  color: #fff;
+}
+
+.lp-pagination-number:disabled {
+  cursor: not-allowed;
+}
+
+.lp-pagination-ellipsis {
+  padding: 0 4px;
+  color: var(--vt-muted);
+  font-weight: 600;
 }
 
 .lesson-plan-cards {
@@ -74,10 +383,15 @@
 
 .lesson-plan-table-wrapper {
   background: white;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e1e5e9;
+  border: 1.5px solid var(--vt-border);
+  width: 100%;
+}
+
+.lp-panel .lesson-plan-table-wrapper {
+  border: none;
+  border-radius: 0;
 }
 
 .lesson-plan-table {
@@ -645,13 +959,110 @@
 .content-cell a:hover { text-decoration: underline; }
 
 /* Responsive tweaks */
+@media (max-width: 992px) {
+  .lesson-plan-page,
+  .lesson-plan-container {
+    padding: 16px;
+  }
+
+  .lp-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 768px) {
-  .lesson-plan-table-wrapper { overflow-x: auto; }
-  .lesson-plan-table { min-width: 720px; }
-  .lesson-plan-stats-grid { grid-template-columns: 1fr; }
-  .header-actions { width: 100%; }
-  .action-btn.report-btn, .action-btn.upload-btn { width: 100%; justify-content: center; }
-  .lesson-plan-filters { flex-direction: column; align-items: stretch; }
+  .lesson-plan-page,
+  .lesson-plan-container {
+    padding: 12px;
+  }
+
+  .lesson-plan-table-wrapper,
+  .lp-table-scroll {
+    overflow-x: auto;
+  }
+
+  .lesson-plan-table {
+    min-width: 680px;
+  }
+
+  .lesson-plan-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-plan-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .header-actions,
+  .vt-page-header-actions {
+    width: 100%;
+  }
+
+  .header-actions .lp-btn-primary,
+  .header-actions .lp-btn-secondary,
+  .vt-page-header-actions .lp-btn-primary,
+  .vt-page-header-actions .lp-btn-secondary,
+  .action-btn.report-btn,
+  .action-btn.upload-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lesson-plan-filters,
+  .lp-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lp-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lp-panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .lesson-plan-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .upload-plan-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lp-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lp-pagination-controls {
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .lp-pagination-btn span {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .lesson-plan-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-plan-table {
+    min-width: 620px;
+    font-size: 0.82rem;
+  }
+
+  .lesson-plan-table th,
+  .lesson-plan-table td {
+    padding: 12px 8px;
+  }
 } 
 
 .lesson-plan-approved-folder {
