@@ -12,25 +12,6 @@
   flex-wrap: wrap;
 }
 
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0.55rem 0.9rem;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  background: var(--vt-primary-tint2);
-  color: var(--vt-primary);
-}
-
-.back-btn:hover {
-  background: var(--vt-primary);
-  color: #fff;
-}
-
 .msp-term-select {
   min-width: 220px;
 }

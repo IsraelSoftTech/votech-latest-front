@@ -29,6 +29,11 @@ const TERM_OPTIONS = [
   { value: "annual", label: "Annual" },
 ];
 
+const MATRIX_PDF_FORMAT_OPTIONS = [
+  { value: "wall", label: "Wall Poster (Landscape)" },
+  { value: "a4", label: "A4 Meeting Format" },
+];
+
 function MovFormSkeleton() {
   return (
     <div className="mov-form">
@@ -69,6 +74,9 @@ function MatrixView() {
   const [cards, setCards] = useState(null);
   const [loadingMatrix, setLoadingMatrix] = useState(false);
   const [matrixError, setMatrixError] = useState(null);
+
+  const [pdfFormat, setPdfFormat] = useState("wall");
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -112,6 +120,55 @@ function MatrixView() {
       );
     } finally {
       setLoadingMatrix(false);
+    }
+  };
+
+  // Renders and streams the PDF on the backend now (same printer/logo
+  // watermark as report cards/transcripts) instead of the old client-side
+  // pdfmake build — same blob-fetch pattern as ReportCard.page.jsx's
+  // handleDownload, so the loading state matches every other download in
+  // the app. Works standalone, doesn't require "View Matrix" first.
+  const handleDownloadPdf = async () => {
+    if (!isReady || downloadingPdf) return;
+    setDownloadingPdf(true);
+    try {
+      const params = new URLSearchParams({ academicYearId, classId, term, format: pdfFormat });
+      if (departmentId) params.set("departmentId", departmentId);
+      const res = await api.get(`/report-cards/marks-overview/matrix-pdf?${params.toString()}`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Marks_Matrix_${pdfFormat === "a4" ? "A4" : "Wall"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      // responseType "blob" means an error body (e.g. the backend's real
+      // "No students found for X in this academic year" 404) arrives as
+      // an opaque Blob, not parsed JSON — same limitation every blob
+      // download in this app has. Worth unpacking specifically here,
+      // though: this page's other button ("View Matrix", a plain JSON
+      // request) already shows that exact reason for the same selection,
+      // so leaving Download silently generic would make the two buttons
+      // disagree on why the same thing just failed.
+      let message = "Failed to generate the marks matrix PDF. Please try again.";
+      const blob = err?.response?.data;
+      if (blob instanceof Blob && blob.type?.includes("json")) {
+        try {
+          const parsed = JSON.parse(await blob.text());
+          message = parsed?.message || parsed?.details || message;
+        } catch {
+          // Not JSON after all (e.g. a stripped-down proxy error page) —
+          // keep the generic fallback rather than showing raw markup.
+        }
+      }
+      toast.error(message);
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -184,6 +241,24 @@ function MatrixView() {
         <Button onClick={handleView} disabled={!isReady || loadingMatrix} loading={loadingMatrix}>
           View Matrix
         </Button>
+        <Select
+          options={MATRIX_PDF_FORMAT_OPTIONS}
+          value={MATRIX_PDF_FORMAT_OPTIONS.find((o) => o.value === pdfFormat)}
+          onChange={(opt) => setPdfFormat(opt?.value || "wall")}
+          isDisabled={downloadingPdf}
+          isSearchable={false}
+          className="mov-pdf-format-select"
+          classNamePrefix="mov-select"
+        />
+        <Button
+          variant="secondary"
+          icon={<FaDownload />}
+          onClick={handleDownloadPdf}
+          disabled={!isReady || downloadingPdf}
+          loading={downloadingPdf}
+        >
+          {downloadingPdf ? "Preparing..." : "Download PDF"}
+        </Button>
       </div>
 
       {loadingMatrix && <MovTableSkeleton />}
@@ -192,7 +267,9 @@ function MatrixView() {
         <EmptyState title="Couldn't load the marks matrix" subtitle={matrixError} />
       )}
 
-      {!loadingMatrix && !matrixError && cards && <MasterSheet data={cards} term={term} />}
+      {!loadingMatrix && !matrixError && cards && (
+        <MasterSheet data={cards} term={term} showDownloadControls={false} />
+      )}
 
       {!loadingMatrix && !matrixError && !cards && (
         <EmptyState icon={<FaTable />} title="Pick a class and term to view every student's marks, subject by subject." />

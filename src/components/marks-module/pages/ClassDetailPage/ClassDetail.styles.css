@@ -1,0 +1,165 @@
+@import "../../styles/tokens.css";
+
+.class-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.class-details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.class-detail-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.class-detail-tab-panel {
+  min-height: 200px;
+}
+
+.class-detail-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.class-detail-skeleton .skeleton-line,
+.class-detail-skeleton .skeleton-block {
+  background: linear-gradient(90deg, #eef1f6 25%, #e2e8f0 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: class-detail-shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+.class-detail-skeleton .skeleton-line.wide {
+  width: 60%;
+  height: 28px;
+}
+
+.class-detail-skeleton .skeleton-block.short {
+  height: 160px;
+  width: 100%;
+}
+
+@keyframes class-detail-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* Students tab */
+
+.class-detail-students-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.class-detail-students-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid var(--vt-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.class-detail-students-table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: var(--vt-primary-tint);
+  color: var(--vt-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.class-detail-students-table td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--vt-border);
+  font-size: 14px;
+  color: var(--vt-ink);
+}
+
+.class-detail-students-row {
+  cursor: pointer;
+}
+
+.class-detail-students-row:hover {
+  background: var(--vt-primary-tint);
+}
+
+.class-detail-students-empty {
+  text-align: center;
+  color: var(--vt-muted);
+  padding: 24px 16px;
+}
+
+.class-detail-empty-text {
+  color: var(--vt-muted);
+  text-align: center;
+  padding: 12px 0;
+  margin: 0;
+}
+
+.class-detail-students-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.class-detail-subjects-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.class-detail-search-input {
+  flex: 1 1 240px;
+  max-width: 320px;
+  padding: 8px 12px;
+  border: 1px solid var(--vt-border);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.class-detail-search-input:focus {
+  outline: none;
+  border-color: var(--vt-primary);
+}
+
+/* Type filter uses the system Select (react-select) via the shared
+   .class-react-select/.class-select__ classes from ClassPage/Class.styles.css
+   (imported into this page already) — this just constrains its width to
+   sit next to the search box instead of stretching full-width. */
+.class-detail-type-filter {
+  flex: 0 1 200px;
+  min-width: 160px;
+}
+
+.class-detail-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.class-detail-sortable:hover {
+  color: var(--vt-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .class-detail-skeleton .skeleton-line,
+  .class-detail-skeleton .skeleton-block {
+    animation: none !important;
+  }
+}

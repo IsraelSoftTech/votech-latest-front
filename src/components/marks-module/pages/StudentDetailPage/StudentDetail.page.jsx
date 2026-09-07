@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import SideTop from "../../../SideTop";
 import Modal from "../../components/Modal/Modal.component";
+import { Button } from "../../components/Button/Button.component";
 import { StudentFormModal } from "../../components/StudentFormModal/StudentFormModal.component";
 import { StudentMarksEditModal } from "../../components/StudentMarksEditModal/StudentMarksEditModal.component";
 import { ReportCardDownloadModal } from "../../components/ReportCardDownloadModal/ReportCardDownloadModal.component";
@@ -210,9 +211,11 @@ export const StudentDetailPage = () => {
     return (
       <SideTop>
         <div className="sdp-page">
-          <button className="sdp-back-btn" onClick={() => navigate("/admin-student")}>
-            <FaArrowLeft /> Back to Students
-          </button>
+          <div className="vt-back-row">
+            <Button variant="ghost" icon={<FaArrowLeft />} onClick={() => navigate(-1)}>
+              Go Back
+            </Button>
+          </div>
           <div className="sdp-loading">Student not found.</div>
         </div>
       </SideTop>
@@ -224,9 +227,11 @@ export const StudentDetailPage = () => {
   return (
     <SideTop>
       <div className="sdp-page">
-        <button className="sdp-back-btn" onClick={() => navigate("/admin-student")}>
-          <FaArrowLeft /> Back to Students
-        </button>
+        <div className="vt-back-row">
+          <Button variant="ghost" icon={<FaArrowLeft />} onClick={() => navigate(-1)}>
+            Go Back
+          </Button>
+        </div>
 
         <div className="sdp-header">
           <div className="sdm-identity">

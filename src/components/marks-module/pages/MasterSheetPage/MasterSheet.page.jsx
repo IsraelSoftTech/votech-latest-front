@@ -12,6 +12,7 @@ import api from "../../utils/api";
 import MasterSheet from "../../components/MasterSheet/MasterSheet.component";
 import SideTop from "../../../SideTop";
 import { EmptyState } from "../../components/EmptyState/EmptyState.component";
+import { Button } from "../../components/Button/Button.component";
 import { FaArrowLeft, FaTable } from "react-icons/fa";
 import "./MasterSheet.page.styles.css";
 
@@ -234,15 +235,21 @@ const MasterSheetPage = () => {
 
   const termValue = TERM_OPTIONS.find((o) => o.value === selectedTerm) || null;
 
+  // Standalone, first thing on the page, above everything else — same
+  // spot on every marks-module detail page.
+  const backButton = (
+    <div className="vt-back-row">
+      <Button variant="ghost" icon={<FaArrowLeft />} onClick={() => navigate(-1)}>
+        Go Back
+      </Button>
+    </div>
+  );
+
   if (!ready) {
     return (
       <SideTop>
         <div className="msp-page">
-          <div className="msp-controls">
-            <button onClick={() => navigate(-1)} className="back-btn">
-              <FaArrowLeft /> <span>Go Back</span>
-            </button>
-          </div>
+          {backButton}
           <EmptyState
             title="Missing filters"
             subtitle="Please return and select Academic Year, Department, and Class."
@@ -255,11 +262,8 @@ const MasterSheetPage = () => {
   return (
     <SideTop>
       <div className="msp-page">
+        {backButton}
         <div className="msp-controls">
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            <FaArrowLeft /> <span>Go Back</span>
-          </button>
-
           <Select
             className="msp-term-select"
             placeholder="Select term to load…"

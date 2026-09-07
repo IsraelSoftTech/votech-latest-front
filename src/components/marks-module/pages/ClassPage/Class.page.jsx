@@ -4,33 +4,35 @@ import SideTop from "../../../SideTop";
 import DataTable from "../../components/DataTable/DataTable.component";
 import { toast } from "react-toastify";
 import api, { headers, subBaseURL } from "../../utils/api";
-import Select from "react-select";
-import {
-  CustomDropdown,
-  CustomInput,
-  SubmitBtn,
-} from "../../components/Inputs/CustumInputs";
+import { ClassFormModal } from "../../components/ClassFormModal/ClassFormModal.component";
 import Stats from "../../components/Stats/Stats.component";
 import { PageHeader } from "../../components/PageHeader/PageHeader.component";
-import Modal from "../../components/Modal/Modal.component";
-import ClassMasterHistoryModal from "../../components/ClassMasterHistoryModal/ClassMasterHistoryModal.component";
 import { useNavigate } from "react-router-dom";
+import { FaBan, FaCheckCircle, FaLayerGroup, FaPlus } from "react-icons/fa";
 import {
-  FaBan,
-  FaCheckCircle,
-  FaLayerGroup,
-  FaPlus,
-  FaUserGraduate,
-  FaHistory,
-} from "react-icons/fa";
+  EMPTY_CLASS_FORM,
+  classToForm,
+  confirmOrientationNameMismatch,
+  transformClassForm,
+  validateClassForm,
+} from "../../utils/classForm.util";
 
 export const ClassPage = () => {
   const navigate = useNavigate();
-  const capitalizeWords = (str) =>
-    str
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
+
+  // Admin1 can see this list (name/department/class master/fees) and can
+  // still Edit/Delete a class from here, but the full detail page
+  // (Overview/Students/Subjects/Teachers/Class Master tabs) is Admin3-only
+  // — rather than send Admin1 into a page that immediately bounces them to
+  // /unauthorized, the row simply isn't a link for them at all (see
+  // DataTable's no-row-click styling below).
+  let currentRole = null;
+  try {
+    currentRole = JSON.parse(sessionStorage.getItem("authUser") || "null")?.role || null;
+  } catch (err) {
+    currentRole = null;
+  }
+  const canOpenClassDetail = currentRole === "Admin3";
 
   const columns = [
     { label: "S/N", accessor: "sn" },
@@ -47,7 +49,6 @@ export const ClassPage = () => {
   const [data, setData] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [teachers, setTeachers] = useState([]);
-  const [selectedRow, setSelectedRow] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters] = useState([]);
   const [stats, setStats] = useState([]);
@@ -55,48 +56,8 @@ export const ClassPage = () => {
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [classMasterHistoryRow, setClassMasterHistoryRow] = useState(null);
 
-  const [form, setForm] = useState({
-    name: "",
-    department_id: null,
-    class_master_id: null,
-    registration_fee: "",
-    bus_fee: "",
-    internship_fee: "",
-    remedial_fee: "",
-    tuition_fee: "",
-    pta_fee: "",
-    total_fee: "",
-    suspended: "",
-    is_orientation: false,
-  });
-
-  function transformClassForm(form) {
-    const result = { ...form };
-    const feeFields = [
-      "registration_fee",
-      "bus_fee",
-      "internship_fee",
-      "remedial_fee",
-      "tuition_fee",
-      "pta_fee",
-    ];
-
-    feeFields.forEach((field) => {
-      const value = Number(result[field]);
-      result[field] = Number.isNaN(value) || value < 0 ? 0 : value;
-    });
-
-    result.total_fee = feeFields.reduce((sum, field) => sum + result[field], 0);
-
-    if (typeof result.suspended === "string") {
-      result.suspended = result.suspended.toLowerCase() === "suspended";
-    }
-
-    return result;
-  }
-
+  const [form, setForm] = useState(EMPTY_CLASS_FORM);
   const [formErrors, setFormErrors] = useState({});
   const [createLoading, setCreateLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
@@ -108,20 +69,7 @@ export const ClassPage = () => {
   };
 
   const resetForm = () => {
-    setForm({
-      name: "",
-      department_id: null,
-      class_master_id: null,
-      registration_fee: "",
-      bus_fee: "",
-      internship_fee: "",
-      remedial_fee: "",
-      tuition_fee: "",
-      pta_fee: "",
-      total_fee: "",
-      suspended: "",
-      is_orientation: false,
-    });
+    setForm(EMPTY_CLASS_FORM);
     setFormErrors({});
   };
 
@@ -245,18 +193,6 @@ export const ClassPage = () => {
     fetchStats();
   }, []);
 
-  // Validation
-  const validateForm = () => {
-    const errors = {};
-    if (!form.name.trim()) errors.name = "Name is required.";
-    if (!form.department_id) errors.department_id = "Department is required.";
-    if (!form.class_master_id)
-      errors.class_master_id = "Class master is required.";
-    if (form.suspended === "" || form.suspended == null)
-      errors.suspended = "Class status (suspended or active) is required";
-    return errors;
-  };
-
   // CRUD Requests
   const createClass = async () => {
     try {
@@ -311,60 +247,49 @@ export const ClassPage = () => {
     }
   };
 
-  // A class whose name says "orientation" but isn't flagged as one would
-  // silently never trigger the six-choice registration flow or the
-  // promotion restriction — a soft nudge here, not a hard block, since a
-  // class named e.g. "Orientation Committee" legitimately isn't one.
-  const confirmOrientationNameMismatch = () => {
-    if (form.is_orientation) return true;
-    if (!form.name?.toLowerCase().includes("orientation")) return true;
-    return window.confirm(
-      `"${form.name}" looks like an orientation class, but "Orientation class" isn't checked. Continue without it?`
-    );
-  };
-
   // Form handlers
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
-    const errors = validateForm();
+    const errors = validateClassForm(form);
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       toast.error(Object.values(errors)[0]);
       return;
     }
-    if (!confirmOrientationNameMismatch()) return;
+    if (!confirmOrientationNameMismatch(form)) return;
     createClass();
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const errors = validateForm();
+    const errors = validateClassForm(form);
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       toast.error(Object.values(errors)[0]);
       return;
     }
-    if (!confirmOrientationNameMismatch()) return;
+    if (!confirmOrientationNameMismatch(form)) return;
     editClass();
   };
 
-  const handleEdit = (row) => {
-    setForm({
-      id: row.id,
-      name: row.name,
-      department_id: row.department_id,
-      class_master_id: row.class_master_id,
-      registration_fee: row.registration_fee,
-      bus_fee: row.bus_fee,
-      internship_fee: row.internship_fee,
-      remedial_fee: row.remedial_fee,
-      tuition_fee: row.tuition_fee,
-      pta_fee: row.pta_fee,
-      total_fee: row.total_fee,
-      suspended: row.suspended === "Suspended",
-      is_orientation: !!row.is_orientation,
-    });
-    setEditModalOpen(true);
+  // Fetches the raw class record instead of reusing the table row: the
+  // table's `data` has already run every fee through .toLocaleString()
+  // for display (e.g. "50,000"), and transformClassForm's Number(...) on
+  // a comma-formatted string is NaN, silently zeroing every fee on save.
+  const handleEdit = async (row) => {
+    try {
+      const res = await api.get(`/classes/${row.id}`);
+      const cls = res.data?.data;
+      if (!cls) throw new Error("Class not found");
+      setForm(classToForm(cls));
+      setEditModalOpen(true);
+    } catch (err) {
+      toast.error(
+        err.response?.data?.details ||
+          err.response?.data?.message ||
+          "Failed to load class for editing."
+      );
+    }
   };
 
   const closeCreateModal = () => {
@@ -377,8 +302,7 @@ export const ClassPage = () => {
     setEditModalOpen(false);
   };
 
-  const handleRowClick = (row) => setSelectedRow(row);
-  const closeModal = () => setSelectedRow(null);
+  const handleRowClick = (row) => navigate(`/academics/classes/${row.id}`);
 
   const openCreateModal = () => {
     resetForm();
@@ -420,354 +344,37 @@ export const ClassPage = () => {
             onDelete={deleteClass}
             loading={isLoading}
             limit={12}
-            onRowClick={handleRowClick}
+            onRowClick={canOpenClassDetail ? handleRowClick : undefined}
             warnDelete={() => {}}
             filterCategories={filters}
-            extraActions={[
-              {
-                icon: <FaUserGraduate />,
-                title: "See Students",
-                onClick: (row) =>
-                  navigate("/admin-student", { state: { class_id: row.id } }),
-              },
-              {
-                icon: <FaHistory />,
-                title: "Class Master History (by year)",
-                onClick: (row) => setClassMasterHistoryRow(row),
-              },
-            ]}
           />
         </div>
 
-        {/* Class Master History Modal */}
-        <Modal
-          isOpen={!!classMasterHistoryRow}
-          onClose={() => setClassMasterHistoryRow(null)}
-          title={`Class Master History — ${classMasterHistoryRow?.name || ""}`}
-        >
-          {classMasterHistoryRow && (
-            <ClassMasterHistoryModal
-              classItem={classMasterHistoryRow}
-              teachersOptions={teachers}
-            />
-          )}
-        </Modal>
-
-        {/* Create Modal */}
-        <Modal
+        <ClassFormModal
+          mode="create"
           isOpen={createModalOpen}
           onClose={closeCreateModal}
-          title="Create Class"
-        >
-          <form onSubmit={handleCreateSubmit} className="class-modal-form">
-            <CustomInput
-              label="Name"
-              type="text"
-              value={form.name}
-              onChange={handleUpdateForm}
-              name="name"
-              error={formErrors.name}
-            />
+          form={form}
+          formErrors={formErrors}
+          onChange={handleUpdateForm}
+          onSubmit={handleCreateSubmit}
+          departments={departments}
+          teachers={teachers}
+          loading={createLoading}
+        />
 
-            <div className="class-form-group">
-              <label className="class-form-label">Department</label>
-              <Select
-                options={departments}
-                value={departments.find((d) => d.value === form.department_id)}
-                onChange={(selected) =>
-                  handleUpdateForm("department_id", selected?.value || null)
-                }
-                isSearchable
-                placeholder="Select Department"
-                className="class-react-select"
-                classNamePrefix="class-select"
-              />
-              {formErrors.department_id && (
-                <p className="class-form-error">{formErrors.department_id}</p>
-              )}
-            </div>
-
-            <div className="class-form-group">
-              <label className="class-form-label">Class Master</label>
-              <Select
-                options={teachers}
-                value={teachers.find((t) => t.value === form.class_master_id)}
-                onChange={(selected) =>
-                  handleUpdateForm("class_master_id", selected?.value || null)
-                }
-                isSearchable
-                placeholder="Select Class Master"
-                className="class-react-select"
-                classNamePrefix="class-select"
-              />
-              {formErrors.class_master_id && (
-                <p className="class-form-error">{formErrors.class_master_id}</p>
-              )}
-            </div>
-
-            <div className="class-form-group class-checkbox-group">
-              <label className="class-checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={!!form.is_orientation}
-                  onChange={(e) =>
-                    handleUpdateForm("is_orientation", e.target.checked)
-                  }
-                />
-                This is an Orientation class (Form One)
-              </label>
-              <p className="class-checkbox-hint">
-                Registration will capture six ranked department choices for
-                students in this class, and promotion will only offer
-                classes in a student's chosen departments as destinations.
-              </p>
-            </div>
-
-            {/* Fees */}
-            <div className="class-fees-section">
-              <h4 className="class-section-title">Fee Structure</h4>
-              <div className="class-fees-grid">
-                {[
-                  { key: "registration_fee", label: "Registration Fee" },
-                  { key: "bus_fee", label: "Bus Fee" },
-                  { key: "internship_fee", label: "Internship Fee" },
-                  { key: "remedial_fee", label: "Remedial Fee" },
-                  { key: "tuition_fee", label: "Tuition Fee" },
-                  { key: "pta_fee", label: "PTA Fee" },
-                ].map((fee) => (
-                  <CustomInput
-                    key={fee.key}
-                    label={fee.label}
-                    value={form[fee.key]}
-                    onChange={handleUpdateForm}
-                    name={fee.key}
-                    type="number"
-                  />
-                ))}
-              </div>
-            </div>
-
-            <CustomDropdown
-              label={"Status"}
-              options={["Active", "Suspended"]}
-              value={form.suspended}
-              onChange={handleUpdateForm}
-              name={"suspended"}
-            />
-
-            <SubmitBtn
-              title={createLoading ? "Creating..." : "Create"}
-              disabled={createLoading}
-            />
-          </form>
-        </Modal>
-
-        {/* Edit Modal */}
-        <Modal
+        <ClassFormModal
+          mode="edit"
           isOpen={editModalOpen}
           onClose={closeEditModal}
-          title="Edit Class"
-        >
-          <form onSubmit={handleEditSubmit} className="class-modal-form">
-            <CustomInput
-              label="Name"
-              type="text"
-              value={form.name}
-              onChange={handleUpdateForm}
-              name="name"
-              error={formErrors.name}
-            />
-
-            <div className="class-form-group">
-              <label className="class-form-label">Department</label>
-              <Select
-                options={departments}
-                value={departments.find((d) => d.value === form.department_id)}
-                onChange={(selected) =>
-                  handleUpdateForm("department_id", selected?.value || null)
-                }
-                isSearchable
-                placeholder="Select Department"
-                className="class-react-select"
-                classNamePrefix="class-select"
-              />
-              {formErrors.department_id && (
-                <p className="class-form-error">{formErrors.department_id}</p>
-              )}
-            </div>
-
-            <div className="class-form-group">
-              <label className="class-form-label">Class Master</label>
-              <Select
-                options={teachers}
-                value={teachers.find((t) => t.value === form.class_master_id)}
-                onChange={(selected) =>
-                  handleUpdateForm("class_master_id", selected?.value || null)
-                }
-                isSearchable
-                placeholder="Select Class Master"
-                className="class-react-select"
-                classNamePrefix="class-select"
-              />
-              {formErrors.class_master_id && (
-                <p className="class-form-error">{formErrors.class_master_id}</p>
-              )}
-            </div>
-
-            <div className="class-form-group class-checkbox-group">
-              <label className="class-checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={!!form.is_orientation}
-                  onChange={(e) =>
-                    handleUpdateForm("is_orientation", e.target.checked)
-                  }
-                />
-                This is an Orientation class (Form One)
-              </label>
-              <p className="class-checkbox-hint">
-                Registration will capture six ranked department choices for
-                students in this class, and promotion will only offer
-                classes in a student's chosen departments as destinations.
-              </p>
-            </div>
-
-            <div className="class-fees-section">
-              <h4 className="class-section-title">Fee Structure</h4>
-              <div className="class-fees-grid">
-                {[
-                  "registration_fee",
-                  "bus_fee",
-                  "internship_fee",
-                  "remedial_fee",
-                  "tuition_fee",
-                  "pta_fee",
-                ].map((fee) => (
-                  <CustomInput
-                    key={fee}
-                    label={capitalizeWords(fee)}
-                    value={
-                      form[fee] != null
-                        ? String(form[fee]).replace(/\s+/g, "")
-                        : ""
-                    }
-                    onChange={handleUpdateForm}
-                    name={fee}
-                    type="number"
-                  />
-                ))}
-              </div>
-            </div>
-
-            <CustomDropdown
-              label={"Status"}
-              options={["Active", "Suspended"]}
-              value={form.suspended !== "Suspended" ? "Active" : "Suspended"}
-              onChange={handleUpdateForm}
-              name={"suspended"}
-            />
-
-            <SubmitBtn
-              title={editLoading ? "Saving..." : "Save"}
-              disabled={editLoading}
-            />
-          </form>
-        </Modal>
-
-        {/* Details Modal */}
-        <Modal
-          isOpen={!!selectedRow}
-          onClose={closeModal}
-          title="Class Details"
-        >
-          {selectedRow && (
-            <div className="class-details-card">
-              <header className="class-details-header">
-                <div className="class-details-title-wrapper">
-                  <h2 className="class-details-title">
-                    {selectedRow.department} {selectedRow.name}
-                  </h2>
-                  <span
-                    className={`class-status-badge ${
-                      selectedRow.suspended === "Suspended"
-                        ? "suspended"
-                        : "active"
-                    }`}
-                  >
-                    {selectedRow.suspended === "Suspended"
-                      ? "Suspended"
-                      : "Active"}
-                  </span>
-                </div>
-              </header>
-
-              <section className="class-details-body">
-                <div className="class-info-group">
-                  <div className="class-info-item">
-                    <span className="class-info-label">Department</span>
-                    <span className="class-info-value">
-                      {selectedRow.department}
-                    </span>
-                  </div>
-                  <div className="class-info-item">
-                    <span className="class-info-label">Class Master</span>
-                    <span className="class-info-value">
-                      {selectedRow.classMaster}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="class-fee-group">
-                  <h4 className="class-fee-title">Fees Overview</h4>
-                  <div className="class-fee-list">
-                    <div className="class-fee-item">
-                      <span>Registration Fee</span>
-                      <span className="class-fee-value">
-                        {selectedRow.registration_fee || "N/A"}
-                      </span>
-                    </div>
-                    <div className="class-fee-item">
-                      <span>Bus Fee</span>
-                      <span className="class-fee-value">
-                        {selectedRow.bus_fee || "N/A"}
-                      </span>
-                    </div>
-                    <div className="class-fee-item">
-                      <span>Internship Fee</span>
-                      <span className="class-fee-value">
-                        {selectedRow.internship_fee || "N/A"}
-                      </span>
-                    </div>
-                    <div className="class-fee-item">
-                      <span>Remedial Fee</span>
-                      <span className="class-fee-value">
-                        {selectedRow.remedial_fee || "N/A"}
-                      </span>
-                    </div>
-                    <div className="class-fee-item">
-                      <span>Tuition Fee</span>
-                      <span className="class-fee-value">
-                        {selectedRow.tuition_fee || "N/A"}
-                      </span>
-                    </div>
-                    <div className="class-fee-item">
-                      <span>PTA Fee</span>
-                      <span className="class-fee-value">
-                        {selectedRow.pta_fee || "N/A"}
-                      </span>
-                    </div>
-                    <div className="class-fee-item class-fee-total">
-                      <span>Total Fee</span>
-                      <span className="class-fee-value">
-                        {`${selectedRow.total_fee} FCFA` || "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-          )}
-        </Modal>
+          form={form}
+          formErrors={formErrors}
+          onChange={handleUpdateForm}
+          onSubmit={handleEditSubmit}
+          departments={departments}
+          teachers={teachers}
+          loading={editLoading}
+        />
       </div>
     </SideTop>
   );

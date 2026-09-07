@@ -62,25 +62,6 @@
   }
 }
 
-.marks-back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  background: none;
-  color: var(--primary-color);
-  font-weight: 500;
-  cursor: pointer;
-  margin-bottom: 24px;
-  padding: 8px 0;
-  font-size: 15px;
-  transition: opacity 0.2s;
-}
-
-.marks-back-btn:hover {
-  opacity: 0.7;
-}
-
 /* Filters */
 .marks-filters-row {
   display: grid;
@@ -1179,11 +1160,6 @@
     padding: 16px;
   }
 
-  .marks-back-btn {
-    font-size: 14px;
-    margin-bottom: 20px;
-  }
-
   .marks-filters-row {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -1438,10 +1414,6 @@
 @media (max-width: 320px) {
   .marks-upload-page {
     padding: 10px;
-  }
-
-  .marks-back-btn {
-    font-size: 13px;
   }
 
   .marks-btn-export,

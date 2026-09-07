@@ -143,6 +143,17 @@
   color: #a0aec0;
 }
 
+.promo-req-copy-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: #f7f9fc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
+
 .promo-req-mode-section {
   display: flex;
   flex-direction: column;

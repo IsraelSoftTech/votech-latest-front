@@ -25,6 +25,9 @@ import {
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import Modal from "../../components/Modal/Modal.component";
 import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import { Button } from "../../components/Button/Button.component";
+
+const VALID_MARK_FILTERS = ["all", "with-marks", "without-marks", "with-zero", "excluded"];
 
 // Utility function for string similarity (Levenshtein distance)
 const calculateSimilarity = (str1, str2) => {
@@ -826,7 +829,13 @@ export const MarksUploadPage = () => {
   const [studentsPerPage, setStudentsPerPage] = useState(10);
 
   // Mark filter state - UPDATED with new option
-  const [markFilter, setMarkFilter] = useState("all"); // 'all', 'with-marks', 'without-marks', 'excluded'
+  // Deep-linked the same one-time way as the filters above (e.g. the
+  // Teacher Dashboard's "Marks I Still Owe" rows land here pre-set to
+  // "without-marks" instead of the "all" everyone else starts on).
+  const initialMarkFilter = searchParams.get("mark_filter");
+  const [markFilter, setMarkFilter] = useState(
+    VALID_MARK_FILTERS.includes(initialMarkFilter) ? initialMarkFilter : "all"
+  ); // 'all', 'with-marks', 'without-marks', 'excluded'
 
   // Frozen filter state
   const [frozenFilterStudents, setFrozenFilterStudents] = useState(null);
@@ -923,7 +932,6 @@ export const MarksUploadPage = () => {
         classesRes,
         termsRes,
         sequencesRes,
-        classSubjectRes,
         deptRes,
         subjectClassRes,
       ] = await Promise.allSettled([
@@ -932,7 +940,6 @@ export const MarksUploadPage = () => {
         api.get("/classes"),
         api.get("/marks/terms"),
         api.get("/marks/sequences"),
-        api.get(`/class-subjects?teacher_id=${user.id}`),
         api.get("/departments"),
         api.get(`/class-subjects?subject_id=${id}`),
       ]);
@@ -959,10 +966,17 @@ export const MarksUploadPage = () => {
       }
 
       if (yearsRes.status === "fulfilled") {
+        const yearData = Array.isArray(yearsRes.value?.data?.data)
+          ? yearsRes.value.data.data
+          : [];
+        // Deep filter: a non-Admin3 role only ever enters marks for the
+        // year that's actually running, so the dropdown offers nothing
+        // else to accidentally pick, an archived year isn't a real choice
+        // for them the way it legitimately is for Admin3.
         setAcademicYears(
-          Array.isArray(yearsRes.value?.data?.data)
-            ? yearsRes.value.data.data
-            : []
+          user.role === "Admin3"
+            ? yearData
+            : yearData.filter((y) => y.status === "active")
         );
       } else {
         setAcademicYears([]);
@@ -988,60 +1002,46 @@ export const MarksUploadPage = () => {
         setSequences([]);
       }
 
+      // /class-subjects?subject_id=X is already scoped to this one
+      // subject across every teacher, exactly the "overall filter": no
+      // department/class dropdown should ever suggest one that doesn't
+      // even offer this subject, Admin3 included. Narrowing that same
+      // list down to this user's own teacher_id on top of it is the
+      // "deep filter" for every non-Admin3 role.
+      const subjectClassData =
+        subjectClassRes.status === "fulfilled" &&
+        Array.isArray(subjectClassRes.value?.data?.data)
+          ? subjectClassRes.value.data.data
+          : [];
+      setSubjectClasses(subjectClassData);
+
+      const relevantAssignments =
+        user.role === "Admin3"
+          ? subjectClassData
+          : subjectClassData.filter(
+              (cs) => Number(cs.teacher_id) === Number(user.id)
+            );
+
       if (deptRes.status === "fulfilled") {
-        setDepartments(
-          Array.isArray(deptRes.value?.data?.data)
-            ? deptRes.value.data.data
-            : []
+        const deptData = Array.isArray(deptRes.value?.data?.data)
+          ? deptRes.value.data.data
+          : [];
+        const relevantDeptIds = new Set(
+          relevantAssignments.map((cs) => cs.department_id)
         );
+        setDepartments(deptData.filter((d) => relevantDeptIds.has(d.id)));
       } else {
         setDepartments([]);
-      }
-
-      if (subjectClassRes.status === "fulfilled") {
-        setSubjectClasses(
-          Array.isArray(subjectClassRes.value?.data?.data)
-            ? subjectClassRes.value.data.data
-            : []
-        );
-      } else {
-        setSubjectClasses([]);
       }
 
       if (classesRes.status === "fulfilled") {
         const classData = Array.isArray(classesRes.value?.data?.data)
           ? classesRes.value.data.data
           : [];
-        const classSubjects =
-          classSubjectRes.status === "fulfilled"
-            ? Array.isArray(classSubjectRes.value?.data?.data)
-              ? classSubjectRes.value.data.data
-              : []
-            : [];
-
-        if (user.role === "Admin3") {
-          setClasses(classData);
-        } else {
-          const filteredClasses = classData
-            .map((cls) => ({
-              ...cls,
-              classSubjects: (Array.isArray(cls.classSubjects)
-                ? cls.classSubjects
-                : []
-              ).filter((cs) =>
-                classSubjects.some(
-                  (teacherCs) =>
-                    teacherCs.id === cs.id && teacherCs.teacher_id === user.id
-                )
-              ),
-            }))
-            .filter(
-              (cls) =>
-                Array.isArray(cls.classSubjects) && cls.classSubjects.length > 0
-            );
-
-          setClasses(filteredClasses);
-        }
+        const relevantClassIds = new Set(
+          relevantAssignments.map((cs) => cs.class_id)
+        );
+        setClasses(classData.filter((cls) => relevantClassIds.has(cls.id)));
       } else {
         setClasses([]);
       }
@@ -1068,6 +1068,18 @@ export const MarksUploadPage = () => {
     hasFetchedRef.current = true;
     fetchDropdowns();
   }, [user, fetchDropdowns]);
+
+  // Deep filter, continued: a non-Admin3 role only ever has one selectable
+  // academic year (the active one), so pick it for them instead of making
+  // them click a dropdown that only has one option anyway. Skipped if a
+  // deep link (e.g. the Teacher Dashboard) already seeded a year.
+  useEffect(() => {
+    if (!user || user.role === "Admin3") return;
+    if (filters.academic_year_id) return;
+    if (academicYears.length === 1) {
+      setFilters((prev) => ({ ...prev, academic_year_id: academicYears[0].id }));
+    }
+  }, [user, academicYears, filters.academic_year_id]);
 
   const loadStudentsMarks = useCallback(async () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
@@ -2170,7 +2182,16 @@ export const MarksUploadPage = () => {
           filtered = filtered.filter((s) => excludedStudents.includes(s.id));
         }
 
-        setFrozenFilterStudents(filtered);
+        // Deep-linking straight into a non-"all" filter (e.g. the Teacher
+        // Dashboard's "Marks I Still Owe" rows) lands here while students
+        // are loaded but marks are still mid-fetch, so this first pass has
+        // nothing to filter against yet and would otherwise freeze an
+        // effectively-unfiltered snapshot. Wait for loadStudentsMarks to
+        // actually finish before freezing, so the frozen list always
+        // reflects real marks data, not a mid-load one.
+        if (!loadingTable) {
+          setFrozenFilterStudents(filtered);
+        }
       } else {
         filtered = students.filter((s) => s && s.id);
         if (frozenFilterStudents !== null) {
@@ -2355,18 +2376,20 @@ export const MarksUploadPage = () => {
   return (
     <SideTop>
       <div className="marks-upload-page">
+        {/* Standalone, above the title — same spot on every marks-module
+            detail page, and now shown regardless of loading state so
+            navigation isn't blocked behind the skeleton. */}
+        <div className="vt-back-row">
+          <Button variant="ghost" icon={<FaArrowLeft />} onClick={() => navigate(-1)}>
+            Go Back
+          </Button>
+        </div>
         <PageHeader title={`Upload ${subject.name} Marks`} />
 
         {loadingPage ? (
           <MarksFiltersSkeleton />
         ) : (
           <>
-            <div>
-              <button className="marks-back-btn" onClick={() => navigate(-1)}>
-                <FaArrowLeft /> <span>Go Back to Subjects</span>
-              </button>
-            </div>
-
             <div className="marks-filters-row">
               <div className="marks-filter-select">
                 <Select

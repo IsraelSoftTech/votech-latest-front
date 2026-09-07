@@ -16,15 +16,17 @@ import api, { subBaseURL, headers } from "../../utils/api";
 import DataTable from "../../components/DataTable/DataTable.component";
 import Stats from "../../components/Stats/Stats.component";
 import AssignCourseModal from "../../components/AssignCourseModal/AssignCourseModal.component";
+import { SubjectFormModal } from "../../components/SubjectFormModal/SubjectFormModal.component";
 import { PageHeader } from "../../components/PageHeader/PageHeader.component";
 import { EmptyState } from "../../components/EmptyState/EmptyState.component";
 import Modal from "../../components/Modal/Modal.component";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import {
-  CustomDropdown,
-  CustomInput,
-  SubmitBtn,
-} from "../../components/Inputs/CustumInputs";
+  EMPTY_SUBJECT_FORM,
+  subjectToForm,
+  subjectFormToPayload,
+  validateSubjectForm,
+} from "../../utils/subjectForm.util";
 import { motion } from "framer-motion";
 
 // A subject can be taught in 30+ classes, whose names already carry their
@@ -64,14 +66,6 @@ const SUBJECT_COLUMNS = [
   },
 ];
 
-const INITIAL_FORM_STATE = {
-  category: "",
-  code: "",
-  coefficient: 0,
-  name: "",
-  orientationDepartmentName: "",
-};
-
 export const SubjectPage = ({ noLayoutWrapper = false }) => {
   const user = useRestrictTo(
     "Admin1",
@@ -90,7 +84,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
   const [data, setData] = useState([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [form, setForm] = useState(INITIAL_FORM_STATE);
+  const [form, setForm] = useState(EMPTY_SUBJECT_FORM);
   const [formErrors, setFormErrors] = useState({});
   const [createLoading, setCreateLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
@@ -109,36 +103,9 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
   }, []);
 
   const resetForm = useCallback(() => {
-    setForm(INITIAL_FORM_STATE);
+    setForm(EMPTY_SUBJECT_FORM);
     setFormErrors({});
   }, []);
-
-  const validateForm = useCallback(() => {
-    const errors = {};
-
-    if (!form.name?.trim()) errors.name = "Subject name is required.";
-    else if (!/^[a-zA-Z0-9\s\-\+\&\.\,\(\)]+$/.test(form.name)) {
-      errors.name =
-        "Subject name may only include letters, numbers, spaces, and basic symbols (- + & . , ( )).";
-    }
-
-    if (!form.code?.trim()) errors.code = "Subject code is required.";
-    else if (!/^[a-zA-Z0-9]+$/.test(form.code))
-      errors.code = "Subject code may only include letters and numbers.";
-
-    const coef = Number(form.coefficient);
-    if (form.coefficient === "" || form.coefficient === null)
-      errors.coefficient = "Coefficient is required.";
-    else if (isNaN(coef)) errors.coefficient = "Coefficient must be a number.";
-    else if (coef < 1)
-      errors.coefficient = "Coefficient cannot be less than 1.";
-    else if (coef > 10)
-      errors.coefficient = "Coefficient cannot be greater than 10.";
-
-    if (!form.category?.trim()) errors.category = "Category is required.";
-
-    return errors;
-  }, [form]);
 
   const fetchSubjects = useCallback(async () => {
     if (!user) return;
@@ -316,23 +283,10 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
     setAssignModalOpen(false);
   };
 
-  // The dropdown stores a department NAME (matching this form's existing
-  // CustomDropdown fields, e.g. category), resolved to the id the API
-  // actually wants right before sending — keeps this consistent with the
-  // rest of the form instead of introducing a differently-shaped select
-  // just for this one field.
-  const resolveOrientationDepartmentId = (name) =>
-    departments.find((d) => d.label === name)?.value ?? null;
-
   const createSubject = async () => {
     try {
       setCreateLoading(true);
-      const { orientationDepartmentName, ...rest } = form;
-      await api.post("/subjects", {
-        ...rest,
-        coefficient: Number(form.coefficient),
-        orientation_department_id: resolveOrientationDepartmentId(orientationDepartmentName),
-      });
+      await api.post("/subjects", subjectFormToPayload(form, departments));
       toast.success("Subject Created successfully.");
       closeCreateModal();
       fetchSubjects();
@@ -351,7 +305,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
-    const errors = validateForm();
+    const errors = validateSubjectForm(form);
     if (Object.keys(errors).length) {
       setFormErrors(errors);
       toast.error(Object.values(errors)[0]);
@@ -363,12 +317,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
   const editSubject = async () => {
     try {
       setEditLoading(true);
-      const { orientationDepartmentName, ...rest } = form;
-      await api.patch(`/subjects/${form.id}`, {
-        ...rest,
-        coefficient: Number(form.coefficient),
-        orientation_department_id: resolveOrientationDepartmentId(orientationDepartmentName),
-      });
+      await api.patch(`/subjects/${form.id}`, subjectFormToPayload(form, departments));
       toast.success("Subject updated successfully.");
       closeEditModal();
       fetchSubjects();
@@ -383,7 +332,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const errors = validateForm();
+    const errors = validateSubjectForm(form);
     if (Object.keys(errors).length) {
       setFormErrors(errors);
       toast.error(Object.values(errors)[0]);
@@ -393,15 +342,7 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
   };
 
   const handleEdit = (row) => {
-    setForm({
-      id: row.id,
-      name: row.name,
-      coefficient: row.coefficient,
-      code: row.code,
-      category: row.category,
-      orientationDepartmentName:
-        row.orientationDepartmentName === "None" ? "" : row.orientationDepartmentName,
-    });
+    setForm(subjectToForm(row));
     setFormErrors({});
     setEditModalOpen(true);
   };
@@ -488,131 +429,29 @@ export const SubjectPage = ({ noLayoutWrapper = false }) => {
         )}
       </div>
 
-      {/* Create Modal */}
-      <Modal
+      <SubjectFormModal
+        mode="create"
         isOpen={createModalOpen}
         onClose={closeCreateModal}
-        title="Create Subject"
-      >
-        <form onSubmit={handleCreateSubmit} className="subject-modal-form">
-          <CustomInput
-            label="Name"
-            value={form.name}
-            placeholder="e.g Mathematics I"
-            name="name"
-            required
-            onChange={handleUpdateForm}
-            error={formErrors.name}
-            onClear={() => handleUpdateForm("name", "")}
-          />
-          <CustomInput
-            label="Code"
-            value={form.code}
-            placeholder="e.g MATH I"
-            name="code"
-            required
-            onChange={handleUpdateForm}
-            error={formErrors.code}
-            onClear={() => handleUpdateForm("code", "")}
-          />
-          <CustomInput
-            label="Coefficient"
-            type="number"
-            value={form.coefficient}
-            placeholder="e.g 4"
-            name="coefficient"
-            required
-            onChange={handleUpdateForm}
-            error={formErrors.coefficient}
-            onClear={() => handleUpdateForm("coefficient", "")}
-          />
-          <CustomDropdown
-            label="Category"
-            value={form.category}
-            required
-            options={["general", "professional", "practical"]}
-            name="category"
-            onClear={() => handleUpdateForm("category", "")}
-            onChange={handleUpdateForm}
-            error={formErrors.category}
-          />
-          <CustomDropdown
-            label="Orientation Placement Department"
-            value={form.orientationDepartmentName}
-            options={departmentNameOptions}
-            name="orientationDepartmentName"
-            onClear={() => handleUpdateForm("orientationDepartmentName", "")}
-            onChange={handleUpdateForm}
-          />
-          <SubmitBtn
-            title={createLoading ? "Creating Subject..." : "Create Subject"}
-            disabled={createLoading}
-          />
-        </form>
-      </Modal>
+        form={form}
+        formErrors={formErrors}
+        onChange={handleUpdateForm}
+        onSubmit={handleCreateSubmit}
+        departmentNameOptions={departmentNameOptions}
+        loading={createLoading}
+      />
 
-      {/* Edit Modal */}
-      <Modal
+      <SubjectFormModal
+        mode="edit"
         isOpen={editModalOpen}
         onClose={closeEditModal}
-        title="Edit Academic Subject"
-      >
-        <form onSubmit={handleEditSubmit} className="subject-modal-form">
-          <CustomInput
-            label="Name"
-            value={form.name}
-            placeholder="e.g Mathematics I"
-            name="name"
-            required
-            onChange={handleUpdateForm}
-            error={formErrors.name}
-            onClear={() => handleUpdateForm("name", "")}
-          />
-          <CustomInput
-            label="Code"
-            value={form.code}
-            placeholder="e.g MATH I"
-            name="code"
-            required
-            onChange={handleUpdateForm}
-            error={formErrors.code}
-            onClear={() => handleUpdateForm("code", "")}
-          />
-          <CustomInput
-            label="Coefficient"
-            type="number"
-            value={form.coefficient}
-            placeholder="e.g 4"
-            name="coefficient"
-            required
-            onChange={handleUpdateForm}
-            error={formErrors.coefficient}
-            onClear={() => handleUpdateForm("coefficient", "")}
-          />
-          <CustomDropdown
-            label="Category"
-            value={form.category}
-            required
-            options={["general", "professional"]}
-            name="category"
-            onClear={() => handleUpdateForm("category", "")}
-            onChange={handleUpdateForm}
-            error={formErrors.category}
-          />
-          <CustomDropdown
-            label="Orientation Placement Department"
-            value={form.orientationDepartmentName}
-            options={departmentNameOptions}
-            name="orientationDepartmentName"
-            onClear={() => handleUpdateForm("orientationDepartmentName", "")}
-            onChange={handleUpdateForm}
-          />
-          <SubmitBtn
-            title={editLoading ? "Saving changes..." : "Save Changes"}
-            disabled={editLoading}
-          />
-        </form>
-      </Modal>
+        form={form}
+        formErrors={formErrors}
+        onChange={handleUpdateForm}
+        onSubmit={handleEditSubmit}
+        departmentNameOptions={departmentNameOptions}
+        loading={editLoading}
+      />
 
       {/* Assign Modal */}
       <Modal

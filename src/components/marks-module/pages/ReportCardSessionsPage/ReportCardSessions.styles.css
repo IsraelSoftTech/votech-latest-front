@@ -214,30 +214,6 @@
   border-top: 1px solid #eef2f7;
 }
 
-.rcs-session-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.8rem;
-}
-
-.rcs-download-all-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: #38a169;
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.83rem;
-  cursor: pointer;
-}
-
-.rcs-download-all-btn:hover {
-  background: #2f855a;
-}
-
 .rcs-run-list {
   display: flex;
   flex-direction: column;

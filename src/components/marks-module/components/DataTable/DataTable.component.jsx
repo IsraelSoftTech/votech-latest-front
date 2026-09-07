@@ -187,7 +187,7 @@ const DataTable = ({
       </div>
 
       <div className="table-scroll-container">
-        <table className="data-table">
+        <table className={`data-table${onRowClick ? "" : " no-row-click"}`}>
           <thead>
             <tr>
               {columns.map(({ label, accessor, sortable }) => (

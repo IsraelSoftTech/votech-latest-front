@@ -9,50 +9,6 @@
   align-items: center;
 }
 
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  font-size: 14px;
-  font-weight: bold;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  background-color: var(--vt-primary-tint2);
-  color: var(--vt-primary);
-}
-
-.back-btn:hover {
-  background-color: var(--vt-primary);
-  color: #fff;
-}
-
-/* Its own class, not the .btn-create borrowed from Subject.styles.css —
-   that class carries a margin-bottom meant for a totally different
-   page's layout (a "Create" button sitting above a table), which was
-   pushing this button out of alignment with Go Back in the same header
-   row. */
-.report-page-download-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  background-color: var(--vt-primary);
-  color: #fff;
-  transition: background-color 0.2s ease;
-}
-
-.report-page-download-btn:hover {
-  background-color: var(--vt-primary-dark);
-}
-
 .report-page-footer {
   width: 100%;
   max-width: 950px;

@@ -7,7 +7,9 @@ import "./Stats.styles.css";
 // a checkmark = something good, an X/ban = something that needs attention),
 // so the tone can be inferred from the icon itself instead of every call
 // site having to also pass a tone — keeps this a one-line drop-in like it
-// already was.
+// already was. A card can still pass an explicit `tone` (e.g. "gold",
+// "pending") when it just wants visual variety rather than a pass/fail
+// judgment, that always wins over the icon guess.
 const toneForIcon = (Icon) => {
   if (Icon === FaCheckCircle) return "good";
   if (Icon === FaTimesCircle || Icon === FaBan) return "warn";
@@ -29,10 +31,10 @@ const Stats = ({ data = [], className = "", loading = false, skeletonCount = 3 }
 
   return (
     <div className={`vt-stats-grid ${className}`}>
-      {data.map(({ title, value, icon: Icon }, idx) => (
+      {data.map(({ title, value, icon: Icon, tone }, idx) => (
         <article
           key={`${title}-${idx}`}
-          className={`vt-stat-card tone-${toneForIcon(Icon)}`}
+          className={`vt-stat-card tone-${tone || toneForIcon(Icon)}`}
           aria-label={`${title} ${value}`}
         >
           <div className="vt-stat-icon" aria-hidden="true">
@@ -56,6 +58,7 @@ Stats.propTypes = {
       value: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
         .isRequired,
       icon: PropTypes.elementType.isRequired, // e.g. FaUsers
+      tone: PropTypes.oneOf(["neutral", "good", "warn", "gold", "pending"]),
     })
   ).isRequired,
   className: PropTypes.string,

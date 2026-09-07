@@ -77,6 +77,25 @@
   color: var(--vt-status-fail);
 }
 
+/* Purely decorative tones — for cards with no pass/fail meaning that just
+   want visual variety instead of every card reading as the same navy
+   "neutral", opt in with an explicit `tone` on the data item. */
+.vt-stat-card.tone-gold .vt-stat-icon {
+  background: var(--vt-gold-tint);
+  color: var(--vt-gold);
+}
+.vt-stat-card.tone-gold .vt-stat-value {
+  color: var(--vt-gold);
+}
+
+.vt-stat-card.tone-pending .vt-stat-icon {
+  background: var(--vt-status-pending-tint);
+  color: var(--vt-status-pending);
+}
+.vt-stat-card.tone-pending .vt-stat-value {
+  color: var(--vt-status-pending);
+}
+
 /* Skeleton — one solid shimmer block per card, matching every other
    loading state in the module, sized identically to the real card so
    nothing shifts once data arrives. */
