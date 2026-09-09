@@ -6,6 +6,11 @@ import 'react-calendar/dist/Calendar.css';
 import { FaCalendarAlt, FaClock, FaUsers, FaUser, FaInfoCircle, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
+import EventParticipantsPicker, {
+  formatEventParticipants,
+  mapStoredParticipants,
+  isSelectAllSelection,
+} from './EventParticipantsPicker';
 
 export default function UserEvents({ wrap = true }) {
   const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
@@ -49,8 +54,8 @@ export default function UserEvents({ wrap = true }) {
   const loadUsers = async () => {
     try {
       if (isAdminRole) {
-        const usersData = await api.getAllUsersForChat();
-        setUsers(usersData);
+        const usersData = await api.getEventUsers();
+        setUsers(Array.isArray(usersData) ? usersData : []);
       }
     } catch (error) {
       console.error('Error loading users:', error);
@@ -163,21 +168,11 @@ export default function UserEvents({ wrap = true }) {
         <input type="text" name="title" value={form.title} onChange={handleFormChange} placeholder="Event title" required />
       </div>
       <textarea name="description" value={form.description} onChange={handleFormChange} placeholder="Description" required />
-      <div className="participants-section">
-        <label className="participants-label">Select Participants</label>
-        <div className="participants-grid">
-          {users.map(user => (
-            <label key={user.id} className="participant-checkbox">
-              <input
-                type="checkbox"
-                checked={selectedParticipants.some(p => p.id === user.id)}
-                onChange={() => handleParticipantToggle(user.id, user.username)}
-              />
-              <span className="participant-name">{user.username}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <EventParticipantsPicker
+        users={users}
+        selectedParticipants={selectedParticipants}
+        onChange={setSelectedParticipants}
+      />
       {formError && <div className="events-form-error">{formError}</div>}
       <button type="submit" className={`events-form-submit${isUpdate ? ' events-form-submit--update' : ''}`}>
         {submitLabel}
@@ -202,17 +197,6 @@ export default function UserEvents({ wrap = true }) {
     }));
   };
 
-  const handleParticipantToggle = (userId, username) => {
-    setSelectedParticipants(prev => {
-      const isSelected = prev.some(p => p.id === userId);
-      if (isSelected) {
-        return prev.filter(p => p.id !== userId);
-      } else {
-        return [...prev, { id: userId, username }];
-      }
-    });
-  };
-
   const submitCreate = async (e) => {
     e.preventDefault();
     setFormError('');
@@ -223,13 +207,15 @@ export default function UserEvents({ wrap = true }) {
     }
 
     try {
+      const selectAll = isSelectAllSelection(selectedParticipants, users);
       const eventData = {
         event_type: form.type,
         title: form.title,
         description: form.description,
         event_date: form.date,
         event_time: form.time,
-        participants: selectedParticipants.map(p => p.username).join(', ')
+        participants: selectAll ? '__ALL__' : selectedParticipants.map(p => p.username).join(', '),
+        selectAllUsers: selectAll,
       };
 
       await api.createEvent(eventData);
@@ -263,14 +249,7 @@ export default function UserEvents({ wrap = true }) {
       description: event.description || ''
     });
     
-    // Set participants
-    if (event.participants) {
-      const participantNames = event.participants.split(', ').filter(p => p.trim());
-      const selectedUsers = users.filter(user => participantNames.includes(user.username));
-      setSelectedParticipants(selectedUsers);
-    } else {
-      setSelectedParticipants([]);
-    }
+    setSelectedParticipants(mapStoredParticipants(event, users));
     
     setShowEdit(true);
   };
@@ -285,13 +264,15 @@ export default function UserEvents({ wrap = true }) {
     }
 
     try {
+      const selectAll = isSelectAllSelection(selectedParticipants, users);
       const eventData = {
         event_type: form.type,
         title: form.title,
         description: form.description,
         event_date: form.date,
         event_time: form.time,
-        participants: selectedParticipants.map(p => p.username).join(', ')
+        participants: selectAll ? '__ALL__' : selectedParticipants.map(p => p.username).join(', '),
+        selectAllUsers: selectAll,
       };
 
       await api.updateEvent(editingEvent.id, eventData);
@@ -517,7 +498,7 @@ export default function UserEvents({ wrap = true }) {
               {selectedEvent.participants && (
                 <div className="detail-item">
                   <FaUsers />
-                  <span>Participants: {selectedEvent.participants}</span>
+                  <span>Participants: {formatEventParticipants(selectedEvent, users.length)}</span>
                 </div>
               )}
             </div>

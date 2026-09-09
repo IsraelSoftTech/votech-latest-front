@@ -73,7 +73,10 @@ export function StudentIdCardPrint({
         forPrint ? "sid-card-outer--print" : ""
       }`}
     >
-      <article className="sid-card" aria-label={`ID card for ${student.full_name}`}>
+      <article
+        className={`sid-card${settings.stamp_src ? " sid-card--has-stamp" : ""}`}
+        aria-label={`ID card for ${student.full_name}`}
+      >
         <div className="sid-card-frame" aria-hidden="true" />
         <div className="sid-card-texture" aria-hidden="true" />
         <div className="sid-card-texture-fine" aria-hidden="true" />
@@ -113,7 +116,7 @@ export function StudentIdCardPrint({
               {qrValue ? (
                 <QRCodeSVG
                   value={qrValue}
-                  size={52}
+                  size={40}
                   level="M"
                   includeMargin={false}
                   className="sid-card-qr"
@@ -144,12 +147,23 @@ export function StudentIdCardPrint({
               <DetailItem label="Guardian" value={student.guardian_contact} />
             </div>
 
-            <div className="sid-details-footer">
-              <DetailItem label="Card No." value={student.card_number} />
-              <DetailItem
-                label="Issued"
-                value={formatDate(getIssuedDate(student))}
-              />
+            <div className="sid-card-bottom">
+              <div className="sid-details-footer">
+                <DetailItem label="Card No." value={student.card_number} />
+                <DetailItem
+                  label="Issued"
+                  value={formatDate(getIssuedDate(student))}
+                />
+              </div>
+              {settings.stamp_src ? (
+                <div className="sid-card-stamp">
+                  <img
+                    src={settings.stamp_src}
+                    alt=""
+                    className="sid-card-stamp-img"
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

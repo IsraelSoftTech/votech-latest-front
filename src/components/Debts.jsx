@@ -17,6 +17,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import SuccessMessage from './SuccessMessage';
 import { useActiveYear } from '../context/ActiveYearContext';
+import { useRestrictTo } from '../hooks/restrictTo';
 import './Finance.css';
 import './ReportFinances.css';
 import './Debts.css';
@@ -58,6 +59,7 @@ function statusLabel(status) {
 }
 
 export default function Debts() {
+  useRestrictTo('Admin2');
   const { activeYear } = useActiveYear();
   const [activeTab, setActiveTab] = useState('owed_by_school');
   const [debts, setDebts] = useState([]);
@@ -357,14 +359,19 @@ export default function Debts() {
           onClose={() => setShowToast(false)}
         />
       )}
-      <div className="rf-root">
+      <div className="rf-root debts-page">
         <div className="rf-print-header">
           <img src={logo} alt="VOTECH Logo" className="rf-print-logo" />
           <span className="rf-print-school">{SCHOOL_NAME}</span>
         </div>
 
-        <div className="rf-page-header">
-          <h1 className="rf-page-title">Debt Recording</h1>
+        <div className="rf-page-header debts-page-header">
+          <div className="debts-page-heading">
+            <h1 className="rf-page-title">Debt Recording</h1>
+            <p className="debts-page-subtitle">
+              Track amounts the school owes and amounts owed to the school
+            </p>
+          </div>
           <div className="rf-statement-actions">
             <button type="button" className="rf-download-pdf-btn" onClick={handleExportPdf}>
               <FaDownload /> Export PDF
@@ -375,22 +382,28 @@ export default function Debts() {
           </div>
         </div>
 
-        <div className="finance-container debts-cards-row" style={{ maxWidth: '100%', padding: 0 }}>
-          <div className="dashboard-cards">
+        <div className="debts-cards-row">
+          <div className="dashboard-cards debts-summary-cards">
             <div className="card we-owe">
               <div className="icon"><FaHandHoldingUsd /></div>
-              <div className="count">{formatXaf(summary.owed_by_school?.total_balance)}</div>
-              <div className="desc">Debts We Owe (balance)</div>
+              <div className="debts-card-text">
+                <div className="count">{formatXaf(summary.owed_by_school?.total_balance)}</div>
+                <div className="desc">Debts We Owe (balance)</div>
+              </div>
             </div>
             <div className="card owed-to-us">
               <div className="icon"><FaBalanceScale /></div>
-              <div className="count">{formatXaf(summary.owed_to_school?.total_balance)}</div>
-              <div className="desc">Debts Owed To Us (balance)</div>
+              <div className="debts-card-text">
+                <div className="count">{formatXaf(summary.owed_to_school?.total_balance)}</div>
+                <div className="desc">Debts Owed To Us (balance)</div>
+              </div>
             </div>
             <div className="card open-debts">
               <div className="icon"><FaExclamationCircle /></div>
-              <div className="count">{totalOpen}</div>
-              <div className="desc">Open / Partial Records</div>
+              <div className="debts-card-text">
+                <div className="count">{totalOpen}</div>
+                <div className="desc">Open / Partial Records</div>
+              </div>
             </div>
           </div>
         </div>
@@ -461,8 +474,8 @@ export default function Debts() {
         {loading ? (
           <div className="rf-loading">Loading debt records…</div>
         ) : (
-          <div className="rf-table-wrap">
-            <table className="rf-table">
+          <div className="rf-table-wrap debts-table-wrap">
+            <table className="rf-table debts-table">
               <thead>
                 <tr>
                   <th>#</th>
@@ -485,9 +498,9 @@ export default function Debts() {
                   </tr>
                 ) : (
                   debts.map((debt, index) => (
-                    <tr key={debt.id}>
-                      <td data-label="#">{index + 1}</td>
-                      <td data-label="Party">{debt.party_name}</td>
+                    <tr key={debt.id} className="debts-row">
+                      <td className="debts-index-cell" data-label="#">{index + 1}</td>
+                      <td className="debts-party-cell" data-label="Party">{debt.party_name}</td>
                       <td data-label="Reference">{debt.reference_number || '—'}</td>
                       <td className="rf-amount-cell" data-label="Amount">
                         {formatXaf(debt.amount)}
@@ -495,7 +508,7 @@ export default function Debts() {
                       <td className="rf-amount-cell" data-label="Paid">
                         {formatXaf(debt.amount_paid)}
                       </td>
-                      <td className="rf-amount-cell" data-label="Balance">
+                      <td className="rf-amount-cell debts-balance-cell" data-label="Balance">
                         {formatXaf(debt.balance)}
                       </td>
                       <td data-label="Status">
@@ -506,7 +519,7 @@ export default function Debts() {
                       <td data-label="Due Date">
                         {debt.due_date ? String(debt.due_date).slice(0, 10) : '—'}
                       </td>
-                      <td data-label="Actions">
+                      <td className="debts-actions-td" data-label="Actions">
                         <div className="debts-actions-cell">
                           {debt.status !== 'paid' && debt.status !== 'written_off' && (
                             <button
@@ -527,6 +540,7 @@ export default function Debts() {
                           <button
                             type="button"
                             className="debts-btn debts-btn-danger debts-btn-sm"
+                            aria-label="Delete debt record"
                             onClick={() => handleDelete(debt)}
                           >
                             <FaTrash />

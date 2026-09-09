@@ -507,7 +507,86 @@
 }
 
 .sidc-settings-modal {
-  width: min(100%, 640px);
+  width: min(100%, 680px);
+}
+
+.sidc-btn-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.sidc-btn-danger:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.sidc-stamp-upload {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem;
+  background: #f8fafc;
+  border: 1px dashed #c8d4ea;
+  border-radius: 10px;
+}
+
+.sidc-stamp-circle {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid #204080;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 1.4rem;
+  overflow: hidden;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px rgba(32, 64, 128, 0.25);
+}
+
+.sidc-stamp-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.sidc-stamp-circle--filled {
+  color: transparent;
+}
+
+.sidc-stamp-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.sidc-stamp-copy p {
+  margin: 0 0 0.7rem;
+  font-size: 0.85rem;
+  color: #5a6478;
+  line-height: 1.45;
+  text-transform: none;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.sidc-stamp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sidc-stamp-file-btn {
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .sidc-stamp-upload {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .sidc-settings-body {

@@ -1,0 +1,65 @@
+.hod-lp-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 0 0 18px;
+  color: #1e3a8a;
+}
+
+.hod-lp-banner svg {
+  flex-shrink: 0;
+  font-size: 1.4rem;
+}
+
+.hod-lp-banner div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hod-lp-banner strong {
+  font-size: 0.95rem;
+}
+
+.hod-lp-banner span {
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.hod-lp-locked {
+  background: #fff;
+  border: 1px solid #e5e9f2;
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+.hod-lp-locked svg {
+  font-size: 2rem;
+  color: #204080;
+  margin-bottom: 12px;
+}
+
+.hod-lp-locked h3 {
+  margin: 0 0 8px;
+  color: #1e3a8a;
+  font-size: 1.15rem;
+}
+
+.hod-lp-locked p {
+  margin: 0 auto;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .hod-lp-banner {
+    align-items: flex-start;
+  }
+}

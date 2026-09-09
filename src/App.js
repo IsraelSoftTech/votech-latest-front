@@ -78,6 +78,7 @@ import Dean from "./components/Dean.jsx";
 import DeanMessage from "./components/DeanMessage.jsx";
 import DeanEvent from "./components/DeanEvent";
 import DeanLessonPlan from "./components/DeanLessonPlan.jsx";
+import HodLessonPlans from "./components/HodLessonPlans.jsx";
 import UserEvents from "./components/UserEvents";
 
 // Misc
@@ -225,7 +226,6 @@ function App() {
         <Route path="/admin-teacher" element={<AdminTeachers />} />
         <Route path="/admin-class" element={<AdminClass />} />
         <Route path="/admin-finance" element={<Finance />} />
-        <Route path="/admin-debts" element={<Debts />} />
         <Route path="/admin-specialty" element={<Specialty />} />
         <Route path="/admin-messages" element={<Message />} />
         <Route path="/admin-messages/:userId" element={<UserChat />} />
@@ -272,6 +272,8 @@ function App() {
         <Route path="/admin-reports-inventory" element={<ReportInventory />} />
         <Route path="/admin-reports-finances" element={<ReportFinances />} />
         <Route path="/admin-reports-property-equipment" element={<PropertyEquipment />} />
+        <Route path="/admin-reports-debts" element={<Debts />} />
+        <Route path="/admin-debts" element={<Navigate to="/admin-reports-debts" replace />} />
         <Route
           path="/admin-timetable"
           element={<TimeTable authUser={authUser} />}
@@ -373,6 +375,7 @@ function App() {
         <Route path="/dean-scheduling" element={<Dean />} />
         <Route path="/dean-academic" element={<Dean />} />
         <Route path="/dean-lesson-plans" element={<DeanLessonPlan />} />
+        <Route path="/hod-lesson-plans" element={<HodLessonPlans />} />
         <Route path="/admin-hods" element={<AdminHODs />} />
 
         {/* Marks / Reports */}

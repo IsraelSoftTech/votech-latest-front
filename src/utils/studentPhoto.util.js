@@ -161,4 +161,16 @@ export const DEFAULT_ID_CARD_SETTINGS = {
   motto_en: "PEACE - WORK - FATHERLAND",
   card_title: "STUDENT ID CARD",
   qr_caption: "Scan for attendance",
+  stamp_url: null,
+  stamp_src: null,
 };
+
+export async function fetchIdCardStampDataUrl() {
+  try {
+    const blob = await api.getIdCardStampBlob();
+    if (!blob || blob.size === 0) return null;
+    return blobToDataUrl(blob);
+  } catch {
+    return null;
+  }
+}

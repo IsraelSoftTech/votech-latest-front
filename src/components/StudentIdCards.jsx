@@ -16,6 +16,9 @@ import {
   FaExclamationTriangle,
   FaCog,
   FaSave,
+  FaUpload,
+  FaTrash,
+  FaStamp,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import SideTop from "./SideTop";
@@ -28,6 +31,7 @@ import {
   buildStudentPhotoMap,
   readCachedIdCardSettings,
   writeCachedIdCardSettings,
+  fetchIdCardStampDataUrl,
 } from "../utils/studentPhoto.util";
 import { getActiveYearSnapshot } from "../utils/activeYearSession";
 import { downloadIdCardsPdf } from "../utils/downloadIdCards.util";
@@ -89,18 +93,75 @@ function TableSkeleton({ rows = 5 }) {
 
 function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
   const [form, setForm] = useState({ ...DEFAULT_ID_CARD_SETTINGS });
+  const localStampUrl = useRef(null);
 
   useEffect(() => {
     if (open && settings) {
-      setForm({ ...DEFAULT_ID_CARD_SETTINGS, ...settings });
+      if (localStampUrl.current) {
+        URL.revokeObjectURL(localStampUrl.current);
+        localStampUrl.current = null;
+      }
+      setForm({
+        ...DEFAULT_ID_CARD_SETTINGS,
+        ...settings,
+        stampFile: null,
+        remove_stamp: false,
+      });
     }
   }, [open, settings]);
+
+  useEffect(() => {
+    return () => {
+      if (localStampUrl.current) {
+        URL.revokeObjectURL(localStampUrl.current);
+      }
+    };
+  }, []);
 
   if (!open) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleStampFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file for the stamp.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Stamp image must be 5 MB or smaller.");
+      return;
+    }
+    if (localStampUrl.current) {
+      URL.revokeObjectURL(localStampUrl.current);
+    }
+    const preview = URL.createObjectURL(file);
+    localStampUrl.current = preview;
+    setForm((prev) => ({
+      ...prev,
+      stampFile: file,
+      stamp_src: preview,
+      remove_stamp: false,
+    }));
+  };
+
+  const handleRemoveStamp = () => {
+    if (localStampUrl.current) {
+      URL.revokeObjectURL(localStampUrl.current);
+      localStampUrl.current = null;
+    }
+    setForm((prev) => ({
+      ...prev,
+      stampFile: null,
+      stamp_src: null,
+      stamp_url: null,
+      remove_stamp: true,
+    }));
   };
 
   return (
@@ -111,7 +172,7 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
       >
         <div className="sidc-modal-header">
           <h2>
-            <FaCog /> ID Card Header Settings
+            <FaCog /> ID Card Settings
           </h2>
           <button type="button" className="sidc-modal-close" onClick={onClose}>
             ×
@@ -119,8 +180,8 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
         </div>
         <div className="sidc-settings-body">
           <p className="sidc-settings-hint">
-            Configure the school name, motto, and title shown on every student ID
-            card header.
+            Configure the school name, motto, title, and official stamp shown on
+            every student ID card.
           </p>
           <div className="sidc-settings-grid">
             <label className="sidc-settings-field sidc-settings-field--wide">
@@ -177,6 +238,48 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
                 placeholder="Scan for attendance"
               />
             </label>
+            <div className="sidc-settings-field sidc-settings-field--wide">
+              <span>Official Stamp</span>
+              <div className="sidc-stamp-upload">
+                <div
+                  className={`sidc-stamp-circle ${
+                    form.stamp_src ? "sidc-stamp-circle--filled" : ""
+                  }`}
+                >
+                  {form.stamp_src ? (
+                    <img src={form.stamp_src} alt="Official stamp preview" />
+                  ) : (
+                    <FaStamp />
+                  )}
+                </div>
+                <div className="sidc-stamp-copy">
+                  <p>
+                    Upload a PNG or JPG. It appears as a round official seal on
+                    the lower-right of every student ID card.
+                  </p>
+                  <div className="sidc-stamp-actions">
+                    <label className="sidc-btn sidc-btn-secondary sidc-stamp-file-btn">
+                      <FaUpload /> {form.stamp_src ? "Change image" : "Upload stamp"}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                        onChange={handleStampFile}
+                        hidden
+                      />
+                    </label>
+                    {form.stamp_src && (
+                      <button
+                        type="button"
+                        className="sidc-btn sidc-btn-danger"
+                        onClick={handleRemoveStamp}
+                      >
+                        <FaTrash /> Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="sidc-settings-preview">
             <span className="sidc-settings-preview-label">Preview</span>
@@ -270,9 +373,17 @@ export default function StudentIdCards() {
   const fetchSettings = useCallback(async () => {
     try {
       const data = await api.getIdCardSettings();
-      const next = { ...DEFAULT_ID_CARD_SETTINGS, ...data };
+      const stampSrc = data?.stamp_url
+        ? (await fetchIdCardStampDataUrl()) || data.stamp_url
+        : null;
+      const next = {
+        ...DEFAULT_ID_CARD_SETTINGS,
+        ...data,
+        stamp_src: stampSrc,
+        remove_stamp: false,
+      };
       setCardSettings(next);
-      writeCachedIdCardSettings(next);
+      writeCachedIdCardSettings({ ...next, stamp_src: null });
     } catch (e) {
       console.warn("ID card settings load failed", e);
     }
@@ -478,10 +589,19 @@ export default function StudentIdCards() {
   const handleSaveSettings = async (form) => {
     setSavingSettings(true);
     try {
-      const res = await api.updateIdCardSettings(form);
-      const next = { ...DEFAULT_ID_CARD_SETTINGS, ...(res.settings || res) };
+      const res = await api.updateIdCardSettings(form, form.stampFile || null);
+      const saved = res.settings || res;
+      const stampSrc = saved?.stamp_url
+        ? (await fetchIdCardStampDataUrl()) || saved.stamp_url
+        : null;
+      const next = {
+        ...DEFAULT_ID_CARD_SETTINGS,
+        ...saved,
+        stamp_src: stampSrc,
+        remove_stamp: false,
+      };
       setCardSettings(next);
-      writeCachedIdCardSettings(next);
+      writeCachedIdCardSettings({ ...next, stamp_src: null });
       toast.success("ID card settings saved");
       setSettingsOpen(false);
     } catch (e) {
@@ -514,7 +634,7 @@ export default function StudentIdCards() {
               type="button"
               className="sidc-btn sidc-btn-secondary"
               onClick={() => setSettingsOpen(true)}
-              title="ID card header settings"
+              title="ID card settings"
             >
               <FaCog /> Settings
             </button>

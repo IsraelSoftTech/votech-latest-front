@@ -50,6 +50,7 @@ import {
 import NotificationBell from "./NotificationBell";
 import MessageIcon from "./MessageIcon";
 import AcademicJobNotificationBell from "./AcademicJobNotificationBell";
+import useHodStatus from "../hooks/useHodStatus";
 
 export default function SideTop({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -59,6 +60,7 @@ export default function SideTop({ children }) {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [myPayslipCount, setMyPayslipCount] = useState(0);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const hodStatus = useHodStatus();
   const [profileData, setProfileData] = useState({
     username: "",
     profileImage: null,
@@ -174,7 +176,6 @@ export default function SideTop({ children }) {
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       { label: "Monitor Users", icon: <FaUsers />, path: "/monitor-users" },
       { label: "Fee", icon: <FaMoneyBill />, path: "/admin-fee" },
-      { label: "Debts", icon: <FaHandHoldingUsd />, path: "/admin-debts" },
       { label: "Salary", icon: <FaFileInvoiceDollar />, path: "/admin-salary" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
       // { label: "Subjects", icon: <FaBook />, path: "/admin-subjects" },
@@ -241,7 +242,6 @@ export default function SideTop({ children }) {
         icon: <FaBookOpen />,
       },
       { label: "Fee", icon: <FaCreditCard />, path: "/admin-fee" },
-      { label: "Debts", icon: <FaHandHoldingUsd />, path: "/admin-debts" },
       { label: "Salary", icon: <FaFileInvoiceDollar />, path: "/admin-salary" },
       {
         label: "Pay Slip",
@@ -255,6 +255,7 @@ export default function SideTop({ children }) {
           { label: "Inventory", path: "/admin-reports-inventory", icon: <FaBoxes /> },
           { label: "Finances", path: "/admin-reports-finances", icon: <FaMoneyBill /> },
           { label: "Property & Equipment", path: "/admin-reports-property-equipment", icon: <FaWarehouse /> },
+          { label: "Debts", path: "/admin-reports-debts", icon: <FaHandHoldingUsd /> },
         ],
       },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
@@ -289,7 +290,6 @@ export default function SideTop({ children }) {
       },
       { label: "Messages", icon: <FaEnvelope />, path: "/admin-messages" },
       { label: "Pay Slip", icon: <FaFileInvoiceDollar />, path: "/payslip" },
-      { label: "Debts", icon: <FaHandHoldingUsd />, path: "/admin-debts" },
       { label: "ID Cards", icon: <FaIdCard />, path: "/admin-idcards" },
       {
         label: "Student Attendance",
@@ -666,6 +666,25 @@ export default function SideTop({ children }) {
   // Admin4 uses its own menu items defined above, not deanMenuItems
   if (authUser?.role === "Admin3") menuToShow = filterMenuItems(menuItems);
 
+  if (hodStatus.is_hod) {
+    const alreadyListed = menuToShow.some(
+      (item) =>
+        item.path === "/hod-lesson-plans" ||
+        (Array.isArray(item.submenu) &&
+          item.submenu.some((sub) => sub.path === "/hod-lesson-plans"))
+    );
+    if (!alreadyListed) {
+      menuToShow = [
+        ...menuToShow,
+        {
+          label: "Dept Lesson Plans",
+          icon: <FaPenFancy />,
+          path: "/hod-lesson-plans",
+        },
+      ];
+    }
+  }
+
   useEffect(() => {
     const isPageVisible = () =>
       typeof document !== "undefined"
@@ -1008,6 +1027,12 @@ export default function SideTop({ children }) {
           >
             <span className="icon"><FaUser /></span>
             <span className="menu-label sidebar-username-text">{username}</span>
+            {hodStatus.hod_status === "active" && (
+              <span className="hod-status-badge hod-status-badge--active">HOD</span>
+            )}
+            {hodStatus.hod_status === "suspended" && (
+              <span className="hod-status-badge hod-status-badge--suspended">HOD (Suspended)</span>
+            )}
             <span className="chevron" aria-hidden="true">
               <FaChevronCircleDown />
             </span>
@@ -1144,6 +1169,12 @@ export default function SideTop({ children }) {
                   />
                 ) : (
                   <span>{username}</span>
+                )}
+                {hodStatus.hod_status === "active" && (
+                  <span className="hod-status-badge hod-status-badge--active">HOD</span>
+                )}
+                {hodStatus.hod_status === "suspended" && (
+                  <span className="hod-status-badge hod-status-badge--suspended">HOD (Suspended)</span>
                 )}
               </div>
             </button>

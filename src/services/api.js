@@ -771,11 +771,61 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  async updateIdCardSettings(settings) {
+  async getIdCardStampBlob() {
+    const headers = {};
+    const auth = this.getAuthHeaders();
+    if (auth.Authorization) headers.Authorization = auth.Authorization;
+    const response = await fetch(`${API_URL}/student-id-cards/settings/stamp`, {
+      headers,
+    });
+    if (response.status === 404) return null;
+    if (!response.ok) return null;
+    return response.blob();
+  }
+
+  async updateIdCardSettings(settings, stampFile = null) {
+    const hasFile = stampFile instanceof File;
+    const removeStamp = Boolean(settings?.remove_stamp) && !hasFile;
+
+    if (hasFile || removeStamp) {
+      const formData = new FormData();
+      const skip = new Set([
+        "stamp_url",
+        "stamp_src",
+        "stampFile",
+        "remove_stamp",
+        "id",
+        "updated_at",
+        "updated_by",
+      ]);
+      Object.entries(settings || {}).forEach(([key, value]) => {
+        if (skip.has(key) || value === undefined || value === null) return;
+        formData.append(key, String(value));
+      });
+      if (hasFile) formData.append("stamp", stampFile);
+      if (removeStamp) formData.append("remove_stamp", "true");
+
+      const headers = {};
+      const auth = this.getAuthHeaders();
+      if (auth.Authorization) headers.Authorization = auth.Authorization;
+
+      const response = await fetch(`${API_URL}/student-id-cards/settings`, {
+        method: "PUT",
+        headers,
+        body: formData,
+      });
+      return this.handleResponse(response);
+    }
+
+    const payload = { ...settings };
+    delete payload.stamp_src;
+    delete payload.stampFile;
+    delete payload.remove_stamp;
+
     const response = await fetch(`${API_URL}/student-id-cards/settings`, {
       method: "PUT",
       headers: this.getAuthHeaders(),
-      body: JSON.stringify(settings),
+      body: JSON.stringify(payload),
     });
     return this.handleResponse(response);
   }
@@ -3314,6 +3364,13 @@ class ApiService {
     return await this.handleResponse(response);
   }
 
+  async getEventUsers() {
+    const response = await fetch(`${API_URL}/events/users`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
   async createEvent(eventData) {
     const response = await fetch(`${API_URL}/events`, {
       method: "POST",
@@ -3475,6 +3532,21 @@ class ApiService {
 
   async getHODStats() {
     const response = await fetch(`${API_URL}/hods/stats/overview`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getMyHodStatus() {
+    const response = await fetch(`${API_URL}/hods/me`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getHodLessonPlans(filters = {}) {
+    const qs = this._lessonPlanQueryString(filters);
+    const response = await fetch(`${API_URL}/lesson-plans/hod${qs}`, {
       headers: this.getAuthHeaders(),
     });
     return await this.handleResponse(response);

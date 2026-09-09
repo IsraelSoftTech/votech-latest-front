@@ -6,6 +6,11 @@ import 'react-calendar/dist/Calendar.css';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import SuccessMessage from './SuccessMessage';
 import api from '../services/api';
+import EventParticipantsPicker, {
+  formatEventParticipants,
+  mapStoredParticipants,
+  isSelectAllSelection,
+} from './EventParticipantsPicker';
 
 export default function DeanEvent() {
   const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
@@ -76,8 +81,8 @@ export default function DeanEvent() {
 
   const loadUsers = async () => {
     try {
-      const usersData = await api.getAllUsersForChat();
-      setUsers(usersData);
+      const usersData = await api.getEventUsers();
+      setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (error) {
       console.error('Error loading users:', error);
     }
@@ -109,17 +114,6 @@ export default function DeanEvent() {
     setSelectedDate(new Date(value));
   };
 
-  const handleParticipantToggle = (userId, username) => {
-    setSelectedParticipants(prev => {
-      const isSelected = prev.some(p => p.id === userId);
-      if (isSelected) {
-        return prev.filter(p => p.id !== userId);
-      } else {
-        return [...prev, { id: userId, username }];
-      }
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -140,13 +134,15 @@ export default function DeanEvent() {
     }
 
     try {
+      const selectAll = isSelectAllSelection(selectedParticipants, users);
       const eventData = {
         event_type: formData.type,
         title: formData.title,
         description: formData.description || '',
         event_date: eventDate,
         event_time: formData.time,
-        participants: selectedParticipants.map(p => p.username).join(', ')
+        participants: selectAll ? '__ALL__' : selectedParticipants.map(p => p.username).join(', '),
+        selectAllUsers: selectAll,
       };
 
       const created = await api.createEvent(eventData);
@@ -199,15 +195,7 @@ export default function DeanEvent() {
       participants: event.participants || ''
     });
     
-    // Set participants
-    if (event.participants) {
-      const participantNames = event.participants.split(', ').filter(p => p.trim());
-      const selectedUsers = users.filter(user => participantNames.includes(user.username));
-      setSelectedParticipants(selectedUsers);
-    } else {
-      setSelectedParticipants([]);
-    }
-    
+    setSelectedParticipants(mapStoredParticipants(event, users));
     setShowEditModal(true);
   };
 
@@ -220,13 +208,15 @@ export default function DeanEvent() {
     }
 
     try {
+      const selectAll = isSelectAllSelection(selectedParticipants, users);
       const eventData = {
         event_type: editFormData.type,
         title: editFormData.title,
         description: editFormData.description,
         event_date: editingEvent.event_date,
         event_time: editFormData.time,
-        participants: selectedParticipants.map(p => p.username).join(', ')
+        participants: selectAll ? '__ALL__' : selectedParticipants.map(p => p.username).join(', '),
+        selectAllUsers: selectAll,
       };
 
       await api.updateEvent(editingEvent.id, eventData);
@@ -354,7 +344,11 @@ export default function DeanEvent() {
                   {event.description && <div className="event-description">{event.description}</div>}
                   <div className="event-details">
                     <span className="event-time">{formatTime(event.event_time)}</span>
-                    {event.participants && <span className="event-participants">Participants: {event.participants}</span>}
+                    {event.participants && (
+                      <span className="event-participants">
+                        Participants: {formatEventParticipants(event, users.length)}
+                      </span>
+                    )}
                   </div>
                   
                   {/* Action Buttons for Creator */}
@@ -439,27 +433,11 @@ export default function DeanEvent() {
                   />
                 </div>
                 
-                {/* Participants Selection */}
-                <div className="participants-section">
-                  <label className="participants-label">Select Participants:</label>
-                  <div className="participants-list">
-                    {users.map(user => (
-                      <label key={user.id} className="participant-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={selectedParticipants.some(p => p.id === user.id)}
-                          onChange={() => handleParticipantToggle(user.id, user.username)}
-                        />
-                        <span className="participant-name">{user.username}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {selectedParticipants.length > 0 && (
-                    <div className="selected-participants">
-                      <strong>Selected:</strong> {selectedParticipants.map(p => p.username).join(', ')}
-                    </div>
-                  )}
-                </div>
+                <EventParticipantsPicker
+                  users={users}
+                  selectedParticipants={selectedParticipants}
+                  onChange={setSelectedParticipants}
+                />
                 
                 <button type="submit" className="create-event-btn">
                   Create Event
@@ -527,27 +505,11 @@ export default function DeanEvent() {
                   />
                 </div>
                 
-                {/* Participants Selection */}
-                <div className="participants-section">
-                  <label className="participants-label">Select Participants:</label>
-                  <div className="participants-list">
-                    {users.map(user => (
-                      <label key={user.id} className="participant-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={selectedParticipants.some(p => p.id === user.id)}
-                          onChange={() => handleParticipantToggle(user.id, user.username)}
-                        />
-                        <span className="participant-name">{user.username}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {selectedParticipants.length > 0 && (
-                    <div className="selected-participants">
-                      <strong>Selected:</strong> {selectedParticipants.map(p => p.username).join(', ')}
-                    </div>
-                  )}
-                </div>
+                <EventParticipantsPicker
+                  users={users}
+                  selectedParticipants={selectedParticipants}
+                  onChange={setSelectedParticipants}
+                />
                 
                 <button type="submit" className="create-event-btn create-event-btn--update">
                   Update Event

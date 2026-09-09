@@ -190,10 +190,8 @@ export default function ChatHub({
           setCanCreateGroup(true);
           return;
         }
-        const hods = await api.getHODs();
-        setCanCreateGroup(
-          Array.isArray(hods) && hods.some((h) => String(h.hod_user_id) === String(authUser?.id))
-        );
+        const myHod = await api.getMyHodStatus();
+        setCanCreateGroup(myHod?.is_hod === true);
       } catch {
         setCanCreateGroup(false);
       }

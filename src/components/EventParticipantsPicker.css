@@ -1,0 +1,124 @@
+.event-participants-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.participants-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.participants-count {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #204080;
+  white-space: nowrap;
+}
+
+.participants-search {
+  width: 100%;
+  border: 1px solid #dbe3f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  color: #1f2937;
+  background: #fff;
+}
+
+.participants-search:focus {
+  outline: none;
+  border-color: #204080;
+  box-shadow: 0 0 0 3px rgba(32, 64, 128, 0.12);
+}
+
+.event-participants-picker .participants-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f9fafb;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.select-all-users {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.select-all-users--on {
+  background: #204080;
+  border-color: #204080;
+  color: #fff;
+}
+
+.select-all-users input {
+  width: 16px;
+  height: 16px;
+  accent-color: #204080;
+}
+
+.select-all-users--on input {
+  accent-color: #fff;
+}
+
+.participants-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.85rem;
+  padding: 12px;
+}
+
+.event-participants-picker .participant-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  min-width: 0;
+}
+
+.event-participants-picker .participant-checkbox:hover {
+  background: #eef2ff;
+  border-color: rgba(32, 64, 128, 0.2);
+}
+
+.event-participants-picker .participant-name {
+  font-size: 0.82rem;
+  color: #374151;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.participant-name em {
+  font-style: normal;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 480px) {
+  .event-participants-picker .participants-list {
+    grid-template-columns: 1fr;
+  }
+}

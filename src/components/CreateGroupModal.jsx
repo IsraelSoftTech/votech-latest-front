@@ -18,20 +18,15 @@ export default function CreateGroupModal({ isOpen, onClose, onGroupCreated }) {
   const fetchUsers = async () => {
     try {
       const authUser = JSON.parse(sessionStorage.getItem('authUser') || 'null');
-      const [usersData, hods] = await Promise.all([
+      const [usersData, myHod] = await Promise.all([
         api.getAllUsersForChat(),
-        api.getHODs().catch(() => [])
+        api.getMyHodStatus().catch(() => null)
       ]);
 
-      // If current user is a HOD, fetch their department detail to get teachers list
-      const myHodLite = Array.isArray(hods)
-        ? hods.find(h => String(h.hod_user_id) === String(authUser?.id))
-        : null;
-
-      if (myHodLite && myHodLite.id) {
+      if (myHod?.is_hod && myHod.hod_id) {
         let myHodFull = null;
         try {
-          myHodFull = await api.getHOD(myHodLite.id);
+          myHodFull = await api.getHOD(myHod.hod_id);
         } catch (_) {
           myHodFull = null;
         }
@@ -39,7 +34,7 @@ export default function CreateGroupModal({ isOpen, onClose, onGroupCreated }) {
         const teacherIds = Array.isArray(myHodFull?.teachers)
           ? myHodFull.teachers.map(t => t.id)
           : [];
-        const allowedIds = new Set([String(myHodLite.hod_user_id), ...teacherIds.map(String)]);
+        const allowedIds = new Set([String(authUser?.id), ...teacherIds.map(String)]);
 
         const filtered = Array.isArray(usersData)
           ? usersData.filter(u => allowedIds.has(String(u.id)))

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './AdminHODs.css';
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
@@ -27,20 +27,12 @@ function AdminHODs() {
   });
 
   useEffect(() => {
-    console.log('AdminHODs component mounted');
-    console.log('Initial state - users:', users, 'subjects:', subjects, 'hods:', hods);
     fetchData();
   }, []);
-  
-  // Monitor data changes
-  useEffect(() => {
-    console.log('Data updated - users:', users.length, 'subjects:', subjects.length, 'hods:', hods.length);
-  }, [users, subjects, hods]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      console.log('Fetching data...');
       
       // Initialize with empty arrays to prevent map errors
       setHods([]);
@@ -76,16 +68,9 @@ function AdminHODs() {
         })
       ]);
       
-      console.log('Fetched HODs data:', hodsData);
-      console.log('Fetched stats data:', statsData);
-      console.log('Fetched users data:', usersData);
-      console.log('Fetched subjects data:', subjectsData);
-      
-      // Ensure we always have arrays/objects
       setHods(Array.isArray(hodsData) ? hodsData : []);
       setStats(statsData && typeof statsData === 'object' ? statsData : { total_hods: 0, suspended_hods: 0, active_hods: 0 });
       setUsers(Array.isArray(usersData) ? usersData : []);
-      // Subjects API returns { ok, status, data }. Support both shapes just in case.
       setSubjects(
         Array.isArray(subjectsData?.data)
           ? subjectsData.data
@@ -106,11 +91,12 @@ function AdminHODs() {
     e.preventDefault();
     try {
       const newHod = await api.createHOD(formData);
-      setHods([newHod, ...hods]);
       setShowCreateModal(false);
       resetForm();
-      fetchData(); // Refresh stats
-      setSuccessMsg('HOD created successfully!');
+      await fetchData();
+      setSuccessMsg(
+        `${newHod.hod_user_name || 'User'} appointed Head of Department for ${newHod.department_name}. Status: Active.`
+      );
     } catch (error) {
       console.error('Error creating HOD:', error);
       alert('Error creating HOD: ' + error.message);
@@ -121,11 +107,13 @@ function AdminHODs() {
     e.preventDefault();
     try {
       const updatedHod = await api.updateHOD(editingHod.id, formData);
-      setHods(hods.map(hod => hod.id === updatedHod.id ? updatedHod : hod));
       setShowEditModal(false);
       setEditingHod(null);
       resetForm();
-      fetchData(); // Refresh stats
+      await fetchData();
+      setSuccessMsg(
+        `HOD assignment updated for ${updatedHod.hod_user_name || 'user'}. Account status is ${updatedHod.hod_status === 'suspended' ? 'HOD (Suspended)' : 'Head of Department'}.`
+      );
     } catch (error) {
       console.error('Error updating HOD:', error);
       alert('Error updating HOD: ' + error.message);
@@ -133,11 +121,11 @@ function AdminHODs() {
   };
 
   const handleDeleteHOD = async (id) => {
-    if (window.confirm('Are you sure you want to delete this HOD?')) {
+    if (window.confirm('Are you sure you want to remove this HOD? The user account will no longer have HOD status.')) {
       try {
         await api.deleteHOD(id);
-        setHods(hods.filter(hod => hod.id !== id));
-        fetchData(); // Refresh stats
+        await fetchData();
+        setSuccessMsg('HOD removed. User account HOD status is now none.');
       } catch (error) {
         console.error('Error deleting HOD:', error);
         alert('Error deleting HOD: ' + error.message);
@@ -148,23 +136,40 @@ function AdminHODs() {
   const handleToggleSuspension = async (id) => {
     try {
       const updatedHod = await api.toggleHODSuspension(id);
-      setHods(hods.map(hod => hod.id === updatedHod.id ? updatedHod : hod));
-      fetchData(); // Refresh stats
+      const nextStatus = updatedHod.hod_status || (updatedHod.suspended ? 'suspended' : 'active');
+      await fetchData();
+      setSuccessMsg(
+        nextStatus === 'suspended'
+          ? `${updatedHod.hod_user_name || 'User'} is now HOD (Suspended). Department lesson plan access is blocked.`
+          : `${updatedHod.hod_user_name || 'User'} is now Head of Department (active).`
+      );
     } catch (error) {
       console.error('Error toggling suspension:', error);
       alert('Error updating HOD status: ' + error.message);
     }
   };
 
-  const openEditModal = (hod) => {
+  const openEditModal = async (hod) => {
     setEditingHod(hod);
     setFormData({
       department_name: hod.department_name,
       hod_user_id: hod.hod_user_id,
-      subject_id: hod.subject_id,
-      teacher_ids: hod.teachers ? hod.teachers.map(t => t.id) : []
+      subject_id: hod.subject_id || '',
+      teacher_ids: hod.teachers ? hod.teachers.map((t) => t.id) : []
     });
     setShowEditModal(true);
+    try {
+      const full = await api.getHOD(hod.id);
+      setFormData({
+        department_name: full.department_name,
+        hod_user_id: full.hod_user_id,
+        subject_id: full.subject_id || '',
+        teacher_ids: (full.teachers || []).map((t) => t.id)
+      });
+      setEditingHod(full);
+    } catch (_) {
+      /* keep list row values */
+    }
   };
 
   const resetForm = () => {
@@ -189,11 +194,23 @@ function AdminHODs() {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const departmentOptions = useMemo(() => {
+    const names = new Map();
+    [...departments, ...specialties].forEach((item) => {
+      if (item?.name && !names.has(String(item.name).toLowerCase())) {
+        names.set(String(item.name).toLowerCase(), item.name);
+      }
+    });
+    return Array.from(names.values()).sort((a, b) => a.localeCompare(b));
+  }, [departments, specialties]);
+
+  const selectedTeacherIds = formData.teacher_ids.map(Number);
+
   return (
     <SideTop>
       <div className="admin-hods-container">
         {successMsg && (
-          <SuccessMessage message={successMsg} onClose={() => setSuccessMsg('')} />
+          <SuccessMessage message={successMsg} duration={4500} onClose={() => setSuccessMsg('')} />
         )}
         {/* Header */}
         <div className="admin-hods-header">
@@ -289,7 +306,7 @@ function AdminHODs() {
                     
                     <div className="admin-hods-table-cell">
                       <span className={`admin-hods-status-badge ${hod.suspended ? 'admin-hods-suspended' : 'admin-hods-active'}`}>
-                        {hod.suspended ? 'Suspended' : 'Active'}
+                        {hod.suspended ? 'HOD (Suspended)' : 'Head of Department'}
                       </span>
                     </div>
                     
@@ -365,11 +382,8 @@ function AdminHODs() {
                     required
                   >
                     <option value="">Select a department</option>
-                    {Array.isArray(departments) && departments.map(dep => (
-                      <option key={`dep-${dep.id || dep.name}`} value={dep.name}>{dep.name}</option>
-                    ))}
-                    {Array.isArray(specialties) && specialties.map(sp => (
-                      <option key={`spec-${sp.id || sp.name}`} value={sp.name}>{sp.name}</option>
+                    {departmentOptions.map((name) => (
+                      <option key={name} value={name}>{name}</option>
                     ))}
                   </select>
                 </div>
@@ -399,7 +413,7 @@ function AdminHODs() {
                       <label key={user.id} className="admin-hods-teacher-checkbox">
                         <input
                           type="checkbox"
-                          checked={formData.teacher_ids.includes(user.id)}
+                          checked={selectedTeacherIds.includes(Number(user.id))}
                           onChange={() => handleTeacherToggle(user.id)}
                         />
                         <span className="admin-hods-checkmark"></span>
@@ -455,11 +469,8 @@ function AdminHODs() {
                     required
                   >
                     <option value="">Select a department</option>
-                    {Array.isArray(departments) && departments.map(dep => (
-                      <option key={`dep-${dep.id || dep.name}`} value={dep.name}>{dep.name}</option>
-                    ))}
-                    {Array.isArray(specialties) && specialties.map(sp => (
-                      <option key={`spec-${sp.id || sp.name}`} value={sp.name}>{sp.name}</option>
+                    {departmentOptions.map((name) => (
+                      <option key={name} value={name}>{name}</option>
                     ))}
                   </select>
                 </div>
@@ -489,7 +500,7 @@ function AdminHODs() {
                       <label key={user.id} className="admin-hods-teacher-checkbox">
                         <input
                           type="checkbox"
-                          checked={formData.teacher_ids.includes(user.id)}
+                          checked={selectedTeacherIds.includes(Number(user.id))}
                           onChange={() => handleTeacherToggle(user.id)}
                         />
                         <span className="admin-hods-checkmark"></span>
