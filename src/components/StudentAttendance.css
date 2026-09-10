@@ -557,6 +557,16 @@
   border: 1px solid #c8d4ea;
 }
 
+.satt-btn-pdf {
+  background: #dc2626;
+  color: #fff;
+}
+
+.satt-btn-excel {
+  background: #15803d;
+  color: #fff;
+}
+
 .satt-btn:hover:not(:disabled) {
   opacity: 0.9;
 }

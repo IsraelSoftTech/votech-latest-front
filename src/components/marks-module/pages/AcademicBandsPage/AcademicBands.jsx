@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { FaLock, FaPlus, FaCopy, FaEdit, FaLayerGroup, FaCheckCircle, FaBan } from "react-icons/fa";
 import Select from "react-select";
 import SideTop from "../../../SideTop";
-import { useActiveYear, useSelectableAcademicYears } from "../../../../context/ActiveYearContext";
+import { useYearScope } from "../../../../hooks/useYearScope";
 import api, { headers, subBaseURL } from "../../utils/api";
 import DataTable from "../../components/DataTable/DataTable.component";
 import Modal from "../../components/Modal/Modal.component";
@@ -12,7 +12,6 @@ import { PageHeader } from "../../components/PageHeader/PageHeader.component";
 import { EmptyState } from "../../components/EmptyState/EmptyState.component";
 import { DetailGrid, DetailRow } from "../../components/DetailGrid/DetailGrid.component";
 import Stats from "../../components/Stats/Stats.component";
-import { useYearScope } from "../../../../hooks/useYearScope";
 import { YearScopeBanner } from "../../components/YearScopeBanner/YearScopeBanner.component";
 import "./AcademicBands.styles.css";
 
@@ -23,20 +22,6 @@ const BANDS_FILTER_OPTIONS = [
 ];
 
 export const AcademicBandsPage = () => {
-<<<<<<< HEAD
-  const isAdmin1ReadOnly =
-    JSON.parse(sessionStorage.getItem("authUser") || "{}").role === "Admin1";
-  const {
-    isViewingArchived,
-    activeYear,
-  } = useActiveYear();
-  const isReadOnly = isAdmin1ReadOnly || isViewingArchived;
-
-  // Data states
-  const [academicYears, setAcademicYears] = useState([]);
-  const selectableYears = useSelectableAcademicYears(academicYears);
-  const isYearSelectionLocked = Boolean(activeYear?.id);
-=======
   const role = JSON.parse(sessionStorage.getItem("authUser") || "{}").role;
 
   // Bands are the most sensitive academics data on this page (they drive
@@ -49,7 +34,6 @@ export const AcademicBandsPage = () => {
   const canEdit = isAdmin3 && yearScope.isEditable;
 
   // Data states
->>>>>>> feature/student-promotion-and-academic-year-updates
   const [departments, setDepartments] = useState([]);
   const [classes, setClasses] = useState([]);
   const [bandsData, setBandsData] = useState([]);
@@ -81,12 +65,6 @@ export const AcademicBandsPage = () => {
   useEffect(() => {
     fetchInitialData();
   }, []);
-
-  useEffect(() => {
-    if (activeYear?.id) {
-      setSelectedYear(Number(activeYear.id));
-    }
-  }, [activeYear?.id]);
 
   const fetchInitialData = async () => {
     setIsLoading(true);
@@ -363,7 +341,7 @@ export const AcademicBandsPage = () => {
 
   // Save bands
   const handleSave = async () => {
-    if (isReadOnly) {
+    if (!canEdit) {
       toast.error(
         "This academic year is read-only. Switch to the active year to save bands."
       );
@@ -462,36 +440,6 @@ export const AcademicBandsPage = () => {
         {/* Filters */}
         <div className="bands-filters">
           <div className="bands-filter-group">
-<<<<<<< HEAD
-            <label className="bands-filter-label">
-              Academic Year <span className="required">*</span>
-            </label>
-            <Select
-              placeholder="Select Academic Year"
-              options={selectableYears.map((y) => ({
-                value: y.id,
-                label: y.name,
-              }))}
-              value={
-                selectedYear
-                  ? {
-                      value: selectedYear,
-                      label: selectableYears.find((y) => y.id === selectedYear)
-                        ?.name,
-                    }
-                  : null
-              }
-              onChange={(opt) => setSelectedYear(opt?.value || null)}
-              isClearable={!isYearSelectionLocked}
-              isDisabled={isYearSelectionLocked}
-              className="bands-select"
-              classNamePrefix="select"
-            />
-          </div>
-
-          <div className="bands-filter-group">
-=======
->>>>>>> feature/student-promotion-and-academic-year-updates
             <label className="bands-filter-label">Filter by Department</label>
             <Select
               placeholder="All Departments"

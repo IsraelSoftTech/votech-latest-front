@@ -16,7 +16,9 @@ import {
 
   FaExclamationTriangle,
 
-  FaPrint,
+  FaFilePdf,
+
+  FaFileExcel,
 
   FaQrcode,
 
@@ -59,6 +61,8 @@ import {
   todayIsoDateInCameroon,
 
 } from "../utils/cameroonTimeClient.util";
+
+import { downloadStudentAttendanceExcel, downloadStudentAttendancePdf } from "../utils/studentAttendanceExcel.util";
 
 import "./StudentAttendance.css";
 
@@ -629,6 +633,10 @@ function ReportsTab({ activeYear }) {
 
   const [loading, setLoading] = useState(false);
 
+  const [exporting, setExporting] = useState(false);
+
+  const [exportingPdf, setExportingPdf] = useState(false);
+
 
 
   useEffect(() => {
@@ -689,9 +697,103 @@ function ReportsTab({ activeYear }) {
 
 
 
-  const handlePrint = () => {
+  const loadExportPayload = async () => {
 
-    window.print();
+    const data = await api.getStudentAttendanceReport({
+
+      from,
+
+      to,
+
+      class_id: classId === "all" ? "" : classId,
+
+      academic_year_id: activeYear?.id,
+
+    });
+
+    const exportRows = Array.isArray(data?.rows) ? data.rows : [];
+
+    if (!exportRows.length) {
+
+      throw new Error("No attendance records for this period.");
+
+    }
+
+    const classLabel =
+
+      classId === "all"
+
+        ? "All classes"
+
+        : classes.find((c) => String(c.id) === String(classId))?.name || "Selected class";
+
+    return {
+
+      rows: exportRows,
+
+      summary: data?.summary || {},
+
+      from,
+
+      to,
+
+      classLabel,
+
+      yearName: activeYear?.name || "",
+
+    };
+
+  };
+
+
+
+  const handlePdfExport = async () => {
+
+    setExportingPdf(true);
+
+    try {
+
+      const payload = await loadExportPayload();
+
+      downloadStudentAttendancePdf(payload);
+
+      toast.success("Attendance PDF downloaded");
+
+    } catch (e) {
+
+      toast.error(e.message || "Failed to download PDF");
+
+    } finally {
+
+      setExportingPdf(false);
+
+    }
+
+  };
+
+
+
+  const handleExcelExport = async () => {
+
+    setExporting(true);
+
+    try {
+
+      const payload = await loadExportPayload();
+
+      await downloadStudentAttendanceExcel(payload);
+
+      toast.success("Attendance Excel downloaded");
+
+    } catch (e) {
+
+      toast.error(e.message || "Failed to export Excel");
+
+    } finally {
+
+      setExporting(false);
+
+    }
 
   };
 
@@ -789,15 +891,31 @@ function ReportsTab({ activeYear }) {
 
           type="button"
 
-          className="satt-btn satt-btn-secondary"
+          className="satt-btn satt-btn-pdf"
 
-          onClick={handlePrint}
+          onClick={handlePdfExport}
 
-          disabled={!rows.length}
+          disabled={exportingPdf || exporting || loading}
 
         >
 
-          <FaPrint /> Print
+          <FaFilePdf /> {exportingPdf ? "Preparing…" : "Download PDF"}
+
+        </button>
+
+        <button
+
+          type="button"
+
+          className="satt-btn satt-btn-excel"
+
+          onClick={handleExcelExport}
+
+          disabled={exporting || exportingPdf || loading}
+
+        >
+
+          <FaFileExcel /> {exporting ? "Preparing…" : "Excel"}
 
         </button>
 
@@ -812,6 +930,8 @@ function ReportsTab({ activeYear }) {
         <p className="satt-report-range">
 
           {from} to {to}
+
+          {` · ${classId === "all" ? "All classes" : classes.find((c) => String(c.id) === String(classId))?.name || "Selected class"}`}
 
           {activeYear?.name ? ` · ${activeYear.name}` : ""}
 

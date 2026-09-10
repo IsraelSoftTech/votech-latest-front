@@ -1081,15 +1081,15 @@ export const MarksUploadPage = () => {
     fetchDropdowns();
   }, [user, fetchDropdowns]);
 
-<<<<<<< HEAD
   useEffect(() => {
     if (!initialDataLoaded || !activeYear?.id) return;
+    if (user?.role === "Admin3") return;
     setFilters((prev) => ({
       ...prev,
       academic_year_id: activeYear.id,
     }));
-  }, [initialDataLoaded, activeYear?.id]);
-=======
+  }, [initialDataLoaded, activeYear?.id, user?.role]);
+
   // Deep filter, continued: a non-Admin3 role only ever has one selectable
   // academic year (the active one), so pick it for them instead of making
   // them click a dropdown that only has one option anyway. Skipped if a
@@ -1101,7 +1101,6 @@ export const MarksUploadPage = () => {
       setFilters((prev) => ({ ...prev, academic_year_id: academicYears[0].id }));
     }
   }, [user, academicYears, filters.academic_year_id]);
->>>>>>> feature/student-promotion-and-academic-year-updates
 
   const loadStudentsMarks = useCallback(async () => {
     const { academic_year_id, class_id, term_id, sequence_id } = filters;
@@ -2424,26 +2423,21 @@ export const MarksUploadPage = () => {
   return (
     <SideTop>
       <div className="marks-upload-page">
-<<<<<<< HEAD
-        <h2 className="marks-page-title">
-          Upload {subject.name} Marks
-          {isMarksReadOnly && (
-            <span className="marks-read-only-badge">
-              <FaLock /> Read Only
-            </span>
-          )}
-        </h2>
-=======
-        {/* Standalone, above the title — same spot on every marks-module
-            detail page, and now shown regardless of loading state so
-            navigation isn't blocked behind the skeleton. */}
         <div className="vt-back-row">
           <Button variant="ghost" icon={<FaArrowLeft />} onClick={() => navigate(-1)}>
             Go Back
           </Button>
         </div>
-        <PageHeader title={`Upload ${subject.name} Marks`} />
->>>>>>> feature/student-promotion-and-academic-year-updates
+        <PageHeader
+          title={`Upload ${subject.name} Marks`}
+          subtitle={
+            isMarksReadOnly ? (
+              <span className="marks-read-only-badge">
+                <FaLock /> Read Only
+              </span>
+            ) : null
+          }
+        />
 
         {loadingPage ? (
           <MarksFiltersSkeleton />
