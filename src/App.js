@@ -49,7 +49,9 @@ import TimeTable from "./components/TimeTable.jsx";
 
 import { SubjectPage } from "./components/marks-module/pages/SubjectsPage/Subject.page";
 import { SubjectDetailPage } from "./components/marks-module/pages/SubjectDetailPage/SubjectDetail.page";
+import { TeacherDetailPage } from "./components/marks-module/pages/TeacherDetailPage/TeacherDetail.page";
 import { ClassPage } from "./components/marks-module/pages/ClassPage/Class.page";
+import { ClassDetailPage } from "./components/marks-module/pages/ClassDetailPage/ClassDetail.page";
 import { AcademicBandsPage } from "./components/marks-module/pages/AcademicBandsPage/AcademicBands";
 import { PromotionPage } from "./components/marks-module/pages/PromotionPage/Promotion";
 import { MarksUploadPage } from "./components/marks-module/pages/MarkPage/MarkPage.page";
@@ -407,7 +409,9 @@ function App() {
         />
         <Route path="/academics/subjects" element={<SubjectsWithDisciplineLayout />} />
         <Route path="/academics/subjects/:id" element={<SubjectDetailPage />} />
+        <Route path="/academics/teachers/:id" element={<TeacherDetailPage />} />
         <Route path="/academics/classes" element={<ClassPage />} />
+        <Route path="/academics/classes/:id" element={<ClassDetailPage />} />
         <Route path="/academics/bands" element={<AcademicBandsPage />} />
         <Route path="/academics/promotion" element={<PromotionPage />} />
         <Route

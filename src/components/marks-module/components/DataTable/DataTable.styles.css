@@ -80,6 +80,13 @@
   cursor: pointer;
 }
 
+/* Rows with no onRowClick handler (see DataTable.component.jsx) shouldn't
+   invite a click that does nothing — no hover highlight, no pointer. */
+.no-row-click .table-row:hover {
+  background-color: white;
+  cursor: default;
+}
+
 /* Truncate cells */
 .cell-truncate {
   max-width: 180px;

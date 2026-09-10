@@ -17,7 +17,11 @@ const FIELDS = [
 ];
 
 export const SchoolSettingsPage = () => {
-  useRestrictTo("Admin1");
+  const user = useRestrictTo("Admin1", "Admin3");
+  // Fail safe until the role is confirmed: only Admin1 unlocks editing,
+  // everyone else (including the brief moment before useRestrictTo
+  // resolves) sees a read-only page rather than a briefly-editable one.
+  const canEdit = user?.role === "Admin1";
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,9 +40,13 @@ export const SchoolSettingsPage = () => {
     })();
   }, []);
 
-  const handleChange = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  const handleChange = (key, value) => {
+    if (!canEdit) return;
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
   const handleSave = async () => {
+    if (!canEdit) return;
     setSaving(true);
     try {
       const res = await api.patch("/school-settings", form);
@@ -58,7 +66,11 @@ export const SchoolSettingsPage = () => {
       <div className="ssp-page">
         <PageHeader
           title="School Settings"
-          subtitle="These values are read live by every report card, master sheet, and transcript, change one here and it changes everywhere."
+          subtitle={
+            canEdit
+              ? "These values are read live by every report card, master sheet, and transcript, change one here and it changes everywhere."
+              : "These values are read live by every report card, master sheet, and transcript. View only, only Admin1 can change them."
+          }
         />
 
         <div className="ssp-panel">
@@ -74,15 +86,19 @@ export const SchoolSettingsPage = () => {
                       type="text"
                       value={form[f.key] || ""}
                       onChange={(e) => handleChange(f.key, e.target.value)}
+                      disabled={!canEdit}
+                      readOnly={!canEdit}
                     />
                   </div>
                 ))}
               </div>
-              <div className="ssp-actions">
-                <Button onClick={handleSave} disabled={saving} loading={saving}>
-                  {saving ? "Saving..." : "Save Settings"}
-                </Button>
-              </div>
+              {canEdit && (
+                <div className="ssp-actions">
+                  <Button onClick={handleSave} disabled={saving} loading={saving}>
+                    {saving ? "Saving..." : "Save Settings"}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>

@@ -6,6 +6,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 import ReportCard from "../../components/ReportCard/ReportCard.component";
 import { PageHeader } from "../../components/PageHeader/PageHeader.component";
+import { Button } from "../../components/Button/Button.component";
 import { EmptyState } from "../../components/EmptyState/EmptyState.component";
 import "./ReportCardPage.styles.css";
 import api from "../../utils/api";
@@ -17,13 +18,6 @@ import { toast } from "react-toastify";
 // Download is a separate concern: it hits /report-cards/single-pdf-direct,
 // which reuses the exact same pdfmake docDefinition builder as bulk, so
 // the file you get is byte-for-byte the same layout either way.
-function getBackendUrl(path, params) {
-  const base = api.defaults.baseURL || "http://localhost:5000/api/v1";
-  const token = sessionStorage.getItem("token") || localStorage.getItem("token");
-  if (token) params.set("token", token);
-  return `${base}/${path}?${params.toString()}`;
-}
-
 export const ReportCardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -49,6 +43,7 @@ export const ReportCardPage = () => {
   const [reportCard, setReportCard] = useState(null);
   const [loading, setLoading] = useState(false);
   const [academicBands, setAcademicBands] = useState([]);
+  const [downloading, setDownloading] = useState(false);
 
   const handleGoBack = () => navigate(-1);
 
@@ -88,35 +83,66 @@ export const ReportCardPage = () => {
   }, [student, academicYearId]);
 
   const isReady = Boolean(student?.id && academicYearId && departmentId && classId);
-  const downloadUrl = isReady
-    ? getBackendUrl(
-        "report-cards/single-pdf-direct",
-        new URLSearchParams({
-          studentId: student.id,
-          academicYearId,
-          departmentId,
-          classId,
-          ...(termId ? { term: termId } : {}),
-          disposition: "attachment",
-        })
-      )
-    : null;
+
+  // A plain <a href> here used to fire the download with zero feedback —
+  // PDF generation isn't instant (same pdfmake+qpdf pipeline as bulk
+  // generation), so a click gave no sign anything was happening until the
+  // browser's own download eventually landed. Fetching as a blob instead
+  // (same pattern as ReportCardHomePage's handleDownloadTranscript) gives
+  // a real loading state to show while it's in flight.
+  const handleDownload = async () => {
+    if (!isReady || downloading) return;
+    setDownloading(true);
+    try {
+      const params = new URLSearchParams({
+        studentId: student.id,
+        academicYearId,
+        departmentId,
+        classId,
+        ...(termId ? { term: termId } : {}),
+      });
+      const res = await api.get(
+        `/report-cards/single-pdf-direct?${params.toString()}`,
+        { responseType: "blob" }
+      );
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(student.full_name ?? student.name ?? "student").replace(/\s+/g, "_")}-report-card.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      // responseType "blob" means an error body arrives as an opaque Blob,
+      // not parsed JSON, same reasoning as handleDownloadTranscript.
+      toast.error("Failed to generate the report card PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="report-page">
+      <div className="vt-back-row">
+        <Button variant="ghost" icon={<FaArrowLeft />} onClick={handleGoBack}>
+          Go Back
+        </Button>
+      </div>
       <PageHeader
         title="Student Report Card"
         actions={
-          <>
-            <button className="back-btn" onClick={handleGoBack}>
-              <FaArrowLeft /> <span>Go Back</span>
-            </button>
-            {downloadUrl && (
-              <a className="report-page-download-btn" href={downloadUrl}>
-                <FaDownload /> <span>Download PDF</span>
-              </a>
-            )}
-          </>
+          isReady && (
+            <Button
+              variant="primary"
+              icon={<FaDownload />}
+              loading={downloading}
+              onClick={handleDownload}
+            >
+              {downloading ? "Preparing..." : "Download PDF"}
+            </Button>
+          )
         }
       />
 

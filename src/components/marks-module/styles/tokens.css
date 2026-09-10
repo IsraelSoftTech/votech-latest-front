@@ -117,3 +117,12 @@
 [class*="__multi-value__label"] {
   color: var(--vt-primary) !important;
 }
+
+/* Shared wrapper for every detail page's "Go Back" button (Button
+   variant="ghost", icon={<FaArrowLeft/>}), so it sits in the exact same
+   spot — standalone, above the title/PageHeader, never mixed into
+   PageHeader's actions — on every page instead of each page inventing
+   its own back-button markup, class name, and spacing. */
+.vt-back-row {
+  margin-bottom: 0.8rem;
+}

@@ -46,6 +46,21 @@
   color: var(--vt-primary);
 }
 
+.tcd-stat-card.good .tcd-stat-icon {
+  background: var(--vt-status-done-tint);
+  color: var(--vt-status-done);
+}
+
+.tcd-stat-card.accent .tcd-stat-icon {
+  background: var(--vt-gold-tint);
+  color: var(--vt-gold);
+}
+
+.tcd-stat-card.warn .tcd-stat-icon {
+  background: #fdf3e6;
+  color: var(--vt-average);
+}
+
 .tcd-stat-body {
   display: flex;
   flex-direction: column;
@@ -68,6 +83,10 @@
   margin-top: 1.8rem;
 }
 
+.tcd-section .vt-tabs {
+  margin-bottom: 1rem;
+}
+
 .tcd-section-title {
   font-size: 1rem;
   font-weight: 700;
@@ -75,6 +94,66 @@
   margin: 0 0 0.9rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--vt-border);
+}
+
+.tcd-alert-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--vt-status-fail);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tcd-owed-sequence {
+  font-size: 0.8rem;
+  color: var(--vt-ink-soft);
+  margin: 0.9rem 0 0.6rem;
+}
+
+/* Shared table format (My Classes, Marks I Still Owe) */
+.tcd-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--vt-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tcd-table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: var(--vt-primary-tint);
+  color: var(--vt-ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tcd-table td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--vt-border);
+  font-size: 0.88rem;
+  color: var(--vt-ink);
+  vertical-align: middle;
+}
+
+.tcd-row-clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.tcd-row-clickable:hover {
+  background: var(--vt-primary-tint);
 }
 
 /* Class Master Of */
@@ -107,33 +186,11 @@
 }
 
 /* My Classes */
-.tcd-class-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
-}
-
-.tcd-class-card {
-  background: #fff;
-  border: 1px solid var(--vt-border);
-  border-radius: 10px;
-  padding: 1rem 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.tcd-class-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
 .tcd-class-name {
   font-weight: 700;
   color: var(--vt-ink);
   font-size: 0.95rem;
+  margin-right: 0.5rem;
 }
 
 .tcd-master-badge {
@@ -147,16 +204,10 @@
   white-space: nowrap;
 }
 
-.tcd-class-students {
-  font-size: 0.8rem;
-  color: var(--vt-ink-soft);
-}
-
 .tcd-class-subjects {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  margin-top: 0.2rem;
 }
 
 .tcd-subject-pill {
@@ -178,32 +229,6 @@
 }
 
 /* Marks I Still Owe */
-.tcd-owed-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.tcd-owed-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  background: #fff;
-  border: 1px solid var(--vt-border);
-  border-radius: 8px;
-  padding: 0.65rem 1rem;
-  width: 100%;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-  transition: border-color 0.15s ease;
-}
-
-.tcd-owed-row:hover {
-  border-color: var(--vt-primary);
-}
-
 .tcd-see-more-btn {
   margin-top: 0.6rem;
   background: none;
@@ -217,12 +242,6 @@
 
 .tcd-see-more-btn:hover {
   text-decoration: underline;
-}
-
-.tcd-owed-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--vt-ink);
 }
 
 .tcd-owed-pill {

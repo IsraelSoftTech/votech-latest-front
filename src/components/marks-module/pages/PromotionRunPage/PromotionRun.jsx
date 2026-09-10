@@ -69,7 +69,7 @@ function promotionStatusText(entry) {
   );
 }
 
-export const PromotionRunPage = () => {
+export const PromotionRunPage = ({ onConfigureRequirements }) => {
   useRestrictTo("Admin3");
 
   const [academicYears, setAcademicYears] = useState([]);
@@ -200,6 +200,19 @@ export const PromotionRunPage = () => {
     (scope === "class" || scope === "manual") &&
     (isSplitClass || isManualClass);
 
+  // requirementModes only ever contains an entry for classes that actually
+  // have a PromotionRequirement row for the active year (see
+  // fetchInitialData's promotion-requirements fetch) — its absence here
+  // means genuinely unconfigured, not "configured as single/automatic".
+  // The backend rejects preview/run outright for these
+  // ("No promotion requirements configured for X"), so this is caught
+  // before that point instead of after.
+  const sourceIsUnconfigured =
+    (scope === "class" || scope === "manual") &&
+    !!selectedSourceClassId &&
+    !promotedClasses.has(selectedSourceClassId) &&
+    !requirementModes[selectedSourceClassId];
+
   // Selecting a different source class invalidates whatever roster/manual
   // picks were in progress for the previous one.
   useEffect(() => {
@@ -304,7 +317,7 @@ export const PromotionRunPage = () => {
   // ── Build the moves this run will attempt, from current setup state ──
   const buildMoves = () => {
     if (scope === "class" || scope === "manual") {
-      if (!selectedSourceClassId) return [];
+      if (!selectedSourceClassId || sourceIsUnconfigured) return [];
 
       if (needsRoster) {
         if (!rosterComplete) return [];
@@ -684,6 +697,8 @@ export const PromotionRunPage = () => {
           setRosterModalOpen={setRosterModalOpen}
           openRosterModal={openRosterModal}
           rosterReviewed={rosterReviewed}
+          sourceIsUnconfigured={sourceIsUnconfigured}
+          onConfigureRequirements={onConfigureRequirements}
         />
       )}
 
@@ -837,6 +852,8 @@ const SetupStep = ({
   setRosterModalOpen,
   openRosterModal,
   rosterReviewed,
+  sourceIsUnconfigured,
+  onConfigureRequirements,
 }) => {
   const scopeOptions = [
     { value: "class", label: "One Class" },
@@ -940,7 +957,7 @@ const SetupStep = ({
                 })()}
             </div>
 
-            {!singleGraduation && !isSplitClass && (
+            {!sourceIsUnconfigured && !singleGraduation && !isSplitClass && (
               <div className="promo-run-filter-group">
                 <label className="promo-run-filter-label">
                   Destination Class
@@ -970,7 +987,7 @@ const SetupStep = ({
               </div>
             )}
 
-            {scope === "manual" && (
+            {!sourceIsUnconfigured && scope === "manual" && (
               <div className="promo-run-filter-group">
                 <label className="promo-run-filter-label">
                   Custom Promotion Average (optional)
@@ -986,7 +1003,24 @@ const SetupStep = ({
             )}
           </div>
 
-          {!isSplitClass && (
+          {sourceIsUnconfigured && (
+            <div className="promo-run-move-needs-individual">
+              <span>
+                No promotion requirements are configured for this class in
+                the active academic year, it can't be previewed or run until
+                that's set up.
+              </span>
+              <button
+                type="button"
+                className="promo-run-handle-individually-btn"
+                onClick={() => onConfigureRequirements?.(selectedSourceClassId)}
+              >
+                Configure Requirements
+              </button>
+            </div>
+          )}
+
+          {!sourceIsUnconfigured && !isSplitClass && (
             <label className="promo-run-graduation-toggle">
               <input
                 type="checkbox"
@@ -1112,9 +1146,17 @@ const SetupStep = ({
             const cfg = moveConfig[cls.id] || {};
             const destinations = sameDepartmentDestinations(cls.id);
             const alreadyPromoted = promotedClasses.has(cls.id);
-            const mode = requirementModes[cls.id] || {};
+            const mode = requirementModes[cls.id];
+            // No entry in requirementModes at all means no
+            // PromotionRequirement row exists for this class in the
+            // active year — genuinely unconfigured, distinct from a
+            // configured split/manual class, and needs a different fix
+            // (set up requirements) than "handle this class individually"
+            // does.
+            const isUnconfigured = !alreadyPromoted && !mode;
             const needsIndividualHandling =
               !alreadyPromoted &&
+              !isUnconfigured &&
               (mode.promotion_mode === "split" ||
                 mode.decision_mode === "manual");
             return (
@@ -1129,6 +1171,20 @@ const SetupStep = ({
                   >
                     {promotionStatusText(promotedClasses.get(cls.id)).hint}
                   </span>
+                ) : isUnconfigured ? (
+                  <div className="promo-run-move-needs-individual">
+                    <span>
+                      No promotion requirements configured, can't be included
+                      in a bulk run.
+                    </span>
+                    <button
+                      type="button"
+                      className="promo-run-handle-individually-btn"
+                      onClick={() => onConfigureRequirements?.(cls.id)}
+                    >
+                      Configure Requirements
+                    </button>
+                  </div>
                 ) : needsIndividualHandling ? (
                   <div className="promo-run-move-needs-individual">
                     <span>
@@ -1171,7 +1227,7 @@ const SetupStep = ({
                     classNamePrefix="select"
                   />
                 )}
-                {!alreadyPromoted && !needsIndividualHandling && (
+                {!alreadyPromoted && !isUnconfigured && !needsIndividualHandling && (
                   <label className="promo-run-move-grad-toggle">
                     <input
                       type="checkbox"

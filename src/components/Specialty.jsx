@@ -9,6 +9,7 @@ import SuccessMessage from './SuccessMessage';
 import { useLocation } from 'react-router-dom';
 import ReactDOM from 'react-dom';
 import SideTop from './SideTop';
+import { useRestrictTo } from '../hooks/restrictTo';
 
 const menuItems = [
   { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
@@ -26,6 +27,11 @@ const menuItems = [
 const years = Array.from({length: 26}, (_, i) => `20${25+i}/20${26+i}`);
 
 export default function Specialty(props) {
+  // Department management, not just a dropdown source — the same data
+  // is served openly elsewhere (getSpecialties) for legitimate dropdown
+  // use by any role, but this management page itself is only for the
+  // roles that actually have a "Departments" nav link to it.
+  useRestrictTo("Admin1", "Admin3", "Admin4", "Discipline");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(years[0]);
   const [specialties, setSpecialties] = useState([]); // Start empty

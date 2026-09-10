@@ -408,7 +408,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--vt-status-done);
+  background: var(--vt-primary);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -420,7 +420,7 @@
 }
 
 .bands-add-btn:hover {
-  background: #059669;
+  background: var(--vt-primary-dark);
 }
 
 .bands-add-btn:active {

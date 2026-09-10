@@ -52,6 +52,14 @@ export const StudentFormModal = ({
   departments,
   academicYears,
   onSaved,
+  // Registering from a specific class's own page (ClassDetailPage) — the
+  // admin is already "in" that class/department, so those two fields are
+  // pre-filled and locked instead of offering a choice that would just
+  // register the student somewhere else entirely. Only applies to new
+  // registrations, not editing an existing student (their class may
+  // legitimately need to change from here).
+  lockedClassId,
+  lockedDepartmentId,
 }) => {
   const isEdit = Boolean(student?.id);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -89,13 +97,21 @@ export const StudentFormModal = ({
       // (enforced server-side too) — default it instead of making every
       // registration start with an extra required click.
       const activeYear = academicYears.find((y) => y.status === "active");
-      setForm({ ...EMPTY_FORM, academic_year_id: activeYear?.id || null });
+      setForm({
+        ...EMPTY_FORM,
+        academic_year_id: activeYear?.id || null,
+        class_id: lockedClassId || null,
+        specialty_id: lockedDepartmentId || null,
+      });
       setChoices([null, null, null, null, null, null]);
       setPhotoPreview(null);
     }
     setPhotoFile(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, student]);
+
+  const classLocked = !isEdit && Boolean(lockedClassId);
+  const departmentLocked = !isEdit && Boolean(lockedDepartmentId);
 
   const selectedClass = classes.find((c) => c.id === form.class_id) || null;
   const isOrientation = Boolean(selectedClass?.is_orientation);
@@ -312,7 +328,8 @@ export const StudentFormModal = ({
                   };
                 });
               }}
-              isClearable
+              isClearable={!departmentLocked}
+              isDisabled={departmentLocked}
               classNamePrefix="sfm-select"
               {...selectPortalProps}
             />
@@ -323,6 +340,7 @@ export const StudentFormModal = ({
               options={classOptions}
               value={classOptions.find((o) => o.value === form.class_id) || null}
               onChange={(opt) => updateField("class_id", opt?.value || null)}
+              isDisabled={classLocked}
               classNamePrefix="sfm-select"
               {...selectPortalProps}
             />

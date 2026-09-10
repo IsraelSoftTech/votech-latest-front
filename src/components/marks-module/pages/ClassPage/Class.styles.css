@@ -138,6 +138,11 @@
   width: 100%;
   color: #333;
   font-family: "Segoe UI", sans-serif;
+  border: 1px solid var(--vt-border, #eceef2);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-sizing: border-box;
 }
 
 .class-details-header {

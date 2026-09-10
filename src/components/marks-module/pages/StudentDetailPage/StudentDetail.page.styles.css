@@ -11,24 +11,6 @@
   font-size: 15px;
 }
 
-.sdp-back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  color: #204080;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 6px 0;
-  margin-bottom: 1rem;
-}
-
-.sdp-back-btn:hover {
-  text-decoration: underline;
-}
-
 .sdp-header {
   display: flex;
   align-items: center;

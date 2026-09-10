@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { FaCheck, FaCopy, FaLayerGroup, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { FaCheck, FaLayerGroup, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import Select from "react-select";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api, { headers, subBaseURL } from "../../utils/api";
@@ -23,7 +23,10 @@ const emptyForm = {
   decision_mode: "automatic",
 };
 
-export const PromotionRequirementsPage = () => {
+export const PromotionRequirementsPage = ({
+  initialOpenClassId = null,
+  onInitialOpenHandled,
+} = {}) => {
   useRestrictTo("Admin3");
 
   const [academicYears, setAcademicYears] = useState([]);
@@ -43,6 +46,7 @@ export const PromotionRequirementsPage = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalClass, setModalClass] = useState(null);
+  const [copiedFromClassId, setCopiedFromClassId] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
@@ -80,10 +84,17 @@ export const PromotionRequirementsPage = () => {
         api.get("/subjects"),
       ]);
 
-      setAcademicYears(yearsRes?.data?.data || []);
+      const years = yearsRes?.data?.data || [];
+      setAcademicYears(years);
       setDepartments(await deptRes.json());
       setClasses(classesRes?.data?.data || []);
       setSubjects(subjectsRes?.data?.data || []);
+
+      // Default to the current academic year instead of leaving the
+      // filter empty, so the page opens already scoped to "now" rather
+      // than forcing an extra click before anything useful shows.
+      const active = years.find((y) => y.status === "active");
+      if (active) setSelectedYear(active.id);
     } catch (err) {
       console.error("Error loading promotion requirements data:", err);
       toast.error("Failed to load data");
@@ -156,19 +167,27 @@ export const PromotionRequirementsPage = () => {
     return true;
   });
 
+  // Only already-configured classes (other than whichever one the modal
+  // is currently open for) are valid copy sources — nothing else has
+  // requirements worth copying.
+  const copySourceOptions = allTableData
+    .filter((r) => r.configured && r.id !== form.class_id)
+    .map((r) => ({ value: r.id, label: r.name }));
+
   const tableColumns = [
     { label: "Class", accessor: "name" },
     { label: "Department", accessor: "department" },
     { label: "Requirements", accessor: "status", sortable: false },
   ];
 
-  const openEditor = async (row, copyFrom = null) => {
+  const openEditor = async (row) => {
     if (!selectedYear) {
       toast.error("Select an academic year first");
       return;
     }
     const classData = classes.find((c) => c.id === row.id);
     setModalClass(classData);
+    setCopiedFromClassId(null);
 
     try {
       const res = await api.get(`/class-subjects?class_id=${row.id}`);
@@ -183,12 +202,12 @@ export const PromotionRequirementsPage = () => {
 
     // Orientation classes fan out into multiple departments by definition —
     // promotion_mode is pinned to "split" for as long as the class is
-    // flagged is_orientation, never carried over from a copy or a stale
-    // saved value. The backend enforces this too, this is just so the
-    // form already reflects reality the moment the modal opens.
+    // flagged is_orientation, never carried over from a stale saved value.
+    // The backend enforces this too, this is just so the form already
+    // reflects reality the moment the modal opens.
     const isOrientationClass = !!classData?.is_orientation;
 
-    const source = copyFrom || getRequirementForClass(row.id);
+    const source = getRequirementForClass(row.id);
     if (source) {
       setForm({
         academic_year_id: selectedYear,
@@ -198,24 +217,11 @@ export const PromotionRequirementsPage = () => {
         min_professional_subjects_passed: String(
           source.min_professional_subjects_passed ?? "0"
         ),
-        // Numeric fields carry over on copy, but subject picks never do,
-        // since a copied id from another class's curriculum is almost
-        // always meaningless here. The admin re-picks deliberately.
-        compulsory_general_subject_ids: copyFrom
-          ? []
-          : source.compulsory_general_subject_ids || [],
-        compulsory_professional_subject_ids: copyFrom
-          ? []
-          : source.compulsory_professional_subject_ids || [],
-        // Structural flags about this specific class, not the criteria
-        // magnitude, so like the subject picks these don't carry over when
-        // copying settings into a different class.
-        promotion_mode: isOrientationClass
-          ? "split"
-          : copyFrom
-          ? "single"
-          : source.promotion_mode || "single",
-        decision_mode: copyFrom ? "automatic" : source.decision_mode || "automatic",
+        compulsory_general_subject_ids: source.compulsory_general_subject_ids || [],
+        compulsory_professional_subject_ids:
+          source.compulsory_professional_subject_ids || [],
+        promotion_mode: isOrientationClass ? "split" : source.promotion_mode || "single",
+        decision_mode: source.decision_mode || "automatic",
       });
     } else {
       setForm({
@@ -229,10 +235,64 @@ export const PromotionRequirementsPage = () => {
     setModalOpen(true);
   };
 
+  // Arriving here from the Run tab's "Configure Requirements" prompt (see
+  // PromotionRunPage/PromotionPage) — opens straight into this class's
+  // editor instead of leaving the admin to find it themselves in the
+  // table below. Waits for classes/selectedYear to be ready (selectedYear
+  // defaults to the active year on load, matching the year the Run tab is
+  // always scoped to) so openEditor has real data to work with.
+  useEffect(() => {
+    if (!initialOpenClassId || isLoading || !selectedYear) return;
+    const cls = classes.find((c) => c.id === initialOpenClassId);
+    if (cls) openEditor(cls);
+    onInitialOpenHandled?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialOpenClassId, isLoading, selectedYear, classes]);
+
+  // "Copy settings from..." inside the open modal itself, replacing the
+  // old row-level copy action that silently copied from whichever
+  // configured class happened to be first in the table with no way to
+  // pick the actual source — this makes the source an explicit choice
+  // made right where the admin is already working.
+  const applyCopyFrom = (sourceClassId) => {
+    const sourceReq = getRequirementForClass(sourceClassId);
+    if (!sourceReq) return;
+
+    const alreadyConfigured = !!getRequirementForClass(form.class_id);
+    if (alreadyConfigured) {
+      const sourceClass = classes.find((c) => c.id === sourceClassId);
+      const proceed = window.confirm(
+        `Replace the settings shown below with ${sourceClass?.name}'s? This won't be saved until you click Save Requirements.`
+      );
+      if (!proceed) return;
+    }
+
+    const isOrientationClass = !!modalClass?.is_orientation;
+    setForm((prev) => ({
+      ...prev,
+      min_average: String(sourceReq.min_average ?? ""),
+      pass_mark: String(sourceReq.pass_mark ?? "10"),
+      min_professional_subjects_passed: String(
+        sourceReq.min_professional_subjects_passed ?? "0"
+      ),
+      // Numeric fields carry over, but subject picks never do, since a
+      // copied id from another class's curriculum is almost always
+      // meaningless here. The admin re-picks deliberately.
+      compulsory_general_subject_ids: [],
+      compulsory_professional_subject_ids: [],
+      // Structural flags about this specific class, not the criteria
+      // magnitude, so like the subject picks these don't carry over.
+      promotion_mode: isOrientationClass ? "split" : "single",
+      decision_mode: "automatic",
+    }));
+    setCopiedFromClassId(sourceClassId);
+  };
+
   const closeModal = () => {
     setModalOpen(false);
     setModalClass(null);
     setForm(emptyForm);
+    setCopiedFromClassId(null);
   };
 
   const toggleSubject = (field, subjectId) => {
@@ -420,28 +480,12 @@ export const PromotionRequirementsPage = () => {
               data={tableData}
               loading={isLoading || isFiltering}
               limit={10}
+              onRowClick={(row) => openEditor(row)}
               onEdit={(row) => openEditor(row)}
               onDelete={() => {}}
               deleteRoles={[]}
               userRole="Admin3"
               editRoles={["Admin3"]}
-              extraActions={[
-                {
-                  icon: <FaCopy />,
-                  title: "Copy from another class",
-                  roles: ["Admin3"],
-                  onClick: (row) => {
-                    const configuredRow = allTableData.find(
-                      (r) => r.configured && r.id !== row.id
-                    );
-                    if (!configuredRow) {
-                      toast.error("No other configured class to copy from yet");
-                      return;
-                    }
-                    openEditor(row, getRequirementForClass(configuredRow.id));
-                  },
-                },
-              ]}
             />
             </div>
           </>
@@ -459,6 +503,33 @@ export const PromotionRequirementsPage = () => {
               handleSave();
             }}
           >
+            {copySourceOptions.length > 0 && (
+              <div className="promo-req-copy-section">
+                <label className="promo-req-filter-label">
+                  Copy settings from another class (optional)
+                </label>
+                <Select
+                  placeholder="Select a configured class to copy from..."
+                  options={copySourceOptions}
+                  value={
+                    copiedFromClassId
+                      ? copySourceOptions.find((o) => o.value === copiedFromClassId)
+                      : null
+                  }
+                  onChange={(opt) => opt && applyCopyFrom(opt.value)}
+                  isClearable={false}
+                  classNamePrefix="select"
+                />
+                {copiedFromClassId && (
+                  <p className="promo-req-field-hint">
+                    Copied from{" "}
+                    {classes.find((c) => c.id === copiedFromClassId)?.name}. Compulsory
+                    subjects were not copied, pick them below for this class.
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="promo-req-mode-section">
               <label
                 className={`promo-req-mode-toggle ${

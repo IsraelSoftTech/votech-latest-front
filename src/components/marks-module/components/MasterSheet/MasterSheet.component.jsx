@@ -39,7 +39,7 @@ const useIsMobile = () => {
   return isMobile;
 };
 
-export default function MasterSheet({ data = [], term = "annual" }) {
+export default function MasterSheet({ data = [], term = "annual", showDownloadControls = true }) {
   const isMobile = useIsMobile();
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
@@ -151,34 +151,36 @@ export default function MasterSheet({ data = [], term = "annual" }) {
             Master Sheet — {termLabel}
           </strong>
         </div>
-        <div className="ms-controls-right">
-          {pdfGenerating && (
-            <div className="ms-pdf-status">
-              <FaSpinner className="ms-spin" />
-              Generating PDF… {pdfProgress.current}/{pdfProgress.total} rows —
-              grab a coffee ☕
-            </div>
-          )}
-          <select
-            className="ms-select"
-            value={pdfFormat}
-            onChange={(e) => setPdfFormat(e.target.value)}
-            disabled={pdfGenerating}
-          >
-            <option value="wall">Wall Poster (Landscape)</option>
-            <option value="a4">A4 Meeting Format</option>
-          </select>
-          <button
-            className="ms-btn"
-            onClick={handleDownloadPDF}
-            disabled={pdfGenerating}
-          >
-            {pdfGenerating ? <FaSpinner className="ms-spin" /> : <FaDownload />}
-            <span className="ms-btn-text">
-              {pdfGenerating ? "Working…" : "Download PDF"}
-            </span>
-          </button>
-        </div>
+        {showDownloadControls && (
+          <div className="ms-controls-right">
+            {pdfGenerating && (
+              <div className="ms-pdf-status">
+                <FaSpinner className="ms-spin" />
+                Generating PDF… {pdfProgress.current}/{pdfProgress.total} rows —
+                grab a coffee ☕
+              </div>
+            )}
+            <select
+              className="ms-select"
+              value={pdfFormat}
+              onChange={(e) => setPdfFormat(e.target.value)}
+              disabled={pdfGenerating}
+            >
+              <option value="wall">Wall Poster (Landscape)</option>
+              <option value="a4">A4 Meeting Format</option>
+            </select>
+            <button
+              className="ms-btn"
+              onClick={handleDownloadPDF}
+              disabled={pdfGenerating}
+            >
+              {pdfGenerating ? <FaSpinner className="ms-spin" /> : <FaDownload />}
+              <span className="ms-btn-text">
+                {pdfGenerating ? "Working…" : "Download PDF"}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="ms-card">

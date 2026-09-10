@@ -146,18 +146,6 @@ function RunRow({ run }) {
 function SessionCard({ session, defaultExpanded }) {
   const [expanded, setExpanded] = useState(Boolean(defaultExpanded));
   const runs = session.runs || [];
-  const completedRuns = runs.filter((r) => r.status === "completed" && r.file_url);
-
-  const handleDownloadAll = () => {
-    if (completedRuns.length === 0) return;
-    toast.info(
-      `Opening ${completedRuns.length} report card PDF(s) one by one — allow pop-ups if your browser blocks them.`,
-      { autoClose: 5000 }
-    );
-    completedRuns.forEach((run, i) => {
-      setTimeout(() => window.open(run.file_url, "_blank"), i * 700);
-    });
-  };
 
   return (
     <div className="rcs-session-card">
@@ -182,13 +170,6 @@ function SessionCard({ session, defaultExpanded }) {
 
       {expanded && (
         <div className="rcs-session-body">
-          {completedRuns.length > 0 && (
-            <div className="rcs-session-toolbar">
-              <button className="rcs-download-all-btn" onClick={handleDownloadAll}>
-                <FaDownload /> Download All ({completedRuns.length})
-              </button>
-            </div>
-          )}
           <div className="rcs-run-list">
             {runs.length === 0 ? (
               <div className="rcs-empty-note">No classes in this session.</div>

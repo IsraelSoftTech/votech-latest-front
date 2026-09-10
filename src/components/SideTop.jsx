@@ -198,6 +198,11 @@ export default function SideTop({ children }) {
             path: "/academics/subjects",
             icon: <FaChalkboardTeacher />,
           },
+          {
+            label: "School Settings",
+            path: "/admin-school-settings",
+            icon: <FaCog />,
+          },
         ],
       },
       {
@@ -220,11 +225,6 @@ export default function SideTop({ children }) {
         label: "Counselling Cases",
         icon: <FaClipboardList />,
         path: "/admin-counselling-cases",
-      },
-      {
-        label: "School Settings",
-        icon: <FaCog />,
-        path: "/admin-school-settings",
       },
     ];
   } else if (authUser?.role === "Admin2") {
@@ -336,6 +336,11 @@ export default function SideTop({ children }) {
             label: "Subjects",
             path: "/academics/subjects",
             icon: <FaChalkboardTeacher />,
+          },
+          {
+            label: "School Settings",
+            path: "/admin-school-settings",
+            icon: <FaCog />,
           },
         ],
       },

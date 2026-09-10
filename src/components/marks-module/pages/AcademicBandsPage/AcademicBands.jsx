@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { FaLock, FaPlus, FaCopy, FaEdit } from "react-icons/fa";
+import { FaLock, FaPlus, FaCopy, FaEdit, FaLayerGroup, FaCheckCircle, FaBan } from "react-icons/fa";
 import Select from "react-select";
 import SideTop from "../../../SideTop";
 import { useActiveYear, useSelectableAcademicYears } from "../../../../context/ActiveYearContext";
@@ -11,9 +11,19 @@ import { CustomInput, SubmitBtn } from "../../components/Inputs/CustumInputs";
 import { PageHeader } from "../../components/PageHeader/PageHeader.component";
 import { EmptyState } from "../../components/EmptyState/EmptyState.component";
 import { DetailGrid, DetailRow } from "../../components/DetailGrid/DetailGrid.component";
+import Stats from "../../components/Stats/Stats.component";
+import { useYearScope } from "../../../../hooks/useYearScope";
+import { YearScopeBanner } from "../../components/YearScopeBanner/YearScopeBanner.component";
 import "./AcademicBands.styles.css";
 
+const BANDS_FILTER_OPTIONS = [
+  { value: "all", label: "All Classes" },
+  { value: "set", label: "Bands Set" },
+  { value: "not_set", label: "Bands Not Set" },
+];
+
 export const AcademicBandsPage = () => {
+<<<<<<< HEAD
   const isAdmin1ReadOnly =
     JSON.parse(sessionStorage.getItem("authUser") || "{}").role === "Admin1";
   const {
@@ -26,13 +36,27 @@ export const AcademicBandsPage = () => {
   const [academicYears, setAcademicYears] = useState([]);
   const selectableYears = useSelectableAcademicYears(academicYears);
   const isYearSelectionLocked = Boolean(activeYear?.id);
+=======
+  const role = JSON.parse(sessionStorage.getItem("authUser") || "{}").role;
+
+  // Bands are the most sensitive academics data on this page (they drive
+  // pass/fail decisions), Admin3-only to edit regardless of year, same
+  // restriction the backend now enforces in academicBand.route.js. Editing
+  // is further narrowed by yearScope.isEditable below: even Admin3 can't
+  // edit an archived year without a live grant for it.
+  const isAdmin3 = role === "Admin3";
+  const yearScope = useYearScope();
+  const canEdit = isAdmin3 && yearScope.isEditable;
+
+  // Data states
+>>>>>>> feature/student-promotion-and-academic-year-updates
   const [departments, setDepartments] = useState([]);
   const [classes, setClasses] = useState([]);
   const [bandsData, setBandsData] = useState([]);
 
   // Filter states
-  const [selectedYear, setSelectedYear] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [bandsStatusFilter, setBandsStatusFilter] = useState("all");
 
   // Loading states
   const [isLoading, setIsLoading] = useState(false);
@@ -67,14 +91,12 @@ export const AcademicBandsPage = () => {
   const fetchInitialData = async () => {
     setIsLoading(true);
     try {
-      const [yearsRes, deptRes, classesRes, bandsRes] = await Promise.all([
-        api.get("/academic-years"),
+      const [deptRes, classesRes, bandsRes] = await Promise.all([
         fetch(`${subBaseURL}/specialties`, { headers: headers() }),
         api.get("/classes"),
         api.get("/academic-bands"),
       ]);
 
-      setAcademicYears(yearsRes?.data?.data || []);
       setDepartments(await deptRes.json());
       setClasses(classesRes?.data?.data || []);
       setBandsData(bandsRes?.data?.data || []);
@@ -100,12 +122,12 @@ export const AcademicBandsPage = () => {
     return bandsData.filter(
       (band) =>
         band.class_id === classId &&
-        (!selectedYear || band.academic_year_id === selectedYear)
+        (!yearScope.selectedYearId || band.academic_year_id === yearScope.selectedYearId)
     );
   };
 
   // Prepare table data
-  const tableData = filteredClasses.map((cls) => {
+  const tableDataAll = filteredClasses.map((cls) => {
     const classBands = getBandsForClass(cls.id);
     const department = departments.find((d) => d.id === cls.department_id);
 
@@ -118,6 +140,24 @@ export const AcademicBandsPage = () => {
       bands: classBands,
     };
   });
+
+  const tableData = tableDataAll.filter((row) => {
+    if (bandsStatusFilter === "set") return row.hasBands;
+    if (bandsStatusFilter === "not_set") return !row.hasBands;
+    return true;
+  });
+
+  // Cards: scoped to the selected year (same set tableDataAll is built
+  // from), independent of the set/not-set filter above so the cards keep
+  // showing the whole picture even while the table itself is filtered down.
+  const bandsSetCount = tableDataAll.filter((row) => row.hasBands).length;
+  const bandsNotSetCount = tableDataAll.length - bandsSetCount;
+  const totalBands = tableDataAll.reduce((sum, row) => sum + row.bandsCount, 0);
+  const stats = [
+    { title: "Number of Bands", value: totalBands, icon: FaLayerGroup },
+    { title: "Bands Set", value: bandsSetCount, icon: FaCheckCircle },
+    { title: "Bands Not Set", value: bandsNotSetCount, icon: FaBan },
+  ];
 
   const tableColumns = [
     { label: "Class Name", accessor: "name" },
@@ -150,7 +190,7 @@ export const AcademicBandsPage = () => {
 
     setModalMode("create");
     setForm({
-      academic_year_id: selectedYear,
+      academic_year_id: yearScope.selectedYearId,
       department_id: classData.department_id,
       class_id: selectedClassDetails.id,
       bands: [{ band_min: "", band_max: "", comment: "" }],
@@ -162,7 +202,7 @@ export const AcademicBandsPage = () => {
 
   // Handle edit button
   const handleEdit = (row) => {
-    if (!selectedYear) {
+    if (!yearScope.selectedYearId) {
       toast.error("Please select an academic year first");
       return;
     }
@@ -172,7 +212,7 @@ export const AcademicBandsPage = () => {
 
     setModalMode("edit");
     setForm({
-      academic_year_id: selectedYear,
+      academic_year_id: yearScope.selectedYearId,
       department_id: classData.department_id,
       class_id: row.id,
       bands:
@@ -190,7 +230,7 @@ export const AcademicBandsPage = () => {
 
   // Handle copy bands
   const handleCopy = (row) => {
-    if (!selectedYear) {
+    if (!yearScope.selectedYearId) {
       toast.error("Please select an academic year first");
       return;
     }
@@ -204,7 +244,7 @@ export const AcademicBandsPage = () => {
 
     setModalMode("copy");
     setForm({
-      academic_year_id: selectedYear,
+      academic_year_id: yearScope.selectedYearId,
       department_id: null, // User must select
       class_id: null, // User must select
       bands: existingBands.map((b) => ({
@@ -219,14 +259,14 @@ export const AcademicBandsPage = () => {
 
   // Handle create new
   const handleCreateNew = () => {
-    if (!selectedYear) {
+    if (!yearScope.selectedYearId) {
       toast.error("Please select an academic year first to create bands");
       return;
     }
 
     setModalMode("create");
     setForm({
-      academic_year_id: selectedYear,
+      academic_year_id: yearScope.selectedYearId,
       department_id: selectedDepartment || null,
       class_id: null,
       bands: [{ band_min: "", band_max: "", comment: "" }],
@@ -359,13 +399,13 @@ export const AcademicBandsPage = () => {
     ? classes.filter((c) => c.department_id === form.department_id)
     : [];
 
-  if (initialLoading) {
+  if (initialLoading || yearScope.loading) {
     return (
       <SideTop>
         <div className="academic-bands-refactored">
           <div className="bands-skeleton">
             <div className="skeleton-line wide" />
-            <div className="skeleton-block short" />
+            <Stats data={[]} loading skeletonCount={3} />
             <div className="skeleton-line" />
             <div className="skeleton-block" />
           </div>
@@ -381,18 +421,18 @@ export const AcademicBandsPage = () => {
         <PageHeader
           title="Academic Performance Bands"
           subtitle={
-            isReadOnly ? (
+            !canEdit ? (
               <span className="bands-readonly-badge">
                 <FaLock /> Read Only
               </span>
             ) : null
           }
           actions={
-            !isReadOnly && (
+            canEdit && (
               <button
                 className="bands-create-btn bands-create-desktop"
                 onClick={handleCreateNew}
-                disabled={!selectedYear}
+                disabled={!yearScope.selectedYearId}
               >
                 <FaPlus />
                 <span>Create Bands</span>
@@ -410,9 +450,19 @@ export const AcademicBandsPage = () => {
           </p>
         </div>
 
+        {/* Stats */}
+        <Stats data={stats} loading={isLoading} skeletonCount={3} />
+
+        {/* Year scope: same banner + picker every year-aware page/modal in
+            this module uses, keeps the "editable this year, read-only that
+            year, unless Admin3 has a grant" rule consistent everywhere
+            instead of each page re-deriving its own version of it. */}
+        <YearScopeBanner yearScope={yearScope} className="bands-year-scope" />
+
         {/* Filters */}
         <div className="bands-filters">
           <div className="bands-filter-group">
+<<<<<<< HEAD
             <label className="bands-filter-label">
               Academic Year <span className="required">*</span>
             </label>
@@ -440,6 +490,8 @@ export const AcademicBandsPage = () => {
           </div>
 
           <div className="bands-filter-group">
+=======
+>>>>>>> feature/student-promotion-and-academic-year-updates
             <label className="bands-filter-label">Filter by Department</label>
             <Select
               placeholder="All Departments"
@@ -463,10 +515,21 @@ export const AcademicBandsPage = () => {
               classNamePrefix="select"
             />
           </div>
+
+          <div className="bands-filter-group">
+            <label className="bands-filter-label">Filter by Bands Status</label>
+            <Select
+              options={BANDS_FILTER_OPTIONS}
+              value={BANDS_FILTER_OPTIONS.find((o) => o.value === bandsStatusFilter)}
+              onChange={(opt) => setBandsStatusFilter(opt?.value || "all")}
+              className="bands-select"
+              classNamePrefix="select"
+            />
+          </div>
         </div>
 
         {/* Instructions */}
-        {!selectedYear && (
+        {!yearScope.selectedYearId && (
           <EmptyState
             icon={<FaCopy className="facopy-2" />}
             title="Get Started"
@@ -475,7 +538,7 @@ export const AcademicBandsPage = () => {
         )}
 
         {/* Table */}
-        {selectedYear && (
+        {yearScope.selectedYearId && (
           <div className="bands-table-container">
             <DataTable
               columns={tableColumns}
@@ -485,10 +548,10 @@ export const AcademicBandsPage = () => {
               onDelete={() => {}} // No delete functionality
               loading={isLoading}
               limit={10}
-              editRoles={isReadOnly ? [] : ["Admin", "Admin2"]}
+              editRoles={canEdit ? ["Admin3"] : []}
               deleteRoles={[]} // Hide delete button
               extraActions={
-                isReadOnly
+                !canEdit
                   ? []
                   : [
                       {
@@ -503,7 +566,7 @@ export const AcademicBandsPage = () => {
         )}
 
         {/* Mobile FAB */}
-        {!isReadOnly && selectedYear && (
+        {canEdit && yearScope.selectedYearId && (
           <button
             className="bands-create-btn bands-create-mobile-fab"
             onClick={handleCreateNew}
@@ -535,7 +598,7 @@ export const AcademicBandsPage = () => {
                   <DetailRow
                     label="Academic Year"
                     value={
-                      academicYears.find((y) => y.id === selectedYear)?.name ||
+                      yearScope.years.find((y) => y.id === yearScope.selectedYearId)?.name ||
                       "N/A"
                     }
                   />
@@ -571,7 +634,7 @@ export const AcademicBandsPage = () => {
                     ))}
                   </div>
 
-                  {!isReadOnly && (
+                  {canEdit && (
                     <div className="bands-details-actions">
                       <button
                         className="bands-details-btn bands-details-btn-edit"
@@ -600,7 +663,7 @@ export const AcademicBandsPage = () => {
                   title="No Academic Bands Available"
                   subtitle="This class doesn't have any performance bands configured yet."
                   action={
-                    !isReadOnly && (
+                    canEdit && (
                       <button
                         className="bands-details-btn bands-details-btn-create"
                         onClick={handleCreateFromDetails}
@@ -643,7 +706,7 @@ export const AcademicBandsPage = () => {
                 type="text"
                 className="bands-readonly-input"
                 value={
-                  academicYears.find((y) => y.id === form.academic_year_id)
+                  yearScope.years.find((y) => y.id === form.academic_year_id)
                     ?.name || ""
                 }
                 readOnly
