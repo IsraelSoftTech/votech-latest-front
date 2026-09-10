@@ -23,7 +23,6 @@ import {
   FaExclamationTriangle,
   FaExchangeAlt,
   FaUnlockAlt,
-  FaLevelUpAlt,
 } from "react-icons/fa";
 
 // The backend puts the actual reason in response.data.message (see
@@ -106,13 +105,11 @@ export const AcademicYear = () => {
   const [revokePassword, setRevokePassword] = useState("");
   const [revokeLoading, setRevokeLoading] = useState(false);
 
-  // Carry Forward assignments (Admin1 only)
-  const [carryForwardModalOpen, setCarryForwardModalOpen] = useState(false);
-  const [carryForwardForm, setCarryForwardForm] = useState({
-    target_year_id: null,
-    password: "",
-  });
-  const [carryForwardLoading, setCarryForwardLoading] = useState(false);
+  // Carrying values into the new year is no longer a separate Admin1
+  // action — it is a step of the Admin3 switch-year flow below, asked as a
+  // plain question once the switch has been confirmed. See
+  // handleSwitchSubmit / confirmSwitch.
+  const [carryForwardPrompt, setCarryForwardPrompt] = useState(null);
   const [carryForwardResult, setCarryForwardResult] = useState(null);
 
   // Popup shown (in addition to the toast) whenever a blocking/destructive
@@ -404,10 +401,44 @@ export const AcademicYear = () => {
       toast.error("Enter your password to confirm this action.");
       return;
     }
+
+    // A brand new year starts with none of the setup the school already
+    // did this year, so ask before switching rather than leaving them to
+    // discover it empty. Carry-forward copies FROM the year that is active
+    // right now, so it has to run before the switch, not after.
+    const targetYear = switchTargetOptions.find(
+      (o) => o.value === switchForm.target_year_id
+    );
+    setCarryForwardPrompt({
+      targetYearId: switchForm.target_year_id,
+      targetYearName: targetYear?.label || "the new year",
+    });
+  };
+
+  // Runs the switch itself, optionally carrying this year's values into
+  // the new year first. Both calls reuse the password already entered on
+  // the switch form, so the admin confirms once, not twice.
+  const runSwitch = async ({ carryForward }) => {
+    setCarryForwardPrompt(null);
+    setCarryForwardResult(null);
+
     try {
       setSwitchLoading(true);
+
+      if (carryForward) {
+        const res = await api.post("/academic-years/carry-forward", {
+          target_year_id: switchForm.target_year_id,
+          password: switchForm.password,
+        });
+        setCarryForwardResult(res?.data?.data || null);
+      }
+
       await api.post("/academic-years/switch", switchForm);
-      toast.success("Academic year switched successfully.");
+      toast.success(
+        carryForward
+          ? "Values carried over and academic year switched successfully."
+          : "Academic year switched successfully."
+      );
       closeSwitchModal();
       fetchAcademicYears();
       fetchStats();
@@ -503,45 +534,7 @@ export const AcademicYear = () => {
     }
   };
 
-  // ─── Carry Forward assignments ───────────────────────────────────────
-
   const activeYear = data.find((y) => y.status === "active") || null;
-  const carryForwardTargetYears = data.filter(
-    (y) => y.status !== "active"
-  );
-
-  const openCarryForwardModal = () => {
-    setCarryForwardForm({ target_year_id: null, password: "" });
-    setCarryForwardResult(null);
-    setCarryForwardModalOpen(true);
-  };
-  const closeCarryForwardModal = () => setCarryForwardModalOpen(false);
-
-  const handleCarryForwardSubmit = async (e) => {
-    e.preventDefault();
-    if (!carryForwardForm.target_year_id) {
-      toast.error("Choose which academic year to carry the assignments into.");
-      return;
-    }
-    if (!carryForwardForm.password) {
-      toast.error("Enter your password to confirm this action.");
-      return;
-    }
-    try {
-      setCarryForwardLoading(true);
-      const res = await api.post("/academic-years/carry-forward", carryForwardForm);
-      setCarryForwardResult(res?.data?.data || null);
-      toast.success("Assignments carried forward successfully.");
-    } catch (err) {
-      showActionError(
-        "Can't Carry Forward Assignments",
-        err,
-        "Failed to carry assignments forward."
-      );
-    } finally {
-      setCarryForwardLoading(false);
-    }
-  };
 
   const grantsData = grants.map((g, i) => ({ ...g, sn: i + 1 }));
 
@@ -632,28 +625,10 @@ export const AcademicYear = () => {
           userRole={role}
         />
 
-        {isAdmin1 && (
-          <div className="academic-grants-section">
-            <div className="academic-toolbar">
-              <h3 className="academic-section-title">
-                <FaLevelUpAlt /> Carry Forward Assignments
-              </h3>
-              <button
-                className="academic-btn-secondary"
-                onClick={openCarryForwardModal}
-                disabled={!activeYear || carryForwardTargetYears.length === 0}
-              >
-                Carry Forward
-              </button>
-            </div>
-            <p className="academic-section-hint">
-              Copies the active year's class-subject-teacher and class
-              master assignments into another year as brand new, independently
-              editable rows. Nothing in the active year is changed, and
-              rows that already exist in the target year are left alone.
-            </p>
-          </div>
-        )}
+        {/* Carrying values into a new year used to be a standalone Admin1
+            action here. It now belongs to whoever moves the school into
+            that year, so it is asked as a step of the Admin3 switch-year
+            flow instead — see the confirmation below the switch modal. */}
 
         {isAdmin1 && (
           <div className="academic-grants-section">
@@ -907,7 +882,7 @@ export const AcademicYear = () => {
                   />
 
                   <SubmitBtn
-                    title={switchLoading ? "Switching..." : "Switch Academic Year"}
+                    title={switchLoading ? "Switching..." : "Continue"}
                     disabled={switchLoading || switchBlocked}
                   />
                 </>
@@ -1052,75 +1027,70 @@ export const AcademicYear = () => {
           </form>
         </Modal>
 
-        {/* Carry Forward Modal */}
+        {/* Carry-forward question, asked as the last step of switching
+            year. Everything listed here is year-scoped, so without it the
+            new year starts blank and all of it has to be set up again by
+            hand. Answering either way still performs the switch. */}
         <Modal
-          isOpen={carryForwardModalOpen}
-          onClose={closeCarryForwardModal}
-          title="Carry Forward Assignments"
+          isOpen={!!carryForwardPrompt}
+          onClose={() => !switchLoading && setCarryForwardPrompt(null)}
+          title="Carry Over Your Setup"
         >
-          {!carryForwardResult ? (
-            <form onSubmit={handleCarryForwardSubmit} className="academic-modal-form">
-              <div className="academic-warning-banner">
-                <FaExclamationTriangle />
-                <div>
-                  This copies <strong>{activeYear?.name || "the active year"}</strong>'s
-                  class-subject-teacher and class master assignments into the
-                  year you choose below, as fresh rows for that year. It does
-                  not touch or remove anything in{" "}
-                  {activeYear?.name || "the active year"}.
-                </div>
+          {carryForwardPrompt && (
+            <div className="academic-confirm-content">
+              <p className="academic-confirm-text">
+                Hey {authUser?.name || authUser?.username || "there"}, would you
+                like to carry over your current values to{" "}
+                <strong>{carryForwardPrompt.targetYearName}</strong>?
+              </p>
+
+              <DetailGrid>
+                <DetailRow label="Subject coefficients and categories" value="Yes" />
+                <DetailRow label="Class names and departments" value="Yes" />
+                <DetailRow label="Class masters" value="Yes" />
+                <DetailRow label="Subject and teacher assignments" value="Yes" />
+                <DetailRow label="Grading bands and comments" value="Yes" />
+                <DetailRow label="School name and principal" value="Yes" />
+              </DetailGrid>
+
+              <p className="academic-section-hint">
+                If you say yes, all of it is copied into the new year so you can
+                edit it there as things change. Nothing in{" "}
+                {activeYear?.name || "the current year"} is altered. If you say
+                no, the new year starts empty and you will need to set each of
+                these up again yourself.
+              </p>
+
+              <div className="academic-confirm-buttons">
+                <button
+                  className="academic-btn-cancel"
+                  type="button"
+                  onClick={() => runSwitch({ carryForward: false })}
+                  disabled={switchLoading}
+                >
+                  No, start fresh
+                </button>
+                <button
+                  className="academic-btn-confirm"
+                  type="button"
+                  onClick={() => runSwitch({ carryForward: true })}
+                  disabled={switchLoading}
+                >
+                  {switchLoading ? "Working..." : "Yes, carry them over"}
+                </button>
               </div>
+            </div>
+          )}
+        </Modal>
 
-              <div className="ci-wrapper">
-                <label className="ci-label">
-                  Carry Into <span className="ci-required">*</span>
-                </label>
-                <Select
-                  classNamePrefix="select"
-                  placeholder="Select a target academic year"
-                  options={carryForwardTargetYears.map((y) => ({
-                    value: y.id,
-                    label: `${y.name} (${y.status})`,
-                  }))}
-                  value={
-                    carryForwardForm.target_year_id
-                      ? {
-                          value: carryForwardForm.target_year_id,
-                          label: carryForwardTargetYears.find(
-                            (y) => y.id === carryForwardForm.target_year_id
-                          )?.name,
-                        }
-                      : null
-                  }
-                  onChange={(opt) =>
-                    setCarryForwardForm((prev) => ({
-                      ...prev,
-                      target_year_id: opt?.value || null,
-                    }))
-                  }
-                />
-              </div>
-
-              <CustomInput
-                label="Confirm your password"
-                type="password"
-                name="carryForwardPassword"
-                value={carryForwardForm.password}
-                required
-                onChange={(name, value) =>
-                  setCarryForwardForm((prev) => ({ ...prev, password: value }))
-                }
-                onClear={() =>
-                  setCarryForwardForm((prev) => ({ ...prev, password: "" }))
-                }
-              />
-
-              <SubmitBtn
-                title={carryForwardLoading ? "Carrying Forward..." : "Carry Forward"}
-                disabled={carryForwardLoading}
-              />
-            </form>
-          ) : (
+        {/* What actually got copied, shown after the switch completes so
+            the counts aren't lost behind the closing switch modal. */}
+        <Modal
+          isOpen={!!carryForwardResult}
+          onClose={() => setCarryForwardResult(null)}
+          title="Values Carried Over"
+        >
+          {carryForwardResult && (
             <div className="academic-confirm-content">
               <p className="academic-confirm-text">
                 Carried <strong>{carryForwardResult.source_year?.name}</strong>{" "}
@@ -1133,23 +1103,31 @@ export const AcademicYear = () => {
                   value={carryForwardResult.class_subjects_created}
                 />
                 <DetailRow
-                  label="Subject/teacher assignments already present (skipped)"
-                  value={carryForwardResult.class_subjects_skipped}
-                />
-                <DetailRow
                   label="Class master assignments created"
                   value={carryForwardResult.class_master_assignments_created}
                 />
                 <DetailRow
-                  label="Class master assignments already present (skipped)"
-                  value={carryForwardResult.class_master_assignments_skipped}
+                  label="Subject coefficients/categories created"
+                  value={carryForwardResult.subject_year_settings_created}
+                />
+                <DetailRow
+                  label="Class names/departments created"
+                  value={carryForwardResult.class_year_settings_created}
+                />
+                <DetailRow
+                  label="Grading bands created"
+                  value={carryForwardResult.academic_bands_created}
+                />
+                <DetailRow
+                  label="School name/principal created"
+                  value={carryForwardResult.school_setting_years_created}
                 />
               </DetailGrid>
               <div className="academic-confirm-buttons">
                 <button
                   className="academic-btn-confirm"
                   type="button"
-                  onClick={closeCarryForwardModal}
+                  onClick={() => setCarryForwardResult(null)}
                 >
                   Done
                 </button>
