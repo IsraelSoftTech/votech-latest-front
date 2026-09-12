@@ -2522,55 +2522,6 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  async switchAcademicYear(targetYearId, reason = "") {
-    const response = await fetch(`${API_URL}/v1/academic-years/switch`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({
-        target_year_id: targetYearId,
-        confirm: true,
-        reason,
-      }),
-    });
-    return this.handleResponse(response);
-  }
-
-  async rolloverAcademicYear({ start_date, end_date, reason = "" }) {
-    const response = await fetch(`${API_URL}/v1/academic-years/rollover`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({
-        start_date,
-        end_date,
-        activate_immediately: true,
-        confirm: true,
-        reason,
-      }),
-    });
-    return this.handleResponse(response);
-  }
-
-  async reactivateAcademicYear(yearId, reason) {
-    const response = await fetch(
-      `${API_URL}/v1/academic-years/${yearId}/reactivate`,
-      {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ confirm: true, reason }),
-      }
-    );
-    return this.handleResponse(response);
-  }
-
-  async getAcademicYearSwitchLogs(limit = 20) {
-    const response = await fetch(
-      `${API_URL}/v1/academic-years/switch-logs?limit=${limit}`,
-      { headers: this.getAuthHeaders() }
-    );
-    const result = await this.handleResponse(response);
-    return result?.data ?? [];
-  }
-
   async getPaidSalaries() {
     try {
       const response = await fetch(`${API_URL}/salary/paid-salaries`, {
