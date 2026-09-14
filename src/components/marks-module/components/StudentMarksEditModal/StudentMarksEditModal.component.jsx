@@ -220,7 +220,7 @@ export function StudentMarksEditModal({ isOpen, onClose, student, onSaved }) {
             academic year yet.
           </p>
         ) : (
-          <table className="sme-table">
+          <div className="sme-table-scroll"><table className="sme-table">
             <thead>
               <tr>
                 <th>Subject</th>
@@ -250,7 +250,7 @@ export function StudentMarksEditModal({ isOpen, onClose, student, onSaved }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
 
         <div className="sme-footer">

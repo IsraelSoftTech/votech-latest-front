@@ -191,6 +191,7 @@ export const TeacherDetailPage = () => {
             subjectRows.length === 0 ? (
               <EmptyState title="Not assigned to any subject yet" />
             ) : (
+              <div className="tdp-table-scroll">
               <table className="tdp-table">
                 <thead>
                   <tr>
@@ -211,6 +212,7 @@ export const TeacherDetailPage = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             )
           )}
 
@@ -218,6 +220,7 @@ export const TeacherDetailPage = () => {
             classRows.length === 0 ? (
               <EmptyState title="Not assigned to any class yet" />
             ) : (
+              <div className="tdp-table-scroll">
               <table className="tdp-table">
                 <thead>
                   <tr>
@@ -238,6 +241,7 @@ export const TeacherDetailPage = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             )
           )}
         </div>

@@ -1,0 +1,24 @@
+@import "../../styles/tokens.css";
+
+/* Header-level kebab: a touch larger than the row one and outlined, so it
+   reads as the card's actions control rather than a stray icon. Menu and
+   sheet styles come from DataTable.styles.css (dt-menu, dt-sheet). */
+.am-kebab {
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid var(--vt-border);
+  background: #fff;
+  color: var(--vt-ink);
+}
+
+.am-kebab:hover,
+.am-kebab.on {
+  border-color: var(--vt-primary);
+  background: var(--vt-primary-tint2);
+  color: var(--vt-primary);
+}
+
+.dt-menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

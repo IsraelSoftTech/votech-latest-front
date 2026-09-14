@@ -31,10 +31,26 @@
   margin-top: 1rem;
 }
 
+/* Tab tables: natural column widths, sideways scroll inside the page on
+   phones, every column scrolls, nothing is pinned. */
+.sdp-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .sdp-tab-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
+
+.sdp-tab-table th,
+.sdp-tab-table td {
+  white-space: nowrap;
+}
+
+
 
 .sdp-tab-table th {
   text-align: left;
@@ -114,5 +130,23 @@
 @media (max-width: 768px) {
   .sdp-page {
     padding: 1rem;
+  }
+
+  /* Primary button fills the row, kebab sits at its right. */
+  .sdp-header-actions {
+    width: 100%;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .sdp-header-actions > .vt-btn {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  .sdp-tab-table {
+    min-width: 560px;
   }
 }

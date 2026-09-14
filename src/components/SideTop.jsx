@@ -158,8 +158,8 @@ export default function SideTop({ children }) {
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
       {
         label: "Academic Years",
-        icon: <FaCalendarAlt />,
-        path: "/admin-academic-years",
+        icon: <FaCalendar />,
+        path: "/academics/academic-years",
       },
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },
       {
@@ -277,8 +277,8 @@ export default function SideTop({ children }) {
       { label: "Dashboard", icon: <MdDashboard />, path: "/admin" },
       {
         label: "Academic Years",
-        icon: <FaCalendarAlt />,
-        path: "/admin-academic-years",
+        icon: <FaCalendar />,
+        path: "/academics/academic-years",
       },
 
       { label: "Students", icon: <FaUserGraduate />, path: "/admin-student" },

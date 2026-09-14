@@ -428,7 +428,7 @@ function TabSkeleton({ tab }) {
             </div>
           </div>
         )}
-        <table className="sdm-table">
+        <div className="sdm-table-scroll"><table className="sdm-table">
           <thead>
             <tr>
               {(tab === "academics" ? ["Subject", "T1", "T2", "T3", "Final"] : ["Fee Type", "Outstanding Balance"]).map(
@@ -449,7 +449,7 @@ function TabSkeleton({ tab }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     );
   }
@@ -557,7 +557,7 @@ function AcademicsTab({ data }) {
           <span className="sdm-stat-label">Class Rank</span>
         </div>
       </div>
-      <table className="sdm-table">
+      <div className="sdm-table-scroll"><table className="sdm-table">
         <thead>
           <tr>
             <th>Subject</th>
@@ -578,12 +578,12 @@ function AcademicsTab({ data }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
 
       {orientationSubjects.length > 0 && (
         <>
           <h4 className="sdm-section-title">Orientation Placement Subjects</h4>
-          <table className="sdm-table">
+          <div className="sdm-table-scroll"><table className="sdm-table">
             <thead>
               <tr>
                 <th>Subject</th>
@@ -604,7 +604,7 @@ function AcademicsTab({ data }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
           {bestOrientationSubject && (
             <p className="sdm-orientation-note">
               Currently strongest in: <b>{bestOrientationSubject.title}</b>
@@ -619,7 +619,7 @@ function AcademicsTab({ data }) {
 function FeesTab({ data }) {
   if (!data?.balance) return <div className="sdm-empty">No fee record found.</div>;
   return (
-    <table className="sdm-table">
+    <div className="sdm-table-scroll"><table className="sdm-table">
       <thead>
         <tr>
           <th>Fee Type</th>
@@ -636,7 +636,7 @@ function FeesTab({ data }) {
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
   );
 }
 

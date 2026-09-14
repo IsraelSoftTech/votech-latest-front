@@ -208,11 +208,29 @@
   margin-top: 0.2rem;
 }
 
+/* Tables keep their natural width and scroll sideways inside the page on
+   phones (instead of squeezing every cell and wrapping subject names);
+   every column scrolls, nothing is pinned. */
+.sdm-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .sdm-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.82rem;
 }
+
+.sdm-table th,
+.sdm-table td {
+  white-space: nowrap;
+}
+
+
+
 
 .sdm-table th {
   background: #204080;
@@ -292,4 +310,10 @@
   margin: 0;
   font-size: 0.83rem;
   color: #2d3748;
+}
+
+@media (max-width: 600px) {
+  .sdm-table {
+    min-width: 520px;
+  }
 }

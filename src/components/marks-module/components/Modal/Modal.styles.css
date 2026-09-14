@@ -7,6 +7,9 @@
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
@@ -19,7 +22,26 @@
 .clean-modal-backdrop.mobile {
   padding: 0;
   align-items: flex-end;
+  /* Tint lives on ::before below (oversized), not here, so the two never
+     stack into a darker band inside the viewport. */
+  background: transparent;
+}
+
+/* Phones: the dimmer overscans the viewport on every side. When the
+   on-screen keyboard opens (or the browser chrome collapses) mobile
+   browsers move the layout viewport, and a dimmer sized exactly to it
+   leaves a strip of page showing at the top or bottom. The sheet itself
+   stays laid out by the normal box; only the tint is oversized. */
+.clean-modal-backdrop.mobile::before {
+  content: "";
+  position: fixed;
+  top: -100vh;
+  bottom: -100vh;
+  left: -100vw;
+  right: -100vw;
   background: rgba(0, 0, 0, 0.4);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* ===== MODAL CONTAINER ===== */

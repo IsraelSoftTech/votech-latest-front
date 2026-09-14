@@ -28,10 +28,26 @@
   margin: 0 0 1rem;
 }
 
+/* Subjects / Classes tabs: natural column widths, sideways scroll inside
+   the page on phones, every column scrolls, nothing is pinned. */
+.tdp-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .tdp-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
+
+.tdp-table th,
+.tdp-table td {
+  white-space: nowrap;
+}
+
+
 
 .tdp-table th {
   text-align: left;
@@ -110,5 +126,11 @@
 @media (max-width: 768px) {
   .tdp-page {
     padding: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .tdp-table {
+    min-width: 560px;
   }
 }

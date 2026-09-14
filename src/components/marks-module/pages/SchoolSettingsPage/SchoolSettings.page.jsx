@@ -75,7 +75,24 @@ export const SchoolSettingsPage = () => {
 
         <div className="ssp-panel">
           {loading || !form ? (
-            <div className="ssp-loading">Loading...</div>
+            // Skeleton shaped like the finished form (one label + input per
+            // field, then the save button), same shimmer as the rest of the
+            // module, so the page does not jump when the values arrive.
+            <div className="ssp-skeleton" aria-busy="true" aria-label="Loading school settings">
+              <div className="ssp-form">
+                {FIELDS.map((f) => (
+                  <div className="ssp-field" key={f.key}>
+                    <div className="ssp-skel ssp-skel-label" />
+                    <div className="ssp-skel ssp-skel-input" />
+                  </div>
+                ))}
+              </div>
+              {canEdit && (
+                <div className="ssp-actions">
+                  <div className="ssp-skel ssp-skel-button" />
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <div className="ssp-form">

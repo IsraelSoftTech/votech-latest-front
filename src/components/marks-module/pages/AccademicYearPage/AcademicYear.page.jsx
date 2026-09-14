@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import SideTop from "../../../SideTop";
 import DataTable from "../../components/DataTable/DataTable.component";
@@ -50,6 +51,7 @@ export const AcademicYear = () => {
   const isReadOnly = role === "Admin1";
   const isAdmin1 = role === "Admin1";
   const isAdmin3 = role === "Admin3";
+  const navigate = useNavigate();
 
   const columns = [
     { label: "S/N", accessor: "sn" },
@@ -60,7 +62,7 @@ export const AcademicYear = () => {
   ];
 
   const [data, setData] = useState([]);
-  const [selectedRow, setSelectedRow] = useState(null);
+  // const [selectedRow, setSelectedRow] = useState(null); // retired with the details modal
   const [isLoading, setIsLoading] = useState(false);
 
   // Create/Edit modal & form
@@ -74,7 +76,20 @@ export const AcademicYear = () => {
   const [formErrors, setFormErrors] = useState({});
   const [createLoading, setCreateLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
-  const [stats, setStats] = useState([]);
+  // Stat cards are derived from the same list the table renders (not a
+  // second /content endpoint), so the two can never disagree, e.g. when a
+  // count included rows the table did not show.
+  const stats = useMemo(
+    () => [
+      { title: "Number of Academic Years", value: data.length, icon: FaCalendarCheck },
+      {
+        title: "Archived Academic Years",
+        value: data.filter((y) => y.status === "archived").length,
+        icon: FaCalendarAlt,
+      },
+    ],
+    [data]
+  );
 
   // Year switch flow (Admin3 only)
   const [switchModalOpen, setSwitchModalOpen] = useState(false);
@@ -167,25 +182,25 @@ export const AcademicYear = () => {
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const res = await api.get("/content/academic-years");
-      const icons = [FaCalendarCheck, FaCalendarAlt];
-
-      const stats = res?.data?.data?.stats;
-      const safeStats = Array.isArray(stats)
-        ? stats.map((d, i) => ({ ...d, icon: icons[i] }))
-        : [];
-      setStats(safeStats);
-    } catch (err) {
-      toast.error(getErrorMessage(err, "Error fetching statistics"));
-      setStats([]);
-    }
-  };
+  // Retired 2026-09-12: stats are derived from `data` above.
+  // const fetchStats = async () => {
+  //   try {
+  //     const res = await api.get("/content/academic-years");
+  //     const icons = [FaCalendarCheck, FaCalendarAlt];
+  // 
+  //     const stats = res?.data?.data?.stats;
+  //     const safeStats = Array.isArray(stats)
+  //       ? stats.map((d, i) => ({ ...d, icon: icons[i] }))
+  //       : [];
+  //     setStats(safeStats);
+  //   } catch (err) {
+  //     toast.error(getErrorMessage(err, "Error fetching statistics"));
+  //     setStats([]);
+  //   }
+  // };
 
   useEffect(() => {
     fetchAcademicYears();
-    fetchStats();
   }, []);
 
   const fetchGrants = async () => {
@@ -246,7 +261,6 @@ export const AcademicYear = () => {
       toast.success("Academic year created successfully.");
       closeCreateModal();
       fetchAcademicYears();
-      fetchStats();
     } catch (err) {
       toast.error(getErrorMessage(err, "Failed to create academic year."));
     } finally {
@@ -262,7 +276,6 @@ export const AcademicYear = () => {
       toast.success("Academic year updated successfully.");
       closeEditModal();
       fetchAcademicYears();
-      fetchStats();
     } catch (err) {
       console.log(err);
       toast.error(getErrorMessage(err, "Failed to update academic year."));
@@ -313,7 +326,6 @@ export const AcademicYear = () => {
       await api.delete(`/academic-years/${row.id}`);
       toast.success("Academic year deleted successfully");
       fetchAcademicYears();
-      fetchStats();
     } catch (err) {
       showActionError(
         `Can't Delete "${row.name}"`,
@@ -324,8 +336,10 @@ export const AcademicYear = () => {
   };
 
   // Row click
-  const handleRowClick = (row) => setSelectedRow(row);
-  const closeModal = () => setSelectedRow(null);
+  // Row click opens the year's detail page (stats, coverage, activity log,
+  // grants), the old in-place details modal is retired below.
+  const handleRowClick = (row) => navigate(`/academics/academic-years/${row.id}`);
+  // const closeModal = () => setSelectedRow(null); // retired with the details modal
 
   const openCreateModal = () => {
     resetForm();
@@ -441,7 +455,6 @@ export const AcademicYear = () => {
       );
       closeSwitchModal();
       fetchAcademicYears();
-      fetchStats();
     } catch (err) {
       showActionError("Can't Switch Academic Year", err, "Failed to switch academic year.");
     } finally {
@@ -666,7 +679,8 @@ export const AcademicYear = () => {
           </div>
         )}
 
-        {/* Details Modal */}
+        {/* Details Modal, retired 2026-09-12 in favour of the detail page
+            (AcademicYearDetail.page.jsx), see handleRowClick.
         <Modal
           isOpen={!!selectedRow}
           onClose={closeModal}
@@ -690,6 +704,7 @@ export const AcademicYear = () => {
             </DetailGrid>
           )}
         </Modal>
+        */}
 
         {/* Create Modal */}
         <Modal

@@ -4,7 +4,10 @@ html, body {
   width: 100%;
   max-width: 100%;
   position: relative;
-  -webkit-overflow-scrolling: touch;
+  /* -webkit-overflow-scrolling: touch was removed: it is ignored by modern
+     iOS anyway, and on older WebKit it made position:fixed descendants of
+     body (every portaled modal backdrop) behave like position:absolute, so
+     the dimmer stopped short of covering the page on phones. */
 }
 #root {
   overflow-x: hidden;

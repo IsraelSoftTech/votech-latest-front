@@ -15,6 +15,7 @@ import SideTop from "../../../SideTop";
 import api, { subBaseURL, headers } from "../../utils/api";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import { Button } from "../../components/Button/Button.component";
+import { ActionMenu } from "../../components/ActionMenu/ActionMenu.component";
 import { PageHeader } from "../../components/PageHeader/PageHeader.component";
 import { EmptyState } from "../../components/EmptyState/EmptyState.component";
 import { DetailGrid, DetailRow } from "../../components/DetailGrid/DetailGrid.component";
@@ -147,6 +148,7 @@ function ClassesTab({ classesData, canViewClass, navigate }) {
     return <EmptyState title="Not assigned to any class yet" />;
   }
   return (
+    <div className="sdp-table-scroll">
     <table className="sdp-tab-table">
       <thead>
         <tr>
@@ -169,6 +171,7 @@ function ClassesTab({ classesData, canViewClass, navigate }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -177,6 +180,7 @@ function TeachersTab({ teachersData, canViewTeacher, navigate }) {
     return <EmptyState title="No teacher assigned to this subject yet" />;
   }
   return (
+    <div className="sdp-table-scroll">
     <table className="sdp-tab-table">
       <thead>
         <tr>
@@ -197,6 +201,7 @@ function TeachersTab({ teachersData, canViewTeacher, navigate }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -205,6 +210,7 @@ function DepartmentsTab({ departmentsData, canViewDepartment, navigate }) {
     return <EmptyState title="Not offered by any department yet" />;
   }
   return (
+    <div className="sdp-table-scroll">
     <table className="sdp-tab-table">
       <thead>
         <tr>
@@ -225,6 +231,7 @@ function DepartmentsTab({ departmentsData, canViewDepartment, navigate }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -416,28 +423,26 @@ export const SubjectDetailPage = () => {
           subtitle={`${subject.code} · Coefficient ${subject.coefficient} · ${subject.category}`}
           actions={
             <div className="sdp-header-actions">
-              {isAdmin3 && (
-                <>
-                  <Button variant="secondary" onClick={openEdit}>
-                    <FaEdit /> Edit
-                  </Button>
-                  <Button variant="danger" onClick={() => setDeleteConfirmOpen(true)}>
-                    <FaTrash /> Delete
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setAssignModalOpen(true)}
-                  >
-                    <FaUserPlus /> Assign To
-                  </Button>
-                </>
-              )}
+              {/* Enter Marks stays the one visible (primary) action; Edit,
+                  Assign To and Delete used to be three more coloured buttons
+                  beside it and now sit behind the same kebab the class page
+                  and the table rows use. */}
               <Button
                 variant="primary"
                 onClick={() => navigate(`/academics/mark-upload/${id}`)}
               >
                 <FaFileAlt /> Enter Marks
               </Button>
+              {isAdmin3 && (
+                <ActionMenu
+                  title={subject.name}
+                  items={[
+                    { key: "edit", label: "Edit subject", icon: <FaEdit />, onClick: openEdit },
+                    { key: "assign", label: "Assign to class", icon: <FaUserPlus />, onClick: () => setAssignModalOpen(true) },
+                    { key: "delete", label: "Delete subject", icon: <FaTrash />, danger: true, onClick: () => setDeleteConfirmOpen(true) },
+                  ]}
+                />
+              )}
             </div>
           }
         />

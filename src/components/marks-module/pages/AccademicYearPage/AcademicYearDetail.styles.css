@@ -1,0 +1,213 @@
+@import "../../styles/tokens.css";
+
+/* Academic Year detail page. Reuses Class.styles.css's detail card / info
+   grid and the shared vt-* components; only what has no equivalent
+   elsewhere is defined here. */
+
+.ay-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ay-detail-header {
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--vt-border);
+}
+
+.ay-detail-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ay-info-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ay-section .ay-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.ay-section .academic-section-title {
+  margin: 0 0 4px 0;
+}
+
+.ay-section .academic-section-hint {
+  margin-bottom: 0;
+}
+
+/* Marks coverage: one tinted panel per term with a progress bar, same
+   bar shape as ReportCardSessions' run progress. */
+.ay-coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.ay-coverage-item {
+  gap: 6px;
+}
+
+.ay-progress-bar {
+  height: 6px;
+  background: var(--vt-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ay-progress-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  background: var(--vt-average);
+}
+
+.ay-progress-fill.complete {
+  background: var(--vt-status-done);
+}
+
+.ay-progress-fill.partial {
+  background: var(--vt-primary);
+}
+
+.ay-progress-fill.low {
+  background: var(--vt-status-fail);
+}
+
+.ay-progress-text {
+  font-size: 0.78rem;
+  color: var(--vt-ink-soft);
+}
+
+/* Clickable class / subject chips (never-promoted classes, setup gaps). */
+.ay-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ay-chip {
+  border: 1.5px solid var(--vt-border);
+  background: var(--vt-primary-tint);
+  color: var(--vt-primary);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ay-chip:hover {
+  background: var(--vt-primary-tint2);
+  border-color: var(--vt-primary);
+}
+
+.ay-health-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.ay-health-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--vt-ink);
+}
+
+.ay-ok {
+  color: var(--vt-status-done);
+}
+
+.ay-bad {
+  color: var(--vt-status-fail);
+}
+
+/* Skeleton: same shimmer as ClassDetail's, shaped like the real layout
+   (header card with info grid, stat row, then section cards). */
+.ay-detail-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ay-detail-skeleton .skeleton-line,
+.ay-detail-skeleton .skeleton-block {
+  background: linear-gradient(90deg, #eef1f6 25%, #e2e8f0 37%, #eef1f6 63%);
+  background-size: 400% 100%;
+  animation: ay-detail-shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+.ay-detail-skeleton .skeleton-line {
+  height: 14px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.ay-detail-skeleton .skeleton-line.wide {
+  width: 45%;
+  height: 28px;
+  margin-bottom: 20px;
+}
+
+.ay-detail-skeleton .skeleton-line.medium {
+  width: 30%;
+  height: 20px;
+  margin-bottom: 16px;
+}
+
+.ay-detail-skeleton .skeleton-line.short {
+  width: 60%;
+  margin-bottom: 0;
+}
+
+.ay-skel-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.ay-detail-skeleton .skeleton-block.info {
+  height: 68px;
+  border-radius: 12px;
+}
+
+@keyframes ay-detail-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@media (max-width: 900px) {
+  .ay-info-grid,
+  .ay-coverage-grid,
+  .ay-skel-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ay-health-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .ay-info-grid,
+  .ay-coverage-grid,
+  .ay-skel-info-grid {
+    grid-template-columns: 1fr;
+  }
+}

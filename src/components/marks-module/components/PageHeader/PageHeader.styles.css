@@ -30,3 +30,23 @@
   gap: 0.6rem;
   flex-wrap: wrap;
 }
+
+/* Phones: the action buttons take the full width and stack, instead of
+   two long labels ("Backfill Orientation Choices", "Register Student")
+   fighting for one line and breaking mid-word. */
+@media (max-width: 600px) {
+  .vt-page-header {
+    padding: 1rem;
+  }
+
+  .vt-page-header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .vt-page-header-actions > * {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+}

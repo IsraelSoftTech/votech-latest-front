@@ -1,3 +1,6 @@
+// Retired 2026-09-12: no longer routed. The Academic Years page now lives in
+// src/components/marks-module/pages/AccademicYearPage (main nav ->
+// /academics/academic-years). Kept for reference until the UI cleanup pass.
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";

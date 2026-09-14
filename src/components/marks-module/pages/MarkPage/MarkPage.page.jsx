@@ -1081,14 +1081,18 @@ export const MarksUploadPage = () => {
     fetchDropdowns();
   }, [user, fetchDropdowns]);
 
+  // The year dropdown is locked to the active year for every role (see
+  // isYearSelectionLocked), so it must also be pre-filled for every role.
+  // It used to skip Admin3, who then saw a disabled, empty "Academic Year"
+  // and could not pick a term or sequence at all.
   useEffect(() => {
     if (!initialDataLoaded || !activeYear?.id) return;
-    if (user?.role === "Admin3") return;
-    setFilters((prev) => ({
-      ...prev,
-      academic_year_id: activeYear.id,
-    }));
-  }, [initialDataLoaded, activeYear?.id, user?.role]);
+    setFilters((prev) =>
+      Number(prev.academic_year_id) === Number(activeYear.id)
+        ? prev
+        : { ...prev, academic_year_id: activeYear.id, term_id: null, sequence_id: null }
+    );
+  }, [initialDataLoaded, activeYear?.id]);
 
   // Deep filter, continued: a non-Admin3 role only ever has one selectable
   // academic year (the active one), so pick it for them instead of making

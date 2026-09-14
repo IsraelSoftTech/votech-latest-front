@@ -74,13 +74,15 @@
   background: #eef2ff;
 }
 
+/* Navy at 16px, same as every other section heading in the module
+   (class-section-title, a3d-section-title), instead of the flat #333. */
 .academic-section-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: var(--vt-primary);
   margin: 0;
   flex: 1;
 }
