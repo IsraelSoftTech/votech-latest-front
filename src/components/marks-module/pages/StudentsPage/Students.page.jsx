@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useLocation, useNavigate } from "react-router-dom";
-import Select from "react-select";
+// import Select from "react-select"; // filters now live in DataTable's toolbar
 import {
   FaPlus,
   FaUserGraduate,
-  FaEdit,
-  FaTrash,
   FaLayerGroup,
   FaFileDownload,
   FaSpinner,
@@ -15,7 +13,8 @@ import {
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api, { headers, subBaseURL } from "../../utils/api";
 import SideTop from "../../../SideTop";
-import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
+// import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
+import DataTable from "../../components/DataTable/DataTable.component";
 import { StudentFormModal } from "../../components/StudentFormModal/StudentFormModal.component";
 // Rebuilt into a full page — see StudentDetailPage. Kept here, not
 // deleted, in case this needs reverting.
@@ -36,6 +35,9 @@ const REPEATING_OPTIONS = [
   { value: "false", label: "Not Repeating" },
 ];
 
+// Sort options used to feed ServerListControls; DataTable sorts from its
+// column headers now (accessors match these keys). Kept for reference.
+// eslint-disable-next-line no-unused-vars
 const SORT_OPTIONS = [
   { value: "full_name", label: "Name" },
   { value: "student_id", label: "Student ID" },
@@ -45,6 +47,8 @@ const SORT_OPTIONS = [
 
 // Mirrors the real table's columns/row count instead of a plain "Loading…"
 // line, so the layout doesn't jump once data arrives.
+// Retired with the hand-rolled table (DataTable brings its own skeleton).
+// eslint-disable-next-line no-unused-vars
 function StudentsTableSkeleton() {
   return (
     <table className="students-table">
@@ -212,6 +216,34 @@ export const StudentsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openBackfillFromNav]);
 
+  // What DataTable shows. Accessors match the API's sort keys so header
+  // sort maps straight onto sortBy. `role` tags pick what the phone card
+  // puts in its value strip (class, sex, status); registration date stays
+  // reachable under "More".
+  const studentColumns = [
+    { label: "Name", accessor: "full_name", role: "title" },
+    { label: "Student ID", accessor: "student_id", role: "subtitle" },
+    { label: "Class", accessor: "class_name", sortable: false, role: "kpi" },
+    { label: "Sex", accessor: "sex", sortable: false, role: "kpi" },
+    {
+      label: "Status",
+      accessor: "status",
+      role: "kpi",
+      render: (s) => (
+        <span className="students-status-cell">
+          <span className={`students-status-pill ${s.status}`}>{s.status}</span>
+          {s.is_repeating && <span className="students-repeating-pill">Repeating</span>}
+        </span>
+      ),
+    },
+    {
+      label: "Registered",
+      accessor: "registration_date",
+      render: (s) => (s.registration_date ? new Date(s.registration_date).toLocaleDateString("en-GB") : "-"),
+    },
+  ];
+  const studentRows = students.map((s) => ({ ...s, class_name: s.Class?.name || "-" }));
+
   const departmentOptions = departments.map((d) => ({ value: d.id, label: d.name }));
   const classOptions = classes
     .filter((c) => !departmentFilter || c.department_id === departmentFilter)
@@ -223,13 +255,13 @@ export const StudentsPage = () => {
   };
 
   const handleEdit = (student, e) => {
-    e.stopPropagation();
+    if (e && e.stopPropagation) e.stopPropagation();
     setEditingStudent(student);
     setFormModalOpen(true);
   };
 
   const handleDelete = (student, e) => {
-    e.stopPropagation();
+    if (e && e.stopPropagation) e.stopPropagation();
     setDeleteTarget(student);
   };
 
@@ -323,6 +355,8 @@ export const StudentsPage = () => {
         }
       />
 
+      {/* Filters row, ServerListControls and the hand-rolled table were
+          replaced by DataTable (server mode) on 2026-09-13; kept for reference.
       <div className="students-filters-row">
         <div className="students-class-filter">
           <Select
@@ -456,6 +490,75 @@ export const StudentsPage = () => {
           </table>
         )}
       </div>
+
+      */}
+
+      <DataTable
+        columns={studentColumns}
+        data={studentRows}
+        loading={loading}
+        searchPlaceholder="Search by name or student ID..."
+        onRowClick={openDetail}
+        onEdit={(row) => handleEdit(row)}
+        onDelete={(row) => handleDelete(row)}
+        skipDeleteConfirm
+        server={{
+          search,
+          onSearchChange: setSearch,
+          filters: [
+            { key: "status", label: "Status", options: STATUS_OPTIONS, value: statusFilter, onChange: setStatusFilter },
+            {
+              key: "department",
+              label: "Department",
+              options: departmentOptions,
+              value: departmentFilter,
+              onChange: (nextDeptId) => {
+                setDepartmentFilter(nextDeptId || null);
+                // A class from a different department can't stay selected
+                // once the department filter changes, that combination
+                // would just silently return nothing.
+                if (nextDeptId && classFilter) {
+                  const cls = classes.find((c) => c.id === classFilter);
+                  if (cls && cls.department_id !== nextDeptId) setClassFilter(null);
+                }
+              },
+            },
+            { key: "class", label: "Class", options: classOptions, value: classFilter, onChange: (v) => setClassFilter(v || null) },
+            { key: "repeating", label: "Repeating", options: REPEATING_OPTIONS, value: repeatingFilter, onChange: setRepeatingFilter },
+          ],
+          sort: { accessor: sortBy, direction: sortDir },
+          onSortChange: (accessor, direction) => {
+            // The API always sorts by something; clearing falls back to name.
+            setSortBy(accessor || "full_name");
+            setSortDir(direction || "asc");
+          },
+          page: pagination.page,
+          totalPages: pagination.totalPages,
+          total: pagination.total,
+          limit: pagination.limit,
+          onPageChange: setPage,
+        }}
+        toolbarActions={
+          classFilter ? (
+            <button
+              type="button"
+              className="students-classlist-btn"
+              onClick={handleDownloadClassList}
+              disabled={downloadingClassList}
+            >
+              {downloadingClassList ? (
+                <>
+                  <FaSpinner className="students-spin" /> Generating…
+                </>
+              ) : (
+                <>
+                  <FaFileDownload /> Download Class List
+                </>
+              )}
+            </button>
+          ) : null
+        }
+      />
 
       <StudentFormModal
         isOpen={formModalOpen}

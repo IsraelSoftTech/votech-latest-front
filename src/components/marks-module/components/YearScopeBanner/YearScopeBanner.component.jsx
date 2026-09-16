@@ -1,6 +1,6 @@
 import React from "react";
 import Select from "react-select";
-import { FaLock, FaUnlockAlt, FaCheckCircle } from "react-icons/fa";
+import { FaLock, FaUnlockAlt } from "react-icons/fa";
 import "./YearScopeBanner.styles.css";
 
 // Reusable "you're viewing/editing data for [Academic Year]" banner + year
@@ -38,24 +38,22 @@ export function YearScopeBanner({ yearScope, className = "" }) {
         />
       </div>
 
-      {selectedYear && (
-        <div
-          className={`year-scope-status ${
-            isEditable ? "year-scope-status--editable" : "year-scope-status--readonly"
-          }`}
-        >
-          {isEditable ? (
-            selectedYear.status === "active" ? (
-              <FaCheckCircle />
-            ) : (
-              <FaUnlockAlt />
-            )
-          ) : (
-            <FaLock />
-          )}
+      {/* The normal case (active year, editable) says nothing: a status
+          line is only worth the space when the user CANNOT edit and needs
+          to know why, or when they can only because of a temporary grant
+          on an archived year, which is unusual enough to flag. */}
+      {selectedYear && !isEditable && (
+        <div className="year-scope-status year-scope-status--readonly">
+          <FaLock />
           <span>
-            <strong>{isEditable ? "Editable" : "Read-only"}</strong> — {editableReason}
+            <strong>Read-only.</strong> {editableReason}
           </span>
+        </div>
+      )}
+      {selectedYear && isEditable && selectedYear.status !== "active" && (
+        <div className="year-scope-status year-scope-status--editable">
+          <FaUnlockAlt />
+          <span>{editableReason}</span>
         </div>
       )}
     </div>

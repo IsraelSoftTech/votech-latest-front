@@ -20,6 +20,23 @@
   flex-shrink: 0;
 }
 
+/* When the header is the card's only content, the divider and the space
+   under it are just an empty band. */
+.class-details-header--solo {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+  /* Title shrinks and wraps; the actions kebab stays top-right instead of
+     dropping under the badge on narrow phones. */
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.class-details-header--solo .class-details-title-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
 .class-detail-tab-panel {
   min-height: 200px;
 }
@@ -65,14 +82,32 @@
   gap: 16px;
 }
 
-.class-detail-students-table {
+/* Subjects / Teachers tabs: same treatment as the student marks tables.
+   The table keeps its natural width and scrolls sideways inside the
+   page on phones, every column scrolls, nothing is pinned. */
+.class-detail-table-scroll {
   width: 100%;
-  border-collapse: collapse;
-  background: white;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--vt-border);
   border-radius: 8px;
-  overflow: hidden;
+  background: #fff;
 }
+
+.class-detail-students-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: white;
+}
+
+.class-detail-students-table th,
+.class-detail-students-table td {
+  white-space: nowrap;
+}
+
+
+
 
 .class-detail-students-table th {
   text-align: left;
@@ -161,5 +196,11 @@
   .class-detail-skeleton .skeleton-line,
   .class-detail-skeleton .skeleton-block {
     animation: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .class-detail-students-table {
+    min-width: 560px;
   }
 }

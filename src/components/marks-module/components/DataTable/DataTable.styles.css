@@ -1,12 +1,331 @@
 @import "../../styles/tokens.css";
 
-/* ============================================= */
-/* BASE STYLES - DESKTOP */
-/* ============================================= */
+/* DataTable, "Summary Cards" look (see DataTable.component.jsx header).
+   Desktop is a table inside a bordered panel; phones get one card per row.
+   Every color and radius comes from tokens.css; no shadows anywhere, same
+   as the rest of the module. */
 
 .table-wrapper {
   width: 100%;
   margin-bottom: 1.5rem;
+}
+
+/* ─── Toolbar ─────────────────────────────────────────────────────── */
+
+.dt-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dt-search {
+  flex: 1 1 260px;
+  max-width: 400px;
+  min-width: 200px;
+}
+
+.dt-inline-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dt-control {
+  min-width: 180px;
+}
+
+.dt-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dt-count {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--vt-ink-soft);
+  white-space: nowrap;
+}
+
+/* Segmented filter (4 options or fewer): one pill group with counts. */
+.dt-segmented {
+  display: inline-flex;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.dt-seg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-right: 1.5px solid var(--vt-border);
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--vt-ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dt-seg-item:last-child {
+  border-right: none;
+}
+
+.dt-seg-item:hover {
+  background: var(--vt-primary-tint);
+  color: var(--vt-primary);
+}
+
+.dt-seg-item.on {
+  background: var(--vt-primary);
+  color: #fff;
+}
+
+.dt-seg-count {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--vt-primary-tint2);
+  color: var(--vt-primary);
+}
+
+.dt-seg-item.on .dt-seg-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* "Filters" / "Sort" buttons */
+.dt-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--vt-ink);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.dt-tool-btn:hover {
+  border-color: var(--vt-primary);
+  color: var(--vt-primary);
+}
+
+.dt-tool-btn.on {
+  background: var(--vt-primary-tint2);
+  border-color: var(--vt-primary);
+  color: var(--vt-primary);
+}
+
+.dt-tool-count {
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--vt-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dt-filters-anchor {
+  position: relative;
+}
+
+.dt-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  width: 320px;
+  background: #fff;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.dt-filters-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dt-filters-panel-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dt-panel-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vt-ink);
+}
+
+.dt-filters-panel-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* Applied filters */
+.dt-chips-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1.5px solid var(--vt-primary);
+  border-radius: 999px;
+  background: var(--vt-primary-tint2);
+  color: var(--vt-primary);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dt-chip svg {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.dt-chip.ghost {
+  border-color: var(--vt-border);
+  background: #fff;
+  color: var(--vt-ink-soft);
+}
+
+/* ─── Shared bits ─────────────────────────────────────────────────── */
+
+.dt-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--vt-ink-soft);
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dt-icon-btn:hover,
+.dt-icon-btn.on {
+  background: var(--vt-primary-tint2);
+  color: var(--vt-primary);
+}
+
+/* Row-action menu (desktop popover and the items inside phone sheets) */
+.dt-menu {
+  z-index: 30;
+  min-width: 180px;
+  background: #fff;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dt-menu-floating {
+  position: fixed;
+  z-index: 1200;
+}
+
+.dt-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--vt-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dt-menu-item:hover,
+.dt-menu-item.on {
+  background: var(--vt-primary-tint);
+  color: var(--vt-primary);
+}
+
+.dt-menu-item.danger {
+  color: var(--vt-status-fail);
+}
+
+.dt-menu-item.danger:hover {
+  background: var(--vt-status-fail-tint);
+}
+
+.dt-menu-icon {
+  display: inline-flex;
+  width: 18px;
+  justify-content: center;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.dt-sort-dir {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--vt-ink-soft);
+}
+
+.dt-sort-idle {
+  opacity: 0.4;
+}
+
+/* ─── Desktop table ───────────────────────────────────────────────── */
+
+.dt-panel {
+  background: #fff;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .table-scroll-container {
@@ -16,20 +335,36 @@
 
 .data-table {
   width: 100%;
-  border-collapse: collapse;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, sans-serif;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: inherit;
   min-width: 600px;
 }
 
-.data-table thead {
-  background-color: #204080;
-  color: white;
+/* Same header as the students table: app navy, white text. */
+.data-table th {
+  height: 48px;
+  padding: 0 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--vt-primary);
+  border-bottom: 1.5px solid var(--vt-border);
+  white-space: nowrap;
+  user-select: none;
 }
 
 .data-table th.sortable-col {
   cursor: pointer;
-  user-select: none;
+}
+
+.data-table th.sortable-col:hover {
+  background: var(--vt-primary-dark);
+}
+
+.data-table th .sort-icon {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .data-table th .th-content {
@@ -40,124 +375,77 @@
 
 .data-table th .sort-icon {
   display: inline-flex;
-  font-size: 0.8em;
-  opacity: 0.9;
+  font-size: 0.85em;
 }
 
-.data-table th .sort-icon-idle {
-  opacity: 0.45;
-}
-
-.data-table th,
 .data-table td {
-  padding: 12px 15px;
-  text-align: left;
-  height: 50px;
+  height: 60px;
+  padding: 0 16px;
+  font-size: 14px;
+  color: var(--vt-ink);
+  background: #fff;
   vertical-align: middle;
-  border: 1px solid var(--vt-border);
+  border-bottom: 1px solid var(--vt-border);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Hide mobile on desktop */
-.mobile-card-cell {
-  display: none !important;
+.data-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
-.desktop-cell {
-  display: table-cell;
+.data-table tbody tr:nth-child(even) td {
+  background: #fafbff;
 }
 
-/* Table row */
 .table-row {
-  background: white;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
-.table-row:hover {
-  background-color: var(--vt-primary-tint2);
+.data-table:not(.no-row-click) .table-row.data-row {
   cursor: pointer;
 }
 
-/* Rows with no onRowClick handler (see DataTable.component.jsx) shouldn't
-   invite a click that does nothing — no hover highlight, no pointer. */
-.no-row-click .table-row:hover {
-  background-color: white;
-  cursor: default;
+.data-table:not(.no-row-click) .table-row.data-row:hover td {
+  background: var(--vt-primary-tint);
 }
 
-/* Truncate cells */
 .cell-truncate {
-  max-width: 180px;
-  position: relative;
+  max-width: 200px;
 }
 
-.cell-truncate:hover {
+.dt-identity-cell {
+  max-width: 280px;
+}
+
+.dt-identity-text {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Actions column pinned to the right edge: a wide table scrolls sideways
+   inside its panel, and the kebab must stay reachable without the user
+   knowing to scroll. Cells carry their own opaque background so content
+   sliding underneath never shows through. */
+.dt-actions-th,
+.dt-actions-td {
+  position: sticky;
+  right: 0;
+  width: 56px;
+  text-align: right;
+  padding-right: 12px;
+  padding-left: 8px;
+}
+
+.dt-actions-td {
   overflow: visible;
-  white-space: normal;
-  background-color: #fff;
-  z-index: 1;
-  border: 1.5px solid var(--vt-border);
+  box-shadow: -1px 0 0 var(--vt-border);
 }
 
-/* Desktop actions — small tinted icon buttons (matches Modal's close
-   button and the Button component: tint at rest, solid fill on hover,
-   never a bare naked icon with no container). Prefixed vt- since a bare
-   ".btn"/".btn-edit" is exactly the kind of name that collides with
-   unrelated legacy pages elsewhere in this app. */
-.vt-row-actions {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.vt-row-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.vt-row-action-btn:active {
-  transform: scale(0.94);
-}
-
-.vt-row-action-edit {
-  background: var(--vt-primary-tint2);
-  color: var(--vt-primary);
-}
-.vt-row-action-edit:hover {
-  background: var(--vt-primary);
-  color: #fff;
-}
-
-.vt-row-action-delete {
-  background: var(--vt-status-fail-tint);
-  color: var(--vt-status-fail);
-}
-.vt-row-action-delete:hover {
-  background: var(--vt-status-fail);
-  color: #fff;
-}
-
-.vt-row-action-extra {
-  background: var(--vt-primary-tint2);
-  color: var(--vt-primary);
-}
-.vt-row-action-extra:hover {
-  background: var(--vt-primary);
-  color: #fff;
-}
-
-/* Desktop loading — shimmer sweep, same technique used on the Admin3
-   dashboard and Students page, so loading looks the same everywhere. */
+/* Loading shimmer, same technique as the Admin3 dashboard and Students
+   page so loading looks the same everywhere. */
 @keyframes vtShimmer {
   0% {
     background-position: 100% 50%;
@@ -169,83 +457,93 @@
 
 .loading-box {
   height: 16px;
-  border-radius: 4px;
+  width: 70%;
+  border-radius: 6px;
   background: linear-gradient(90deg, #eef1f6 25%, #f6f8fb 37%, #eef1f6 63%);
   background-size: 400% 100%;
   animation: vtShimmer 1.4s ease infinite;
 }
 
+.loading-box.wide {
+  width: 85%;
+}
+
 .loading-box.action-loading {
-  width: 60px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
 }
 
-/* No data */
-.no-data {
-  text-align: center;
-  padding: 40px 16px;
-  color: var(--vt-ink-soft);
-  font-style: italic;
+.no-data-row td.no-data {
+  padding: 8px 0;
+  white-space: normal;
 }
 
-/* Controls */
-.table-controls {
+/* ─── Footer ──────────────────────────────────────────────────────── */
+
+.dt-footer {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
   align-items: center;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 4px 0;
+  font-size: 13px;
+  color: var(--vt-ink-soft);
 }
 
-.table-search {
-  flex: 0.5;
-  max-width: 400px;
-  min-width: 200px;
-}
-
-/* Pagination */
-.pagination {
-  margin-top: 10px;
+.dt-pager {
   display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dt-page-btn {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 4px;
-}
-
-.pagination-numbers {
-  display: flex;
-  gap: 4px;
-}
-
-.pagination-btn {
-  padding: 4px 8px;
+  padding: 0 8px;
   border: 1.5px solid var(--vt-border);
-  background: white;
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--vt-ink);
   cursor: pointer;
-  border-radius: 6px;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.pagination-btn:hover:not(:disabled) {
+.dt-page-btn:hover:not(:disabled) {
   background: var(--vt-primary-tint);
   border-color: var(--vt-primary);
 }
 
-.pagination-btn:disabled {
-  opacity: 0.5;
+.dt-page-btn:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-.pagination-btn.active {
+.dt-page-btn.active {
   background: var(--vt-primary);
-  color: white;
   border-color: var(--vt-primary);
+  color: #fff;
 }
 
-.pagination-ellipsis {
+.dt-page-ellipsis {
   padding: 0 4px;
-  color: #999;
+  color: var(--vt-muted);
 }
 
-/* Modal content */
+.dt-page-status {
+  padding: 0 10px;
+  font-weight: 500;
+  color: var(--vt-ink);
+}
+
+/* ─── Delete modal (unchanged) ────────────────────────────────────── */
+
 .datatable-delete-content {
   width: 100%;
 }
@@ -268,478 +566,357 @@
   flex: 1;
 }
 
-/* ============================================= */
-/* PREMIUM MOBILE DESIGN */
-/* ============================================= */
+/* ─── Phone cards ─────────────────────────────────────────────────── */
 
-@media (max-width: 768px) {
-  .table-wrapper {
-    margin-bottom: 1rem;
-  }
+.dt-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-  /* Controls */
-  .table-controls {
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
+.dt-card {
+  background: #fff;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
 
-  .table-search {
-    width: 100%;
-    max-width: 100%;
-    min-width: unset;
-  }
+.dt-card.pressable {
+  cursor: pointer;
+}
 
-  .table-scroll-container {
-    overflow-x: visible;
-  }
+.dt-card.pressable:active {
+  border-color: var(--vt-primary);
+  background: var(--vt-primary-tint);
+}
 
-  .data-table {
-    border: none;
-    min-width: unset;
-    width: 100%;
-    table-layout: fixed;
-  }
+.dt-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-  .data-table thead {
-    display: none;
-  }
+.dt-card-titles {
+  flex: 1;
+  min-width: 0;
+}
 
-  .data-table tbody {
-    display: block;
-    width: 100%;
-  }
+.dt-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--vt-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  .data-table tr {
-    display: block;
-    width: 100%;
-    margin-bottom: 16px;
-    position: relative;
-  }
+.dt-card-sub {
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--vt-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  /* Hide desktop cells completely */
-  .desktop-cell {
-    display: none !important;
-    visibility: hidden !important;
-    width: 0 !important;
-    height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-  }
+.dt-card-chevron {
+  color: var(--vt-muted);
+  flex: none;
+}
 
-  /* Show mobile card */
-  .mobile-card-cell {
-    display: block !important;
-    visibility: visible !important;
-    width: 100% !important;
-    padding: 0 !important;
-    border: none !important;
-    height: auto !important;
-  }
+.dt-card-head .dt-kebab {
+  width: 44px;
+  height: 44px;
+  margin-right: -8px;
+  flex: none;
+}
 
-  /* Premium Mobile Card */
-  .mobile-card {
-    width: 100%;
-    display: block;
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1.5px solid var(--vt-border);
-    overflow: hidden;
-    transition: border-color 0.2s ease;
-    position: relative;
-  }
+.dt-kpis {
+  display: grid;
+  /* First slot is double width: text values (class names) tend to land
+     there and need room to wrap at a space, not mid-word. */
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--vt-border);
+}
 
-  .mobile-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--vt-primary);
+.dt-kpi {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dt-kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--vt-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dt-kpi-value {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--vt-ink);
+  font-variant-numeric: tabular-nums;
+  /* Long values (class names) wrap to a second line instead of being cut
+     to "CERTIFICATI..."; anything longer than two lines is clipped. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.dt-more {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--vt-border);
+}
+
+.dt-more-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.dt-more-label {
+  flex: none;
+  color: var(--vt-ink-soft);
+}
+
+.dt-more-value {
+  text-align: right;
+  color: var(--vt-ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.dt-more-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--vt-primary);
+  cursor: pointer;
+}
+
+.dt-more-icon {
+  font-size: 10px;
+  transition: transform 0.15s ease;
+}
+
+.dt-more-icon.up {
+  transform: rotate(180deg);
+}
+
+/* Card skeleton, same blocks as a real card so nothing jumps. */
+.dt-card.skeleton .loading-box.title {
+  width: 65%;
+  height: 15px;
+  margin-bottom: 6px;
+}
+
+.dt-card.skeleton .loading-box.sub {
+  width: 40%;
+  height: 12px;
+}
+
+.dt-card.skeleton .loading-box.kpi-label {
+  width: 60%;
+  height: 10px;
+}
+
+.dt-card.skeleton .loading-box.kpi-value {
+  width: 45%;
+  height: 15px;
+}
+
+/* ─── Phone sheet ─────────────────────────────────────────────────── */
+
+.dt-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: transparent;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Tint on an oversized layer, same reason as Modal.styles.css: the mobile
+   keyboard / browser chrome moves the layout viewport, an exactly-sized
+   dimmer leaves a strip of page showing. */
+.dt-sheet-overlay::before {
+  content: "";
+  position: fixed;
+  top: -100vh;
+  bottom: -100vh;
+  left: -100vw;
+  right: -100vw;
+  background: rgba(35, 50, 82, 0.35);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.dt-sheet {
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  border-top: 1.5px solid var(--vt-border);
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  animation: dtSheetUp 0.2s ease;
+}
+
+@keyframes dtSheetUp {
+  from {
+    transform: translateY(24px);
     opacity: 0;
-    transition: opacity 0.3s ease;
   }
-
-  .mobile-card:active {
-    border-color: var(--vt-primary);
-  }
-
-  .mobile-card:active::before {
+  to {
+    transform: translateY(0);
     opacity: 1;
   }
-
-  /* Card Body */
-  .card-body {
-    padding: 16px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .card-row {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    gap: 6px;
-    width: 100%;
-  }
-
-  .card-row:first-child {
-    padding-top: 0;
-  }
-
-  .card-row:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .row-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--vt-ink-soft);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    line-height: 1.5;
-  }
-
-  /* Row value with see more/less */
-  .row-value-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .row-value {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--vt-ink);
-    line-height: 1.6;
-    width: 100%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
-  }
-
-  .row-value.expanded {
-    display: block;
-  }
-
-  .toggle-text-btn {
-    background: none;
-    border: none;
-    color: var(--vt-primary);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 4px 0;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    align-self: flex-start;
-  }
-
-  .toggle-text-btn:hover {
-    text-decoration: underline;
-    opacity: 0.8;
-  }
-
-  .toggle-text-btn:active {
-    opacity: 0.6;
-  }
-
-  /* Card Footer */
-  .card-footer {
-    background: #f8f9fa;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    padding: 12px 16px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  /* ALWAYS STACK BUTTONS VERTICALLY ON MOBILE */
-  .action-buttons-mobile {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-  }
-
-  /* Premium Action Buttons - Solid Colors */
-  .btn-mobile {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    border: none;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-    color: white;
-  }
-
-  .btn-mobile span {
-    color: white;
-  }
-
-  .btn-mobile svg {
-    font-size: 16px;
-    color: white;
-  }
-
-  /* Edit button - Primary Navy (Solid) */
-  .btn-edit-mobile {
-    background-color: var(--vt-primary);
-  }
-
-  .btn-edit-mobile:hover {
-    background-color: var(--vt-primary-dark);
-  }
-
-  .btn-edit-mobile:active {
-    background-color: var(--vt-primary-dark);
-  }
-
-  /* Delete button - Red (Solid) */
-  .btn-delete-mobile {
-    background-color: #dc2626;
-  }
-
-  .btn-delete-mobile:hover {
-    background-color: #ef4444;
-  }
-
-  .btn-delete-mobile:active {
-    background-color: #b91c1c;
-  }
-
-  /* Extra button - Primary Navy (Solid) */
-  .btn-extra-mobile {
-    background-color: var(--vt-primary);
-  }
-
-  .btn-extra-mobile:hover {
-    background-color: var(--vt-primary-dark);
-  }
-
-  .btn-extra-mobile:active {
-    background-color: var(--vt-primary-dark);
-  }
-
-  /* Premium Skeleton Loader — reuses vtShimmer, defined above */
-  .skeleton-card {
-    width: 100%;
-    background: #ffffff;
-    pointer-events: none;
-  }
-
-  .skeleton-card::before {
-    display: none;
-  }
-
-  .skeleton-row {
-    display: flex;
-    flex-direction: column;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-    gap: 6px;
-  }
-
-  .skeleton-row:first-child {
-    padding-top: 0;
-  }
-
-  .skeleton-row:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .skeleton-label,
-  .skeleton-value {
-    height: 16px;
-    border-radius: 4px;
-    background: linear-gradient(90deg, #eef1f6 25%, #f6f8fb 37%, #eef1f6 63%);
-    background-size: 400% 100%;
-    animation: vtShimmer 1.4s ease infinite;
-  }
-
-  .skeleton-label {
-    width: 100px;
-  }
-
-  .skeleton-value {
-    width: 100%;
-  }
-
-  .skeleton-btn {
-    width: 100%;
-    height: 44px;
-    border-radius: 8px;
-    background: linear-gradient(90deg, #eef1f6 25%, #f6f8fb 37%, #eef1f6 63%);
-    background-size: 400% 100%;
-    animation: vtShimmer 1.4s ease infinite;
-  }
-
-  /* No data */
-  .no-data-row {
-    display: block;
-    width: 100%;
-  }
-
-  .no-data {
-    display: block;
-    width: 100%;
-    background: white;
-    border-radius: 12px;
-    border: 1.5px solid var(--vt-border);
-    padding: 40px 20px;
-  }
-
-  /* Pagination */
-  .pagination {
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 16px;
-  }
-
-  .pagination-btn {
-    font-size: 13px;
-    padding: 8px 12px;
-  }
-
-  .delete-resource-text {
-    font-size: 15px;
-    margin-bottom: 20px;
-  }
-
-  .datatable-modal-buttons {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .datatable-modal-buttons .vt-btn {
-    width: 100%;
-  }
 }
 
-/* ============================================= */
-/* SMALL MOBILE - 480px */
-/* ============================================= */
+.dt-sheet-grab {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--vt-border);
+  margin: 4px auto 10px;
+}
+
+.dt-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.dt-sheet-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--vt-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dt-sheet-body {
+  overflow-y: auto;
+}
+
+.dt-sort-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dt-sort-list .dt-menu-item {
+  min-height: 48px;
+  font-size: 15px;
+}
+
+/* ─── Phone layout adjustments ────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .dt-toolbar {
+    gap: 8px;
+  }
+
+  .dt-search {
+    flex: 1 1 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .dt-inline-controls,
+  .dt-toolbar-actions {
+    width: 100%;
+  }
+
+  .dt-toolbar-actions > * {
+    flex: 1;
+  }
+
+  .dt-segmented {
+    width: 100%;
+  }
+
+  .dt-seg-item {
+    flex: 1;
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .dt-tool-btn {
+    min-height: 44px;
+  }
+
+  .dt-chips-row {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .dt-chips-row .dt-count {
+    margin-left: auto;
+    padding-left: 8px;
+  }
+
+  .dt-footer {
+    padding-top: 12px;
+  }
+
+  .dt-page-btn {
+    min-width: 40px;
+    height: 40px;
+  }
+}
 
 @media (max-width: 480px) {
-  .mobile-card {
-    border-radius: 10px;
+  /* Two labelled action buttons no longer fit side by side; stack them
+     so nothing is cut off at the right edge. */
+  .dt-toolbar-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .card-body {
-    padding: 14px;
+  .dt-toolbar-actions > * {
+    width: 100%;
+    min-height: 44px;
   }
 
-  .card-row {
-    padding: 10px 0;
-    gap: 5px;
-  }
-
-  .row-label {
-    font-size: 12px;
-  }
-
-  .row-value {
-    font-size: 14px;
-  }
-
-  .toggle-text-btn {
-    font-size: 12px;
-  }
-
-  .card-footer {
-    padding: 10px 14px;
-  }
-
-  .action-buttons-mobile {
+  .dt-kpis {
     gap: 8px;
   }
 
-  .btn-mobile {
-    padding: 11px 18px;
-    font-size: 13px;
-  }
-
-  .btn-mobile svg {
-    font-size: 15px;
-  }
-
-  .pagination-btn {
-    font-size: 12px;
-    padding: 7px 10px;
-  }
-
-}
-
-/* ============================================= */
-/* VERY SMALL DEVICES - 320px */
-/* ============================================= */
-
-@media (max-width: 320px) {
-  .mobile-card {
-    border-radius: 8px;
-    margin-bottom: 12px;
-  }
-
-  .card-body {
-    padding: 12px;
-  }
-
-  .card-row {
-    padding: 8px 0;
-    gap: 4px;
-  }
-
-  .row-label {
-    font-size: 11px;
-  }
-
-  .row-value {
-    font-size: 13px;
-  }
-
-  .toggle-text-btn {
-    font-size: 11px;
-  }
-
-  .card-footer {
-    padding: 8px 12px;
-  }
-
-  .action-buttons-mobile {
-    gap: 6px;
-  }
-
-  .btn-mobile {
-    padding: 10px 16px;
-    font-size: 12px;
-  }
-
-  .btn-mobile svg {
+  .dt-kpi-value {
     font-size: 14px;
   }
-
-  .pagination-btn {
-    font-size: 11px;
-    padding: 6px 8px;
-    min-width: 32px;
-  }
-
 }
-
-/* ============================================= */
-/* ACCESSIBILITY & PERFORMANCE */
-/* ============================================= */
-

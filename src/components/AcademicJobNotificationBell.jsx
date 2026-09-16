@@ -103,6 +103,18 @@ export default function AcademicJobNotificationBell() {
     setOpen((v) => !v);
   };
 
+  // Phones get a bottom sheet (same gesture as the app's modals); desktop
+  // keeps the anchored dropdown, clamped so it can never run off either
+  // edge of the viewport (it used to hang off the left when the bell was
+  // not at the far right of a narrow screen).
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
+  const desktopStyle = (() => {
+    if (!anchorRect) return {};
+    const width = Math.min(340, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(anchorRect.right - width, window.innerWidth - width - 12));
+    return { top: anchorRect.bottom + 8, left, width };
+  })();
+
   const handleMarkAllRead = async () => {
     try {
       await fetch(`${config.API_V1_URL}/academic-notifications/mark-all-read`, {
@@ -152,12 +164,18 @@ export default function AcademicJobNotificationBell() {
         anchorRect &&
         ReactDOM.createPortal(
           <div
-            className="ajnb-panel"
-            style={{
-              top: anchorRect.bottom + 8,
-              right: Math.max(12, window.innerWidth - anchorRect.right),
-            }}
+            className={`ajnb-layer${isMobile ? " mobile" : ""}`}
+            onClick={isMobile ? () => setOpen(false) : undefined}
+            role="presentation"
           >
+          <div
+            className={`ajnb-panel${isMobile ? " sheet" : ""}`}
+            style={isMobile ? undefined : desktopStyle}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Job notifications"
+          >
+            {isMobile && <div className="ajnb-sheet-grab" />}
             <div className="ajnb-panel-header">
               <span>Job Notifications</span>
               {unreadCount > 0 && (
@@ -189,6 +207,7 @@ export default function AcademicJobNotificationBell() {
                 ))
               )}
             </div>
+          </div>
           </div>,
           document.body
         )}

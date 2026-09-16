@@ -27,7 +27,11 @@ import Message from "./components/Message.jsx";
 import UserChat from "./components/UserChat";
 import StudentIdCards from "./components/StudentIdCards.jsx";
 import StudentAttendance from "./components/StudentAttendance.jsx";
-import AcademicYearManagement from "./components/AcademicYearManagement.jsx";
+// Retired 2026-09-12: the Academic Years page is the marks-module one below
+// (AccademicYearPage), reachable from the main nav at /academics/academic-years.
+// import AcademicYearManagement from "./components/AcademicYearManagement.jsx";
+import { AcademicYear } from "./components/marks-module/pages/AccademicYearPage/AcademicYear.page";
+import { AcademicYearDetail } from "./components/marks-module/pages/AccademicYearPage/AcademicYearDetail.page";
 import Users from "./components/Users.jsx";
 import MonitorUsers from "./components/MonitorUsers.jsx";
 import Fee from "./components/Fee";
@@ -222,7 +226,10 @@ function App() {
             )
           }
         />
-        <Route path="/admin-academic-years" element={<AcademicYearManagement />} />
+        {/* Old main-nav path, kept so bookmarks and any leftover links still land
+            on the Academic Years page. */}
+        <Route path="/admin-academic-years" element={<Navigate to="/academics/academic-years" replace />} />
+        {/* <Route path="/admin-academic-years" element={<AcademicYearManagement />} /> */}
         <Route path="/admin-student" element={<StudentsPage />} />
         <Route path="/admin-student/:id" element={<StudentDetailPage />} />
         <Route path="/admin-teacher" element={<AdminTeachers />} />
@@ -403,10 +410,8 @@ function App() {
 
         {/* ----------------------------------------- */}
         {/* Academics - marks-module pages */}
-        <Route
-          path="/academics/academic-years"
-          element={<Navigate to="/admin-academic-years" replace />}
-        />
+        <Route path="/academics/academic-years" element={<AcademicYear />} />
+        <Route path="/academics/academic-years/:id" element={<AcademicYearDetail />} />
         <Route path="/academics/subjects" element={<SubjectsWithDisciplineLayout />} />
         <Route path="/academics/subjects/:id" element={<SubjectDetailPage />} />
         <Route path="/academics/teachers/:id" element={<TeacherDetailPage />} />

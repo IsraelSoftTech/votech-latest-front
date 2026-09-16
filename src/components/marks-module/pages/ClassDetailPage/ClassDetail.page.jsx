@@ -15,6 +15,8 @@ import {
   FaBook,
   FaPlus,
   FaExclamationTriangle,
+  FaFileDownload,
+  FaSpinner,
 } from "react-icons/fa";
 import SideTop from "../../../SideTop";
 import api, { headers, subBaseURL } from "../../utils/api";
@@ -25,7 +27,9 @@ import { ClassFormModal } from "../../components/ClassFormModal/ClassFormModal.c
 import { StudentFormModal } from "../../components/StudentFormModal/StudentFormModal.component";
 import Modal from "../../components/Modal/Modal.component";
 import { Button } from "../../components/Button/Button.component";
-import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
+// import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
+import DataTable from "../../components/DataTable/DataTable.component";
+import { ActionMenu } from "../../components/ActionMenu/ActionMenu.component";
 // Just for the .datatable-delete-content/.datatable-modal-buttons/
 // .delete-resource-text classes, reusing DataTable's own delete-confirm
 // look instead of re-styling a second version of the same dialog.
@@ -67,8 +71,13 @@ function StudentsTab({ classItem }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("active");
+  const [repeatingFilter, setRepeatingFilter] = useState("");
+  const [sortBy, setSortBy] = useState("full_name");
+  const [sortDir, setSortDir] = useState("asc");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+  const [downloadingClassList, setDownloadingClassList] = useState(false);
 
   const [classesOptions, setClassesOptions] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -86,8 +95,12 @@ function StudentsTab({ classItem }) {
         page: String(page),
         limit: "20",
         class_id: String(classItem.id),
+        sortBy,
+        sortDir,
       });
       if (search.trim()) params.set("search", search.trim());
+      if (statusFilter) params.set("status", statusFilter);
+      if (repeatingFilter) params.set("is_repeating", repeatingFilter);
       const res = await api.get(`/students?${params.toString()}`);
       setStudents(res.data?.data?.students || []);
       setPagination(res.data?.data?.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 });
@@ -96,7 +109,7 @@ function StudentsTab({ classItem }) {
     } finally {
       setLoading(false);
     }
-  }, [classItem.id, page, search]);
+  }, [classItem.id, page, search, statusFilter, repeatingFilter, sortBy, sortDir]);
 
   useEffect(() => {
     fetchStudents();
@@ -104,7 +117,7 @@ function StudentsTab({ classItem }) {
 
   useEffect(() => {
     setPage(1);
-  }, [search]);
+  }, [search, statusFilter, repeatingFilter, sortBy, sortDir]);
 
   // Dropdown data for the register/edit modal — fetched once per tab
   // mount, same source lists StudentsPage itself uses.
@@ -129,15 +142,74 @@ function StudentsTab({ classItem }) {
   };
 
   const handleEdit = (student, e) => {
-    e.stopPropagation();
+    if (e && e.stopPropagation) e.stopPropagation();
     setEditingStudent(student);
     setFormModalOpen(true);
   };
 
   const handleDelete = (student, e) => {
-    e.stopPropagation();
+    if (e && e.stopPropagation) e.stopPropagation();
     setDeleteTarget(student);
   };
+
+  // Same PDF the Students page offers once a class filter is set; here the
+  // class is a given, so it is always available.
+  const handleDownloadClassList = async () => {
+    if (downloadingClassList) return;
+    setDownloadingClassList(true);
+    try {
+      const base = api.defaults.baseURL || "http://localhost:5000/api/v1";
+      const res = await fetch(`${base}/students/class/${classItem.id}/list-pdf?disposition=attachment`, {
+        headers: headers(),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || "Failed to generate class list.");
+      }
+      const blob = await res.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `Class_List_${String(classItem.name || "class").replace(/\s+/g, "_")}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      toast.error(err.message || "Failed to download class list.");
+    } finally {
+      setDownloadingClassList(false);
+    }
+  };
+
+  // Same shape as the Students page's table, minus the Class column (every
+  // row here is this class by definition). Accessors match the API's sort
+  // keys; `role` tags pick the phone card's value strip.
+  const studentColumns = [
+    { label: "Name", accessor: "full_name", role: "title" },
+    { label: "Student ID", accessor: "student_id", role: "subtitle" },
+    { label: "Sex", accessor: "sex_label", sortable: false, role: "kpi" },
+    {
+      label: "Status",
+      accessor: "status",
+      role: "kpi",
+      render: (s) => (
+        <span className="students-status-cell">
+          <span className={`students-status-pill ${s.status}`}>{s.status}</span>
+          {s.is_repeating && <span className="students-repeating-pill">Repeating</span>}
+        </span>
+      ),
+    },
+    {
+      label: "Registered",
+      accessor: "registration_date",
+      render: (s) => (s.registration_date ? new Date(s.registration_date).toLocaleDateString("en-GB") : "-"),
+    },
+  ];
+  const studentRows = students.map((s) => ({
+    ...s,
+    sex_label: s.sex === "M" ? "Male" : s.sex === "F" ? "Female" : "N/A",
+  }));
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
@@ -156,6 +228,8 @@ function StudentsTab({ classItem }) {
 
   return (
     <div className="class-detail-students-tab">
+      {/* Register button row, ServerListControls and the hand-rolled table
+          were replaced by DataTable (server mode) on 2026-09-13; kept for reference.
       <div className="class-detail-students-toolbar">
         <button className="students-register-btn" onClick={handleRegister}>
           <FaPlus /> Register Student
@@ -228,6 +302,66 @@ function StudentsTab({ classItem }) {
           )}
         </tbody>
       </table>
+
+      */}
+
+      <DataTable
+        columns={studentColumns}
+        data={studentRows}
+        loading={loading}
+        searchPlaceholder="Search students in this class..."
+        onRowClick={(s) => navigate(`/admin-student/${s.id}`)}
+        onEdit={(s) => handleEdit(s)}
+        onDelete={(s) => handleDelete(s)}
+        skipDeleteConfirm
+        server={{
+          search,
+          onSearchChange: setSearch,
+          filters: [
+            {
+              key: "status",
+              label: "Status",
+              options: [
+                { value: "active", label: "Active" },
+                { value: "graduated", label: "Graduated" },
+                { value: "withdrawn", label: "Withdrawn" },
+              ],
+              value: statusFilter,
+              onChange: setStatusFilter,
+            },
+            {
+              key: "repeating",
+              label: "Repeating",
+              options: [
+                { value: "true", label: "Repeating" },
+                { value: "false", label: "Not Repeating" },
+              ],
+              value: repeatingFilter,
+              onChange: setRepeatingFilter,
+            },
+          ],
+          sort: { accessor: sortBy, direction: sortDir },
+          onSortChange: (accessor, direction) => {
+            setSortBy(accessor || "full_name");
+            setSortDir(direction || "asc");
+          },
+          page: pagination.page,
+          totalPages: pagination.totalPages,
+          total: pagination.total,
+          limit: pagination.limit,
+          onPageChange: setPage,
+        }}
+        toolbarActions={
+          <>
+            <Button variant="secondary" icon={downloadingClassList ? <FaSpinner className="students-spin" /> : <FaFileDownload />} onClick={handleDownloadClassList} disabled={downloadingClassList}>
+              {downloadingClassList ? "Generating…" : "Class List"}
+            </Button>
+            <Button icon={<FaPlus />} onClick={handleRegister}>
+              Register Student
+            </Button>
+          </>
+        }
+      />
 
       <StudentFormModal
         isOpen={formModalOpen}
@@ -356,6 +490,7 @@ function SubjectsTab({ classSubjects }) {
       {rows.length === 0 ? (
         <p className="class-detail-empty-text">No subjects assigned to this class yet.</p>
       ) : (
+        <div className="class-detail-table-scroll">
         <table className="class-detail-students-table">
           <thead>
             <tr>
@@ -390,6 +525,7 @@ function SubjectsTab({ classSubjects }) {
             )}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
@@ -423,6 +559,7 @@ function TeachersTab({ classSubjects }) {
       {rows.length === 0 ? (
         <p className="class-detail-empty-text">No teachers assigned to this class yet.</p>
       ) : (
+        <div className="class-detail-table-scroll">
         <table className="class-detail-students-table">
           <thead>
             <tr>
@@ -443,6 +580,7 @@ function TeachersTab({ classSubjects }) {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
@@ -645,7 +783,7 @@ export function ClassDetailPage() {
         {backButton}
 
         <div className="class-details-card">
-          <header className="class-details-header">
+          <header className="class-details-header class-details-header--solo">
             <div className="class-details-title-wrapper">
               <h2 className="class-details-title">
                 {cls.department?.name} {cls.name}
@@ -655,12 +793,16 @@ export function ClassDetailPage() {
               </span>
             </div>
             <div className="class-detail-header-actions">
-              <Button variant="secondary" onClick={openEdit}>
-                <FaEdit /> Edit
-              </Button>
-              <Button variant="danger" onClick={() => setDeleteConfirmOpen(true)}>
-                <FaTrash /> Delete
-              </Button>
+              {/* Edit / Delete used to be two coloured buttons here (a solid
+                  red Delete beside a tinted Edit); they now sit behind the
+                  same kebab the table rows use. */}
+              <ActionMenu
+                title={cls.name}
+                items={[
+                  { key: "edit", label: "Edit class", icon: <FaEdit />, onClick: openEdit },
+                  { key: "delete", label: "Delete class", icon: <FaTrash />, danger: true, onClick: () => setDeleteConfirmOpen(true) },
+                ]}
+              />
             </div>
           </header>
         </div>

@@ -34,8 +34,41 @@
   text-align: center;
 }
 
+/* Portal layer. On desktop it takes no space and lets clicks through
+   (the panel is positioned inside it); on phones it is the dimmed overlay
+   behind the bottom sheet, tap outside to close. */
+.ajnb-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  pointer-events: none;
+}
+
+.ajnb-layer.mobile {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-end;
+  background: transparent;
+}
+
+/* Tint on an oversized layer, same reason as the modals: the phone
+   keyboard / browser chrome moves the layout viewport and an exactly
+   sized dimmer leaves a strip of page showing. */
+.ajnb-layer.mobile::before {
+  content: "";
+  position: fixed;
+  top: -100vh;
+  bottom: -100vh;
+  left: -100vw;
+  right: -100vw;
+  background: rgba(35, 50, 82, 0.35);
+  z-index: -1;
+  pointer-events: none;
+}
+
 .ajnb-panel {
   position: fixed;
+  pointer-events: auto;
   width: 340px;
   max-width: calc(100vw - 24px);
   max-height: 420px;
@@ -47,6 +80,46 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Phone: bottom sheet, full width, up to 80% of the screen tall, list
+   scrolls inside. */
+.ajnb-panel.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  max-height: 80vh;
+  max-height: 80dvh;
+  border-radius: 16px 16px 0 0;
+  border-bottom: none;
+  box-shadow: none;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: ajnb-sheet-up 0.2s ease;
+}
+
+@keyframes ajnb-sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.ajnb-sheet-grab {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: #e8edf5;
+  margin: 10px auto 2px;
+  flex-shrink: 0;
+}
+
+.ajnb-panel.sheet .ajnb-item {
+  min-height: 56px;
+  padding: 0.85rem 1rem;
 }
 
 .ajnb-panel-header {

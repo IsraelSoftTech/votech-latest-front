@@ -43,11 +43,20 @@
   font-size: 13px;
 }
 
+/* Scroll container kept as a safety net for very narrow screens; the
+   table itself still fits the modal width so the score inputs stay on
+   screen (that is the column that matters here). */
+.sme-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .sme-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
+
 
 .sme-table th,
 .sme-table td {
