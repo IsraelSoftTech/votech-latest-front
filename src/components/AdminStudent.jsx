@@ -40,6 +40,8 @@ import marksApi from "./marks-module/utils/api";
 import { toast } from "react-toastify";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import config from "../config";
+
 const menuItems = [
   { label: "Dashboard", icon: <FaTachometerAlt /> },
   { label: "Students", icon: <FaUserGraduate /> },
@@ -54,7 +56,6 @@ const menuItems = [
   { label: "Exam/Marks", icon: <FaChartBar /> },
   { label: "Lesson Plans", icon: <FaPenFancy /> },
 ];
-import config from "../config";
 
 const years = Array.from({ length: 26 }, (_, i) => `20${25 + i}/20${26 + i}`);
 

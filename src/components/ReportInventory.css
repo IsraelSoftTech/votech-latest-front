@@ -395,6 +395,14 @@
   color: #dc2626;
 }
 
+.ri-form-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #64748b;
+}
+
 .ri-input {
   width: 100%;
   padding: 10px 14px;

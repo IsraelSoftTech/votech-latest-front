@@ -7,6 +7,7 @@ import Loader from "./components/Loader";
 import Welcome from "./components/Welcome";
 import Signin from "./components/Signin";
 import Signup from "./components/Signup";
+import SuperAdminRoles from "./components/SuperAdminRoles";
 
 // Admin / Core
 import Admin from "./components/Admin.jsx";
@@ -102,6 +103,8 @@ import MasterSheetPage from "./components/marks-module/pages/MasterSheetPage/Mas
 import UnauthorizedPage from "./components/Unauthorized.page";
 import ReportCard from "./components/marks-module/components/ReportCard/ReportCard.component";
 import { ActiveYearProvider } from "./context/ActiveYearContext";
+import UserGuide from "./components/UserGuide";
+import AdminUserGuides from "./components/AdminUserGuides";
 
 // Wrappers so Discipline always sees DisciplineSideTop menu on shared routes
 function PayslipWithDisciplineLayout() {
@@ -126,6 +129,22 @@ function SubjectsWithDisciplineLayout() {
     );
   }
   return <SubjectPage />;
+}
+
+function UserGuideWithLayout() {
+  const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
+  if (authUser?.role === "Discipline") {
+    return (
+      <DisciplineSideTop>
+        <UserGuide />
+      </DisciplineSideTop>
+    );
+  }
+  return (
+    <SideTop>
+      <UserGuide />
+    </SideTop>
+  );
 }
 
 function TeacherCasesWithDisciplineLayout() {
@@ -212,6 +231,9 @@ function App() {
         {/* Auth */}
         <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
+        {/* Where the super admin lands after the master credentials: no role
+            yet, so no layout — just the chooser. */}
+        <Route path="/super-admin" element={<SuperAdminRoles />} />
 
         {/* Admin / Core */}
         <Route
@@ -256,6 +278,18 @@ function App() {
           element={<Admin2PaySlip authUser={authUser} />}
         />
         <Route path="/payslip" element={<PayslipWithDisciplineLayout />} />
+
+        {/* Read-only guides, open to every signed-in role. The server decides
+            which guides each role receives. */}
+        <Route path="/user-guide" element={<UserGuideWithLayout />} />
+        <Route
+          path="/admin-user-guides"
+          element={
+            <SideTop>
+              <AdminUserGuides />
+            </SideTop>
+          }
+        />
 
         {/* Attendance / Staff */}
         <Route

@@ -4,6 +4,7 @@ import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
 import { FaPlus, FaEdit, FaTrashAlt } from 'react-icons/fa';
 import logo from '../assets/logo.png';
+import { todayIsoDateInCameroon } from '../utils/cameroonTimeClient.util';
 import './ReportInventory.css';
 
 const UOM_OPTIONS = ['Pieces', 'Kg', 'Liters', 'Cartons', 'Others'];
@@ -12,7 +13,9 @@ const CATEGORY_OPTIONS = [
   { value: 'expenditure', label: 'Expenditure' },
 ];
 
-const INITIAL_FORM = {
+// Built fresh each time so the default date is still correct after the app has
+// been left open overnight.
+const makeInitialForm = () => ({
   item_name: '',
   head_id: '',
   category: 'income',
@@ -21,16 +24,39 @@ const INITIAL_FORM = {
   amount: '',
   support_doc: '',
   supplier: '',
-};
+  transaction_date: todayIsoDateInCameroon(),
+});
 
 const INITIAL_HEAD_FORM = { name: '' };
+
+// transaction_date arrives as YYYY-MM-DD; read it as text rather than through
+// Date so the day shown never shifts by a timezone.
+const toDateInputValue = (value) => {
+  if (!value) return '';
+  return String(value).slice(0, 10);
+};
+
+const formatDate = (value) => {
+  const iso = toDateInputValue(value);
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!parts) return '—';
+  return `${parts[3]}/${parts[2]}/${parts[1]}`;
+};
+
+const sortByTransactionDateDesc = (list) =>
+  [...list].sort((a, b) => {
+    const aDate = toDateInputValue(a.transaction_date || a.created_at);
+    const bDate = toDateInputValue(b.transaction_date || b.created_at);
+    if (aDate !== bDate) return aDate < bDate ? 1 : -1;
+    return (Number(b.id) || 0) - (Number(a.id) || 0);
+  });
 
 export default function ReportInventory() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [form, setForm] = useState(INITIAL_FORM);
+  const [form, setForm] = useState(makeInitialForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -50,7 +76,7 @@ export default function ReportInventory() {
     try {
       setLoading(true);
       const data = await api.getReportInventory();
-      setItems(Array.isArray(data) ? data : []);
+      setItems(Array.isArray(data) ? sortByTransactionDateDesc(data) : []);
     } catch (err) {
       setItems([]);
       setError('Failed to load items');
@@ -80,7 +106,7 @@ export default function ReportInventory() {
   };
 
   const resetForm = () => {
-    setForm(INITIAL_FORM);
+    setForm(makeInitialForm());
     setEditingItem(null);
     setError('');
   };
@@ -93,7 +119,7 @@ export default function ReportInventory() {
 
   const openEditForm = (item) => {
     setSuccess('');
-    const amt = item.amount != null ? item.amount : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+    const amt = item.amount != null ? item.amount : (Number(item.unit_cost_price) || 0);
     setForm({
       item_name: item.item_name || '',
       head_id: item.head_id ? String(item.head_id) : '',
@@ -103,6 +129,9 @@ export default function ReportInventory() {
       amount: String(amt),
       support_doc: item.support_doc || '',
       supplier: item.supplier || '',
+      transaction_date:
+        toDateInputValue(item.transaction_date || item.created_at) ||
+        todayIsoDateInCameroon(),
     });
     setEditingItem(item);
     setShowForm(true);
@@ -125,6 +154,15 @@ export default function ReportInventory() {
       setError('Quantity must be at least 1 when provided');
       return;
     }
+    const txDate = toDateInputValue(form.transaction_date);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(txDate)) {
+      setError('Transaction date is required');
+      return;
+    }
+    if (txDate > todayIsoDateInCameroon()) {
+      setError('Transaction date cannot be in the future');
+      return;
+    }
     setSubmitting(true);
     try {
       const payload = {
@@ -136,6 +174,7 @@ export default function ReportInventory() {
         amount: amt,
         support_doc: form.support_doc?.trim() || null,
         supplier: form.category === 'income' ? (form.supplier?.trim() || null) : null,
+        transaction_date: txDate,
       };
       if (editingItem) {
         const res = await api.updateReportInventoryItem(editingItem.id, payload);
@@ -144,7 +183,9 @@ export default function ReportInventory() {
           head_name: heads.find((h) => h.id === res.item.head_id)?.name,
         };
         setItems((prev) =>
-          prev.map((it) => (it.id === editingItem.id ? updated : it))
+          sortByTransactionDateDesc(
+            prev.map((it) => (it.id === editingItem.id ? updated : it))
+          )
         );
         setSuccessType('success');
         setSuccess('Item updated successfully!');
@@ -154,7 +195,7 @@ export default function ReportInventory() {
           ...res.item,
           head_name: heads.find((h) => h.id === res.item.head_id)?.name,
         };
-        setItems((prev) => [created, ...prev]);
+        setItems((prev) => sortByTransactionDateDesc([created, ...prev]));
         setSuccessType('success');
         setSuccess('Item registered successfully!');
       }
@@ -272,7 +313,7 @@ export default function ReportInventory() {
 
   const getItemAmount = (item) => {
     if (item.amount != null && !isNaN(Number(item.amount))) return Number(item.amount);
-    return (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+    return Number(item.unit_cost_price) || 0;
   };
 
   return (
@@ -380,6 +421,7 @@ export default function ReportInventory() {
                 <thead>
                   <tr>
                     <th>Item ID</th>
+                    <th>Date</th>
                     <th>Item Name</th>
                     <th>Head</th>
                     <th>Category</th>
@@ -394,7 +436,7 @@ export default function ReportInventory() {
                 <tbody>
                   {items.length === 0 ? (
                     <tr className="ri-empty-row">
-                      <td colSpan={10} className="ri-empty">
+                      <td colSpan={11} className="ri-empty">
                         No items yet. Click &quot;Add Item&quot; to register.
                       </td>
                     </tr>
@@ -402,6 +444,7 @@ export default function ReportInventory() {
                     items.map((item) => (
                       <tr key={item.id}>
                         <td className="ri-id" data-label="Item ID">{item.item_id || item.id}</td>
+                        <td data-label="Date">{formatDate(item.transaction_date || item.created_at)}</td>
                         <td data-label="Item Name">{item.item_name}</td>
                         <td className="ri-desc" data-label="Head">{item.head_name || '—'}</td>
                         <td data-label="Category">
@@ -469,6 +512,22 @@ export default function ReportInventory() {
                     disabled
                     className="ri-input ri-disabled"
                   />
+                </div>
+                <div className="ri-form-row">
+                  <label>Transaction Date <span className="ri-required">*</span></label>
+                  <input
+                    type="date"
+                    name="transaction_date"
+                    value={form.transaction_date}
+                    onChange={handleFormChange}
+                    max={todayIsoDateInCameroon()}
+                    className="ri-input"
+                    required
+                  />
+                  <span className="ri-form-hint">
+                    The day the transaction actually happened, not today. Set it
+                    back when recording past transactions.
+                  </span>
                 </div>
                 <div className="ri-form-row">
                   <label>Item Name <span className="ri-required">*</span></label>

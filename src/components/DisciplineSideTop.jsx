@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './DisciplineSideTop.css';
 import logo from '../assets/logo.png';
-import { FaEnvelope, FaUserGraduate, FaClipboardList, FaGavel, FaFileAlt, FaComments, FaShieldAlt, FaCog, FaBars, FaSignOutAlt, FaUser, FaCamera, FaTimes, FaFileInvoiceDollar, FaPenFancy, FaBookOpen } from 'react-icons/fa';
+import { FaEnvelope, FaUserGraduate, FaClipboardList, FaGavel, FaFileAlt, FaComments, FaShieldAlt, FaCog, FaBars, FaSignOutAlt, FaUser, FaCamera, FaTimes, FaFileInvoiceDollar, FaPenFancy, FaBookOpen, FaBook, FaExchangeAlt } from 'react-icons/fa';
 import { MdDashboard } from 'react-icons/md';
 import ReactDOM from 'react-dom';
 import api from '../services/api';
@@ -19,7 +19,8 @@ const menuItems = [
   { label: 'Subjects', icon: <FaBookOpen />, path: '/academics/subjects' },
   { label: 'Lesson Plans', icon: <FaPenFancy />, path: '/discipline-lesson-plans' },
   { label: 'Pay Slip', icon: <FaFileInvoiceDollar />, path: '/payslip' },
-  { label: 'Events', icon: <FaClipboardList />, path: '/discipline-events' }
+  { label: 'Events', icon: <FaClipboardList />, path: '/discipline-events' },
+  { label: 'User Guide', icon: <FaBook />, path: '/user-guide' }
 ];
 
 export default function DisciplineSideTop({ children, hasUnread = false, activeTab }) {
@@ -38,6 +39,9 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
   const location = useLocation();
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
   const username = authUser?.username || 'User';
+  // Only a super admin who signed in with the master credentials may hop to
+  // another role without signing in again.
+  const isSuperAdmin = api.isSuperAdminSession();
 
   // Profile management functions
   const openProfileModal = () => {
@@ -328,11 +332,18 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
               >
                 <FaCog style={{ fontSize: 17 }} /> Settings
               </button>
+              {isSuperAdmin && (
+                <button
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#204080', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}
+                  onClick={() => navigate('/super-admin')}
+                >
+                  <FaExchangeAlt style={{ fontSize: 17 }} /> Switch Role
+                </button>
+              )}
               <button
                 style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', color: '#e53e3e', fontWeight: 500, fontSize: 16, padding: '10px 18px', cursor: 'pointer', borderRadius: 0, textAlign: 'left' }}
                 onClick={() => {
-                  sessionStorage.removeItem('token');
-                  sessionStorage.removeItem('authUser');
+                  api.clearToken();
                   window.location.href = '/signin';
                 }}
               >

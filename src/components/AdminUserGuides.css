@@ -1,0 +1,606 @@
+@import "./marks-module/styles/tokens.css";
+
+/* Same aliasing approach as Admin3Dashboard.styles.css and UserGuide.css, so
+   all three pages share one palette. */
+.aug-page {
+  --aug-primary: var(--vt-primary);
+  --aug-primary-tint: var(--vt-primary-tint);
+  --aug-primary-tint2: var(--vt-primary-tint2);
+  --aug-accent-tint: var(--vt-gold-tint);
+  --aug-success: var(--vt-status-done);
+  --aug-success-tint: var(--vt-status-done-tint);
+  --aug-danger: var(--vt-status-fail);
+  --aug-danger-tint: var(--vt-status-fail-tint);
+  --aug-ink: var(--vt-ink);
+  --aug-ink-soft: var(--vt-ink-soft);
+  --aug-muted: var(--vt-muted);
+  --aug-border: var(--vt-border);
+
+  padding: 1.6rem 1.8rem 3rem;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.aug-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  background: var(--aug-primary-tint);
+  border: 1px solid var(--aug-border);
+  border-radius: 10px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.4rem;
+}
+
+.aug-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--aug-primary);
+  margin: 0;
+}
+
+.aug-subtitle {
+  font-size: 0.82rem;
+  color: var(--aug-ink-soft);
+  margin: 0.3rem 0 0;
+}
+
+/* ===== Tabs ===== */
+.aug-tabs {
+  display: flex;
+  gap: 0.3rem;
+  border-bottom: 1px solid var(--aug-border);
+  margin-bottom: 1.1rem;
+}
+
+.aug-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.6rem 1rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--aug-ink-soft);
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.aug-tab:hover {
+  color: var(--aug-primary);
+}
+
+.aug-tab.active {
+  color: var(--aug-primary);
+  border-bottom-color: var(--aug-primary);
+}
+
+/* ===== Toolbar ===== */
+.aug-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-bottom: 1.1rem;
+}
+
+.aug-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1.5px solid var(--aug-border);
+  border-radius: 8px;
+  padding: 0 0.7rem;
+  height: 40px;
+  color: var(--aug-muted);
+  flex: 1 1 260px;
+  max-width: 380px;
+}
+
+.aug-search:focus-within {
+  border-color: var(--aug-primary);
+}
+
+.aug-search input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 0.86rem;
+  color: var(--aug-ink);
+  background: transparent;
+  min-width: 0;
+}
+
+.aug-search button {
+  border: none;
+  background: transparent;
+  color: var(--aug-muted);
+  cursor: pointer;
+  display: flex;
+  padding: 0;
+}
+
+.aug-select {
+  height: 40px;
+  border: 1.5px solid var(--aug-border);
+  border-radius: 8px;
+  padding: 0 0.7rem;
+  font-size: 0.86rem;
+  color: var(--aug-ink);
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aug-select:focus {
+  outline: none;
+  border-color: var(--aug-primary);
+}
+
+/* ===== Table ===== */
+.aug-panel {
+  background: #fff;
+  border: 1px solid var(--aug-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.aug-state {
+  text-align: center;
+  color: var(--aug-muted);
+  font-size: 0.9rem;
+  padding: 3rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.aug-state p {
+  margin: 0;
+}
+
+.aug-table-wrap {
+  overflow-x: auto;
+}
+
+.aug-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.aug-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--aug-ink-soft);
+  background: var(--aug-primary-tint);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--aug-border);
+  white-space: nowrap;
+}
+
+.aug-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--aug-border);
+  vertical-align: middle;
+  color: var(--aug-ink);
+}
+
+.aug-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.aug-table tbody tr:hover {
+  background: #fafbfe;
+}
+
+.aug-cell-title {
+  display: block;
+  font-weight: 700;
+  color: var(--aug-ink);
+}
+
+.aug-cell-sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--aug-muted);
+  margin-top: 0.15rem;
+}
+
+.aug-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  background: var(--aug-primary-tint2);
+  color: var(--aug-primary);
+  white-space: nowrap;
+}
+
+.aug-type-video {
+  background: var(--aug-accent-tint);
+  color: #a17d10;
+}
+
+.aug-type-note {
+  background: var(--aug-success-tint);
+  color: var(--aug-success);
+}
+
+.aug-type-link {
+  background: #f2f4f9;
+  color: var(--aug-ink-soft);
+}
+
+.aug-role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-width: 260px;
+}
+
+.aug-chip {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: #f2f4f9;
+  color: var(--aug-ink-soft);
+  white-space: nowrap;
+}
+
+.aug-chip-all {
+  background: var(--aug-primary-tint2);
+  color: var(--aug-primary);
+}
+
+.aug-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.aug-status.live {
+  background: var(--aug-success-tint);
+  color: var(--aug-success);
+}
+
+.aug-status.draft {
+  background: #f2f4f9;
+  color: var(--aug-ink-soft);
+}
+
+.aug-views,
+.aug-date {
+  color: var(--aug-ink-soft);
+  white-space: nowrap;
+}
+
+.aug-actions {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.aug-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--aug-border);
+  background: #fff;
+  color: var(--aug-ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.aug-icon-btn:hover {
+  border-color: var(--aug-primary);
+  color: var(--aug-primary);
+}
+
+.aug-icon-btn.danger:hover {
+  border-color: var(--aug-danger);
+  color: var(--aug-danger);
+}
+
+/* ===== Buttons ===== */
+.aug-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  padding: 0.55rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aug-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.aug-btn-primary {
+  background: var(--aug-primary);
+  color: #fff;
+}
+
+.aug-btn-primary:hover:not(:disabled) {
+  background: var(--vt-primary-dark);
+}
+
+.aug-btn-ghost {
+  background: #fff;
+  border-color: var(--aug-border);
+  color: var(--aug-ink-soft);
+}
+
+.aug-btn-danger {
+  background: var(--aug-danger);
+  color: #fff;
+}
+
+/* ===== Modal ===== */
+.aug-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 12000;
+  padding: 16px;
+}
+
+.aug-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.aug-modal-sm {
+  max-width: 420px;
+}
+
+.aug-modal form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.aug-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.2rem;
+  border-bottom: 1px solid var(--vt-border);
+}
+
+.aug-modal-header h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  color: var(--vt-primary);
+}
+
+.aug-modal-close {
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aug-modal-body {
+  padding: 1.2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.aug-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.9rem 1.2rem;
+  border-top: 1px solid var(--vt-border);
+}
+
+/* ===== Form ===== */
+.aug-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.aug-field-row {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.aug-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--aug-ink-soft);
+}
+
+.aug-field input[type="text"],
+.aug-field input[type="url"],
+.aug-field input[type="number"],
+.aug-field textarea {
+  border: 1.5px solid var(--aug-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.86rem;
+  color: var(--aug-ink);
+  font-family: inherit;
+  width: 100%;
+}
+
+.aug-field input:focus,
+.aug-field textarea:focus {
+  outline: none;
+  border-color: var(--aug-primary);
+}
+
+.aug-field textarea {
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.aug-hint {
+  font-size: 0.72rem;
+  color: var(--aug-muted);
+}
+
+.aug-type-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.aug-pill {
+  border: 1.5px solid var(--aug-border);
+  background: #fff;
+  color: var(--aug-ink-soft);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aug-pill.active {
+  background: var(--aug-primary);
+  border-color: var(--aug-primary);
+  color: #fff;
+}
+
+.aug-roles {
+  border: 1.5px solid var(--aug-border);
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.aug-role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.4rem;
+}
+
+.aug-role {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: var(--aug-ink);
+  cursor: pointer;
+}
+
+.aug-role.disabled {
+  color: var(--aug-muted);
+  cursor: not-allowed;
+}
+
+.aug-role-all {
+  font-weight: 700;
+  color: var(--aug-primary);
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--aug-border);
+}
+
+.aug-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--aug-ink);
+  cursor: pointer;
+}
+
+.aug-form-error {
+  background: var(--aug-danger-tint);
+  color: var(--aug-danger);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.aug-progress {
+  position: relative;
+  background: #f2f4f9;
+  border-radius: 999px;
+  height: 22px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aug-progress-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--aug-primary-tint2);
+  transition: width 0.2s ease;
+}
+
+.aug-progress span {
+  position: relative;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--aug-primary);
+}
+
+.aug-confirm-text {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--aug-ink);
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .aug-page {
+    padding: 1rem;
+  }
+
+  .aug-field-row {
+    flex-direction: column;
+  }
+
+  .aug-search {
+    max-width: none;
+  }
+}

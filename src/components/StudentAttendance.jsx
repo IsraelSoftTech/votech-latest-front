@@ -30,6 +30,12 @@ import {
 
   FaSignOutAlt,
 
+  FaTimes,
+
+  FaUserPlus,
+
+  FaUserShield,
+
 } from "react-icons/fa";
 
 import { toast } from "react-toastify";
@@ -1440,7 +1446,7 @@ function SettingsTab({ canEdit, onSettingsSaved }) {
 
       ) : (
 
-        <p className="satt-settings-readonly">Only Admin1/Admin3 can edit these settings.</p>
+        <p className="satt-settings-readonly">Only Admin3 can edit these settings.</p>
 
       )}
 
@@ -1451,6 +1457,187 @@ function SettingsTab({ canEdit, onSettingsSaved }) {
 }
 
 
+
+// Admin3 only: hand the attendance page to any user on the system. A granted
+// user gets the same Scanner and Reports tabs the Discipline account has.
+function AttendanceAccessCard() {
+  const [users, setUsers] = useState([]);
+  const [granted, setGranted] = useState([]);
+  const [search, setSearch] = useState("");
+  const [selectedId, setSelectedId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const [allUsers, accessList] = await Promise.all([
+        api.getUsers(),
+        api.getAttendanceAccessUsers(),
+      ]);
+      setUsers(Array.isArray(allUsers) ? allUsers : []);
+      setGranted(Array.isArray(accessList) ? accessList : []);
+    } catch (e) {
+      toast.error(e.message || "Failed to load attendance access");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const grantedIds = useMemo(
+    () => new Set(granted.map((g) => Number(g.id))),
+    [granted]
+  );
+
+  const candidates = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return users
+      .filter((u) => !grantedIds.has(Number(u.id)))
+      .filter((u) =>
+        term
+          ? `${u.name || ""} ${u.username || ""} ${u.role || ""}`
+              .toLowerCase()
+              .includes(term)
+          : true
+      );
+  }, [users, grantedIds, search]);
+
+  const handleGrant = async () => {
+    const userId = Number(selectedId);
+    if (!userId) {
+      toast.error("Select a user first");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await api.grantAttendanceAccess(userId);
+      toast.success(res.message || "Attendance access granted");
+      setSelectedId("");
+      setSearch("");
+      await load();
+    } catch (e) {
+      toast.error(e.message || "Failed to grant access");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRevoke = async (user) => {
+    setSaving(true);
+    try {
+      await api.revokeAttendanceAccess(user.id);
+      toast.success(`Attendance access removed for ${user.name}`);
+      await load();
+    } catch (e) {
+      toast.error(e.message || "Failed to remove access");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="satt-settings satt-access">
+      <div className="satt-settings-intro">
+        <h3>
+          <FaUserShield className="satt-access-icon" /> Attendance access
+        </h3>
+        <p>
+          Give any user the attendance page. They get the same Scanner and
+          Reports tabs the Discipline account has — Settings stays with Admin3.
+        </p>
+      </div>
+
+      <div className="satt-filters">
+        <div className="satt-field satt-field--grow">
+          <label htmlFor="satt-access-search">Find user</label>
+          <input
+            id="satt-access-search"
+            type="text"
+            placeholder="Search by name, username or role"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="satt-field satt-field--grow">
+          <label htmlFor="satt-access-user">User</label>
+          <select
+            id="satt-access-user"
+            value={selectedId}
+            onChange={(e) => setSelectedId(e.target.value)}
+          >
+            <option value="">
+              {loading ? "Loading users…" : "Select a user"}
+            </option>
+            {candidates.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name} ({u.username}) — {u.role}
+              </option>
+            ))}
+          </select>
+          <span className="satt-field-hint">
+            {candidates.length} user{candidates.length === 1 ? "" : "s"} without
+            attendance access
+          </span>
+        </div>
+
+        <button
+          type="button"
+          className="satt-btn satt-btn-primary"
+          onClick={handleGrant}
+          disabled={saving || !selectedId}
+        >
+          <FaUserPlus /> Give access
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="satt-empty">Loading attendance access…</div>
+      ) : granted.length === 0 ? (
+        <div className="satt-empty">
+          No extra users have attendance access yet.
+        </div>
+      ) : (
+        <div className="satt-table-wrap">
+          <table className="satt-table satt-access-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Given by</th>
+                <th aria-label="Actions" />
+              </tr>
+            </thead>
+            <tbody>
+              {granted.map((u) => (
+                <tr key={u.id}>
+                  <td>{u.name}</td>
+                  <td>{u.username}</td>
+                  <td>{u.role}</td>
+                  <td>{u.granted_by_name || "—"}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="satt-btn satt-btn-secondary satt-access-revoke"
+                      onClick={() => handleRevoke(u)}
+                      disabled={saving}
+                    >
+                      <FaTimes /> Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function StudentAttendance({
 
@@ -1470,7 +1657,14 @@ export default function StudentAttendance({
 
   const authUser = JSON.parse(sessionStorage.getItem("authUser") || "{}");
 
-  const canEditHours = ["Admin1", "Admin3"].includes(authUser?.role);
+  // Settings belongs to Admin3 alone. Everyone else who can reach this page —
+  // Discipline, Dean, Admin4, or a user granted access — gets Scanner and
+  // Reports only.
+  const canManageSettings = authUser?.role === "Admin3";
+
+  useEffect(() => {
+    if (!canManageSettings && tab === TABS.SETTINGS) setTab(TABS.SCANNER);
+  }, [canManageSettings, tab]);
 
 
 
@@ -1546,19 +1740,15 @@ export default function StudentAttendance({
 
         </button>
 
-        <button
-
-          type="button"
-
-          className={`satt-tab ${tab === TABS.SETTINGS ? "active" : ""}`}
-
-          onClick={() => setTab(TABS.SETTINGS)}
-
-        >
-
-          <FaCog /> Settings
-
-        </button>
+        {canManageSettings && (
+          <button
+            type="button"
+            className={`satt-tab ${tab === TABS.SETTINGS ? "active" : ""}`}
+            onClick={() => setTab(TABS.SETTINGS)}
+          >
+            <FaCog /> Settings
+          </button>
+        )}
 
       </div>
 
@@ -1572,11 +1762,14 @@ export default function StudentAttendance({
 
         {tab === TABS.REPORTS && <ReportsTab activeYear={activeYear} />}
 
-        {tab === TABS.SETTINGS && (
-          <SettingsTab
-            canEdit={canEditHours}
-            onSettingsSaved={() => setSettingsRefreshKey((k) => k + 1)}
-          />
+        {tab === TABS.SETTINGS && canManageSettings && (
+          <>
+            <SettingsTab
+              canEdit={canManageSettings}
+              onSettingsSaved={() => setSettingsRefreshKey((k) => k + 1)}
+            />
+            <AttendanceAccessCard />
+          </>
         )}
 
       </div>

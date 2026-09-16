@@ -38,6 +38,7 @@ import {
   FaWarehouse,
   FaLock,
   FaHandHoldingUsd,
+  FaExchangeAlt,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
@@ -51,6 +52,7 @@ import NotificationBell from "./NotificationBell";
 import MessageIcon from "./MessageIcon";
 import AcademicJobNotificationBell from "./AcademicJobNotificationBell";
 import useHodStatus from "../hooks/useHodStatus";
+import useAttendanceAccess from "../hooks/useAttendanceAccess";
 
 export default function SideTop({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -61,6 +63,7 @@ export default function SideTop({ children }) {
   const [myPayslipCount, setMyPayslipCount] = useState(0);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const hodStatus = useHodStatus();
+  const attendanceAccess = useAttendanceAccess();
   const [profileData, setProfileData] = useState({
     username: "",
     profileImage: null,
@@ -83,6 +86,9 @@ export default function SideTop({ children }) {
 
   const authUser = JSON.parse(sessionStorage.getItem("authUser"));
   const username = authUser?.username || "User";
+  // Only a super admin who signed in with the master credentials may hop to
+  // another role without signing in again.
+  const isSuperAdmin = api.isSuperAdminSession();
 
   // Debug logging for Admin4 role detection
   // console.log("Current user role:", authUser?.role);
@@ -351,6 +357,11 @@ export default function SideTop({ children }) {
         path: "/staff-attendance",
       },
       { label: "Events", icon: <FaCalendarAlt />, path: "/my-events" },
+      {
+        label: "User Guide",
+        icon: <FaBook />,
+        path: "/admin-user-guides",
+      },
     ];
   } else if (authUser?.role === "Admin4") {
     // console.log("Setting Admin4 menu items");
@@ -688,6 +699,41 @@ export default function SideTop({ children }) {
         },
       ];
     }
+  }
+
+  // A user granted attendance access from the Admin3 Settings tab gets the
+  // same entry the Discipline account has, unless their role already lists an
+  // attendance page of its own.
+  if (attendanceAccess.hasAccess) {
+    const attendancePaths = ["/admin-attendance", "/student-attendance-report"];
+    const alreadyListed = menuToShow.some(
+      (item) =>
+        attendancePaths.includes(item.path) ||
+        (Array.isArray(item.submenu) &&
+          item.submenu.some((sub) => attendancePaths.includes(sub.path)))
+    );
+    if (!alreadyListed) {
+      menuToShow = [
+        ...menuToShow,
+        {
+          label: "Attendance",
+          icon: <FaClipboardList />,
+          path: "/admin-attendance",
+        },
+      ];
+    }
+  }
+
+  // Every account can read the guides Admin3 publishes for their role, so this
+  // is appended once here rather than repeated in each role's menu above.
+  // Admin3 is skipped: its own entry already points at the management page,
+  // which carries the same reading view as a tab.
+  const guidePaths = ["/user-guide", "/admin-user-guides"];
+  if (!menuToShow.some((item) => guidePaths.includes(item?.path))) {
+    menuToShow = [
+      ...menuToShow,
+      { label: "User Guide", icon: <FaBook />, path: "/user-guide" },
+    ];
   }
 
   useEffect(() => {
@@ -1053,11 +1099,22 @@ export default function SideTop({ children }) {
               <span className="icon"><FaCog /></span>
               <span className="menu-label">Settings</span>
             </div>
+            {isSuperAdmin && (
+              <div
+                className="submenu-item"
+                onClick={() => {
+                  setSidebarOpen(false);
+                  navigate("/super-admin");
+                }}
+              >
+                <span className="icon"><FaExchangeAlt /></span>
+                <span className="menu-label">Switch Role</span>
+              </div>
+            )}
             <div
               className="submenu-item"
               onClick={() => {
-                sessionStorage.removeItem("token");
-                sessionStorage.removeItem("authUser");
+                api.clearToken();
                 window.location.href = "/signin";
               }}
             >
@@ -1221,6 +1278,27 @@ export default function SideTop({ children }) {
                   >
                     <FaCog style={{ fontSize: 17 }} /> Settings
                   </button>
+                  {isSuperAdmin && (
+                    <button
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        background: "none",
+                        border: "none",
+                        color: "#204080",
+                        fontWeight: 500,
+                        fontSize: 16,
+                        padding: "10px 18px",
+                        cursor: "pointer",
+                        borderRadius: 0,
+                        textAlign: "left",
+                      }}
+                      onClick={() => navigate("/super-admin")}
+                    >
+                      <FaExchangeAlt style={{ fontSize: 17 }} /> Switch Role
+                    </button>
+                  )}
                   <button
                     style={{
                       display: "flex",
@@ -1237,8 +1315,7 @@ export default function SideTop({ children }) {
                       textAlign: "left",
                     }}
                     onClick={() => {
-                      sessionStorage.removeItem("token");
-                      sessionStorage.removeItem("authUser");
+                      api.clearToken();
                       window.location.href = "/signin";
                     }}
                   >

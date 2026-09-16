@@ -102,7 +102,22 @@ function StudentsTableSkeleton() {
 // admin dashboards still depend on it seeing everyone by default; this
 // page talks to the newer /api/v1/students layer instead.
 export const StudentsPage = () => {
-  useRestrictTo("Admin3");
+  // Admin3 is the only role that can change students here. Admin1, Admin4 and
+  // Discipline read the list but get no Register/Edit/Delete, no orientation
+  // backfill, and no row click into the Admin3-only detail page (same approach
+  // as ClassPage). That mirrors students.route.js, where reading students is
+  // open to any signed-in user and every write is restrictTo("Admin3").
+  useRestrictTo("Admin1", "Admin3", "Admin4", "Discipline");
+  // Read straight from storage rather than useRestrictTo's return value,
+  // which is null until its effect runs and would flash the write buttons
+  // off and on for Admin3.
+  let currentRole = null;
+  try {
+    currentRole = JSON.parse(sessionStorage.getItem("authUser") || "null")?.role || null;
+  } catch (err) {
+    currentRole = null;
+  }
+  const canManageStudents = currentRole === "Admin3";
   const navigate = useNavigate();
   const location = useLocation();
   const classFilterFromNav = location.state?.class_id || null;
@@ -212,9 +227,9 @@ export const StudentsPage = () => {
   // Arriving from the dashboard's orientation-backfill card — open the
   // tool directly instead of making the admin find the button themselves.
   useEffect(() => {
-    if (openBackfillFromNav) setBackfillModalOpen(true);
+    if (openBackfillFromNav && canManageStudents) setBackfillModalOpen(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openBackfillFromNav]);
+  }, [openBackfillFromNav, canManageStudents]);
 
   // What DataTable shows. Accessors match the API's sort keys so header
   // sort maps straight onto sortBy. `role` tags pick what the phone card
@@ -338,20 +353,22 @@ export const StudentsPage = () => {
           </span>
         }
         actions={
-          <>
-            {hasOrientationClasses && (
-              <button
-                className="students-backfill-btn"
-                onClick={() => setBackfillModalOpen(true)}
-                disabled={loadingInitial}
-              >
-                <FaLayerGroup /> Backfill Orientation Choices
+          canManageStudents ? (
+            <>
+              {hasOrientationClasses && (
+                <button
+                  className="students-backfill-btn"
+                  onClick={() => setBackfillModalOpen(true)}
+                  disabled={loadingInitial}
+                >
+                  <FaLayerGroup /> Backfill Orientation Choices
+                </button>
+              )}
+              <button className="students-register-btn" onClick={handleRegister} disabled={loadingInitial}>
+                <FaPlus /> Register Student
               </button>
-            )}
-            <button className="students-register-btn" onClick={handleRegister} disabled={loadingInitial}>
-              <FaPlus /> Register Student
-            </button>
-          </>
+            </>
+          ) : null
         }
       />
 
@@ -498,9 +515,12 @@ export const StudentsPage = () => {
         data={studentRows}
         loading={loading}
         searchPlaceholder="Search by name or student ID..."
-        onRowClick={openDetail}
+        onRowClick={canManageStudents ? openDetail : undefined}
         onEdit={(row) => handleEdit(row)}
         onDelete={(row) => handleDelete(row)}
+        editRoles={["Admin3"]}
+        deleteRoles={["Admin3"]}
+        userRole={currentRole}
         skipDeleteConfirm
         server={{
           search,

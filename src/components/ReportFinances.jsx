@@ -285,6 +285,30 @@ function getLogoBase64() {
   });
 }
 
+// Amount is the total for the line as it was entered; quantity is recorded
+// alongside it and must not be multiplied in. unit_cost_price is the legacy
+// column that older rows fall back to.
+function getEntryAmount(item) {
+  if (item.amount != null && !Number.isNaN(Number(item.amount))) {
+    return Number(item.amount);
+  }
+  return Number(item.unit_cost_price) || 0;
+}
+
+// transaction_date is the day the transaction happened and arrives as
+// YYYY-MM-DD; older rows only have the recording timestamp. Formatting the
+// string directly keeps the day from shifting by a timezone.
+function formatEntryDate(item) {
+  const raw = item.transaction_date || item.created_at;
+  if (!raw) return '';
+  const parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(raw));
+  if (parts) return `${parts[3]}/${parts[2]}/${parts[1]}`;
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime())
+    ? ''
+    : parsed.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
 function buildIncomeRows(items) {
   const rows = [];
   let itemSn = 1;
@@ -313,11 +337,9 @@ function buildIncomeRows(items) {
       isHeader: true,
     });
     headItems.forEach((item) => {
-      const amt = item.amount != null ? Number(item.amount) : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+      const amt = getEntryAmount(item);
       headTotal += amt;
-      const dateStr = item.created_at
-        ? new Date(item.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        : '';
+      const dateStr = formatEntryDate(item);
       rows.push({
         sn: itemSn++,
         date: dateStr,
@@ -384,11 +406,9 @@ function buildExpenditureRows(items) {
       isHeader: true,
     });
     headItems.forEach((item) => {
-      const amt = item.amount != null ? Number(item.amount) : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+      const amt = getEntryAmount(item);
       headTotal += amt;
-      const dateStr = item.created_at
-        ? new Date(item.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        : '';
+      const dateStr = formatEntryDate(item);
       rows.push({
         sn: itemSn++,
         date: dateStr,
@@ -438,7 +458,7 @@ function buildFinancialStatementData(items) {
   incomeItems.forEach((item) => {
     const headName = item.head_name || 'Uncategorized';
     if (!incomeByHead[headName]) incomeByHead[headName] = 0;
-    incomeByHead[headName] += item.amount != null ? Number(item.amount) : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+    incomeByHead[headName] += getEntryAmount(item);
   });
   Object.keys(incomeByHead)
     .sort()
@@ -454,7 +474,7 @@ function buildFinancialStatementData(items) {
   expenditureItems.forEach((item) => {
     const headName = item.head_name || 'Uncategorized';
     if (!expenditureByHead[headName]) expenditureByHead[headName] = 0;
-    expenditureByHead[headName] += item.amount != null ? Number(item.amount) : (Number(item.unit_cost_price) || 0) * (item.quantity ?? 1);
+    expenditureByHead[headName] += getEntryAmount(item);
   });
   Object.keys(expenditureByHead)
     .sort()

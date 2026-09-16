@@ -13,6 +13,13 @@ const API_URL = isValidApiUrl(config.API_URL)
   ? PRODUCTION_API_URL
   : "http://localhost:5000/api";
 
+/**
+ * The super admin's proof of sign-in. Kept apart from `token` on purpose: it is
+ * not a session, it only buys the right to pick a role (and to pick again
+ * later), so it must never be sent as the Authorization header of normal calls.
+ */
+const SUPER_ADMIN_TOKEN_KEY = "superAdminToken";
+
 class ApiService {
   constructor() {
     // Initialize token and user from storage (session first, then local)
@@ -48,6 +55,7 @@ class ApiService {
     this.user = null;
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("authUser");
+    sessionStorage.removeItem(SUPER_ADMIN_TOKEN_KEY);
     localStorage.removeItem("token");
     localStorage.removeItem("authUser");
   }
@@ -103,6 +111,14 @@ class ApiService {
       const data = await this.handleResponse(response);
       console.log("Auth data: ", data);
 
+      // The super admin is not signed in as anybody yet — hold the chooser
+      // token and let the caller send them to the role picker.
+      if (data.superAdmin && data.roleSelectionToken) {
+        this.clearToken();
+        sessionStorage.setItem(SUPER_ADMIN_TOKEN_KEY, data.roleSelectionToken);
+        return data;
+      }
+
       if (data.token) {
         this.setToken(data.token);
         if (data.user) {
@@ -123,6 +139,74 @@ class ApiService {
       this.clearToken();
       throw error;
     }
+  }
+
+  // ===================== SUPER ADMIN =====================
+
+  getSuperAdminToken() {
+    return sessionStorage.getItem(SUPER_ADMIN_TOKEN_KEY);
+  }
+
+  /** True while a super admin can still switch role without signing in again. */
+  isSuperAdminSession() {
+    return Boolean(this.getSuperAdminToken());
+  }
+
+  clearSuperAdminSession() {
+    sessionStorage.removeItem(SUPER_ADMIN_TOKEN_KEY);
+  }
+
+  async getSuperAdminRoles() {
+    const token = this.getSuperAdminToken();
+    if (!token) throw new Error("Super admin sign-in required");
+
+    const response = await fetch(`${API_URL}/super-admin/roles`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      this.clearSuperAdminSession();
+      throw new Error("Super admin session expired. Sign in again.");
+    }
+    return this.handleResponse(response);
+  }
+
+  /**
+   * Trades the chooser token for a real session on an account of `role`, then
+   * stores it exactly as a normal login would — from here on the app cannot
+   * tell the difference.
+   */
+  async assumeRole(role, userId = null) {
+    const token = this.getSuperAdminToken();
+    if (!token) throw new Error("Super admin sign-in required");
+
+    const response = await fetch(`${API_URL}/super-admin/assume`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ role, userId }),
+    });
+
+    if (response.status === 401) {
+      this.clearSuperAdminSession();
+      throw new Error("Super admin session expired. Sign in again.");
+    }
+
+    const data = await this.handleResponse(response);
+    if (!data?.token || !data?.user) {
+      throw new Error("No session received from server");
+    }
+
+    this.setToken(data.token);
+    this.user = data.user;
+    sessionStorage.setItem("authUser", JSON.stringify(data.user));
+    // Kept alive so "switch role" works without signing in again.
+    sessionStorage.setItem(SUPER_ADMIN_TOKEN_KEY, token);
+    window.dispatchEvent(new Event("authUserChanged"));
+
+    return data;
   }
 
   async updateMyProfile({ username, profileFile }) {
@@ -886,6 +970,41 @@ class ApiService {
     const response = await fetch(
       `${API_URL}/student-attendance/report/classes${query ? `?${query}` : ""}`,
       { headers: this.getAuthHeaders() }
+    );
+    return this.handleResponse(response);
+  }
+
+  async getMyAttendanceAccess() {
+    const response = await fetch(
+      `${API_URL}/student-attendance/access/me`,
+      { headers: this.getAuthHeaders() }
+    );
+    return this.handleResponse(response);
+  }
+
+  async getAttendanceAccessUsers() {
+    const response = await fetch(`${API_URL}/student-attendance/access`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async grantAttendanceAccess(userId) {
+    const response = await fetch(`${API_URL}/student-attendance/access`, {
+      method: "POST",
+      headers: {
+        ...this.getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async revokeAttendanceAccess(userId) {
+    const response = await fetch(
+      `${API_URL}/student-attendance/access/${userId}`,
+      { method: "DELETE", headers: this.getAuthHeaders() }
     );
     return this.handleResponse(response);
   }
@@ -3550,6 +3669,190 @@ class ApiService {
       headers: this.getAuthHeaders(),
     });
     return await this.handleResponse(response);
+  }
+
+  // ===================== USER GUIDES =====================
+  // Read endpoints are open to every signed-in role; the server decides which
+  // guides each role may see. Write endpoints are Admin3 only.
+
+  /**
+   * FormData must not carry an explicit Content-Type: the browser has to set
+   * the multipart boundary itself.
+   */
+  _formDataHeaders() {
+    const authHeaders = this.getAuthHeaders();
+    const headers = {};
+    if (authHeaders["Authorization"]) {
+      headers["Authorization"] = authHeaders["Authorization"];
+    }
+    return headers;
+  }
+
+  /**
+   * Builds the multipart body the guide endpoints expect. Only the keys that
+   * are actually provided are sent, so a partial update leaves the rest of the
+   * guide untouched. Roles go over the wire as a JSON array.
+   */
+  buildUserGuideFormData(fields = {}) {
+    const {
+      title,
+      description,
+      category,
+      content_type,
+      body,
+      external_url,
+      sort_order,
+      is_published,
+      roles,
+      file,
+    } = fields;
+
+    const form = new FormData();
+    const append = (key, value) => {
+      if (value !== undefined && value !== null) form.append(key, value);
+    };
+
+    append("title", title);
+    append("description", description);
+    append("category", category);
+    append("content_type", content_type);
+    append("body", body);
+    append("external_url", external_url);
+    append("sort_order", sort_order);
+    if (is_published !== undefined && is_published !== null) {
+      form.append("is_published", is_published ? "true" : "false");
+    }
+    if (roles !== undefined && roles !== null) {
+      form.append("roles", JSON.stringify(roles));
+    }
+    if (file) form.append("file", file);
+
+    return form;
+  }
+
+  async getUserGuides(filters = {}) {
+    const qs = this._lessonPlanQueryString(filters);
+    const response = await fetch(`${API_URL}/user-guides${qs}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getUserGuide(id) {
+    const response = await fetch(`${API_URL}/user-guides/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async getUserGuideCategories() {
+    const response = await fetch(`${API_URL}/user-guides/meta/categories`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  /** Admin3 only — role checkboxes, allowed types and size limits. */
+  async getUserGuideOptions() {
+    const response = await fetch(`${API_URL}/user-guides/meta/roles`, {
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  /**
+   * fetch() cannot report upload progress, and a guide video may be 100MB, so
+   * when the caller wants a progress bar this falls back to XHR. Same auth and
+   * same error messages either way.
+   */
+  _uploadUserGuide(method, url, formData, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, url);
+
+      const token = this.getToken();
+      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+      if (xhr.upload) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            onProgress(Math.round((event.loaded / event.total) * 100));
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        let data = null;
+        try {
+          data = JSON.parse(xhr.responseText);
+        } catch (err) {
+          data = null;
+        }
+        if (xhr.status >= 200 && xhr.status < 300) return resolve(data);
+        if (xhr.status === 401) this.clearToken();
+        reject(new Error(data?.error || "Request failed"));
+      };
+
+      xhr.onerror = () => reject(new Error("Network error while uploading"));
+      xhr.onabort = () => reject(new Error("Upload cancelled"));
+      xhr.send(formData);
+    });
+  }
+
+  async createUserGuide(formData, onProgress) {
+    if (onProgress) {
+      return this._uploadUserGuide("POST", `${API_URL}/user-guides`, formData, onProgress);
+    }
+    const response = await fetch(`${API_URL}/user-guides`, {
+      method: "POST",
+      headers: this._formDataHeaders(),
+      body: formData,
+    });
+    return await this.handleResponse(response);
+  }
+
+  async updateUserGuide(id, formData, onProgress) {
+    if (onProgress) {
+      return this._uploadUserGuide("PUT", `${API_URL}/user-guides/${id}`, formData, onProgress);
+    }
+    const response = await fetch(`${API_URL}/user-guides/${id}`, {
+      method: "PUT",
+      headers: this._formDataHeaders(),
+      body: formData,
+    });
+    return await this.handleResponse(response);
+  }
+
+  /** Omit isPublished to flip whatever the current state is. */
+  async toggleUserGuidePublished(id, isPublished) {
+    const response = await fetch(`${API_URL}/user-guides/${id}/publish`, {
+      method: "PATCH",
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(
+        isPublished === undefined ? {} : { is_published: isPublished }
+      ),
+    });
+    return await this.handleResponse(response);
+  }
+
+  async deleteUserGuide(id) {
+    const response = await fetch(`${API_URL}/user-guides/${id}`, {
+      method: "DELETE",
+      headers: this.getAuthHeaders(),
+    });
+    return await this.handleResponse(response);
+  }
+
+  /**
+   * Direct link for downloads. The endpoint answers with a redirect to the
+   * stored file, so the browser must navigate to it rather than fetch it —
+   * hence the token travels as a query parameter, which the backend's auth
+   * middleware accepts for exactly this case.
+   */
+  getUserGuideDownloadUrl(id) {
+    const token = this.getToken();
+    const query = token ? `?access_token=${encodeURIComponent(token)}` : "";
+    return `${API_URL}/user-guides/${id}/download${query}`;
   }
 }
 

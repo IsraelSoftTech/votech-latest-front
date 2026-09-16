@@ -6,6 +6,7 @@ import { FaEye, FaEyeSlash, FaArrowLeft, FaCheckCircle, FaKey } from 'react-icon
 import { FcGoogle } from 'react-icons/fc';
 import api from '../services/api';
 import { prefetchActiveYearContext } from '../context/ActiveYearContext';
+import { dashboardPathForRole } from '../utils/roleRoutes';
 import Loader from './Loader';
 import SuccessMessage from './SuccessMessage';
 
@@ -53,6 +54,23 @@ const Signin = () => {
 
     try {
       const response = await api.login(form.username, form.password);
+
+      // The super admin is signed in but is nobody yet: send them to the
+      // chooser, where picking a role hands back a real session.
+      if (response.superAdmin) {
+        setSuccess('Super admin verified. Choose a role...');
+        setSuccessType('success');
+        setShowSuccess(true);
+        setShowLoader(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          setShowLoader(false);
+          navigate('/super-admin', { replace: true });
+        }, 1500);
+        setLoading(false);
+        return;
+      }
+
       const user = response.data?.user || response.user;
       if (user) {
         await prefetchActiveYearContext();
@@ -63,19 +81,7 @@ const Signin = () => {
         setShowLoader(true);
         setTimeout(() => {
           setShowLoader(false);
-          if (["Admin1", "Admin2", "Admin3"].includes(user.role)) {
-            navigate('/admin');
-          } else if (user.role === "Admin4") {
-            navigate('/dean');
-          } else if (user.role === "Discipline") {
-            navigate('/discipline');
-          } else if (user.role === "Teacher") {
-            navigate('/teacher-dashboard');
-          } else if (user.role === "Psychosocialist") {
-            navigate('/psycho-dashboard');
-          } else {
-            navigate('/dashboard');
-          }
+          navigate(dashboardPathForRole(user.role));
         }, 3000);
       } else {
         setError('Invalid username or password.');
