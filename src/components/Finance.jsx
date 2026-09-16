@@ -125,19 +125,14 @@ export default function Finance() {
 
     (async () => {
       try {
-        let cardPaid = totalPaid;
-        let cardOwed = totalOwed;
-        let classData;
-        if (loadingTotals) {
-          const [totals, data] = await Promise.all([api.getFeeTotalsSummary(), api.getFeeSummaryByClass()]);
-          cardPaid = totals.totalPaid;
-          cardOwed = totals.totalOwed;
-          classData = data;
-        } else {
-          classData = await api.getFeeSummaryByClass();
-        }
-        const totalExpected = (cardPaid || 0) + (cardOwed || 0);
+        const classData = await api.getFeeSummaryByClass();
         const classes = classData?.classes || [];
+        // Total the printed rows rather than the dashboard cards, so the
+        // OVERALL TOTAL always reconciles with the table above it.
+        const sumOf = (key) => classes.reduce((sum, c) => sum + (Number(c[key]) || 0), 0);
+        const totalExpected = sumOf('total_expected');
+        const cardPaid = sumOf('total_paid');
+        const cardOwed = sumOf('total_owed');
         const rows = classes.map((c, i) => `
           <tr>
             <td style="border: 1px solid #333; padding: 8px; text-align: center;">${i + 1}</td>
