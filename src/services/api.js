@@ -186,7 +186,7 @@ class ApiService {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ role, userId }),
+      body: JSON.stringify({ role }),
     });
 
     if (response.status === 401) {
@@ -693,10 +693,11 @@ class ApiService {
     });
     return await this.handleResponse(response);
   }
-  async suspendUser(id) {
+  async suspendUser(id, action = "suspend") {
     const response = await fetch(`${API_URL}/users/${id}/suspend`, {
       method: "POST",
-      headers: this.getAuthHeaders(),
+      headers: { ...this.getAuthHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
     });
     return await this.handleResponse(response);
   }
@@ -3761,7 +3762,7 @@ class ApiService {
   }
 
   /**
-   * fetch() cannot report upload progress, and a guide video may be 100MB, so
+   * fetch() cannot report upload progress, and a guide video may be large, so
    * when the caller wants a progress bar this falls back to XHR. Same auth and
    * same error messages either way.
    */
