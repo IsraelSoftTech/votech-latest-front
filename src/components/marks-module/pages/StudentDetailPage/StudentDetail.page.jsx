@@ -16,6 +16,9 @@ import {
   FaTrash,
   FaFileAlt,
   FaPen,
+  FaHistory,
+  FaSignOutAlt,
+  FaUndo,
 } from "react-icons/fa";
 import SideTop from "../../../SideTop";
 import Modal from "../../components/Modal/Modal.component";
@@ -23,6 +26,8 @@ import { Button } from "../../components/Button/Button.component";
 import { StudentFormModal } from "../../components/StudentFormModal/StudentFormModal.component";
 import { StudentMarksEditModal } from "../../components/StudentMarksEditModal/StudentMarksEditModal.component";
 import { ReportCardDownloadModal } from "../../components/ReportCardDownloadModal/ReportCardDownloadModal.component";
+import { ActionMenu } from "../../components/ActionMenu/ActionMenu.component";
+import { ExitStudentModal } from "../../components/ExitStudentModal/ExitStudentModal.component";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api, { headers, subBaseURL } from "../../utils/api";
 // Tab content styling reused as-is from the modal this page replaces —
@@ -41,6 +46,9 @@ const TABS = [
   { key: "discipline", label: "Discipline", icon: <FaExclamationTriangle /> },
   { key: "attendance", label: "Attendance", icon: <FaCalendarCheck /> },
   { key: "promotion", label: "Promotion History", icon: <FaGraduationCap /> },
+  // Every graduated / left / reactivated marking from the registration
+  // desk, with who, when and why.
+  { key: "history", label: "Status History", icon: <FaHistory /> },
 ];
 
 export const StudentDetailPage = () => {
@@ -68,6 +76,7 @@ export const StudentDetailPage = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [transcriptDownloading, setTranscriptDownloading] = useState(false);
+  const [exitModal, setExitModal] = useState(null); // { initialStatus }
 
   const fetchStudent = useCallback(async () => {
     setLoadingStudent(true);
@@ -134,11 +143,14 @@ export const StudentDetailPage = () => {
         } else if (tab === "promotion") {
           const res = await api.get(`/promotions/students/${student.id}/history`);
           data = res.data.data || [];
+        } else if (tab === "history") {
+          const res = await api.get(`/students/${student.id}/status-history`);
+          data = res.data.data || [];
         }
         setCache((prev) => ({ ...prev, [tab]: data }));
       } catch (err) {
         if (err.response?.status === 404) {
-          setCache((prev) => ({ ...prev, [tab]: tab === "promotion" ? [] : null }));
+          setCache((prev) => ({ ...prev, [tab]: tab === "promotion" || tab === "history" ? [] : null }));
         } else {
           setCache((prev) => ({ ...prev, [tab]: { error: true } }));
         }
@@ -161,6 +173,17 @@ export const StudentDetailPage = () => {
   // until something else happens to change activeTab and back.
   const refreshAcademics = () => {
     loadTab("academics", true);
+  };
+
+  const handleReactivate = async () => {
+    try {
+      const res = await api.post(`/students/${student.id}/exit/revert`, {});
+      toast.success(res?.data?.data?.message || "Student is active again.");
+      fetchStudent();
+      loadTab("history", true);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not reactivate the student.");
+    }
   };
 
   const handleDownloadTranscript = async () => {
@@ -258,6 +281,9 @@ export const StudentDetailPage = () => {
             </div>
           </div>
 
+          {/* Two everyday actions stay visible; downloads, status changes
+              and delete sit behind the same kebab used everywhere else
+              (five buttons in a row broke badly on phones). */}
           <div className="sdp-actions">
             <button className="sdp-action-btn" onClick={() => setEditModalOpen(true)}>
               <FaEdit /> Edit Info
@@ -265,22 +291,29 @@ export const StudentDetailPage = () => {
             <button className="sdp-action-btn" onClick={() => setMarksModalOpen(true)}>
               <FaPen /> Edit Marks
             </button>
-            <button className="sdp-action-btn" onClick={() => setReportCardModalOpen(true)}>
-              <FaDownload /> Report Card
-            </button>
-            <button
-              className="sdp-action-btn"
-              onClick={handleDownloadTranscript}
-              disabled={transcriptDownloading}
-            >
-              <FaFileAlt /> {transcriptDownloading ? "Preparing…" : "Transcript"}
-            </button>
-            <button
-              className="sdp-action-btn sdp-danger"
-              onClick={() => setDeleteTarget(student)}
-            >
-              <FaTrash /> Delete
-            </button>
+            <ActionMenu
+              title={student.full_name}
+              items={[
+                { key: "report", label: "Download report card", icon: <FaDownload />, onClick: () => setReportCardModalOpen(true) },
+                {
+                  key: "transcript",
+                  label: transcriptDownloading ? "Preparing transcript..." : "Download transcript",
+                  icon: <FaFileAlt />,
+                  disabled: transcriptDownloading,
+                  onClick: handleDownloadTranscript,
+                },
+                student.status === "active"
+                  ? { key: "graduate", label: "Mark as graduated", icon: <FaGraduationCap />, onClick: () => setExitModal({ initialStatus: "graduated" }) }
+                  : null,
+                student.status === "active"
+                  ? { key: "left", label: "Mark as left the school", icon: <FaSignOutAlt />, onClick: () => setExitModal({ initialStatus: "withdrawn" }) }
+                  : null,
+                student.status !== "active"
+                  ? { key: "reactivate", label: "Reactivate", icon: <FaUndo />, onClick: handleReactivate }
+                  : null,
+                { key: "delete", label: "Delete student", icon: <FaTrash />, danger: true, onClick: () => setDeleteTarget(student) },
+              ]}
+            />
           </div>
         </div>
 
@@ -312,9 +345,23 @@ export const StudentDetailPage = () => {
             <AttendanceTab data={tabData} />
           ) : activeTab === "promotion" ? (
             <PromotionTab data={tabData} />
+          ) : activeTab === "history" ? (
+            <StatusHistoryTab data={tabData} />
           ) : null}
         </div>
       </div>
+
+      <ExitStudentModal
+        isOpen={!!exitModal}
+        onClose={() => setExitModal(null)}
+        onDone={() => {
+          fetchStudent();
+          loadTab("history", true);
+        }}
+        mode="single"
+        students={[student]}
+        initialStatus={exitModal?.initialStatus || "withdrawn"}
+      />
 
       {photoLightboxOpen &&
         student.photo_url &&
@@ -704,6 +751,43 @@ function PromotionTab({ data }) {
             {row.to_class?.name || "Graduated"}
             {row.to_academic_year ? ` (${row.to_academic_year.name})` : ""}
             {row.overall_average != null ? `, Average: ${row.overall_average}` : ""}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const STATUS_CHANGE_LABEL = {
+  graduated: "Marked as graduated",
+  withdrawn: "Marked as left the school",
+  active: "Reactivated",
+};
+
+function StatusHistoryTab({ data }) {
+  if (!Array.isArray(data) || data.length === 0) {
+    return <div className="sdm-empty">No status changes recorded for this student.</div>;
+  }
+  return (
+    <div className="sdm-case-list">
+      {data.map((row) => (
+        <div key={row.id} className="sdm-case-card">
+          <div className="sdm-case-header">
+            <span className={`sdm-case-status ${row.to_status === "active" ? "promoted" : "failed"}`}>
+              {STATUS_CHANGE_LABEL[row.to_status] || row.to_status}
+              {row.reverted_at ? " (reverted)" : ""}
+            </span>
+            <span className="sdm-case-date">
+              {row.performed_at ? new Date(row.performed_at).toLocaleString("en-GB") : ""}
+            </span>
+          </div>
+          <p className="sdm-case-desc">
+            {row.class?.name ? `While in ${row.class.name}` : ""}
+            {row.academic_year?.name ? ` (${row.academic_year.name})` : ""}
+            {row.performer ? ` · by ${row.performer.name || row.performer.username}` : ""}
+            {row.source === "bulk" ? " · in bulk" : ""}
+            {row.reason ? ` · ${row.reason}` : ""}
+            {row.effective_date ? ` · effective ${new Date(row.effective_date).toLocaleDateString("en-GB")}` : ""}
           </p>
         </div>
       ))}

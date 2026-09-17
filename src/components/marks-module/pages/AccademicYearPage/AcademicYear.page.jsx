@@ -99,6 +99,10 @@ export const AcademicYear = () => {
     target_year_id: null,
     password: "",
     confirm_non_default: false,
+    // "promote" (default: go promote first) | "skip" (switch now, place
+    // students one by one at registration, see studentPlacement.controller)
+    pending_choice: "promote",
+    skip_pending_placement: false,
   });
   const [switchLoading, setSwitchLoading] = useState(false);
 
@@ -155,7 +159,10 @@ export const AcademicYear = () => {
   const fetchAcademicYears = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get("/academic-years");
+      // Every year, archived included: this page is where a year is
+      // managed, so it must show what actually exists (the default call
+      // returns only the active year and hid archived ones entirely).
+      const res = await api.get("/academic-years?all=true");
 
       const list = res?.data?.data;
       if (Array.isArray(list)) {
@@ -262,7 +269,10 @@ export const AcademicYear = () => {
       closeCreateModal();
       fetchAcademicYears();
     } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to create academic year."));
+      // Overlap / linked-data refusals name the exact year and dates; keep
+      // them on screen (same dialog the other year actions use) instead of
+      // a toast that vanishes before it is read.
+      showActionError("Can't Create Academic Year", err, "Failed to create academic year.");
     } finally {
       setCreateLoading(false);
     }
@@ -376,7 +386,13 @@ export const AcademicYear = () => {
   };
 
   const openSwitchModal = () => {
-    setSwitchForm({ target_year_id: null, password: "", confirm_non_default: false });
+    setSwitchForm({
+      target_year_id: null,
+      password: "",
+      confirm_non_default: false,
+      pending_choice: "promote",
+      skip_pending_placement: false,
+    });
     setSwitchModalOpen(true);
     fetchChecklist();
   };
@@ -396,10 +412,14 @@ export const AcademicYear = () => {
     switchForm.target_year_id &&
     switchForm.target_year_id !== checklist.default_next_year.id;
 
+  const pendingClasses = checklist?.blocking_classes || [];
+  const pendingTotal =
+    checklist?.blocking_students_total ?? pendingClasses.reduce((n, c) => n + (c.pending_students || 0), 0);
   const switchBlocked =
     !!checklist &&
     (checklist.promotion_run_in_progress ||
-      (checklist.blocking_classes || []).length > 0);
+      (pendingClasses.length > 0 &&
+        !(switchForm.pending_choice === "skip" && switchForm.skip_pending_placement)));
 
   const handleSwitchSubmit = async (e) => {
     e.preventDefault();
@@ -447,7 +467,11 @@ export const AcademicYear = () => {
         setCarryForwardResult(res?.data?.data || null);
       }
 
-      await api.post("/academic-years/switch", switchForm);
+      const { pending_choice, skip_pending_placement, ...body } = switchForm;
+      await api.post("/academic-years/switch", {
+        ...body,
+        ...(pending_choice === "skip" && skip_pending_placement ? { skip_pending_placement: true } : {}),
+      });
       toast.success(
         carryForward
           ? "Values carried over and academic year switched successfully."
@@ -823,13 +847,64 @@ export const AcademicYear = () => {
                 </div>
               )}
 
-              {(checklist.blocking_classes || []).length > 0 && (
+              {pendingClasses.length > 0 && (
                 <div className="academic-blocking-banner">
-                  <FaExclamationTriangle /> These classes still have students
-                  who have not been promoted out of{" "}
-                  {checklist.active_year.name}:{" "}
-                  {checklist.blocking_classes.map((c) => c.name).join(", ")}.
-                  Run or finish their promotion first.
+                  <div>
+                    <FaExclamationTriangle />{" "}
+                    <strong>
+                      {pendingTotal} student{pendingTotal === 1 ? "" : "s"} in {pendingClasses.length} class
+                      {pendingClasses.length === 1 ? "" : "es"} have not been promoted out of{" "}
+                      {checklist.active_year.name}.
+                    </strong>
+                  </div>
+                  <ul className="academic-pending-classes">
+                    {pendingClasses.map((c) => (
+                      <li key={c.id}>
+                        {c.name} <span>({c.pending_students})</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <label className="academic-choice">
+                    <input
+                      type="radio"
+                      name="pending_choice"
+                      checked={switchForm.pending_choice === "promote"}
+                      onChange={() =>
+                        setSwitchForm((prev) => ({ ...prev, pending_choice: "promote", skip_pending_placement: false }))
+                      }
+                    />
+                    <span>
+                      <strong>Promote them first</strong> (recommended when the results are ready).{" "}
+                      <button type="button" className="academic-link-btn" onClick={() => navigate("/academics/promotion")}>
+                        Open Promotion
+                      </button>
+                    </span>
+                  </label>
+                  <label className="academic-choice">
+                    <input
+                      type="radio"
+                      name="pending_choice"
+                      checked={switchForm.pending_choice === "skip"}
+                      onChange={() => setSwitchForm((prev) => ({ ...prev, pending_choice: "skip" }))}
+                    />
+                    <span>
+                      <strong>Switch now and place them as they register.</strong> They stay listed as
+                      &quot;Not yet placed&quot; until each one registers, graduates, or leaves.
+                    </span>
+                  </label>
+                  {switchForm.pending_choice === "skip" && (
+                    <label className="academic-confirm-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={switchForm.skip_pending_placement}
+                        onChange={(e) =>
+                          setSwitchForm((prev) => ({ ...prev, skip_pending_placement: e.target.checked }))
+                        }
+                      />
+                      I understand these {pendingTotal} students must be placed one by one at registration.
+                    </label>
+                  )}
                 </div>
               )}
 
@@ -897,7 +972,7 @@ export const AcademicYear = () => {
                   />
 
                   <SubmitBtn
-                    title={switchLoading ? "Switching..." : "Continue"}
+                    title={switchLoading ? "Switching..." : "Switch year"}
                     disabled={switchLoading || switchBlocked}
                   />
                 </>

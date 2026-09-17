@@ -204,3 +204,51 @@
     min-width: 560px;
   }
 }
+
+/* Students of this class not yet placed after a year switch */
+.class-detail-pending-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 1.5px solid var(--vt-gold-border);
+  border-radius: 10px;
+  background: var(--vt-gold-tint);
+  color: var(--vt-ink);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.class-detail-pending-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 1 320px;
+}
+
+.class-detail-pending-text svg {
+  flex: none;
+  margin-top: 3px;
+  color: #8a6d1d;
+}
+
+.class-detail-pending-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .class-detail-pending-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .class-detail-pending-actions .vt-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}

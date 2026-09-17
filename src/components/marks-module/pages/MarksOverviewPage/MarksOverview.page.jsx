@@ -83,7 +83,7 @@ function MatrixView() {
       setLoadingLists(true);
       try {
         const [yearsRes, classesRes, deptRes] = await Promise.all([
-          api.get("/academic-years"),
+          api.get("/academic-years?all=true"),
           api.get("/classes"),
           fetch(`${subBaseURL}/specialties`, { headers: headers() }).then((r) => r.json()),
         ]);
@@ -357,7 +357,7 @@ function TrackerView() {
       setLoadingLists(true);
       try {
         const [yearsRes, termsRes, seqRes] = await Promise.all([
-          api.get("/academic-years"),
+          api.get("/academic-years?all=true"),
           api.get("/marks/terms"),
           api.get("/marks/sequences"),
         ]);

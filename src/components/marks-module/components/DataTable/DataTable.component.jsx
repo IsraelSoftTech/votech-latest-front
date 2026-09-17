@@ -300,6 +300,12 @@ const DataTable = ({
   // onDelete straight away instead of opening the built-in confirmation.
   skipDeleteConfirm = false,
   searchPlaceholder = "Search...",
+  // Row selection for bulk actions: a checkbox per row (and select-all on
+  // desktop); `bulkActions` renders in a bar while something is selected
+  // and receives the selected rows. Selection lives here, keyed the same
+  // way menus and cards are (rowKeyOf), and clears when the data changes.
+  selectable = false,
+  bulkActions,
 }) => {
   const isMobile = useIsMobile();
   const isServer = !!server;
@@ -313,6 +319,10 @@ const DataTable = ({
   const [menuRowId, setMenuRowId] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState(() => new Set());
+  useEffect(() => {
+    setSelectedKeys(new Set());
+  }, [data]);
 
   const filtersRef = useRef(null);
   const menuButtonRef = useRef(null);
@@ -421,6 +431,26 @@ const DataTable = ({
   useEffect(() => {
     if (!isServer) setCurrentPage(1);
   }, [isServer, searchTerm, filterCategory, fieldFilters]);
+
+  // ── Selection ─────────────────────────────────────────────────────────
+  const pageKeys = paginatedData.map((r, i) => rowKeyOf(r, startIndex + i));
+  const allOnPageSelected = pageKeys.length > 0 && pageKeys.every((k) => selectedKeys.has(k));
+  const toggleKey = (key) =>
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  const toggleAllOnPage = () =>
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) pageKeys.forEach((k) => next.delete(k));
+      else pageKeys.forEach((k) => next.add(k));
+      return next;
+    });
+  const clearSelection = () => setSelectedKeys(new Set());
+  const selectedRows = data.filter((r, i) => selectedKeys.has(rowKeyOf(r, i)));
 
   const openDeleteModal = (row) => setDeleteTarget(row);
   const closeDeleteModal = () => setDeleteTarget(null);
@@ -697,6 +727,18 @@ const DataTable = ({
         </div>
       )}
 
+      {selectable && selectedRows.length > 0 && !isMobile && (
+        <div className="dt-bulk-bar" role="region" aria-label="Selected rows">
+          <span className="dt-bulk-count">
+            {selectedRows.length} selected
+          </span>
+          <div className="dt-bulk-actions">{typeof bulkActions === "function" ? bulkActions(selectedRows, clearSelection) : bulkActions}</div>
+          <button type="button" className="dt-chip ghost" onClick={clearSelection}>
+            Clear
+          </button>
+        </div>
+      )}
+
       {/* Desktop table */}
       {!isMobile && (
         <div className="dt-panel">
@@ -704,6 +746,18 @@ const DataTable = ({
             <table className={`data-table${onRowClick ? "" : " no-row-click"}`}>
               <thead>
                 <tr>
+                  {selectable && (
+                    <th className="dt-select-th">
+                      <input
+                        type="checkbox"
+                        className="dt-checkbox"
+                        checked={allOnPageSelected}
+                        onChange={toggleAllOnPage}
+                        aria-label="Select all rows on this page"
+                        disabled={loading || paginatedData.length === 0}
+                      />
+                    </th>
+                  )}
                   {columns.map(({ label, accessor, sortable }) => (
                     <th
                       key={accessor}
@@ -730,6 +784,7 @@ const DataTable = ({
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={`loading-${i}`} className="table-row loading-row">
+                      {selectable && <td className="dt-select-td" />}
                       {columns.map(({ accessor }, idx) => (
                         <td key={accessor}>
                           <div className={`loading-box${idx === 0 ? " wide" : ""}`} />
@@ -744,7 +799,7 @@ const DataTable = ({
                   ))
                 ) : paginatedData.length === 0 ? (
                   <tr className="no-data-row">
-                    <td colSpan={columns.length + (hasAnyAction ? 1 : 0)} className="no-data">
+                    <td colSpan={columns.length + (hasAnyAction ? 1 : 0) + (selectable ? 1 : 0)} className="no-data">
                       <EmptyState
                         title="No data at the moment"
                         subtitle={appliedFilters.length || normalizedSearchTerm ? "Try clearing the search or filters." : undefined}
@@ -755,7 +810,22 @@ const DataTable = ({
                   paginatedData.map((row, rowIndex) => {
                     const rowKey = rowKeyOf(row, startIndex + rowIndex);
                     return (
-                    <tr key={rowKey} className="table-row data-row" onClick={() => onRowClick && onRowClick(row)}>
+                    <tr
+                      key={rowKey}
+                      className={`table-row data-row${selectedKeys.has(rowKey) ? " selected" : ""}`}
+                      onClick={() => onRowClick && onRowClick(row)}
+                    >
+                      {selectable && (
+                        <td className="dt-select-td" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className="dt-checkbox"
+                            checked={selectedKeys.has(rowKey)}
+                            onChange={() => toggleKey(rowKey)}
+                            aria-label={`Select ${titleOf(row)}`}
+                          />
+                        </td>
+                      )}
                       {columns.map((col) => {
                         const { accessor, label, render } = col;
                         const isTitle = col === roles.title;
@@ -844,7 +914,7 @@ const DataTable = ({
               const pressable = !!onRowClick;
               return (
                 <div
-                  className={`dt-card${pressable ? " pressable" : ""}`}
+                  className={`dt-card${pressable ? " pressable" : ""}${selectedKeys.has(rowKey) ? " selected" : ""}`}
                   key={rowKey}
                   onClick={pressable ? () => onRowClick(row) : undefined}
                   role={pressable ? "button" : undefined}
@@ -861,6 +931,17 @@ const DataTable = ({
                   }
                 >
                   <div className="dt-card-head">
+                    {selectable && (
+                      <label className="dt-card-select" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className="dt-checkbox"
+                          checked={selectedKeys.has(rowKey)}
+                          onChange={() => toggleKey(rowKey)}
+                          aria-label={`Select ${title}`}
+                        />
+                      </label>
+                    )}
                     <div className="dt-card-titles">
                       <div className="dt-card-title">{title || "-"}</div>
                       {roles.subtitle && (
@@ -926,6 +1007,16 @@ const DataTable = ({
               );
             })
           )}
+        </div>
+      )}
+
+      {selectable && selectedRows.length > 0 && isMobile && (
+        <div className="dt-bulk-bar" role="region" aria-label="Selected rows">
+          <span className="dt-bulk-count">{selectedRows.length} selected</span>
+          <div className="dt-bulk-actions">{typeof bulkActions === "function" ? bulkActions(selectedRows, clearSelection) : bulkActions}</div>
+          <button type="button" className="dt-chip ghost" onClick={clearSelection}>
+            Clear
+          </button>
         </div>
       )}
 

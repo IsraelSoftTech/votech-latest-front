@@ -296,3 +296,23 @@
     text-align: center;
   }
 }
+
+/* "Not yet placed" card: same shell as the orientation card, gold tint */
+.a3d-pending-card {
+  border-color: var(--vt-gold-border, #e8ce7c);
+  background: var(--vt-gold-tint, #fbf3d9);
+}
+
+.a3d-pending-icon {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #8a6d1d;
+  font-size: 1.3rem;
+  border: 1px solid var(--vt-gold-border, #e8ce7c);
+}

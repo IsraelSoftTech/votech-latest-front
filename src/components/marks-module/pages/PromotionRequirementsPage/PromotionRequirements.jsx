@@ -78,7 +78,7 @@ export const PromotionRequirementsPage = ({
     setIsLoading(true);
     try {
       const [yearsRes, deptRes, classesRes, subjectsRes] = await Promise.all([
-        api.get("/academic-years"),
+        api.get("/academic-years?all=true"),
         fetch(`${subBaseURL}/specialties`, { headers: headers() }),
         api.get("/classes"),
         api.get("/subjects"),

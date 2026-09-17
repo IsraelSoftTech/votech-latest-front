@@ -303,3 +303,16 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* "Not yet placed" (active, still in an older year) beside the status pill */
+.students-pending-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  background: var(--vt-gold-tint);
+  color: #8a6d1d;
+  border: 1px solid var(--vt-gold-border);
+}

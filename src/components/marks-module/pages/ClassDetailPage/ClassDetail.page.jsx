@@ -17,6 +17,10 @@ import {
   FaExclamationTriangle,
   FaFileDownload,
   FaSpinner,
+  FaUserCheck,
+  FaGraduationCap,
+  FaSignOutAlt,
+  FaUndo,
 } from "react-icons/fa";
 import SideTop from "../../../SideTop";
 import api, { headers, subBaseURL } from "../../utils/api";
@@ -25,6 +29,8 @@ import { Tabs } from "../../components/Tabs/Tabs.component";
 import Stats from "../../components/Stats/Stats.component";
 import { ClassFormModal } from "../../components/ClassFormModal/ClassFormModal.component";
 import { StudentFormModal } from "../../components/StudentFormModal/StudentFormModal.component";
+import { RegisterStudentFlow } from "../../components/RegisterStudentFlow/RegisterStudentFlow.component";
+import { ExitStudentModal } from "../../components/ExitStudentModal/ExitStudentModal.component";
 import Modal from "../../components/Modal/Modal.component";
 import { Button } from "../../components/Button/Button.component";
 // import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
@@ -136,10 +142,64 @@ function StudentsTab({ classItem }) {
       .catch(() => toast.error("Failed to load academic years."));
   }, []);
 
-  const handleRegister = () => {
-    setEditingStudent(null);
-    setFormModalOpen(true);
+  // Registration always starts with the returning-student search; from a
+  // class page the destination is pre-selected to this class.
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [exitModal, setExitModal] = useState(null);
+  // Students of THIS class still sitting in an older year after a switch
+  // (the tab itself lists the active year's roster).
+  const [pendingHere, setPendingHere] = useState({ count: 0, students: [], year_name: null });
+
+  const fetchPendingHere = useCallback(async () => {
+    try {
+      const res = await api.get(`/students/pending-placement?class_id=${classItem.id}&limit=200`);
+      const d = res.data?.data || {};
+      const mine = (d.classes || []).filter((c) => Number(c.class_id) === Number(classItem.id));
+      setPendingHere({
+        count: mine.reduce((n, c) => n + c.students, 0),
+        students: d.students || [],
+        year_name: mine[0]?.academic_year_name || null,
+      });
+    } catch {
+      setPendingHere({ count: 0, students: [], year_name: null });
+    }
+  }, [classItem.id]);
+  useEffect(() => {
+    fetchPendingHere();
+  }, [fetchPendingHere, students]);
+
+  const handleRegister = () => setRegisterOpen(true);
+
+  const reactivate = async (student) => {
+    try {
+      const res = await api.post(`/students/${student.id}/exit/revert`, {});
+      toast.success(res?.data?.data?.message || "Student is active again.");
+      fetchStudents();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not reactivate the student.");
+    }
   };
+
+  const rowActions = [
+    {
+      icon: <FaGraduationCap />,
+      title: "Mark as graduated",
+      isVisible: (row) => row.status === "active",
+      onClick: (row) => setExitModal({ mode: "single", students: [row], initialStatus: "graduated" }),
+    },
+    {
+      icon: <FaSignOutAlt />,
+      title: "Mark as left",
+      isVisible: (row) => row.status === "active",
+      onClick: (row) => setExitModal({ mode: "single", students: [row], initialStatus: "withdrawn" }),
+    },
+    {
+      icon: <FaUndo />,
+      title: "Reactivate",
+      isVisible: (row) => row.status === "graduated" || row.status === "withdrawn",
+      onClick: reactivate,
+    },
+  ];
 
   const handleEdit = (student, e) => {
     if (e && e.stopPropagation) e.stopPropagation();
@@ -305,6 +365,32 @@ function StudentsTab({ classItem }) {
 
       */}
 
+      {pendingHere.count > 0 && (
+        <div className="class-detail-pending-banner">
+          <div className="class-detail-pending-text">
+            <FaUserCheck />
+            <span>
+              <strong>{pendingHere.count}</strong> student{pendingHere.count === 1 ? "" : "s"} from this class
+              {pendingHere.year_name ? ` (${pendingHere.year_name})` : ""} {pendingHere.count === 1 ? "is" : "are"} not
+              yet placed for this year. Place each one when they register, or mark those who did not return.
+            </span>
+          </div>
+          <div className="class-detail-pending-actions">
+            <Button size="sm" icon={<FaUserCheck />} onClick={handleRegister}>
+              Place a student
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<FaSignOutAlt />}
+              onClick={() => setExitModal({ mode: "bulk", students: pendingHere.students, initialStatus: "withdrawn" })}
+            >
+              Mark remaining as left ({pendingHere.count})
+            </Button>
+          </div>
+        </div>
+      )}
+
       <DataTable
         columns={studentColumns}
         data={studentRows}
@@ -314,6 +400,21 @@ function StudentsTab({ classItem }) {
         onEdit={(s) => handleEdit(s)}
         onDelete={(s) => handleDelete(s)}
         skipDeleteConfirm
+        extraActions={rowActions}
+        selectable
+        bulkActions={(rows) => {
+          const active = rows.filter((r) => r.status === "active");
+          return (
+            <>
+              <Button size="sm" variant="secondary" icon={<FaGraduationCap />} disabled={active.length === 0} onClick={() => setExitModal({ mode: "bulk", students: active, initialStatus: "graduated" })}>
+                Mark as graduated
+              </Button>
+              <Button size="sm" variant="secondary" icon={<FaSignOutAlt />} disabled={active.length === 0} onClick={() => setExitModal({ mode: "bulk", students: active, initialStatus: "withdrawn" })}>
+                Mark as left
+              </Button>
+            </>
+          );
+        }}
         server={{
           search,
           onSearchChange: setSearch,
@@ -363,6 +464,7 @@ function StudentsTab({ classItem }) {
         }
       />
 
+      {/* Edit only: new registrations go through RegisterStudentFlow below. */}
       <StudentFormModal
         isOpen={formModalOpen}
         onClose={() => setFormModalOpen(false)}
@@ -373,6 +475,30 @@ function StudentsTab({ classItem }) {
         lockedClassId={classItem.id}
         lockedDepartmentId={classItem.department_id}
         onSaved={fetchStudents}
+      />
+
+      <RegisterStudentFlow
+        isOpen={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        onDone={fetchStudents}
+        classes={classesOptions}
+        departments={departments}
+        academicYears={academicYears}
+        lockedClassId={classItem.id}
+        lockedDepartmentId={classItem.department_id}
+        onOpenProfile={(s) => {
+          setRegisterOpen(false);
+          navigate(`/admin-student/${s.id}`);
+        }}
+      />
+
+      <ExitStudentModal
+        isOpen={!!exitModal}
+        onClose={() => setExitModal(null)}
+        onDone={() => fetchStudents()}
+        mode={exitModal?.mode || "single"}
+        students={exitModal?.students || []}
+        initialStatus={exitModal?.initialStatus || "withdrawn"}
       />
 
       {/* Same styled confirm dialog as StudentsPage — never a native

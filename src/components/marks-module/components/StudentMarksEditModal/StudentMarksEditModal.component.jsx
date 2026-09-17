@@ -33,7 +33,7 @@ export function StudentMarksEditModal({ isOpen, onClose, student, onSaved }) {
     setEdits({});
     setLoadError(null);
     Promise.all([
-      api.get("/academic-years"),
+      api.get("/academic-years?all=true"),
       api.get("/marks/terms"),
       api.get("/marks/sequences"),
     ])

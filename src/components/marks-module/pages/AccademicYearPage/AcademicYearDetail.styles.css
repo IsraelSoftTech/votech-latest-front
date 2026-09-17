@@ -211,3 +211,7 @@
     grid-template-columns: 1fr;
   }
 }
+
+.ay-deletion-note {
+  margin: 12px 0 0 !important;
+}

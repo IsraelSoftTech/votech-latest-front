@@ -81,7 +81,7 @@ export const MasterSheetDownloadPage = () => {
       setLoadingPage(true);
       try {
         const [yearsRes, classesRes, deptRes] = await Promise.all([
-          api.get("/academic-years"),
+          api.get("/academic-years?all=true"),
           api.get("/classes"),
           fetch(`${subBaseURL}/specialties`, { headers: headers() }).then((r) => r.json()),
         ]);

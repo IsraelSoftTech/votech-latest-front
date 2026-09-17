@@ -16,6 +16,7 @@ import {
   FaExclamationTriangle,
   FaBell,
   FaChevronRight,
+  FaUserCheck,
 } from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api from "../../utils/api";
@@ -351,6 +352,18 @@ export const Admin3Dashboard = () => {
     fetchSummary();
   }, [fetchSummary]);
 
+  // Students still not placed after a year switch (studentPlacement
+  // controller). Shown as its own card until it reaches zero, so the
+  // registration desk cannot forget them.
+  const [pending, setPending] = useState(null);
+  useEffect(() => {
+    api
+      .get("/students/pending-placement?limit=1")
+      .then((res) => setPending(res.data?.data || null))
+      .catch(() => setPending(null));
+  }, []);
+  const pendingYears = [...new Set((pending?.classes || []).map((c) => c.academic_year_name).filter(Boolean))];
+
   const goToStudents = (state) => navigate("/admin-student", { state });
 
   if (loading && !data) {
@@ -468,6 +481,29 @@ export const Admin3Dashboard = () => {
               onClick={() => navigate("/admin-specialty")}
             />
           </div>
+
+          {pending?.total_pending > 0 && (
+            <button
+              type="button"
+              className="a3d-orientation-card a3d-pending-card"
+              onClick={() => goToStudents({ status: "pending" })}
+            >
+              <div className="a3d-pending-icon">
+                <FaUserCheck />
+              </div>
+              <div className="a3d-orientation-text">
+                <span className="a3d-orientation-title">
+                  Not yet placed{pendingYears.length ? ` from ${pendingYears.join(", ")}` : ""}: {pending.total_pending} student
+                  {pending.total_pending === 1 ? "" : "s"}
+                </span>
+                <span className="a3d-orientation-sub">
+                  In {pending.classes.length} class{pending.classes.length === 1 ? "" : "es"}. Place each one as they register,
+                  or mark those who did not return.
+                </span>
+              </div>
+              <FaChevronRight className="a3d-stat-arrow" />
+            </button>
+          )}
 
           {structure.orientation.total > 0 && (
             <button

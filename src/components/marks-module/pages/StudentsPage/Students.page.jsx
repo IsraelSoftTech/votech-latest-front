@@ -9,6 +9,10 @@ import {
   FaFileDownload,
   FaSpinner,
   FaExclamationTriangle,
+  FaUserCheck,
+  FaGraduationCap,
+  FaSignOutAlt,
+  FaUndo,
 } from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api, { headers, subBaseURL } from "../../utils/api";
@@ -16,6 +20,9 @@ import SideTop from "../../../SideTop";
 // import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
 import DataTable from "../../components/DataTable/DataTable.component";
 import { StudentFormModal } from "../../components/StudentFormModal/StudentFormModal.component";
+import { RegisterStudentFlow } from "../../components/RegisterStudentFlow/RegisterStudentFlow.component";
+import { ExitStudentModal } from "../../components/ExitStudentModal/ExitStudentModal.component";
+import { Button } from "../../components/Button/Button.component";
 // Rebuilt into a full page — see StudentDetailPage. Kept here, not
 // deleted, in case this needs reverting.
 // import { StudentDetailModal } from "../../components/StudentDetailModal/StudentDetailModal.component";
@@ -28,6 +35,9 @@ const STATUS_OPTIONS = [
   { value: "active", label: "Active" },
   { value: "graduated", label: "Graduated" },
   { value: "withdrawn", label: "Withdrawn" },
+  // Not a real status: active students still in an older year after a
+  // switch (server computes it, ?pending_placement=true).
+  { value: "pending", label: "Not yet placed" },
 ];
 
 const REPEATING_OPTIONS = [
@@ -151,6 +161,14 @@ export const StudentsPage = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
 
   const [formModalOpen, setFormModalOpen] = useState(false);
+  // Search-first registration (RegisterStudentFlow); `autoPlace` is set
+  // when opened from a row's "Place in class".
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [autoPlace, setAutoPlace] = useState(null);
+  // Graduated / left confirmation, for one student, a selection, or the
+  // end-of-registration sweep.
+  const [exitModal, setExitModal] = useState(null); // { mode, students, sweep, initialStatus }
+  const [pendingSummary, setPendingSummary] = useState(null); // { total_pending, classes }
   const [editingStudent, setEditingStudent] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailStudent, setDetailStudent] = useState(null);
@@ -188,7 +206,8 @@ export const StudentsPage = () => {
     try {
       const params = new URLSearchParams({ page: String(page), limit: "20", sortBy, sortDir });
       if (search.trim()) params.set("search", search.trim());
-      if (statusFilter) params.set("status", statusFilter);
+      if (statusFilter === "pending") params.set("pending_placement", "true");
+      else if (statusFilter) params.set("status", statusFilter);
       if (departmentFilter) params.set("department_id", departmentFilter);
       if (classFilter) params.set("class_id", classFilter);
       if (repeatingFilter) params.set("is_repeating", repeatingFilter);
@@ -247,6 +266,7 @@ export const StudentsPage = () => {
       render: (s) => (
         <span className="students-status-cell">
           <span className={`students-status-pill ${s.status}`}>{s.status}</span>
+          {s.placement_state === "pending" && <span className="students-pending-pill">Not yet placed</span>}
           {s.is_repeating && <span className="students-repeating-pill">Repeating</span>}
         </span>
       ),
@@ -257,17 +277,95 @@ export const StudentsPage = () => {
       render: (s) => (s.registration_date ? new Date(s.registration_date).toLocaleDateString("en-GB") : "-"),
     },
   ];
-  const studentRows = students.map((s) => ({ ...s, class_name: s.Class?.name || "-" }));
+  const studentRows = students.map((s) => ({
+    ...s,
+    class_name: s.Class?.name || "-",
+    placement_state:
+      s.status !== "active"
+        ? s.status
+        : activeAcademicYearId && Number(s.academic_year_id) !== Number(activeAcademicYearId)
+        ? "pending"
+        : "placed",
+  }));
 
   const departmentOptions = departments.map((d) => ({ value: d.id, label: d.name }));
   const classOptions = classes
     .filter((c) => !departmentFilter || c.department_id === departmentFilter)
     .map((c) => ({ value: c.id, label: c.name }));
 
+  // Registration always starts with the returning-student search.
   const handleRegister = () => {
-    setEditingStudent(null);
-    setFormModalOpen(true);
+    setAutoPlace(null);
+    setRegisterOpen(true);
   };
+
+  const openPlacement = (student) => {
+    setAutoPlace({ id: student.id, search: student.student_id || student.full_name });
+    setRegisterOpen(true);
+  };
+
+  const reactivate = async (student) => {
+    try {
+      const res = await api.post(`/students/${student.id}/exit/revert`, {});
+      toast.success(res?.data?.data?.message || "Student is active again.");
+      fetchStudents();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not reactivate the student.");
+    }
+  };
+
+  // The "Not yet placed" view also shows how many are left per year, and
+  // offers the sweep ("mark everyone still pending from <year> as left").
+  const fetchPendingSummary = useCallback(async () => {
+    try {
+      const res = await api.get("/students/pending-placement?limit=1");
+      setPendingSummary(res.data?.data || null);
+    } catch {
+      setPendingSummary(null);
+    }
+  }, []);
+  useEffect(() => {
+    if (statusFilter === "pending") fetchPendingSummary();
+  }, [statusFilter, fetchPendingSummary, students]);
+
+  const pendingYears = (() => {
+    const byYear = new Map();
+    for (const c of pendingSummary?.classes || []) {
+      const cur = byYear.get(c.academic_year_id) || { id: c.academic_year_id, name: c.academic_year_name, count: 0 };
+      cur.count += c.students;
+      byYear.set(c.academic_year_id, cur);
+    }
+    return [...byYear.values()];
+  })();
+
+  const rowActions = canManageStudents
+    ? [
+        {
+          icon: <FaUserCheck />,
+          title: "Place in class",
+          isVisible: (row) => row.placement_state === "pending",
+          onClick: openPlacement,
+        },
+        {
+          icon: <FaGraduationCap />,
+          title: "Mark as graduated",
+          isVisible: (row) => row.status === "active",
+          onClick: (row) => setExitModal({ mode: "single", students: [row], initialStatus: "graduated" }),
+        },
+        {
+          icon: <FaSignOutAlt />,
+          title: "Mark as left",
+          isVisible: (row) => row.status === "active",
+          onClick: (row) => setExitModal({ mode: "single", students: [row], initialStatus: "withdrawn" }),
+        },
+        {
+          icon: <FaUndo />,
+          title: "Reactivate",
+          isVisible: (row) => row.status === "graduated" || row.status === "withdrawn",
+          onClick: reactivate,
+        },
+      ]
+    : [];
 
   const handleEdit = (student, e) => {
     if (e && e.stopPropagation) e.stopPropagation();
@@ -522,6 +620,33 @@ export const StudentsPage = () => {
         deleteRoles={["Admin3"]}
         userRole={currentRole}
         skipDeleteConfirm
+        extraActions={rowActions}
+        selectable={canManageStudents}
+        bulkActions={(rows) => {
+          const active = rows.filter((r) => r.status === "active");
+          return (
+            <>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<FaGraduationCap />}
+                disabled={active.length === 0}
+                onClick={() => setExitModal({ mode: "bulk", students: active, initialStatus: "graduated" })}
+              >
+                Mark as graduated
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<FaSignOutAlt />}
+                disabled={active.length === 0}
+                onClick={() => setExitModal({ mode: "bulk", students: active, initialStatus: "withdrawn" })}
+              >
+                Mark as left
+              </Button>
+            </>
+          );
+        }}
         server={{
           search,
           onSearchChange: setSearch,
@@ -559,7 +684,27 @@ export const StudentsPage = () => {
           onPageChange: setPage,
         }}
         toolbarActions={
-          classFilter ? (
+          statusFilter === "pending" && canManageStudents && pendingYears.length > 0 ? (
+            <>
+              {pendingYears.map((y) => (
+                <Button
+                  key={y.id}
+                  variant="secondary"
+                  icon={<FaSignOutAlt />}
+                  onClick={() =>
+                    setExitModal({
+                      mode: "sweep",
+                      students: [],
+                      initialStatus: "withdrawn",
+                      sweep: { from_academic_year_id: y.id, year_name: y.name, count: y.count },
+                    })
+                  }
+                >
+                  Mark remaining from {y.name} as left ({y.count})
+                </Button>
+              ))}
+            </>
+          ) : classFilter ? (
             <button
               type="button"
               className="students-classlist-btn"
@@ -580,6 +725,7 @@ export const StudentsPage = () => {
         }
       />
 
+      {/* Edit only: new registrations go through RegisterStudentFlow below. */}
       <StudentFormModal
         isOpen={formModalOpen}
         onClose={() => setFormModalOpen(false)}
@@ -588,6 +734,30 @@ export const StudentsPage = () => {
         departments={departments}
         academicYears={academicYears}
         onSaved={fetchStudents}
+      />
+
+      <RegisterStudentFlow
+        isOpen={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        onDone={fetchStudents}
+        classes={classes}
+        departments={departments}
+        academicYears={academicYears}
+        autoPlace={autoPlace}
+        onOpenProfile={(s) => {
+          setRegisterOpen(false);
+          navigate(`/admin-student/${s.id}`);
+        }}
+      />
+
+      <ExitStudentModal
+        isOpen={!!exitModal}
+        onClose={() => setExitModal(null)}
+        onDone={() => fetchStudents()}
+        mode={exitModal?.mode || "single"}
+        students={exitModal?.students || []}
+        sweep={exitModal?.sweep || null}
+        initialStatus={exitModal?.initialStatus || "withdrawn"}
       />
 
       {/* Rebuilt into a full page — see StudentDetailPage.

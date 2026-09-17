@@ -313,3 +313,64 @@
   }
 }
 
+
+/* Switch dialog: pending classes list and the two-way choice */
+.academic-pending-classes {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  columns: 2;
+  column-gap: 16px;
+  font-size: 0.85rem;
+  color: var(--vt-ink);
+}
+
+.academic-pending-classes li {
+  break-inside: avoid;
+  line-height: 1.6;
+}
+
+.academic-pending-classes span {
+  color: var(--vt-ink-soft);
+}
+
+.academic-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--vt-ink);
+  font-weight: 400;
+  cursor: pointer;
+  line-height: 1.45;
+}
+
+.academic-choice input[type="radio"] {
+  accent-color: var(--vt-primary);
+  margin-top: 3px;
+  flex: none;
+}
+
+.academic-choice:has(input:checked) {
+  border-color: var(--vt-primary);
+  background: var(--vt-primary-tint);
+}
+
+.academic-link-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--vt-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .academic-pending-classes {
+    columns: 1;
+  }
+}

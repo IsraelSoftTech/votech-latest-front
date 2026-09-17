@@ -1,0 +1,121 @@
+@import "../../styles/tokens.css";
+
+.esm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.esm-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.esm-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  color: var(--vt-ink);
+}
+
+.esm-choice input {
+  accent-color: var(--vt-primary);
+  margin-top: 3px;
+  flex: none;
+}
+
+.esm-choice svg {
+  color: var(--vt-primary);
+  margin-top: 2px;
+  flex: none;
+}
+
+.esm-choice span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.esm-choice small {
+  color: var(--vt-ink-soft);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.esm-choice.on {
+  border-color: var(--vt-primary);
+  background: var(--vt-primary-tint);
+}
+
+.esm-who {
+  background: var(--vt-primary-tint);
+  border: 1px solid var(--vt-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--vt-ink);
+  line-height: 1.5;
+}
+
+.esm-who p {
+  margin: 0;
+}
+
+.esm-note {
+  margin-top: 6px !important;
+  font-size: 12.5px;
+  color: var(--vt-ink-soft);
+}
+
+.esm-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--vt-status-fail-tint);
+  color: var(--vt-status-fail);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.esm-ack input {
+  accent-color: var(--vt-status-fail);
+  margin-top: 3px;
+}
+
+.esm-ack svg {
+  margin-right: 6px;
+}
+
+.esm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.esm-actions .vt-btn {
+  min-height: 44px;
+}
+
+@media (max-width: 480px) {
+  .esm-choices {
+    grid-template-columns: 1fr;
+  }
+
+  .esm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .esm-actions .vt-btn {
+    width: 100%;
+  }
+}

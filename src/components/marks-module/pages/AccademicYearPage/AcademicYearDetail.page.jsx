@@ -347,6 +347,17 @@ export const AcademicYearDetail = () => {
               }
             />
           </div>
+          {overview.deletion && (
+            <p className="academic-section-hint ay-deletion-note">
+              {overview.deletion.blocked_by_active
+                ? "This is the active year, so it cannot be deleted."
+                : overview.deletion.verified === false
+                ? "Linked data for this year could not be fully verified, so deletion is refused until that is fixed."
+                : overview.deletion.can_delete
+                ? "This year has no linked data and can be deleted."
+                : `This year cannot be deleted: it still has ${overview.deletion.linked_summary} linked to it. Any new year whose dates overlap it will be refused.`}
+            </p>
+          )}
         </div>
 
         <Stats data={statsData} skeletonCount={6} />
@@ -488,6 +499,23 @@ export const AcademicYearDetail = () => {
           hint="Gaps that block marks entry or report cards for this year."
         >
           <div className="ay-health-grid">
+            {!isArchived && (
+              <div>
+                <h4 className="ay-health-title">
+                  {health.pending_placement_students ? <FaTimesCircle className="ay-bad" /> : <FaCheckCircle className="ay-ok" />}
+                  Students not yet placed from previous years ({fmtNum(health.pending_placement_students || 0)})
+                </h4>
+                {health.pending_placement_students > 0 && (
+                  <p className="academic-section-hint">
+                    In {fmtNum(health.pending_placement_classes)} class{health.pending_placement_classes === 1 ? "" : "es"}.
+                    Place them as they register, or mark those who did not return.{" "}
+                    <button type="button" className="academic-link-btn" onClick={() => navigate("/admin-student", { state: { status: "pending" } })}>
+                      Open the list
+                    </button>
+                  </p>
+                )}
+              </div>
+            )}
             <div>
               <h4 className="ay-health-title">
                 {health.classes_without_master.length === 0 ? <FaCheckCircle className="ay-ok" /> : <FaTimesCircle className="ay-bad" />}
