@@ -2,11 +2,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaArrowRight,
-  FaCheck,
-  FaChevronDown,
   FaShieldAlt,
   FaSignOutAlt,
-  FaUserCircle,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import api from "../services/api";
@@ -24,20 +21,9 @@ const ROLE_LABELS = {
   Psychosocialist: "Psychosocialist",
 };
 
-const initials = (account) =>
-  (account.name || account.username || "?")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-
 /**
- * The decision page the super admin lands on after signing in with the master
- * credentials. Picking a role hands back a normal session on a real account of
- * that role, so from the next screen on the app behaves exactly as it would for
- * that person.
+ * After the master login, the super admin picks a role and enters a dedicated
+ * workspace for that role — never another staff member's account.
  */
 export default function SuperAdminRoles() {
   const navigate = useNavigate();
@@ -46,8 +32,6 @@ export default function SuperAdminRoles() {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [expanded, setExpanded] = useState(null);
-  const [chosenAccount, setChosenAccount] = useState({});
   const [entering, setEntering] = useState(null);
 
   const currentRole = (() => {
@@ -87,8 +71,7 @@ export default function SuperAdminRoles() {
     setEntering(role);
     setError("");
     try {
-      const userId = chosenAccount[role] ?? accounts[0].id;
-      const { user } = await api.assumeRole(role, userId);
+      const { user } = await api.assumeRole(role);
       await prefetchActiveYearContext();
       navigate(dashboardPathForRole(user.role), { replace: true });
     } catch (err) {
@@ -128,8 +111,8 @@ export default function SuperAdminRoles() {
             <h1 className="sar-title">Choose a role to enter</h1>
             <p className="sar-subtitle">
               {username ? `Signed in as ${username}. ` : ""}
-              Pick a role and you take over that account for this session. You
-              can come back and switch at any time.
+              Each role has a dedicated VOTECH workspace. You never log into
+              another user&apos;s account. You can come back and switch at any time.
             </p>
           </div>
 
@@ -143,9 +126,7 @@ export default function SuperAdminRoles() {
             <div className="sar-grid">
               {roles.map(({ role, description, accounts }) => {
                 const available = accounts.length > 0;
-                const selectedId = chosenAccount[role] ?? accounts[0]?.id;
-                const selected = accounts.find((a) => a.id === selectedId);
-                const isOpen = expanded === role;
+                const workspace = accounts[0];
                 const isCurrent = currentRole === role;
 
                 return (
@@ -170,57 +151,16 @@ export default function SuperAdminRoles() {
                     {available ? (
                       <>
                         <div className="sar-account">
-                          <span className="sar-avatar">{initials(selected)}</span>
+                          <span className="sar-avatar">SA</span>
                           <div className="sar-account-meta">
                             <span className="sar-account-name">
-                              {selected.name || selected.username}
+                              {workspace.name || `VOTECH ${ROLE_LABELS[role] || role}`}
                             </span>
                             <span className="sar-account-username">
-                              @{selected.username}
+                              Dedicated workspace
                             </span>
                           </div>
-                          {accounts.length > 1 && (
-                            <button
-                              type="button"
-                              className={`sar-switch ${isOpen ? "open" : ""}`}
-                              onClick={() => setExpanded(isOpen ? null : role)}
-                              aria-expanded={isOpen}
-                            >
-                              {accounts.length} accounts <FaChevronDown />
-                            </button>
-                          )}
                         </div>
-
-                        {isOpen && (
-                          <ul className="sar-account-list">
-                            {accounts.map((account) => (
-                              <li key={account.id}>
-                                <button
-                                  type="button"
-                                  className={`sar-account-option ${
-                                    account.id === selectedId ? "selected" : ""
-                                  }`}
-                                  onClick={() => {
-                                    setChosenAccount((prev) => ({
-                                      ...prev,
-                                      [role]: account.id,
-                                    }));
-                                    setExpanded(null);
-                                  }}
-                                >
-                                  <FaUserCircle />
-                                  <span className="sar-option-name">
-                                    {account.name || account.username}
-                                  </span>
-                                  <span className="sar-option-username">
-                                    @{account.username}
-                                  </span>
-                                  {account.id === selectedId && <FaCheck />}
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
 
                         <button
                           type="button"
@@ -239,7 +179,7 @@ export default function SuperAdminRoles() {
                       </>
                     ) : (
                       <p className="sar-empty">
-                        No active account holds this role yet.
+                        This workspace is not ready yet. Restart the server to create it.
                       </p>
                     )}
                   </div>

@@ -8,16 +8,22 @@ const COLORS = ['#204080', '#388e3c'];
 
 export default function Admin2Dash() {
   const [students, setStudents] = useState([]);
-  const [teachers, setTeachers] = useState([]);
+  const [staffCount, setStaffCount] = useState(0);
 
   useEffect(() => {
     api.getStudents().then(setStudents).catch(() => setStudents([]));
-    api.getAllTeachers().then(setTeachers).catch(() => setTeachers([]));
+    api
+      .getAllUsers()
+      .then((users) => {
+        const list = Array.isArray(users) ? users : [];
+        setStaffCount(list.filter((u) => !u.suspended).length);
+      })
+      .catch(() => setStaffCount(0));
   }, []);
 
   const data = [
     { name: 'Students', value: students.length },
-    { name: 'Teachers', value: teachers.length },
+    { name: 'Staff', value: staffCount },
   ];
 
   return (
@@ -30,7 +36,7 @@ export default function Admin2Dash() {
         </div>
         <div className="card teachers">
           <div className="icon"><FaChalkboardTeacher /></div>
-          <div className="count" style={{ fontSize: 22 }}>{teachers.length}</div>
+          <div className="count" style={{ fontSize: 22 }}>{staffCount}</div>
           <div className="desc" style={{ fontSize: 13, opacity: 0.8 }}>Total Staff</div>
         </div>
       </div>
@@ -50,4 +56,4 @@ export default function Admin2Dash() {
       </div>
     </SideTop>
   );
-} 
+}

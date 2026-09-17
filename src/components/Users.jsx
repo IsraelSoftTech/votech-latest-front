@@ -33,6 +33,7 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editSuccess, setEditSuccess] = useState('');
   const [editLoading, setEditLoading] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
 
   // Get user role
   const authUser = JSON.parse(sessionStorage.getItem('authUser'));
@@ -41,6 +42,7 @@ export default function Users() {
   const isAdmin3 = authUser?.role === 'Admin3';
   const canChangePassword = isAdmin2;
   const canFullManageUsers = isAdmin3;
+  const canSuspendUsers = isAdmin2 || isAdmin3;
 
   useEffect(() => {
     fetchUsers();
@@ -121,23 +123,35 @@ export default function Users() {
     setWarning({ show: true, type: 'suspend', user });
   }
   async function confirmWarning() {
-    if (!warning.user) return;
-    if (warning.type === 'delete') {
+    if (!warning.user || actionBusy) return;
+    setActionBusy(true);
+    if (warning.type === "delete") {
       try {
         await api.deleteUser(warning.user.id);
-        setWarning({ show: false, type: '', user: null });
-        fetchUsers();
+        setUsers((prev) => prev.filter((u) => u.id !== warning.user.id));
+        setWarning({ show: false, type: "", user: null });
       } catch (err) {
-        alert('Failed to delete user.');
+        alert(err?.message || "Failed to delete user.");
+      } finally {
+        setActionBusy(false);
       }
-    } else if (warning.type === 'suspend') {
+    } else if (warning.type === "suspend") {
       try {
-        await api.suspendUser(warning.user.id);
-        setWarning({ show: false, type: '', user: null });
-        fetchUsers();
+        const action = warning.user.suspended ? "unsuspend" : "suspend";
+        await api.suspendUser(warning.user.id, action);
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === warning.user.id ? { ...u, suspended: action === "suspend" } : u
+          )
+        );
+        setWarning({ show: false, type: "", user: null });
       } catch (err) {
-        alert('Failed to suspend user.');
+        alert(err?.message || "Failed to suspend user.");
+      } finally {
+        setActionBusy(false);
       }
+    } else {
+      setActionBusy(false);
     }
   }
   function cancelWarning() {
@@ -210,8 +224,8 @@ export default function Users() {
     setCreateSuccess('');
   }
 
-  const totalUsers = users.length;
-  const suspendedUsers = users.filter(u => u.suspended).length;
+  const totalUsers = users.filter((u) => !u.suspended).length;
+  const suspendedUsers = users.filter((u) => u.suspended).length;
 
   // Filter users by search (name, username, email, contact, role)
   const filteredUsers = useMemo(() => {
@@ -318,30 +332,30 @@ export default function Users() {
                         </button>
                       )}
                       {canFullManageUsers && user.role !== 'Admin3' && (
-                        <>
-                          <button
-                            className="users-action-btn delete"
-                            aria-label="Delete"
-                            data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}
-                            onClick={() => handleDelete(user)}
-                            type="button"
-                            disabled={isAdmin1}
-                            style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
-                          >
-                            <FaTrash />
-                          </button>
-                          <button
-                            className="users-action-btn suspend"
-                            aria-label={user.suspended ? 'Unsuspend' : 'Suspend'}
-                            data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : (user.suspended ? 'Unsuspend' : 'Suspend')}
-                            onClick={() => handleSuspend(user)}
-                            type="button"
-                            disabled={isAdmin1}
-                            style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
-                          >
-                            {user.suspended ? <FaCheckCircle /> : <FaBan />}
-                          </button>
-                        </>
+                        <button
+                          className="users-action-btn delete"
+                          aria-label="Delete"
+                          data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : 'Delete'}
+                          onClick={() => handleDelete(user)}
+                          type="button"
+                          disabled={isAdmin1}
+                          style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
+                        >
+                          <FaTrash />
+                        </button>
+                      )}
+                      {canSuspendUsers && user.role !== 'Admin3' && (
+                        <button
+                          className="users-action-btn suspend"
+                          aria-label={user.suspended ? 'Unsuspend' : 'Suspend'}
+                          data-tooltip={isAdmin1 ? 'Not allowed for Admin1' : (user.suspended ? 'Unsuspend' : 'Suspend')}
+                          onClick={() => handleSuspend(user)}
+                          type="button"
+                          disabled={isAdmin1}
+                          style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
+                        >
+                          {user.suspended ? <FaCheckCircle /> : <FaBan />}
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -422,7 +436,7 @@ export default function Users() {
           </div>
         )}
         {warning.show && (
-          <div className="users-modal-overlay" onClick={cancelWarning}>
+          <div className="users-modal-overlay" onClick={() => !actionBusy && cancelWarning()}>
             <div className="users-warning-modal" onClick={e => e.stopPropagation()}>
               <h4>{warning.type === 'delete' ? 'Delete User' : warning.type === 'suspend' ? (warning.user?.suspended ? 'Unsuspend User' : 'Suspend User') : ''}</h4>
               <p>
@@ -430,8 +444,21 @@ export default function Users() {
                 {warning.type === 'suspend' && (warning.user?.suspended ? 'Are you sure you want to unsuspend this user?' : 'Are you sure you want to suspend this user?')}
               </p>
               <div className="users-warning-actions">
-                <button className="users-warning-btn" onClick={confirmWarning} disabled={isAdmin1} style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}>{warning.type === 'delete' ? 'Delete' : warning.user?.suspended ? 'Unsuspend' : 'Suspend'}</button>
-                <button className="users-warning-btn cancel" onClick={cancelWarning}>Cancel</button>
+                <button
+                  className="users-warning-btn"
+                  onClick={confirmWarning}
+                  disabled={isAdmin1 || actionBusy}
+                  style={isAdmin1 ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
+                >
+                  {actionBusy
+                    ? (warning.type === 'delete' ? 'Deleting…' : warning.user?.suspended ? 'Unsuspending…' : 'Suspending…')
+                    : warning.type === 'delete'
+                      ? 'Delete'
+                      : warning.user?.suspended
+                        ? 'Unsuspend'
+                        : 'Suspend'}
+                </button>
+                <button className="users-warning-btn cancel" onClick={cancelWarning} disabled={actionBusy}>Cancel</button>
               </div>
             </div>
           </div>

@@ -557,15 +557,32 @@
   font-weight: 600;
 }
 
+.aug-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.aug-progress-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--aug-primary);
+}
+
+.aug-progress-hint {
+  font-size: 0.72rem;
+  color: var(--aug-muted);
+}
+
 .aug-progress {
   position: relative;
   background: #f2f4f9;
   border-radius: 999px;
-  height: 22px;
+  height: 12px;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .aug-progress-bar {
@@ -573,8 +590,8 @@
   left: 0;
   top: 0;
   bottom: 0;
-  background: var(--aug-primary-tint2);
-  transition: width 0.2s ease;
+  background: var(--aug-primary);
+  transition: width 0.15s ease;
 }
 
 .aug-progress span {

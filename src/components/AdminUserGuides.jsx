@@ -15,6 +15,11 @@ import {
 } from "react-icons/fa";
 import { useRestrictTo } from "../hooks/restrictTo";
 import api from "../services/api";
+import {
+  GUIDE_VIDEO_MAX_BYTES,
+  GUIDE_VIDEO_SOURCE_MAX_BYTES,
+  compressGuideVideo,
+} from "../utils/compressGuideVideo";
 import UserGuide from "./UserGuide";
 import "./AdminUserGuides.css";
 
@@ -69,7 +74,7 @@ function extensionOf(name) {
 
 /**
  * Mirrors the server's rules so the admin is told what is wrong before a
- * 100MB upload starts. The server re-checks all of this regardless.
+ * large upload starts. Videos over 15MB are compressed, not rejected.
  */
 function validate(form, limits) {
   if (!form.title.trim()) return "Give the guide a title";
@@ -89,7 +94,9 @@ function validate(form, limits) {
   if (["document", "video"].includes(form.content_type)) {
     const isDoc = form.content_type === "document";
     const allowed = isDoc ? limits.documentExtensions : limits.videoExtensions;
-    const maxBytes = isDoc ? limits.documentBytes : limits.videoBytes;
+    const maxBytes = isDoc
+      ? limits.documentBytes
+      : limits.videoSourceBytes || GUIDE_VIDEO_SOURCE_MAX_BYTES;
 
     if (!form.file) {
       if (form.existingFileUrl && form.existingType === form.content_type) return "";
@@ -100,7 +107,7 @@ function validate(form, limits) {
     }
     if (form.file.size > maxBytes) {
       return form.content_type === "video"
-        ? `Videos are limited to ${formatMb(maxBytes)}. Add longer videos as a link instead.`
+        ? `Videos larger than ${formatMb(maxBytes)} cannot be processed. Add them as a link instead.`
         : `Documents are limited to ${formatMb(maxBytes)}`;
     }
   }
@@ -163,8 +170,10 @@ export default function AdminUserGuides() {
     documentExtensions: [],
     videoExtensions: [],
     documentBytes: 20 * 1024 * 1024,
-    videoBytes: 100 * 1024 * 1024,
+    videoBytes: GUIDE_VIDEO_MAX_BYTES,
+    videoSourceBytes: GUIDE_VIDEO_SOURCE_MAX_BYTES,
   });
+  const [progressKind, setProgressKind] = useState(null);
 
   const [search, setSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
@@ -214,7 +223,8 @@ export default function AdminUserGuides() {
           documentExtensions: data?.limits?.documentExtensions || [],
           videoExtensions: data?.limits?.videoExtensions || [],
           documentBytes: data?.limits?.documentBytes || 20 * 1024 * 1024,
-          videoBytes: data?.limits?.videoBytes || 100 * 1024 * 1024,
+          videoBytes: data?.limits?.videoBytes || GUIDE_VIDEO_MAX_BYTES,
+          videoSourceBytes: data?.limits?.videoSourceBytes || GUIDE_VIDEO_SOURCE_MAX_BYTES,
         })
       )
       .catch(() => {});
@@ -272,21 +282,39 @@ export default function AdminUserGuides() {
     };
     if (form.content_type === "text") fields.body = form.body;
     if (form.content_type === "link") fields.external_url = form.external_url.trim();
-    if (form.file) fields.file = form.file;
-
-    const payload = api.buildUserGuideFormData(fields);
-    const large = form.file && form.file.size > 5 * 1024 * 1024;
 
     setSaving(true);
-    setProgress(large ? 0 : null);
+    setProgress(null);
+    setProgressKind(null);
     try {
+      let fileToSend = form.file || null;
+      if (
+        fileToSend &&
+        form.content_type === "video" &&
+        fileToSend.size > (options.videoBytes || GUIDE_VIDEO_MAX_BYTES)
+      ) {
+        setProgressKind("compress");
+        setProgress(1);
+        fileToSend = await compressGuideVideo(fileToSend, {
+          maxBytes: options.videoBytes || GUIDE_VIDEO_MAX_BYTES,
+          onProgress: setProgress,
+        });
+      }
+      if (fileToSend) fields.file = fileToSend;
+
+      const payload = api.buildUserGuideFormData(fields);
+      const hasFile = Boolean(fileToSend);
+      setProgressKind(hasFile ? "upload" : "save");
+      setProgress(hasFile ? 0 : 35);
+
       if (form.id) {
-        await api.updateUserGuide(form.id, payload, large ? setProgress : undefined);
+        await api.updateUserGuide(form.id, payload, hasFile ? setProgress : undefined);
         toast.success("Guide updated");
       } else {
-        await api.createUserGuide(payload, large ? setProgress : undefined);
+        await api.createUserGuide(payload, hasFile ? setProgress : undefined);
         toast.success("Guide published");
       }
+      if (hasFile) setProgress(100);
       setForm(null);
       loadGuides();
     } catch (err) {
@@ -294,6 +322,7 @@ export default function AdminUserGuides() {
     } finally {
       setSaving(false);
       setProgress(null);
+      setProgressKind(null);
     }
   };
 
@@ -628,9 +657,16 @@ export default function AdminUserGuides() {
                     />
                     <span className="aug-hint">
                       {form.content_type === "video"
-                        ? `Up to ${formatMb(options.videoBytes)}. For longer videos, use an external link instead.`
+                        ? `Stored size is ${formatMb(options.videoBytes)}. Larger videos (up to ${formatMb(options.videoSourceBytes)}) are compressed automatically to ${formatMb(options.videoBytes)} at up to 720p. For very long videos, use an external link.`
                         : `Up to ${formatMb(options.documentBytes)}.`}
                     </span>
+                    {form.content_type === "video" &&
+                      form.file &&
+                      form.file.size > (options.videoBytes || GUIDE_VIDEO_MAX_BYTES) && (
+                      <span className="aug-hint">
+                        This {formatMb(form.file.size)} video will be compressed to {formatMb(options.videoBytes)} before upload.
+                      </span>
+                    )}
                     {form.existingFileName && !form.file && (
                       <span className="aug-hint">Current file: {form.existingFileName}</span>
                     )}
@@ -657,10 +693,27 @@ export default function AdminUserGuides() {
 
                 {formError && <div className="aug-form-error">{formError}</div>}
 
-                {progress !== null && (
-                  <div className="aug-progress">
-                    <div className="aug-progress-bar" style={{ width: `${progress}%` }} />
-                    <span>{progress}% uploaded</span>
+                {progressKind && (
+                  <div className="aug-progress-wrap">
+                    <div className="aug-progress-label">
+                      {progressKind === "compress"
+                        ? "Compressing video"
+                        : progressKind === "upload"
+                          ? "Saving video"
+                          : "Saving guide"}
+                      <strong>{Math.max(0, Math.min(100, progress ?? 0))}%</strong>
+                    </div>
+                    <div className="aug-progress">
+                      <div
+                        className="aug-progress-bar"
+                        style={{ width: `${Math.max(0, Math.min(100, progress ?? 0))}%` }}
+                      />
+                    </div>
+                    <span className="aug-progress-hint">
+                      {progressKind === "compress"
+                        ? "Reducing the file to 15MB. Keep this window open until it finishes."
+                        : "Uploading the compressed file to the server."}
+                    </span>
                   </div>
                 )}
               </div>
@@ -675,7 +728,15 @@ export default function AdminUserGuides() {
                   Cancel
                 </button>
                 <button type="submit" className="aug-btn aug-btn-primary" disabled={saving}>
-                  {saving ? "Saving…" : form.id ? "Save changes" : "Create guide"}
+                  {saving
+                    ? progressKind === "compress"
+                      ? "Compressing…"
+                      : progressKind === "upload"
+                        ? "Saving…"
+                        : "Saving…"
+                    : form.id
+                      ? "Save changes"
+                      : "Create guide"}
                 </button>
               </div>
             </form>
