@@ -62,6 +62,10 @@
   padding: 24px;
   margin-top: 18px;
 }
+.finance-metrics .recharts-wrapper,
+.finance-metrics .recharts-surface {
+  background: #fff;
+}
 .finance-metrics h3 {
   margin: 0 0 18px 0;
   color: #204080;

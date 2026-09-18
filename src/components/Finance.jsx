@@ -1,113 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Admin.css';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserGraduate, FaChalkboardTeacher, FaBook, FaMoneyBill, FaClipboardList, FaChartBar, FaFileAlt, FaPenFancy, FaTachometerAlt, FaSignOutAlt, FaMoneyBillWave, FaMoneyCheckAlt, FaChevronDown, FaChartPie, FaBoxes, FaFileInvoiceDollar, FaPrint } from 'react-icons/fa';
+import './Finance.css';
+import { FaMoneyBillWave, FaMoneyCheckAlt, FaPrint } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import ReactDOM from 'react-dom';
-import { FaCog } from 'react-icons/fa';
 import SideTop from './SideTop';
 import api from '../services/api';
-import { useEffect } from 'react';
 
-const menuItems = [
-  { label: 'Dashboard', icon: <FaTachometerAlt />, path: '/admin' },
-  { label: 'Students', icon: <FaUserGraduate />, path: '/admin-student' },
-  { label: 'Staff', icon: <FaChalkboardTeacher />, path: '/admin-teacher' },
-  { label: 'Classes', icon: <FaBook />, path: '/admin-class' },
-  { label: 'Subjects', icon: <FaBook /> },
-  { label: 'Finances', icon: <FaMoneyBill />, path: '/admin-finance' },
-  { label: 'Attendance', icon: <FaClipboardList /> },
-  { label: 'Reports', icon: <FaFileAlt /> },
-  { label: 'Exam/Marks', icon: <FaChartBar /> },
-  { label: 'Lesson Plans', icon: <FaPenFancy /> },
-];
-
-const years = Array.from({length: 26}, (_, i) => `20${25+i}/20${26+i}`);
-
-const feeData = [
-  { date: 'Jul 8', fee: 0, salary: 0 },
-  { date: 'Jul 9', fee: 0, salary: 0 },
-  { date: 'Jul 10', fee: 0, salary: 0 },
-  { date: 'Jul 11', fee: 0, salary: 0 },
-  { date: 'Jul 12', fee: 1, salary: 0.5 },
-  { date: 'Jul 13', fee: 3, salary: 2 },
-  { date: 'Jul 14', fee: 1, salary: 1 },
-  { date: 'Jul 15', fee: 2, salary: 1.5 },
-  { date: 'Jul 16', fee: 4, salary: 2.5 },
-  { date: 'Jul 17', fee: 3, salary: 2 },
-  { date: 'Jul 18', fee: 2, salary: 1 },
-];
+const PLACEHOLDER_CHART = [{ date: '—', paid: 0, owed: 0 }];
 
 export default function Finance() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedYear, setSelectedYear] = useState(years[0]);
-  const [showFinanceDropdown, setShowFinanceDropdown] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [totalPaid, setTotalPaid] = useState(0);
   const [totalOwed, setTotalOwed] = useState(0);
   const [loadingTotals, setLoadingTotals] = useState(true);
-  const [feeChartData, setFeeChartData] = useState([]);
-  const authUser = JSON.parse(sessionStorage.getItem('authUser'));
-  const username = authUser?.username || 'User';
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [feeChartData, setFeeChartData] = useState(PLACEHOLDER_CHART);
 
   useEffect(() => {
-    // Load cards immediately with fast API - don't block on slow chart
+    let cancelled = false;
     (async () => {
       setLoadingTotals(true);
       try {
-        const { totalPaid: paid, totalOwed: owed } = await api.getFeeTotalsSummary();
+        const data = await api.getFeeTotalsSummary();
+        if (cancelled) return;
+        const paid = data.totalPaid || 0;
+        const owed = data.totalOwed || 0;
         setTotalPaid(paid);
         setTotalOwed(owed);
+        const chart = Array.isArray(data.chart) && data.chart.length
+          ? data.chart
+          : [{ date: 'Current', paid, owed }];
+        setFeeChartData(chart);
       } catch (e) {
+        if (cancelled) return;
         setTotalPaid(0);
         setTotalOwed(0);
+        setFeeChartData(PLACEHOLDER_CHART);
       }
-      setLoadingTotals(false);
+      if (!cancelled) setLoadingTotals(false);
     })();
-
-    // Chart loads in background (slower - many API calls)
-    (async () => {
-      try {
-        const students = await api.getStudents();
-        const feeStatsArr = await Promise.all(students.map(async student => {
-          try {
-            const stats = await api.getStudentFeeStats(student.id);
-            return { student, stats };
-          } catch (e) {
-            return { student, stats: null };
-          }
-        }));
-        const dateMap = {};
-        const feeTypes = ['Registration', 'Bus', 'Tuition', 'Internship', 'Remedial', 'PTA'];
-        for (const { student, stats } of feeStatsArr) {
-          let classTotalFee = 0;
-          let paid = 0;
-          if (stats?.student && stats?.balance) {
-            feeTypes.forEach(type => {
-              const expected = parseFloat(stats.student[type.toLowerCase() + '_fee']) || 0;
-              const balance = stats.balance[type] || 0;
-              classTotalFee += expected;
-              paid += Math.max(0, expected - balance);
-            });
-          }
-          const paidDate = student.created_at ? student.created_at.slice(0, 10) : null;
-          if (paidDate) {
-            if (!dateMap[paidDate]) dateMap[paidDate] = { date: paidDate, paid: 0, owed: 0 };
-            dateMap[paidDate].paid += paid;
-            dateMap[paidDate].owed += (classTotalFee - paid);
-          }
-        }
-        const chartData = Object.values(dateMap)
-          .sort((a, b) => new Date(a.date) - new Date(b.date))
-          .map(d => ({ date: d.date, paid: d.paid, owed: d.owed }));
-        setFeeChartData(chartData);
-      } catch (e) {
-        setFeeChartData([]);
-      }
-    })();
+    return () => { cancelled = true; };
   }, []);
 
   const handlePrintFeeSummary = () => {
@@ -203,7 +134,7 @@ export default function Finance() {
         setTimeout(function() { window.close(); }, 1000);
       }, 200);
     })();
-  <\/script>
+  </${'script'}>
 </body>
 </html>`;
         w.document.open();
@@ -218,8 +149,10 @@ export default function Finance() {
 
   return (
     <SideTop>
-      {/* Place the main content of Finance here, excluding sidebar/topbar */}
       <div className="finance-cards-row">
+        <button className="finance-print-summary-btn" onClick={handlePrintFeeSummary} title="Print All Fee Summary by Class">
+          <FaPrint /> Print Summary
+        </button>
         <div className="dashboard-cards">
           <div className="card paid">
             <div className="icon"><FaMoneyBillWave /></div>
@@ -232,32 +165,19 @@ export default function Finance() {
             <div className="desc">Total Fee Owed</div>
           </div>
         </div>
-        <button className="finance-print-summary-btn" onClick={handlePrintFeeSummary} title="Print All Fee Summary by Class">
-          <FaPrint /> Print Summary
-        </button>
       </div>
       <div className="finance-metrics">
         <h3>Fee Paid and Fee Owed Rate</h3>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={feeChartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#204080" stopOpacity={0.6}/>
-                <stop offset="95%" stopColor="#204080" stopOpacity={0}/>
-              </linearGradient>
-              <linearGradient id="colorOwed" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#e53e3e" stopOpacity={0.5}/>
-                <stop offset="95%" stopColor="#e53e3e" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip />
-            <Area type="monotone" dataKey="paid" stroke="#204080" fillOpacity={1} fill="url(#colorPaid)" name="Fee Paid" />
-            <Area type="monotone" dataKey="owed" stroke="#e53e3e" fillOpacity={1} fill="url(#colorOwed)" name="Fee Owed" />
+            <Area type="monotone" dataKey="paid" stroke="#204080" fill="#204080" fillOpacity={0.35} name="Fee Paid" />
+            <Area type="monotone" dataKey="owed" stroke="#e53e3e" fill="#e53e3e" fillOpacity={0.35} name="Fee Owed" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
     </SideTop>
   );
-} 
+}
