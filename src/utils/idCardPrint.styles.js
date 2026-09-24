@@ -52,8 +52,8 @@ export const ID_CARD_PRINT_INLINE_CSS = `
 .sid-details-footer .sid-detail-item{border-bottom:none;padding-bottom:0}
 .sid-details-footer .sid-detail-label{font-size:4.1pt}
 .sid-details-footer .sid-detail-value{font-size:5.6pt;font-weight:700;color:#204080}
-.sid-card-stamp{flex:0 0 10mm;width:10mm;height:10mm;display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;background:#fff;border:0.3mm solid #204080;box-shadow:0 0 0 0.25mm #fff,0 0 0 0.48mm rgba(32,64,128,0.5);z-index:4}
-.sid-card-stamp-img{width:100%;height:100%;object-fit:contain;object-position:center;display:block;background:#fff;border-radius:50%}
+.sid-card-stamp{position:relative;flex:0 0 10mm;width:10mm;height:10mm;display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;background:#fff;border:0.3mm solid #204080;box-shadow:0 0 0 0.25mm #fff,0 0 0 0.48mm rgba(32,64,128,0.5);z-index:4}
+.sid-card-stamp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block;background:#fff;border-radius:50%}
 .sid-card:not(.sid-card--has-stamp) .sid-card-bottom{min-height:5.4mm}
 .sid-card-footer-strip{height:1.85mm;background:linear-gradient(90deg,#1a3568,#204080 30%,#2d5aa8 70%,#1a3568);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .sid-footer-text{font-size:2.6pt;font-weight:700;line-height:1;color:rgba(255,255,255,0.92);letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90%}

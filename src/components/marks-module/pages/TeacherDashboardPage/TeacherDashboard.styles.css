@@ -6,6 +6,35 @@
   margin: 0 auto;
 }
 
+.tcd-hod-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.95rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid #b7e4c7;
+  background: var(--vt-status-done-tint);
+  color: var(--vt-status-done);
+}
+
+.tcd-hod-banner strong,
+.tcd-hod-banner span {
+  display: block;
+}
+
+.tcd-hod-banner span {
+  margin-top: 0.15rem;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+.tcd-hod-banner--suspended {
+  background: var(--vt-status-fail-tint);
+  border-color: #f5c2c0;
+  color: var(--vt-status-fail);
+}
+
 .tcd-stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

@@ -504,6 +504,22 @@
   transform: scale(1.05);
 }
 
+.lp-decision-note {
+  margin: 0 0 16px;
+  color: #66708c;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.lp-decision-note strong {
+  color: #204080;
+  text-transform: capitalize;
+}
+
+.lp-muted {
+  color: #94a3b8;
+}
+
 .action-btn.approve {
   background: #d1fae5;
   color: #059669;

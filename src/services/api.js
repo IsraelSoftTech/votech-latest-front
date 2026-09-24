@@ -860,9 +860,13 @@ class ApiService {
     const headers = {};
     const auth = this.getAuthHeaders();
     if (auth.Authorization) headers.Authorization = auth.Authorization;
-    const response = await fetch(`${API_URL}/student-id-cards/settings/stamp`, {
-      headers,
-    });
+    const response = await fetch(
+      `${API_URL}/student-id-cards/settings/stamp?v=${Date.now()}`,
+      {
+        headers,
+        cache: "no-store",
+      }
+    );
     if (response.status === 404) return null;
     if (!response.ok) return null;
     return response.blob();
@@ -1513,8 +1517,10 @@ class ApiService {
         });
       }
 
-      // Combine staff with assignments (teachers) or empty data (other roles)
+      // Combine staff with assignments (teachers) or empty data (other roles).
+      // Suspended accounts are excluded so staff counts match active users.
       const staffWithAssignments = staffRaw
+        .filter((user) => user && !user.suspended)
         .map((staff) => {
           if (!staff) return null;
           const staffKey = String(staff.id ?? staff.user_id ?? "");

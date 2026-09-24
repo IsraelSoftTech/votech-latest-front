@@ -3,6 +3,7 @@ import SideTop from './SideTop';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
 import TimeTableReport from './TimeTableReport.jsx';
+import './TimeTable.css';
 
 export default function TimeTable() {
   const [classes, setClasses] = useState([]);
@@ -325,30 +326,15 @@ export default function TimeTable() {
       <style>{`
         @media print {
           @page { size: A4 landscape; margin: 10mm; }
-          .tt-no-print { display: none !important; }
-          .tt-print-page { page-break-after: always; }
         }
-        .tt-container { padding: 16px; display: grid; gap: 16px; }
-        .tt-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
-        .tt-panel-header { padding: 12px 16px; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
-        .tt-panel-body { padding: 12px 16px; }
-        .tt-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .tt-grid th, .tt-grid td { border: 1px solid #e5e7eb; padding: 6px; font-size: 12px; }
-        .tt-break { background: #f3f4f6; text-align: center; font-weight: 600; }
-        .tt-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 8px; }
-        .tt-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e5e7eb; padding: 6px 10px; border-radius: 999px; cursor: pointer; }
-        .tt-chip input { margin: 0; }
-        .tt-controls input, .tt-controls select { padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; }
-        .tt-btn { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; cursor: pointer; }
-        .tt-btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-        .tt-flex { display: grid; gap: 16px; grid-template-columns: 1fr; }
-        @media (min-width: 900px) { .tt-flex { grid-template-columns: 1.1fr 1fr; } }
-        .tt-assignment { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
-        .tt-scroll { overflow: auto; }
       `}</style>
 
       <div className="tt-container" ref={printRef}>
-        <div className="tt-flex">
+        <div className="tt-page-head tt-no-print">
+          <h1>Timetables</h1>
+          <p>Choose classes, set the week, assign subjects and teachers, then generate and download the timetable.</p>
+        </div>
+        <div className="tt-flex tt-no-print">
           <div className="tt-panel">
             <div className="tt-panel-header">Classes to Generate</div>
             <div className="tt-panel-body tt-scroll" style={{ maxHeight: 320 }}>
@@ -414,13 +400,13 @@ export default function TimeTable() {
           <div className="tt-panel-body tt-scroll" style={{ maxHeight: 420 }}>
             {classes.filter(c => selectedClassIds.has(c.id)).map(c => (
               <div key={c.id} className="tt-assignment">
-                <div style={{ fontWeight: 700, marginBottom: 8 }}>{c.name}</div>
+                <div className="tt-class-title">{c.name}</div>
                 {subjects.map(s => {
                   const data = classPlans[c.id]?.[s.id] || { weeklyPeriods: 2, preferred: [], teacherIds: [] };
                   return (
-                    <div key={s.id} style={{ borderTop: '1px dashed #e5e7eb', paddingTop: 8, marginTop: 8 }}>
+                    <div key={s.id} className="tt-subject-block">
                       <div className="tt-row">
-                        <div style={{ fontWeight: 600, minWidth: 160 }}>{s.name}</div>
+                        <div className="tt-subject-name">{s.name}</div>
                         <label>Weekly periods
                           <input
                             type="number"
@@ -457,7 +443,7 @@ export default function TimeTable() {
               </div>
             ))}
             {classes.filter(c => selectedClassIds.has(c.id)).length === 0 && (
-              <div style={{ color: '#6b7280' }}>Select at least one class to configure assignments.</div>
+              <div className="tt-muted">Select at least one class to configure assignments.</div>
             )}
           </div>
         </div>
@@ -467,10 +453,10 @@ export default function TimeTable() {
             <div className="tt-panel-header">Generated Timetables</div>
             <div className="tt-panel-body">
               {classes.filter(c => selectedClassIds.has(c.id)).map(c => (
-                <div key={c.id} className="tt-print-page" style={{ marginBottom: 24 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <div style={{ fontWeight: 800, fontSize: 18 }}>{c.name} - Timetable</div>
-                    <div style={{ color: '#6b7280' }}>Periods/day: {periodsPerDay} • Period: {periodDurationMin} min • Break: {breakDurationMin} min</div>
+                <div key={c.id} className="tt-print-page">
+                  <div className="tt-sheet-head">
+                    <h3>{c.name} — Timetable</h3>
+                    <div className="tt-muted">Periods/day: {periodsPerDay} · Period: {periodDurationMin} min · Break: {breakDurationMin} min</div>
                       </div>
                   <div className="tt-scroll">
                     <table className="tt-grid" role="grid" aria-label={`Timetable for ${getClassName(c.id)}`}>
@@ -485,9 +471,9 @@ export default function TimeTable() {
           <tbody>
                         {Array.from({ length: periodsPerDay }, (_, p) => (
                           <tr key={p}>
-                            <td style={{ fontWeight: 600 }}>
-                              P{p + 1}
-                              <div style={{ color: '#6b7280', fontWeight: 400 }}>{getPeriodStartLabel(p)}</div>
+                            <td>
+                              <div className="tt-slot-subject">P{p + 1}</div>
+                              <div className="tt-slot-teacher">{getPeriodStartLabel(p)}</div>
                         </td>
                             {days.map((_, dIndex) => {
                               const slot = timetables[c.id]?.[dIndex]?.[p];
@@ -495,9 +481,9 @@ export default function TimeTable() {
                               const subj = slot?.subjectName || '';
                               const teacher = slot?.teacherName || '';
                     return (
-                                <td key={dIndex} onClick={() => handleEditCell(c.id, dIndex, p)} style={{ cursor: 'pointer' }}>
-                                  <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{subj}</div>
-                                  <div style={{ color: '#6b7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{teacher}</div>
+                                <td key={dIndex} onClick={() => handleEditCell(c.id, dIndex, p)}>
+                                  <div className="tt-slot-subject">{subj}</div>
+                                  <div className="tt-slot-teacher">{teacher}</div>
                       </td>
                     );
                   })}

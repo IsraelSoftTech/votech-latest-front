@@ -214,7 +214,10 @@ function AdminHODs() {
         )}
         {/* Header */}
         <div className="admin-hods-header">
-          <h1>HODs Management</h1>
+          <div>
+            <h1>Heads of Department</h1>
+            <p>Appoint a user as HOD for a department. Their account is notified, and HOD status appears on their dashboard until the assignment is removed.</p>
+          </div>
           {(() => {
             const au = JSON.parse(sessionStorage.getItem('authUser') || localStorage.getItem('authUser') || 'null') || {};
             const roleLower = (au.role || '').toString().toLowerCase();

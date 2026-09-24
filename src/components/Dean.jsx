@@ -48,10 +48,10 @@ export default function Dean() {
         // Fetch total users for Staff Members count
         try {
           const users = await api.getUsers();
-          const totalUsers = Array.isArray(users)
-            ? users.length
-            : (users && Array.isArray(users.data) ? users.data.length : 0);
-          setStaffCount(totalUsers);
+          const list = Array.isArray(users)
+            ? users
+            : (users && Array.isArray(users.data) ? users.data : []);
+          setStaffCount(list.filter((user) => !user?.suspended).length);
         } catch (e) {
           console.log('Failed to fetch users for staff count', e);
           setStaffCount(0);

@@ -12,6 +12,7 @@ import {
   FaFolderOpen,
   FaCheckCircle,
   FaTimesCircle,
+  FaExchangeAlt,
 } from 'react-icons/fa';
 import SideTop from './SideTop';
 import SuccessMessage from './SuccessMessage';
@@ -325,9 +326,16 @@ export default function DeanLessonPlan() {
     setTimeout(() => setSuccess(''), 3000);
   };
 
-  const handleReview = plan => {
+  const handleReview = (plan, mode) => {
+    const flipping = mode === 'change' && (plan.status === 'approved' || plan.status === 'rejected');
+    const nextStatus = flipping
+      ? (plan.status === 'approved' ? 'rejected' : 'approved')
+      : 'approved';
     setSelectedPlan(plan);
-    setReviewForm({ status: 'approved', admin_comment: '' });
+    setReviewForm({
+      status: nextStatus,
+      admin_comment: plan.admin_comment || '',
+    });
     setShowReviewModal(true);
   };
 
@@ -335,6 +343,7 @@ export default function DeanLessonPlan() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    const changingDecision = selectedPlan && selectedPlan.status !== 'pending' && selectedPlan.status !== reviewForm.status;
     try {
       if (selectedPlan.type === 'content') {
         // For content-based lessons
@@ -343,7 +352,11 @@ export default function DeanLessonPlan() {
         // For file-based lesson plans
         await api.reviewLessonPlan(selectedPlan.id, reviewForm.status, reviewForm.admin_comment);
       }
-      setSuccess('Lesson plan reviewed successfully!');
+      setSuccess(
+        changingDecision
+          ? `Lesson plan ${reviewForm.status === 'approved' ? 'approved' : 'rejected'}. The previous decision was replaced.`
+          : 'Lesson plan reviewed successfully!'
+      );
       setShowReviewModal(false);
       setSelectedPlan(null);
       setReviewForm({ status: 'approved', admin_comment: '' });
@@ -838,6 +851,16 @@ export default function DeanLessonPlan() {
                             </>
                           )}
 
+                          {canReview && (plan.status === 'approved' || plan.status === 'rejected') && (
+                            <button
+                              className="action-btn approve"
+                              onClick={() => handleReview(plan, 'change')}
+                              title={plan.status === 'approved' ? 'Undo approval and reject' : 'Undo rejection and approve'}
+                            >
+                              <FaExchangeAlt />
+                            </button>
+                          )}
+
                           {plan.status === 'approved' && plan.type === 'file' && plan.file_url && (
                             <button
                               className="action-btn view"
@@ -996,7 +1019,14 @@ export default function DeanLessonPlan() {
             <div className="review-modal-content" onClick={e => e.stopPropagation()}>
               <button className="lesson-plan-modal-close" onClick={() => setShowReviewModal(false)}>×</button>
               <form onSubmit={handleReviewSubmit}>
-                <h2 className="lesson-plan-form-title">Review Lesson Plan</h2>
+                <h2 className="lesson-plan-form-title">
+                  {selectedPlan.status === 'pending' ? 'Review Lesson Plan' : 'Change decision'}
+                </h2>
+                {selectedPlan.status !== 'pending' && (
+                  <p className="lp-decision-note">
+                    This plan is currently <strong>{selectedPlan.status}</strong>. Choose the other decision to replace it.
+                  </p>
+                )}
                 <div className="review-form-grid">
                   <div className="lesson-plan-input-group">
                     <label className="lesson-plan-input-label">Plan Title</label>
@@ -1062,7 +1092,11 @@ export default function DeanLessonPlan() {
                     className={`review-btn ${reviewForm.status}`} 
                     disabled={loading}
                   >
-                    {loading ? 'Processing...' : reviewForm.status === 'approved' ? 'Approve' : 'Reject'}
+                    {loading
+                      ? 'Processing...'
+                      : selectedPlan.status !== 'pending'
+                        ? (reviewForm.status === 'approved' ? 'Change to Approved' : 'Change to Rejected')
+                        : (reviewForm.status === 'approved' ? 'Approve' : 'Reject')}
                   </button>
                 </div>
               </form>

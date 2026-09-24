@@ -1341,7 +1341,33 @@ export default function SideTop({ children }) {
             </button>
           </div>
         )}
-        <div style={{ marginTop: isViewingArchivedYear ? 72 : 32 }}>{children}</div>
+        <div style={{ marginTop: isViewingArchivedYear ? 72 : 32 }}>
+          {(hodStatus.hod_status === "active" || hodStatus.hod_status === "suspended") && (
+            <div
+              className={`hod-account-banner hod-account-banner--${hodStatus.hod_status}`}
+              role="status"
+            >
+              <FaUserTie aria-hidden="true" />
+              <div>
+                <strong>
+                  {hodStatus.hod_status === "active"
+                    ? "Head of Department"
+                    : "HOD assignment suspended"}
+                </strong>
+                <span>
+                  {hodStatus.hod_status === "active"
+                    ? hodStatus.department_name
+                      ? `You are HOD for ${hodStatus.department_name}. Department lesson plans are in your menu.`
+                      : "You are Head of Department. Department lesson plans are in your menu."
+                    : hodStatus.department_name
+                      ? `Your Head of Department role for ${hodStatus.department_name} is suspended.`
+                      : "Your Head of Department role is suspended."}
+                </span>
+              </div>
+            </div>
+          )}
+          {children}
+        </div>
       </div>
       {sidebarOpen && (
         <div
