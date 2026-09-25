@@ -39,13 +39,18 @@ function CardPhoto({ student, photoSrc }) {
   return <div className="sid-photo-fallback">{initial}</div>;
 }
 
-function DetailItem({ label, value }) {
+function DetailItem({ label, value, wrap = false }) {
   return (
-    <div className="sid-detail-item">
+    <div className={`sid-detail-item${wrap ? " sid-detail-item--wrap" : ""}`}>
       <span className="sid-detail-label">{label}</span>
       <span className="sid-detail-value">{value || "—"}</span>
     </div>
   );
+}
+
+function joinParts(parts) {
+  const text = parts.map((part) => String(part || "").trim()).filter(Boolean);
+  return text.join(" · ");
 }
 
 /**
@@ -143,8 +148,19 @@ export function StudentIdCardPrint({
               <DetailItem label="DOB" value={formatDate(student.date_of_birth)} />
               <DetailItem label="POB" value={student.place_of_birth} />
               <DetailItem label="Father" value={student.father_name} />
-              <DetailItem label="Mother" value={student.mother_name} />
-              <DetailItem label="Guardian" value={student.guardian_contact} />
+            </div>
+
+            <div className="sid-family-row">
+              <DetailItem
+                label="Mother"
+                wrap
+                value={joinParts([student.mother_name, student.mother_contact])}
+              />
+              <DetailItem
+                label="Guardian"
+                wrap
+                value={joinParts([student.guardian_name, student.guardian_contact])}
+              />
             </div>
 
             <div className="sid-card-bottom">

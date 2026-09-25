@@ -359,7 +359,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.05mm;
-  padding: 0.3mm 0.6mm;
+  padding: 0.15mm 0.55mm;
   background: linear-gradient(90deg, rgba(32, 64, 128, 0.12) 0%, rgba(32, 64, 128, 0.04) 100%);
   border-left: 0.55mm solid #204080;
   border-radius: 0 0.7mm 0.7mm 0;
@@ -387,11 +387,19 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 1.6mm;
-  row-gap: 0.22mm;
+  row-gap: 0.15mm;
   flex: 1 1 auto;
   min-height: 0;
   align-content: start;
   overflow: hidden;
+}
+
+.sid-family-row {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1.6mm;
+  align-items: start;
 }
 
 .sid-detail-item {
@@ -422,15 +430,23 @@
   text-overflow: ellipsis;
 }
 
+.sid-detail-item--wrap .sid-detail-value {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.15;
+  word-break: break-word;
+}
+
 /* Always-visible Card No. / Issued / stamp row */
 .sid-card-bottom {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 1.2mm;
-  min-height: 10.2mm;
-  padding-top: 0.35mm;
-  margin-top: 0.15mm;
+  min-height: 8.6mm;
+  padding-top: 0.25mm;
+  margin-top: 0.2mm;
   border-top: 0.3mm solid rgba(32, 64, 128, 0.22);
 }
 
@@ -463,9 +479,9 @@
 
 .sid-card-stamp {
   position: relative;
-  flex: 0 0 10mm;
-  width: 10mm;
-  height: 10mm;
+  flex: 0 0 8.4mm;
+  width: 8.4mm;
+  height: 8.4mm;
   display: flex;
   align-items: center;
   justify-content: center;
