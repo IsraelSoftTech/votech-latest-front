@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SideTop from './SideTop';
-import { FaEdit, FaSave, FaTimes, FaDollarSign, FaUsers, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaDownload, FaPrint, FaLock, FaEye } from 'react-icons/fa';
+import { FaEdit, FaSave, FaTimes, FaDollarSign, FaCalendarAlt, FaMoneyBillWave, FaSearch, FaDownload, FaLock, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import api from '../services/api';
 import SuccessMessage from './SuccessMessage';
 import MessageBox from './MessageBox';
@@ -10,6 +10,17 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import './Salary.css';
 
+const SALARY_PAGE_SIZE = 10;
+
+function salaryPageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = new Set([1, total, current]);
+  for (let i = current - 1; i <= current + 1; i += 1) {
+    if (i >= 1 && i <= total) pages.add(i);
+  }
+  return [...pages].sort((a, b) => a - b);
+}
+
 export default function Salary({ authUser }) {
   const [approvedApplications, setApprovedApplications] = useState([]);
   const [statistics, setStatistics] = useState({
@@ -18,6 +29,7 @@ export default function Salary({ authUser }) {
     totalApproved: 0
   });
   const [loading, setLoading] = useState(true);
+  const [staffPage, setStaffPage] = useState(1);
   const [editingSalary, setEditingSalary] = useState(null);
   const [salaryAmount, setSalaryAmount] = useState('');
   const [editMonth, setEditMonth] = useState(new Date().getMonth() + 1);
@@ -25,7 +37,7 @@ export default function Salary({ authUser }) {
   const [successMessage, setSuccessMessage] = useState('');
   
   // Get permissions
-  const { isReadOnly, isAdmin1 } = usePermissions();
+  const { isReadOnly } = usePermissions();
   
   // Pay Salary Modal States
   const [showPayModal, setShowPayModal] = useState(false);
@@ -77,6 +89,8 @@ export default function Salary({ authUser }) {
       return;
     }
     fetchData();
+    // fetchData closes over the latest handlers; listing it would refetch on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser]);
 
   // Persist CNPS preferences whenever they change
@@ -99,7 +113,7 @@ export default function Salary({ authUser }) {
   const toggleCnpsExcluded = (userOrApp) => {
     setCnpsPreferences((prev) => {
       const idKey = String(userOrApp && (userOrApp.user_id || userOrApp.applicant_id || userOrApp.id));
-      const nameKey = `name:${String(userOrApp && (userOrApp.user_name || userOrApp.applicant_name) || '')}`;
+      const nameKey = `name:${String((userOrApp && (userOrApp.user_name || userOrApp.applicant_name)) || '')}`;
       const currentById = typeof prev[idKey] === 'boolean' ? prev[idKey] : undefined;
       const currentByName = typeof prev[nameKey] === 'boolean' ? prev[nameKey] : undefined;
       const current = typeof currentById === 'boolean' ? currentById : (typeof currentByName === 'boolean' ? currentByName : false);
@@ -143,6 +157,7 @@ export default function Salary({ authUser }) {
       ]);
       setApprovedApplications(applicationsData);
       setStatistics(statsData);
+      setStaffPage(1);
       // Merge CNPS prefs from backend response
       try {
         const mergedPrefs = { ...cnpsPreferences };
@@ -249,29 +264,6 @@ export default function Salary({ authUser }) {
     setSalaryAmount('');
     setEditMonth(new Date().getMonth() + 1);
     setEditYear(null);
-  };
-
-  const handleUndoPaid = async (application) => {
-    try {
-      if (!application || !application.salary_id) return;
-      showMessage(
-        'Undo Payment',
-        `Are you sure you want to undo the payment for ${application.applicant_name} (${application.salary_month} ${application.salary_year})?`,
-        'warning',
-        async () => {
-          await api.undoSalaryPaid(application.salary_id);
-          setSuccessMessage('success');
-          await fetchData();
-          setTimeout(() => setSuccessMessage(''), 3000);
-        },
-        'Undo',
-        'Cancel',
-        true
-      );
-    } catch (error) {
-      console.error('Error undoing salary payment:', error);
-      showMessage('Error', `Failed to undo salary payment: ${error.message}`, 'error');
-    }
   };
 
   const handlePaidOptions = (application) => {
@@ -680,7 +672,6 @@ export default function Salary({ authUser }) {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1; // 1-12
-    const currentDay = now.getDate();
     
     // Academic year changes on August 1st
     // If we're in August (1st or later) or September onwards, use current year as start
@@ -725,7 +716,18 @@ export default function Salary({ authUser }) {
     { value: 12, label: 'December' }
   ];
 
-  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
+  const staffTotal = approvedApplications.length;
+  const staffTotalPages = Math.max(1, Math.ceil(staffTotal / SALARY_PAGE_SIZE));
+  const staffPageSafe = Math.min(staffPage, staffTotalPages);
+  const staffStart = (staffPageSafe - 1) * SALARY_PAGE_SIZE;
+  const pagedStaff = approvedApplications.slice(staffStart, staffStart + SALARY_PAGE_SIZE);
+  const staffPageList = salaryPageNumbers(staffPageSafe, staffTotalPages);
+
+  const goToStaffPage = (page) => {
+    const next = Math.min(Math.max(1, page), staffTotalPages);
+    setStaffPage(next);
+    setEditingSalary(null);
+  };
 
   return (
     <SideTop>
@@ -748,8 +750,8 @@ export default function Salary({ authUser }) {
           </h1>
           <p className="salary-subtitle">
             {isReadOnly 
-              ? `View salary information for approved applications - ${getCurrentMonthName()} ${new Date().getFullYear()} (Read-only access)`
-              : `Manage salaries for approved applications - ${getCurrentMonthName()} ${new Date().getFullYear()}`
+              ? `Salary records for staff — ${getCurrentMonthName()} ${new Date().getFullYear()}`
+              : `Manage salaries for staff — ${getCurrentMonthName()} ${new Date().getFullYear()}`
             }
           </p>
         </div>
@@ -775,17 +777,6 @@ export default function Salary({ authUser }) {
               <h3 className="salary-stat-title">Total Pending</h3>
               <p className="salary-stat-amount">{formatCurrency(statistics.totalPending)}</p>
               <p className="salary-stat-label">This Month</p>
-            </div>
-          </div>
-
-          <div className="salary-stat-card salary-approved-card">
-            <div className="salary-stat-icon">
-              <FaUsers />
-            </div>
-            <div className="salary-stat-content">
-              <h3 className="salary-stat-title">Approved Staff</h3>
-              <p className="salary-stat-amount">{statistics.totalApproved}</p>
-              <p className="salary-stat-label">Total Approved</p>
             </div>
           </div>
         </div>
@@ -840,13 +831,13 @@ export default function Salary({ authUser }) {
           {loading ? (
             <div className="salary-loading">
               <div className="salary-loading-spinner"></div>
-              <p>Loading approved applications...</p>
+              <p>Loading staff...</p>
             </div>
           ) : approvedApplications.length === 0 ? (
             <div className="salary-empty-state">
               <div className="salary-empty-icon">📋</div>
-              <h3>No Approved Applications</h3>
-              <p>There are no approved applications to display. Approved applications will appear here once they are processed.</p>
+              <h3>No staff</h3>
+              <p>Active staff accounts appear here.</p>
             </div>
           ) : (
             <div className="salary-table-responsive">
@@ -862,8 +853,8 @@ export default function Salary({ authUser }) {
                   </tr>
                 </thead>
                 <tbody className="salary-table-body">
-                  {approvedApplications.map((app) => (
-                    <tr key={app.application_id} className="salary-table-row">
+                  {pagedStaff.map((app) => (
+                    <tr key={app.applicant_id || app.application_id} className="salary-table-row">
                       <td className="salary-table-cell salary-name-cell">
                         <div className="salary-applicant-info">
                           <span className="salary-applicant-name">{app.applicant_name}</span>
@@ -1009,6 +1000,54 @@ export default function Salary({ authUser }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {!loading && staffTotal > 0 && (
+            <div className="salary-pagination" aria-label="Staff pagination">
+              <span className="salary-pagination-summary">
+                Showing {staffStart + 1}–{Math.min(staffStart + SALARY_PAGE_SIZE, staffTotal)} of {staffTotal}
+              </span>
+              <div className="salary-pagination-controls">
+                <button
+                  type="button"
+                  className="salary-pagination-btn"
+                  disabled={staffPageSafe <= 1}
+                  onClick={() => goToStaffPage(staffPageSafe - 1)}
+                  aria-label="Previous page"
+                >
+                  <FaChevronLeft aria-hidden="true" />
+                  Prev
+                </button>
+                <div className="salary-pagination-numbers">
+                  {staffPageList.map((pageNum, idx) => {
+                    const prev = staffPageList[idx - 1];
+                    const showEllipsis = prev && pageNum - prev > 1;
+                    return (
+                      <React.Fragment key={pageNum}>
+                        {showEllipsis && <span className="salary-pagination-ellipsis">…</span>}
+                        <button
+                          type="button"
+                          className={`salary-pagination-number${pageNum === staffPageSafe ? ' active' : ''}`}
+                          onClick={() => goToStaffPage(pageNum)}
+                          aria-current={pageNum === staffPageSafe ? 'page' : undefined}
+                        >
+                          {pageNum}
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="salary-pagination-btn"
+                  disabled={staffPageSafe >= staffTotalPages}
+                  onClick={() => goToStaffPage(staffPageSafe + 1)}
+                  aria-label="Next page"
+                >
+                  Next
+                  <FaChevronRight aria-hidden="true" />
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -1232,7 +1271,7 @@ export default function Salary({ authUser }) {
                   className="salary-receipt-modal-download-btn"
                   onClick={() => {
                     if (receiptRef.current) {
-                      const canvas = html2canvas(receiptRef.current, {
+                      html2canvas(receiptRef.current, {
                         scale: 2,
                         useCORS: true,
                         allowTaint: true,

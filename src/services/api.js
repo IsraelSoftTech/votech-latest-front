@@ -20,6 +20,16 @@ const API_URL = isValidApiUrl(config.API_URL)
  */
 const SUPER_ADMIN_TOKEN_KEY = "superAdminToken";
 
+function readApiErrorMessage(payload, fallback) {
+  if (typeof payload?.message === "string" && payload.message.trim() && payload.message !== "Server error") {
+    return payload.message;
+  }
+  if (typeof payload?.error === "string" && payload.error.trim()) {
+    return payload.error;
+  }
+  return fallback;
+}
+
 class ApiService {
   constructor() {
     // Initialize token and user from storage (session first, then local)
@@ -1957,7 +1967,7 @@ class ApiService {
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || "Failed to create debt record");
+      throw new Error(readApiErrorMessage(err, "Failed to create debt record"));
     }
     return await response.json();
   }
@@ -1973,7 +1983,7 @@ class ApiService {
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || "Failed to update debt record");
+      throw new Error(readApiErrorMessage(err, "Failed to update debt record"));
     }
     return await response.json();
   }
@@ -1989,7 +1999,7 @@ class ApiService {
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || "Failed to record payment");
+      throw new Error(readApiErrorMessage(err, "Failed to record payment"));
     }
     return await response.json();
   }
@@ -2001,7 +2011,7 @@ class ApiService {
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || "Failed to delete debt record");
+      throw new Error(readApiErrorMessage(err, "Failed to delete debt record"));
     }
     return await response.json();
   }

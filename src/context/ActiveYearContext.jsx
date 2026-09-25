@@ -17,15 +17,44 @@ import {
 
 const ActiveYearContext = createContext(null);
 
+async function loadActiveYearFallback() {
+  try {
+    const res = await api.getActiveAcademicYear();
+    const year = res?.data;
+    if (!year?.id) return null;
+    return {
+      id: year.id,
+      name: year.name,
+      start_date: year.start_date,
+      end_date: year.end_date,
+      status: year.status,
+      isWritable: year.isWritable !== false,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function prefetchActiveYearContext() {
   try {
     const res = await api.getAcademicYearContext();
     const data = res?.data;
     if (data?.activeYear) {
       setActiveYearSnapshot(data.activeYear);
+      return data;
+    }
+    const fallback = await loadActiveYearFallback();
+    if (fallback) {
+      setActiveYearSnapshot(fallback);
+      return { ...(data || {}), activeYear: fallback };
     }
     return data ?? null;
   } catch {
+    const fallback = await loadActiveYearFallback();
+    if (fallback) {
+      setActiveYearSnapshot(fallback);
+      return { activeYear: fallback, archivedYears: [] };
+    }
     return null;
   }
 }
@@ -42,16 +71,26 @@ export function ActiveYearProvider({ children }) {
     setLoading(true);
     try {
       const res = await api.getAcademicYearContext();
-      const data = res?.data;
-      if (data?.activeYear) {
-        setActiveYear(data.activeYear);
-        setActiveYearSnapshot(data.activeYear);
+      const data = res?.data || {};
+      let year = data.activeYear || null;
+      if (!year?.id) {
+        year = await loadActiveYearFallback();
+      }
+      if (year?.id) {
+        setActiveYear(year);
+        setActiveYearSnapshot(year);
       } else {
         setActiveYear(null);
       }
-      setArchivedYears(Array.isArray(data?.archivedYears) ? data.archivedYears : []);
-      return data ?? null;
+      setArchivedYears(Array.isArray(data.archivedYears) ? data.archivedYears : []);
+      return { ...data, activeYear: year };
     } catch {
+      const fallback = await loadActiveYearFallback();
+      if (fallback?.id) {
+        setActiveYear(fallback);
+        setActiveYearSnapshot(fallback);
+        return { activeYear: fallback, archivedYears: [] };
+      }
       return null;
     } finally {
       setLoading(false);
