@@ -364,6 +364,8 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
   const canReview = isAdmin4;
   const isApprovedLibrary = isAdmin3 && admin3Tab === 'approved';
   const isMyUploadsView = isAdmin3 && admin3Tab === 'mine';
+  const showReviewComment =
+    isMyUploadsView || (!isAdmin1 && !isAdmin4 && !isApprovedLibrary);
 
   const pageTitle = isAdmin3
     ? admin3Tab === 'mine'
@@ -381,7 +383,7 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
       ? 'View submitted lesson plans and download the ones Admin4 has approved'
       : isAdmin4
       ? 'Review submitted lesson plans. An approval or rejection can be changed later.'
-      : 'Upload and track your lesson planning documents';
+      : 'Upload and track your lesson plans. Admin4’s review comment appears on each plan after it is reviewed.';
 
   const statsData = useMemo(() => {
     if (isApprovedLibrary) {
@@ -551,7 +553,7 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
                   {isApprovedLibrary && <th>Department</th>}
                   <th>Period Type</th>
                   {!isApprovedLibrary && <th>Status</th>}
-                  {!isApprovedLibrary && isMyUploadsView && <th>Admin Comment</th>}
+                  {!isApprovedLibrary && showReviewComment && <th>Review comment</th>}
                   <th>Submitted</th>
                   {(isAdmin1 || isAdmin4 || isApprovedLibrary) && <th>Submitted By</th>}
                   {(isAdmin1 || isAdmin4) && <th>Role</th>}
@@ -579,9 +581,9 @@ export default function LessonPlan({ noLayoutWrapper = false }) {
                       </span>
                     </td>
                     )}
-                    {!isApprovedLibrary && isMyUploadsView && (
-                      <td className="lp-comment-cell">
-                        {plan.admin_comment || '—'}
+                    {!isApprovedLibrary && showReviewComment && (
+                      <td className="lp-comment-cell" title={plan.admin_comment || undefined}>
+                        {plan.admin_comment ? plan.admin_comment : '—'}
                       </td>
                     )}
                     <td>{formatDate(plan.submitted_at)}</td>

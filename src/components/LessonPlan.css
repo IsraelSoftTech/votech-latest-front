@@ -163,10 +163,13 @@
 }
 
 .lp-comment-cell {
-  max-width: 200px;
+  max-width: 280px;
+  min-width: 160px;
   font-size: 0.85rem;
-  color: var(--vt-ink-soft);
+  color: var(--vt-ink);
+  white-space: normal;
   word-break: break-word;
+  line-height: 1.4;
 }
 
 /* Data panel */
