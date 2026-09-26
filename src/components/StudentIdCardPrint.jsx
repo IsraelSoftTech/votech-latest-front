@@ -6,6 +6,15 @@ import "./StudentIdCardPrint.css";
 
 function formatDate(value) {
   if (!value) return "—";
+  const raw = String(value).slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [year, month, day] = raw.split("-").map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return String(value);
   return d.toLocaleDateString("en-GB", {
@@ -13,10 +22,6 @@ function formatDate(value) {
     month: "short",
     year: "numeric",
   });
-}
-
-function getIssuedDate(student) {
-  return student.registration_date || student.regDate || student.issued_at;
 }
 
 function CardPhoto({ student, photoSrc }) {
@@ -144,10 +149,16 @@ export function StudentIdCardPrint({
               <DetailItem label="Class" value={student.class_name} />
               <DetailItem label="Department" value={student.specialty_name} />
               <DetailItem label="Academic Year" value={student.academic_year_name} />
+            </div>
+
+            <div className="sid-bio-row">
               <DetailItem label="Sex" value={student.sex} />
               <DetailItem label="DOB" value={formatDate(student.date_of_birth)} />
-              <DetailItem label="POB" value={student.place_of_birth} />
-              <DetailItem label="Father" value={student.father_name} />
+            </div>
+
+            <div className="sid-origin-row">
+              <DetailItem label="POB" wrap value={student.place_of_birth} />
+              <DetailItem label="Father" wrap value={student.father_name} />
             </div>
 
             <div className="sid-family-row">
@@ -167,8 +178,12 @@ export function StudentIdCardPrint({
               <div className="sid-details-footer">
                 <DetailItem label="Card No." value={student.card_number} />
                 <DetailItem
-                  label="Issued"
-                  value={formatDate(getIssuedDate(student))}
+                  label="Date Issued"
+                  value={formatDate(settings.date_issued)}
+                />
+                <DetailItem
+                  label="Expiry Date"
+                  value={formatDate(settings.expiry_date)}
                 />
               </div>
               {settings.stamp_src ? (
@@ -185,7 +200,9 @@ export function StudentIdCardPrint({
         </div>
 
         <div className="sid-card-footer-strip" aria-hidden="true">
-          <span className="sid-footer-text">{settings.school_name}</span>
+          <span className="sid-footer-text">
+            VOTECH S7 ACADEMY || Powered by Izzy Tech Team (+237 675644383)
+          </span>
         </div>
       </article>
     </div>

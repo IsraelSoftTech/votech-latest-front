@@ -74,14 +74,14 @@ export async function downloadIdCardsPdf(
     const { x, y } = cardPosition(slot);
 
     const canvas = await html2canvas(cards[i], {
-      scale: 3,
+      scale: 4,
       useCORS: true,
       allowTaint: true,
       backgroundColor: "#ffffff",
       logging: false,
     });
 
-    const imgData = canvas.toDataURL("image/jpeg", 0.94);
+    const imgData = canvas.toDataURL("image/jpeg", 0.93);
     pdf.addImage(imgData, "JPEG", x, y, CARD_W_MM, CARD_H_MM);
   }
 

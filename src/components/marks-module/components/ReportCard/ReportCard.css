@@ -188,9 +188,12 @@
 
 .info-table .value {
   border-bottom: 1px solid #204080;
-  min-width: 150px;
+  min-width: 120px;
   font-weight: 600;
   color: #333;
+  white-space: normal;
+  overflow: visible;
+  word-break: break-word;
 }
 
 /* Subjects Section */
@@ -707,11 +710,12 @@
     line-height: 1.15 !important;
   }
 
-  .subjects-table th {
-    height: 3mm !important;
-    background: linear-gradient(135deg, #e8eeff 0%, #f0f4ff 100%) !important;
-    font-size: 7pt !important;
-  }
+    .subjects-table th {
+      height: auto !important;
+      min-height: 4mm !important;
+      background: linear-gradient(135deg, #e8eeff 0%, #f0f4ff 100%) !important;
+      font-size: 7pt !important;
+    }
 
   .subject-cell {
     font-size: 7pt !important;

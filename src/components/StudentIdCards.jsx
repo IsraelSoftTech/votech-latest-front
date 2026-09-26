@@ -180,8 +180,8 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
         </div>
         <div className="sidc-settings-body">
           <p className="sidc-settings-hint">
-            Configure the school name, motto, title, and official stamp shown on
-            every student ID card.
+            Configure the school name, motto, title, dates, and official stamp
+            shown on every student ID card.
           </p>
           <div className="sidc-settings-grid">
             <label className="sidc-settings-field sidc-settings-field--wide">
@@ -236,6 +236,24 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
                 value={form.qr_caption}
                 onChange={handleChange}
                 placeholder="Scan for attendance"
+              />
+            </label>
+            <label className="sidc-settings-field">
+              <span>Date Issued</span>
+              <input
+                type="date"
+                name="date_issued"
+                value={form.date_issued || ""}
+                onChange={handleChange}
+              />
+            </label>
+            <label className="sidc-settings-field">
+              <span>Expiry Date</span>
+              <input
+                type="date"
+                name="expiry_date"
+                value={form.expiry_date || ""}
+                onChange={handleChange}
               />
             </label>
             <div className="sidc-settings-field sidc-settings-field--wide">
@@ -525,7 +543,7 @@ export default function StudentIdCards() {
     if (!students.length) return;
     setDownloading(true);
     try {
-      const photoMap = await buildStudentPhotoMap(students);
+      const photoMap = await buildStudentPhotoMap(students, { size: "print" });
 
       flushSync(() => {
         setDownloadPhotoMap(photoMap);

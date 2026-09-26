@@ -39,26 +39,27 @@ export const ID_CARD_PRINT_INLINE_CSS = `
 .sid-card-qr{display:block;width:10.2mm!important;height:10.2mm!important;background:#fff}
 .sid-card-qr-placeholder{width:10.2mm;height:10.2mm;border:1px dashed #aaa;display:flex;align-items:center;justify-content:center;font-size:5pt;color:#888;background:#fff}
 .sid-card-qr-caption{font-size:3pt;font-weight:600;color:#204080;text-align:center;line-height:1;letter-spacing:0.01em}
-.sid-card-details{display:flex;flex-direction:column;gap:0.3mm;min-width:0;min-height:0;height:100%;overflow:hidden;border-left:0.35mm solid rgba(32,64,128,0.15);padding-left:1.1mm}
+.sid-card-details{display:flex;flex-direction:column;gap:0.16mm;min-width:0;min-height:0;height:100%;overflow:visible;border-left:0.35mm solid rgba(32,64,128,0.15);padding-left:1.1mm}
 .sid-name-strip{flex-shrink:0;display:flex;flex-direction:column;gap:0.05mm;padding:0.15mm 0.55mm;background:linear-gradient(90deg,rgba(32,64,128,0.12) 0%,rgba(32,64,128,0.04) 100%);border-left:0.55mm solid #204080;border-radius:0 0.7mm 0.7mm 0}
 .sid-name-label{font-size:4.5pt;font-weight:700;color:#204080;text-transform:uppercase;letter-spacing:0.08em}
-.sid-name-value{font-size:6.6pt;font-weight:800;color:#152238;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sid-details-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:1.6mm;row-gap:0.15mm;flex:1 1 auto;min-height:0;align-content:start;overflow:hidden}
-.sid-family-row{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;column-gap:1.6mm;align-items:start}
+.sid-name-value{font-size:6.6pt;font-weight:800;color:#152238;line-height:1.08;white-space:normal;overflow:visible;word-break:break-word}
+.sid-details-grid,.sid-bio-row,.sid-origin-row,.sid-family-row{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;column-gap:1.6mm;align-items:start;overflow:visible}
+.sid-details-grid{row-gap:0.08mm;align-content:start}
+.sid-origin-row .sid-detail-value,.sid-family-row .sid-detail-value{white-space:normal;overflow:visible;text-overflow:unset;line-height:1.12;word-break:break-word}
 .sid-detail-item{display:flex;flex-direction:column;gap:0;min-width:0;padding-bottom:0.08mm;border-bottom:0.18mm dotted rgba(32,64,128,0.14)}
 .sid-detail-label{font-size:4.1pt;font-weight:700;color:#204080;text-transform:uppercase;letter-spacing:0.03em;line-height:1.05}
-.sid-detail-value{font-size:5.5pt;font-weight:600;color:#152238;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sid-detail-value{font-size:5.5pt;font-weight:600;color:#152238;line-height:1.1;white-space:normal;overflow:visible;word-break:break-word}
 .sid-detail-item--wrap .sid-detail-value{white-space:normal;overflow:visible;text-overflow:unset;line-height:1.15;word-break:break-word}
-.sid-card-bottom{flex:0 0 auto;display:flex;align-items:center;gap:1.2mm;min-height:8.6mm;padding-top:0.25mm;margin-top:0.2mm;border-top:0.3mm solid rgba(32,64,128,0.22)}
-.sid-details-footer{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:1.4mm;margin:0;padding:0;border:none;align-content:center}
+.sid-card-bottom{flex:0 0 auto;display:flex;align-items:center;gap:1.2mm;min-height:0;padding-top:0.15mm;margin-top:0.1mm;border-top:0.3mm solid rgba(32,64,128,0.22)}
+.sid-details-footer{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:1mm;margin:0;padding:0;border:none;align-content:center}
 .sid-details-footer .sid-detail-item{border-bottom:none;padding-bottom:0}
 .sid-details-footer .sid-detail-label{font-size:4.1pt}
 .sid-details-footer .sid-detail-value{font-size:5.6pt;font-weight:700;color:#204080}
-.sid-card-stamp{position:relative;flex:0 0 8.4mm;width:8.4mm;height:8.4mm;display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;background:#fff;border:0.3mm solid #204080;box-shadow:0 0 0 0.25mm #fff,0 0 0 0.48mm rgba(32,64,128,0.5);z-index:4}
+.sid-card-stamp{position:relative;flex:0 0 7.2mm;width:7.2mm;height:7.2mm;display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;background:#fff;border:0.3mm solid #204080;box-shadow:0 0 0 0.25mm #fff,0 0 0 0.48mm rgba(32,64,128,0.5);z-index:4}
 .sid-card-stamp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block;background:#fff;border-radius:50%}
 .sid-card:not(.sid-card--has-stamp) .sid-card-bottom{min-height:5.4mm}
-.sid-card-footer-strip{height:1.85mm;background:linear-gradient(90deg,#1a3568,#204080 30%,#2d5aa8 70%,#1a3568);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.sid-footer-text{font-size:2.6pt;font-weight:700;line-height:1;color:rgba(255,255,255,0.92);letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90%}
+.sid-card-footer-strip{height:2.5mm;background:linear-gradient(90deg,#1a3568,#204080 30%,#2d5aa8 70%,#1a3568);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 1.2mm}
+.sid-footer-text{font-size:4.1pt;font-weight:700;line-height:1;color:rgba(255,255,255,0.95);letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .sid-print-sheet{background:#fff;box-sizing:border-box;width:100%}
 .sid-print-sheet--grid{display:grid;grid-template-columns:repeat(2,85.6mm);column-gap:8mm;row-gap:4mm;justify-content:center;align-content:start}
 .sid-print-sheet--single{display:flex;justify-content:center;align-items:flex-start;width:100%}

@@ -35,14 +35,9 @@
   }
 
   .report-card-wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    /* Scale down to fit A4 */
-    transform: scale(0.95);
+    position: static;
+    overflow: visible;
+    transform: none;
   }
 
   @page {
