@@ -11,6 +11,7 @@ import EventParticipantsPicker, {
   mapStoredParticipants,
   isSelectAllSelection,
 } from './EventParticipantsPicker';
+import { formatCalendarDate, isOnOrAfterToday, toCalendarDateString } from '../utils/calendarDate';
 
 export default function UserEvents({ wrap = true }) {
   const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
@@ -68,9 +69,8 @@ export default function UserEvents({ wrap = true }) {
       setEvents(data);
       
       // Calculate stats
-      const now = new Date();
-      const upcoming = data.filter(event => new Date(event.event_date) >= now).length;
-      const past = data.filter(event => new Date(event.event_date) < now).length;
+      const upcoming = data.filter(event => isOnOrAfterToday(event.event_date)).length;
+      const past = data.filter(event => !isOnOrAfterToday(event.event_date)).length;
       
       setStats({
         total: data.length,
@@ -90,8 +90,8 @@ export default function UserEvents({ wrap = true }) {
   };
 
   const getEventsForDate = (date) => {
-    const dateStr = date.toISOString().slice(0, 10);
-    return events.filter(event => event.event_date === dateStr);
+    const dateStr = toCalendarDateString(date);
+    return events.filter(event => toCalendarDateString(event.event_date) === dateStr);
   };
 
   const tileContent = ({ date, view }) => {
@@ -120,18 +120,14 @@ export default function UserEvents({ wrap = true }) {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  const formatDate = (dateStr) => formatCalendarDate(dateStr, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 
-  const isEventUpcoming = (eventDate) => {
-    return new Date(eventDate) >= new Date();
-  };
+  const isEventUpcoming = (eventDate) => isOnOrAfterToday(eventDate);
 
   const upcomingEvents = events.filter(event => isEventUpcoming(event.event_date));
   const pastEvents = events.filter(event => !isEventUpcoming(event.event_date));
@@ -184,7 +180,7 @@ export default function UserEvents({ wrap = true }) {
   const openCreateForDate = (date) => {
     if (!isAdminRole) return;
     setModalDate(date);
-    setForm({ type: 'Meeting', date: date.toISOString().slice(0, 10), time: '', title: '', description: '' });
+    setForm({ type: 'Meeting', date: toCalendarDateString(date), time: '', title: '', description: '' });
     setSelectedParticipants([]);
     setShowCreate(true);
   };
@@ -212,7 +208,7 @@ export default function UserEvents({ wrap = true }) {
         event_type: form.type,
         title: form.title,
         description: form.description,
-        event_date: form.date,
+        event_date: toCalendarDateString(form.date),
         event_time: form.time,
         participants: selectAll ? '__ALL__' : selectedParticipants.map(p => p.username).join(', '),
         selectAllUsers: selectAll,
@@ -243,7 +239,7 @@ export default function UserEvents({ wrap = true }) {
     setEditingEvent(event);
     setForm({
       type: event.event_type,
-      date: event.event_date,
+      date: toCalendarDateString(event.event_date),
       time: event.event_time,
       title: event.title,
       description: event.description || ''
@@ -269,7 +265,7 @@ export default function UserEvents({ wrap = true }) {
         event_type: form.type,
         title: form.title,
         description: form.description,
-        event_date: form.date,
+        event_date: toCalendarDateString(form.date),
         event_time: form.time,
         participants: selectAll ? '__ALL__' : selectedParticipants.map(p => p.username).join(', '),
         selectAllUsers: selectAll,
@@ -354,7 +350,7 @@ export default function UserEvents({ wrap = true }) {
                 onClick={() => {
                   setShowCreate(true);
                   setModalDate(new Date());
-                  setForm(f => ({ ...f, date: new Date().toISOString().slice(0, 10) }));
+                  setForm(f => ({ ...f, date: toCalendarDateString(new Date()) }));
                   setSelectedParticipants([]);
                 }}
               >

@@ -9,6 +9,7 @@ import api from '../services/api';
 import NotificationBell from './NotificationBell';
 import MessageIcon from './MessageIcon';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { isOnOrAfterToday } from '../utils/calendarDate';
 
 const menuItems = [
   { label: 'Dashboard', icon: <MdDashboard />, path: '/discipline' },
@@ -117,15 +118,9 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
         try {
           const allEvents = await api.getEvents();
           if (Array.isArray(allEvents)) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const upcomingEvents = allEvents.filter(event => {
-              if (!event.date) return false;
-              const eventDate = new Date(event.date);
-              eventDate.setHours(0, 0, 0, 0);
-              return eventDate >= today;
-            });
+            const upcomingEvents = allEvents.filter(event =>
+              isOnOrAfterToday(event.event_date)
+            );
             
             setUpcomingEventsCount(upcomingEvents.length);
             console.log('DisciplineSideTop: Fallback events count:', upcomingEvents.length);
@@ -227,15 +222,9 @@ export default function DisciplineSideTop({ children, hasUnread = false, activeT
       try {
         const allEvents = await api.getEvents();
         if (Array.isArray(allEvents)) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          
-          const upcomingEvents = allEvents.filter(event => {
-            if (!event.date) return false;
-            const eventDate = new Date(event.date);
-            eventDate.setHours(0, 0, 0, 0);
-            return eventDate >= today;
-          });
+          const upcomingEvents = allEvents.filter(event =>
+            isOnOrAfterToday(event.event_date)
+          );
           
           setUpcomingEventsCount(upcomingEvents.length);
         } else {

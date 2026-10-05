@@ -11,6 +11,7 @@ import EventParticipantsPicker, {
   mapStoredParticipants,
   isSelectAllSelection,
 } from './EventParticipantsPicker';
+import { formatCalendarDate, toCalendarDateString } from '../utils/calendarDate';
 
 export default function DeanEvent() {
   const authUser = JSON.parse(sessionStorage.getItem('authUser')) || {};
@@ -39,6 +40,7 @@ export default function DeanEvent() {
     title: '',
     description: '',
     time: '',
+    date: '',
     participants: ''
   });
 
@@ -89,7 +91,7 @@ export default function DeanEvent() {
   };
 
   const handleDateClick = date => {
-    setSelectedDate(date);
+    setSelectedDate(toCalendarDateString(date));
     setFormData({
       type: '',
       title: '',
@@ -110,8 +112,7 @@ export default function DeanEvent() {
   };
 
   const handleDateChange = (e) => {
-    const { value } = e.target;
-    setSelectedDate(new Date(value));
+    setSelectedDate(e.target.value);
   };
 
   const handleSubmit = async (e) => {
@@ -127,7 +128,7 @@ export default function DeanEvent() {
       return;
     }
 
-    const eventDate = selectedDate.toISOString ? selectedDate.toISOString().slice(0, 10) : (typeof selectedDate === 'string' ? selectedDate : null);
+    const eventDate = toCalendarDateString(selectedDate);
     if (!eventDate) {
       showMessage('Invalid date selected. Please try again.', 'error');
       return;
@@ -192,6 +193,7 @@ export default function DeanEvent() {
       title: event.title,
       description: event.description || '',
       time: event.event_time,
+      date: toCalendarDateString(event.event_date),
       participants: event.participants || ''
     });
     
@@ -202,8 +204,8 @@ export default function DeanEvent() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     
-    if (!editFormData.type || !editFormData.title || !editFormData.time) {
-      showMessage('Please fill in all required fields (Type, Title, and Time)', 'error');
+    if (!editFormData.type || !editFormData.title || !editFormData.time || !toCalendarDateString(editFormData.date)) {
+      showMessage('Please fill in all required fields (Type, Title, Date, and Time)', 'error');
       return;
     }
 
@@ -213,7 +215,7 @@ export default function DeanEvent() {
         event_type: editFormData.type,
         title: editFormData.title,
         description: editFormData.description,
-        event_date: editingEvent.event_date,
+        event_date: toCalendarDateString(editFormData.date),
         event_time: editFormData.time,
         participants: selectAll ? '__ALL__' : selectedParticipants.map(p => p.username).join(', '),
         selectAllUsers: selectAll,
@@ -270,8 +272,8 @@ export default function DeanEvent() {
   };
 
   const getEventsForDate = (date) => {
-    const dateStr = date.toISOString().slice(0, 10);
-    return events.filter(event => event.event_date === dateStr);
+    const dateStr = toCalendarDateString(date);
+    return events.filter(event => toCalendarDateString(event.event_date) === dateStr);
   };
 
   const tileContent = ({ date, view }) => {
@@ -338,7 +340,7 @@ export default function DeanEvent() {
                 <div key={event.id} className="event-item">
                   <div className="event-header">
                     <span className="event-type">{event.event_type}</span>
-                    <span className="event-date">{new Date(event.event_date).toLocaleDateString()}</span>
+                    <span className="event-date">{formatCalendarDate(event.event_date)}</span>
                   </div>
                   <div className="event-title">{event.title}</div>
                   {event.description && <div className="event-description">{event.description}</div>}
@@ -420,7 +422,7 @@ export default function DeanEvent() {
                   <input 
                     name="date" 
                     type="date" 
-                    value={selectedDate ? selectedDate.toISOString().slice(0, 10) : ''} 
+                    value={selectedDate || ''} 
                     onChange={handleDateChange}
                     className="event-date-readonly"
                   />
@@ -492,9 +494,9 @@ export default function DeanEvent() {
                   <input 
                     name="date" 
                     type="date" 
-                    value={editingEvent.event_date} 
-                    disabled
-                    style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                    value={editFormData.date || ''}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, date: e.target.value }))}
+                    required
                   />
                   <input 
                     name="time" 

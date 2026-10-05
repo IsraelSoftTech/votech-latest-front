@@ -34,6 +34,7 @@ import {
   fetchIdCardStampDataUrl,
 } from "../utils/studentPhoto.util";
 import { getActiveYearSnapshot } from "../utils/activeYearSession";
+import { toCalendarDateString } from "../utils/calendarDate";
 import { downloadIdCardsPdf } from "../utils/downloadIdCards.util";
 import "./StudentIdCards.css";
 
@@ -104,6 +105,8 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
       setForm({
         ...DEFAULT_ID_CARD_SETTINGS,
         ...settings,
+        date_issued: toCalendarDateString(settings.date_issued),
+        expiry_date: toCalendarDateString(settings.expiry_date),
         stampFile: null,
         remove_stamp: false,
       });
@@ -397,6 +400,8 @@ export default function StudentIdCards() {
       const next = {
         ...DEFAULT_ID_CARD_SETTINGS,
         ...data,
+        date_issued: toCalendarDateString(data?.date_issued),
+        expiry_date: toCalendarDateString(data?.expiry_date),
         stamp_src: stampSrc,
         remove_stamp: false,
       };
@@ -615,6 +620,8 @@ export default function StudentIdCards() {
       const next = {
         ...DEFAULT_ID_CARD_SETTINGS,
         ...saved,
+        date_issued: toCalendarDateString(saved?.date_issued),
+        expiry_date: toCalendarDateString(saved?.expiry_date),
         stamp_src: stampSrc,
         remove_stamp: false,
       };

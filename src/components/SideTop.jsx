@@ -44,6 +44,7 @@ import logo from "../assets/logo.png";
 import ReactDOM from "react-dom";
 import "./SideTop.css";
 import api from "../services/api";
+import { isOnOrAfterToday } from "../utils/calendarDate";
 import config from "../config";
 import {
   useActiveYear,
@@ -780,14 +781,9 @@ export default function SideTop({ children }) {
   const refreshEventsCount = async () => {
     try {
       const events = await api.getEvents();
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const upcomingEvents = events.filter((event) => {
-        const eventDate = new Date(event.event_date);
-        eventDate.setHours(0, 0, 0, 0);
-        return eventDate >= today;
-      });
+      const upcomingEvents = events.filter((event) =>
+        isOnOrAfterToday(event.event_date)
+      );
 
       setUpcomingEventsCount(upcomingEvents.length);
     } catch (error) {

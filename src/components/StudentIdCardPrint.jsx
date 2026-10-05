@@ -2,22 +2,14 @@ import React, { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import logo from "../assets/logo.png";
 import { DEFAULT_ID_CARD_SETTINGS } from "../utils/studentPhoto.util";
+import { toCalendarDateString } from "../utils/calendarDate";
 import "./StudentIdCardPrint.css";
 
 function formatDate(value) {
-  if (!value) return "—";
-  const raw = String(value).slice(0, 10);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    const [year, month, day] = raw.split("-").map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  }
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleDateString("en-GB", {
+  const ymd = toCalendarDateString(value);
+  if (!ymd) return "—";
+  const [year, month, day] = ymd.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
