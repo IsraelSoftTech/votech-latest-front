@@ -60,7 +60,7 @@ function statusLabel(status) {
 
 export default function Debts() {
   useRestrictTo('Admin2');
-  const { activeYear } = useActiveYear();
+  const { activeYear, refreshContext } = useActiveYear();
   const [activeTab, setActiveTab] = useState('owed_by_school');
   const [debts, setDebts] = useState([]);
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
@@ -120,8 +120,22 @@ export default function Debts() {
     loadData();
   }, [loadData]);
 
-  const openCreateModal = () => {
-    if (!activeYear?.id) {
+  const resolveActiveYear = async () => {
+    if (activeYear?.id) return activeYear;
+    const refreshed = await refreshContext();
+    if (refreshed?.activeYear?.id) return refreshed.activeYear;
+    try {
+      const res = await api.getActiveAcademicYear();
+      if (res?.data?.id) return res.data;
+    } catch {
+      /* The save request resolves the year on the server. */
+    }
+    return null;
+  };
+
+  const openCreateModal = async () => {
+    const year = await resolveActiveYear();
+    if (!year?.id) {
       notify('No active academic year is configured. Contact Admin3.', 'error');
       return;
     }
@@ -129,7 +143,7 @@ export default function Debts() {
     setFormData({
       ...EMPTY_FORM,
       status: 'open',
-      academic_year_id: String(activeYear.id),
+      academic_year_id: String(year.id),
     });
     setFormModalOpen(true);
   };
@@ -160,10 +174,11 @@ export default function Debts() {
   const handleSaveDebt = async (e) => {
     e.preventDefault();
     const yearId = editingDebt
-      ? editingDebt.academic_year_id || activeYear?.id
-      : activeYear?.id;
+      ? editingDebt.academic_year_id || formData.academic_year_id || activeYear?.id
+      : formData.academic_year_id || activeYear?.id;
+    const resolvedYearId = yearId || (await resolveActiveYear())?.id;
 
-    if (!yearId) {
+    if (!resolvedYearId) {
       notify('No active academic year is configured. Contact Admin3.', 'error');
       return;
     }
@@ -178,7 +193,7 @@ export default function Debts() {
         reference_number: formData.reference_number.trim() || null,
         date_recorded: formData.date_recorded,
         due_date: formData.due_date || null,
-        academic_year_id: Number(yearId),
+        academic_year_id: Number(resolvedYearId),
         status: formData.status,
       };
 

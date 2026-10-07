@@ -5,6 +5,7 @@ import api from '../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Dean.css';
+import { formatCalendarDate, isOnOrAfterToday } from '../utils/calendarDate';
 
 export default function Dean() {
   const [events, setEvents] = useState([]);
@@ -21,25 +22,15 @@ export default function Dean() {
         
         // Fetch upcoming events
         const allEvents = await api.getEvents();
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
         const upcomingEvents = allEvents
-          .filter(event => {
-            const eventDate = new Date(event.event_date);
-            eventDate.setHours(0, 0, 0, 0);
-            return eventDate >= today;
-          })
+          .filter(event => isOnOrAfterToday(event.event_date))
           .slice(0, 3) // Show only 3 upcoming events
           .map(event => ({
             title: event.title,
-            date: new Date(event.event_date).toLocaleDateString('en-US', {
+            date: formatCalendarDate(event.event_date, {
               month: 'short',
               day: 'numeric',
               year: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true
             }),
             attendees: event.attendees || 0
           }));
@@ -48,10 +39,10 @@ export default function Dean() {
         // Fetch total users for Staff Members count
         try {
           const users = await api.getUsers();
-          const totalUsers = Array.isArray(users)
-            ? users.length
-            : (users && Array.isArray(users.data) ? users.data.length : 0);
-          setStaffCount(totalUsers);
+          const list = Array.isArray(users)
+            ? users
+            : (users && Array.isArray(users.data) ? users.data : []);
+          setStaffCount(list.filter((user) => !user?.suspended).length);
         } catch (e) {
           console.log('Failed to fetch users for staff count', e);
           setStaffCount(0);

@@ -163,10 +163,13 @@
 }
 
 .lp-comment-cell {
-  max-width: 200px;
+  max-width: 280px;
+  min-width: 160px;
   font-size: 0.85rem;
-  color: var(--vt-ink-soft);
+  color: var(--vt-ink);
+  white-space: normal;
   word-break: break-word;
+  line-height: 1.4;
 }
 
 /* Data panel */
@@ -502,6 +505,22 @@
 .action-btn.delete:hover {
   background: #fecaca;
   transform: scale(1.05);
+}
+
+.lp-decision-note {
+  margin: 0 0 16px;
+  color: #66708c;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.lp-decision-note strong {
+  color: #204080;
+  text-transform: capitalize;
+}
+
+.lp-muted {
+  color: #94a3b8;
 }
 
 .action-btn.approve {

@@ -691,6 +691,37 @@
   background: #fffbeb;
 }
 
+.hod-account-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 18px 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #b7e4c7;
+  background: #eaf7f0;
+  color: #1f7a4d;
+}
+
+.hod-account-banner strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.hod-account-banner span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.hod-account-banner--suspended {
+  background: #fdecec;
+  border-color: #f5c2c0;
+  color: #c0392b;
+}
+
 .hod-status-badge {
   display: inline-flex;
   align-items: center;

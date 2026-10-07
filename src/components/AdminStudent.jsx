@@ -317,10 +317,10 @@ export default function AdminStudent() {
         // Fetch users count for Registered Staff card
         try {
           const users = await api.getUsers();
-          const count = Array.isArray(users)
-            ? users.length
-            : (users && Array.isArray(users.data) ? users.data.length : 0);
-          setUsersCount(count);
+          const list = Array.isArray(users)
+            ? users
+            : (users && Array.isArray(users.data) ? users.data : []);
+          setUsersCount(list.filter((user) => !user?.suspended).length);
         } catch (e) {
           console.log("Failed to fetch users for staff count", e);
           setUsersCount(0);

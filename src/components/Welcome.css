@@ -223,6 +223,17 @@
   border-top: 1px solid rgba(30, 58, 138, 0.08);
 }
 
+.welcome-footer-link {
+  color: #1e3a8a;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.welcome-footer-link:hover {
+  color: #1d4ed8;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .welcome-hero-content {

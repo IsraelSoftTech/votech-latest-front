@@ -70,7 +70,15 @@ function Welcome() {
 
       <footer className="welcome-footer">
         <span>
-          © 2027 Votech Academy — Powered by Izzy Tech Team
+          © 2027 Votech Academy — Powered by{" "}
+          <a
+            className="welcome-footer-link"
+            href="https://izzytechteam.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Izzy Tech Team
+          </a>{" "}
           (+237 675 644 383)
         </span>
       </footer>

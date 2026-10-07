@@ -23,7 +23,7 @@ export async function fetchStudentThumbDataUrl(studentDbId, size = "card") {
 
   try {
     const params = new URLSearchParams({ size });
-    if (size === "card") {
+    if (size === "card" || size === "print") {
       params.set("generate", "true");
     }
     const response = await fetch(
@@ -40,7 +40,7 @@ export async function fetchStudentThumbDataUrl(studentDbId, size = "card") {
   }
 }
 
-export async function buildStudentPhotoMap(students = []) {
+export async function buildStudentPhotoMap(students = [], { size = "card" } = {}) {
   const map = {};
   const needFetch = [];
 
@@ -52,19 +52,25 @@ export async function buildStudentPhotoMap(students = []) {
       student.has_photo ?? Boolean(student.photo_url || student.photo);
     if (!hasPhoto) continue;
 
+    if (size === "print") {
+      needFetch.push({ id, fallback: student.thumb_src || null });
+      continue;
+    }
+
     if (student.thumb_src) {
       map[id] = student.thumb_src;
       photoCache.set(`${id}:card`, student.thumb_src);
     } else {
-      needFetch.push(id);
+      needFetch.push({ id, fallback: null });
     }
   }
 
   if (needFetch.length) {
     await Promise.all(
-      needFetch.map(async (id) => {
-        const dataUrl = await fetchStudentThumbDataUrl(id, "card");
+      needFetch.map(async ({ id, fallback }) => {
+        const dataUrl = await fetchStudentThumbDataUrl(id, size);
         if (dataUrl) map[id] = dataUrl;
+        else if (fallback) map[id] = fallback;
       })
     );
   }
@@ -163,6 +169,8 @@ export const DEFAULT_ID_CARD_SETTINGS = {
   qr_caption: "Scan for attendance",
   stamp_url: null,
   stamp_src: null,
+  date_issued: "",
+  expiry_date: "",
 };
 
 export async function fetchIdCardStampDataUrl() {

@@ -34,6 +34,7 @@ import {
   fetchIdCardStampDataUrl,
 } from "../utils/studentPhoto.util";
 import { getActiveYearSnapshot } from "../utils/activeYearSession";
+import { toCalendarDateString } from "../utils/calendarDate";
 import { downloadIdCardsPdf } from "../utils/downloadIdCards.util";
 import "./StudentIdCards.css";
 
@@ -104,6 +105,8 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
       setForm({
         ...DEFAULT_ID_CARD_SETTINGS,
         ...settings,
+        date_issued: toCalendarDateString(settings.date_issued),
+        expiry_date: toCalendarDateString(settings.expiry_date),
         stampFile: null,
         remove_stamp: false,
       });
@@ -180,8 +183,8 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
         </div>
         <div className="sidc-settings-body">
           <p className="sidc-settings-hint">
-            Configure the school name, motto, title, and official stamp shown on
-            every student ID card.
+            Configure the school name, motto, title, dates, and official stamp
+            shown on every student ID card.
           </p>
           <div className="sidc-settings-grid">
             <label className="sidc-settings-field sidc-settings-field--wide">
@@ -236,6 +239,24 @@ function IdCardSettingsModal({ open, settings, saving, onClose, onSave }) {
                 value={form.qr_caption}
                 onChange={handleChange}
                 placeholder="Scan for attendance"
+              />
+            </label>
+            <label className="sidc-settings-field">
+              <span>Date Issued</span>
+              <input
+                type="date"
+                name="date_issued"
+                value={form.date_issued || ""}
+                onChange={handleChange}
+              />
+            </label>
+            <label className="sidc-settings-field">
+              <span>Expiry Date</span>
+              <input
+                type="date"
+                name="expiry_date"
+                value={form.expiry_date || ""}
+                onChange={handleChange}
               />
             </label>
             <div className="sidc-settings-field sidc-settings-field--wide">
@@ -379,6 +400,8 @@ export default function StudentIdCards() {
       const next = {
         ...DEFAULT_ID_CARD_SETTINGS,
         ...data,
+        date_issued: toCalendarDateString(data?.date_issued),
+        expiry_date: toCalendarDateString(data?.expiry_date),
         stamp_src: stampSrc,
         remove_stamp: false,
       };
@@ -525,7 +548,7 @@ export default function StudentIdCards() {
     if (!students.length) return;
     setDownloading(true);
     try {
-      const photoMap = await buildStudentPhotoMap(students);
+      const photoMap = await buildStudentPhotoMap(students, { size: "print" });
 
       flushSync(() => {
         setDownloadPhotoMap(photoMap);
@@ -597,6 +620,8 @@ export default function StudentIdCards() {
       const next = {
         ...DEFAULT_ID_CARD_SETTINGS,
         ...saved,
+        date_issued: toCalendarDateString(saved?.date_issued),
+        expiry_date: toCalendarDateString(saved?.expiry_date),
         stamp_src: stampSrc,
         remove_stamp: false,
       };

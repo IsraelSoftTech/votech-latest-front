@@ -2,6 +2,30 @@ import React, { useLayoutEffect } from "react";
 import "./ReportCard.css";
 import logo from "../../../../assets/logo.png";
 
+function formatBirthDate(value) {
+  if (!value) return "—";
+  const raw = String(value).slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (!match) return String(value);
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const month = months[Number(match[2]) - 1];
+  if (!month) return String(value);
+  return `${Number(match[3])} ${month} ${match[1]}`;
+}
+
 const sampleData = {
   student: {
     name: "NKONGHO LUA DANIEL",
@@ -830,7 +854,7 @@ export default function ReportCard({
               </tr>
               <tr>
                 <td className="label">Date of Birth:</td>
-                <td className="value">{data.student.dateOfBirth}</td>
+                <td className="value">{formatBirthDate(data.student.dateOfBirth)}</td>
                 <td className="label">Academic Year:</td>
                 <td className="value">{data.student.academicYear}</td>
               </tr>

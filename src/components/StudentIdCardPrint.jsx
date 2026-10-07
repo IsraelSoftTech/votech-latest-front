@@ -2,21 +2,18 @@ import React, { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import logo from "../assets/logo.png";
 import { DEFAULT_ID_CARD_SETTINGS } from "../utils/studentPhoto.util";
+import { toCalendarDateString } from "../utils/calendarDate";
 import "./StudentIdCardPrint.css";
 
 function formatDate(value) {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleDateString("en-GB", {
+  const ymd = toCalendarDateString(value);
+  if (!ymd) return "—";
+  const [year, month, day] = ymd.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
-}
-
-function getIssuedDate(student) {
-  return student.registration_date || student.regDate || student.issued_at;
 }
 
 function CardPhoto({ student, photoSrc }) {
@@ -39,13 +36,18 @@ function CardPhoto({ student, photoSrc }) {
   return <div className="sid-photo-fallback">{initial}</div>;
 }
 
-function DetailItem({ label, value }) {
+function DetailItem({ label, value, wrap = false }) {
   return (
-    <div className="sid-detail-item">
+    <div className={`sid-detail-item${wrap ? " sid-detail-item--wrap" : ""}`}>
       <span className="sid-detail-label">{label}</span>
       <span className="sid-detail-value">{value || "—"}</span>
     </div>
   );
+}
+
+function joinParts(parts) {
+  const text = parts.map((part) => String(part || "").trim()).filter(Boolean);
+  return text.join(" · ");
 }
 
 /**
@@ -139,20 +141,41 @@ export function StudentIdCardPrint({
               <DetailItem label="Class" value={student.class_name} />
               <DetailItem label="Department" value={student.specialty_name} />
               <DetailItem label="Academic Year" value={student.academic_year_name} />
+            </div>
+
+            <div className="sid-bio-row">
               <DetailItem label="Sex" value={student.sex} />
               <DetailItem label="DOB" value={formatDate(student.date_of_birth)} />
-              <DetailItem label="POB" value={student.place_of_birth} />
-              <DetailItem label="Father" value={student.father_name} />
-              <DetailItem label="Mother" value={student.mother_name} />
-              <DetailItem label="Guardian" value={student.guardian_contact} />
+            </div>
+
+            <div className="sid-origin-row">
+              <DetailItem label="POB" wrap value={student.place_of_birth} />
+              <DetailItem label="Father" wrap value={student.father_name} />
+            </div>
+
+            <div className="sid-family-row">
+              <DetailItem
+                label="Mother"
+                wrap
+                value={joinParts([student.mother_name, student.mother_contact])}
+              />
+              <DetailItem
+                label="Guardian"
+                wrap
+                value={joinParts([student.guardian_name, student.guardian_contact])}
+              />
             </div>
 
             <div className="sid-card-bottom">
               <div className="sid-details-footer">
                 <DetailItem label="Card No." value={student.card_number} />
                 <DetailItem
-                  label="Issued"
-                  value={formatDate(getIssuedDate(student))}
+                  label="Date Issued"
+                  value={formatDate(settings.date_issued)}
+                />
+                <DetailItem
+                  label="Expiry Date"
+                  value={formatDate(settings.expiry_date)}
                 />
               </div>
               {settings.stamp_src ? (
@@ -169,7 +192,9 @@ export function StudentIdCardPrint({
         </div>
 
         <div className="sid-card-footer-strip" aria-hidden="true">
-          <span className="sid-footer-text">{settings.school_name}</span>
+          <span className="sid-footer-text">
+            VOTECH S7 ACADEMY || Powered by Izzy Tech Team (+237 675644383)
+          </span>
         </div>
       </article>
     </div>

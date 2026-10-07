@@ -6,8 +6,10 @@ import {
   FaBookOpen,
   FaChalkboardTeacher,
   FaExclamationCircle,
+  FaUserTie,
 } from "react-icons/fa";
 import api from "../../utils/api";
+import useHodStatus from "../../../../hooks/useHodStatus";
 import SideTop from "../../../SideTop";
 import { PageHeader } from "../../components/PageHeader/PageHeader.component";
 import { EmptyState } from "../../components/EmptyState/EmptyState.component";
@@ -83,6 +85,7 @@ export const TeacherDashboardPage = () => {
     }
   }, []);
   const displayName = authUser?.name || authUser?.username || "";
+  const hod = useHodStatus();
 
   useEffect(() => {
     let cancelled = false;
@@ -161,6 +164,33 @@ export const TeacherDashboardPage = () => {
           title={displayName ? `${getGreeting()}, ${displayName}` : "My Dashboard"}
           subtitle={`Your classes, students, and subjects for ${data.academicYear}`}
         />
+
+        {hod.hod_status === "active" && (
+          <div className="tcd-hod-banner" role="status">
+            <FaUserTie />
+            <div>
+              <strong>Head of Department</strong>
+              <span>
+                {hod.department_name
+                  ? `${hod.department_name}. Open Dept Lesson Plans from your menu.`
+                  : "Department lesson plans are available from your menu."}
+              </span>
+            </div>
+          </div>
+        )}
+        {hod.hod_status === "suspended" && (
+          <div className="tcd-hod-banner tcd-hod-banner--suspended" role="status">
+            <FaUserTie />
+            <div>
+              <strong>HOD assignment suspended</strong>
+              <span>
+                {hod.department_name
+                  ? `Your role for ${hod.department_name} is suspended until Admin4 reactivates it.`
+                  : "Your HOD role is suspended until Admin4 reactivates it."}
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="tcd-stat-grid">
           <StatCard icon={<FaChalkboard />} label="My Classes" value={data.classes.length} />

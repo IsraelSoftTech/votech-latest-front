@@ -16,7 +16,7 @@ export default function Admin2Dash() {
       .getAllUsers()
       .then((users) => {
         const list = Array.isArray(users) ? users : [];
-        setStaffCount(list.filter((u) => !u.suspended).length);
+        setStaffCount(list.filter((u) => u && !u.suspended).length);
       })
       .catch(() => setStaffCount(0));
   }, []);
