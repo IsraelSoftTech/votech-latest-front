@@ -13,6 +13,7 @@ import {
   FaGraduationCap,
   FaSignOutAlt,
   FaUndo,
+  FaArchive,
 } from "react-icons/fa";
 import { useRestrictTo } from "../../../../hooks/restrictTo";
 import api, { headers, subBaseURL } from "../../utils/api";
@@ -22,6 +23,7 @@ import DataTable from "../../components/DataTable/DataTable.component";
 import { StudentFormModal } from "../../components/StudentFormModal/StudentFormModal.component";
 import { RegisterStudentFlow } from "../../components/RegisterStudentFlow/RegisterStudentFlow.component";
 import { ExitStudentModal } from "../../components/ExitStudentModal/ExitStudentModal.component";
+import { ArchivedClassListModal } from "../../components/ArchivedClassListModal/ArchivedClassListModal.component";
 import { Button } from "../../components/Button/Button.component";
 // Rebuilt into a full page — see StudentDetailPage. Kept here, not
 // deleted, in case this needs reverting.
@@ -174,6 +176,7 @@ export const StudentsPage = () => {
   const [detailStudent, setDetailStudent] = useState(null);
   const [backfillModalOpen, setBackfillModalOpen] = useState(false);
   const [downloadingClassList, setDownloadingClassList] = useState(false);
+  const [archivedListOpen, setArchivedListOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -705,25 +708,45 @@ export const StudentsPage = () => {
               ))}
             </>
           ) : classFilter ? (
-            <button
-              type="button"
-              className="students-classlist-btn"
-              onClick={handleDownloadClassList}
-              disabled={downloadingClassList}
-            >
-              {downloadingClassList ? (
-                <>
-                  <FaSpinner className="students-spin" /> Generating…
-                </>
-              ) : (
-                <>
-                  <FaFileDownload /> Download Class List
-                </>
+            <>
+              <button
+                type="button"
+                className="students-classlist-btn"
+                onClick={handleDownloadClassList}
+                disabled={downloadingClassList}
+              >
+                {downloadingClassList ? (
+                  <>
+                    <FaSpinner className="students-spin" /> Generating…
+                  </>
+                ) : (
+                  <>
+                    <FaFileDownload /> Download Class List
+                  </>
+                )}
+              </button>
+              {canManageStudents && (
+                <button
+                  type="button"
+                  className="students-classlist-btn"
+                  onClick={() => setArchivedListOpen(true)}
+                >
+                  <FaArchive /> Past Year List
+                </button>
               )}
-            </button>
+            </>
           ) : null
         }
       />
+
+      {canManageStudents && (
+        <ArchivedClassListModal
+          isOpen={archivedListOpen}
+          onClose={() => setArchivedListOpen(false)}
+          classItem={classes.find((c) => c.id === classFilter) || null}
+          academicYears={academicYears}
+        />
+      )}
 
       {/* Edit only: new registrations go through RegisterStudentFlow below. */}
       <StudentFormModal

@@ -1,0 +1,68 @@
+@import "../../styles/tokens.css";
+
+.acl-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.acl-intro,
+.acl-empty {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--vt-ink-soft);
+}
+
+.acl-years {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.acl-year {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  min-height: 44px;
+  border: 1.5px solid var(--vt-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--vt-ink);
+  cursor: pointer;
+}
+
+.acl-year input {
+  accent-color: var(--vt-primary);
+  flex: none;
+}
+
+.acl-year--on {
+  border-color: var(--vt-primary);
+  background: var(--vt-primary-tint);
+}
+
+.acl-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.acl-actions .vt-btn {
+  min-height: 44px;
+}
+
+@media (max-width: 480px) {
+  .acl-years {
+    grid-template-columns: 1fr;
+  }
+
+  .acl-actions {
+    flex-direction: column-reverse;
+  }
+
+  .acl-actions .vt-btn {
+    width: 100%;
+  }
+}

@@ -21,6 +21,7 @@ import {
   FaGraduationCap,
   FaSignOutAlt,
   FaUndo,
+  FaArchive,
 } from "react-icons/fa";
 import SideTop from "../../../SideTop";
 import api, { headers, subBaseURL } from "../../utils/api";
@@ -31,6 +32,7 @@ import { ClassFormModal } from "../../components/ClassFormModal/ClassFormModal.c
 import { StudentFormModal } from "../../components/StudentFormModal/StudentFormModal.component";
 import { RegisterStudentFlow } from "../../components/RegisterStudentFlow/RegisterStudentFlow.component";
 import { ExitStudentModal } from "../../components/ExitStudentModal/ExitStudentModal.component";
+import { ArchivedClassListModal } from "../../components/ArchivedClassListModal/ArchivedClassListModal.component";
 import Modal from "../../components/Modal/Modal.component";
 import { Button } from "../../components/Button/Button.component";
 // import { ServerListControls } from "../../components/ServerListControls/ServerListControls.component";
@@ -84,6 +86,7 @@ function StudentsTab({ classItem }) {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
   const [downloadingClassList, setDownloadingClassList] = useState(false);
+  const [archivedListOpen, setArchivedListOpen] = useState(false);
 
   const [classesOptions, setClassesOptions] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -457,11 +460,21 @@ function StudentsTab({ classItem }) {
             <Button variant="secondary" icon={downloadingClassList ? <FaSpinner className="students-spin" /> : <FaFileDownload />} onClick={handleDownloadClassList} disabled={downloadingClassList}>
               {downloadingClassList ? "Generating…" : "Class List"}
             </Button>
+            <Button variant="secondary" icon={<FaArchive />} onClick={() => setArchivedListOpen(true)}>
+              Past Year List
+            </Button>
             <Button icon={<FaPlus />} onClick={handleRegister}>
               Register Student
             </Button>
           </>
         }
+      />
+
+      <ArchivedClassListModal
+        isOpen={archivedListOpen}
+        onClose={() => setArchivedListOpen(false)}
+        classItem={classItem}
+        academicYears={academicYears}
       />
 
       {/* Edit only: new registrations go through RegisterStudentFlow below. */}
