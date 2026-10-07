@@ -744,7 +744,6 @@ export const StudentsPage = () => {
           isOpen={archivedListOpen}
           onClose={() => setArchivedListOpen(false)}
           classItem={classes.find((c) => c.id === classFilter) || null}
-          academicYears={academicYears}
         />
       )}
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaArchive, FaFileDownload, FaSpinner } from "react-icons/fa";
+import { FaFileDownload, FaSpinner } from "react-icons/fa";
 import { toast } from "react-toastify";
 import Modal from "../Modal/Modal.component";
 import { Button } from "../Button/Button.component";
@@ -11,18 +11,41 @@ import "./ArchivedClassListModal.styles.css";
 // Admin1 switching the active year. Only archived years are offered, so the
 // current year can't be picked here; it has the normal "Class List" button.
 // The PDF itself carries an "archived" banner and footer on every page.
-export function ArchivedClassListModal({ isOpen, onClose, classItem, academicYears = [] }) {
-  const pastYears = academicYears
-    .filter((y) => y.status !== "active")
-    .sort((a, b) => String(b.name).localeCompare(String(a.name)));
+//
+// Loads its own year list: plain GET /academic-years returns ONLY the active
+// year (readAllAcademicYears), so the pages' own list never holds a past
+// year. ?all=true is what returns archived years too.
+export function ArchivedClassListModal({ isOpen, onClose, classItem }) {
+  const [pastYears, setPastYears] = useState([]);
+  const [loadingYears, setLoadingYears] = useState(false);
   const [yearId, setYearId] = useState(null);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
-    setYearId(pastYears[0]?.id ?? null);
+    let cancelled = false;
     setDownloading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setYearId(null);
+    setLoadingYears(true);
+    api
+      .get("/academic-years", { params: { all: "true" } })
+      .then((res) => {
+        if (cancelled) return;
+        const past = (res.data?.data || [])
+          .filter((y) => y.status !== "active")
+          .sort((a, b) => String(b.name).localeCompare(String(a.name)));
+        setPastYears(past);
+        setYearId(past[0]?.id ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load academic years.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingYears(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   const handleDownload = async () => {
@@ -57,7 +80,7 @@ export function ArchivedClassListModal({ isOpen, onClose, classItem, academicYea
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={() => !downloading && onClose()} title="Past year class list" icon={<FaArchive />}>
+    <Modal isOpen={isOpen} onClose={() => !downloading && onClose()} title="Past year class list">
       <div className="acl-body">
         <p className="acl-intro">
           Download <strong>{classItem?.name}</strong> as it was in a past academic year. The list is rebuilt from
@@ -65,7 +88,11 @@ export function ArchivedClassListModal({ isOpen, onClose, classItem, academicYea
           graduated or left. Every page is marked as archived.
         </p>
 
-        {pastYears.length === 0 ? (
+        {loadingYears ? (
+          <p className="acl-empty">
+            <FaSpinner className="students-spin" /> Loading academic years…
+          </p>
+        ) : pastYears.length === 0 ? (
           <p className="acl-empty">There are no past academic years yet.</p>
         ) : (
           <div className="acl-years" role="radiogroup" aria-label="Academic year">

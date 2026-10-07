@@ -474,7 +474,6 @@ function StudentsTab({ classItem }) {
         isOpen={archivedListOpen}
         onClose={() => setArchivedListOpen(false)}
         classItem={classItem}
-        academicYears={academicYears}
       />
 
       {/* Edit only: new registrations go through RegisterStudentFlow below. */}
