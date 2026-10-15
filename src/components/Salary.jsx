@@ -21,6 +21,11 @@ function salaryPageNumbers(current, total) {
   return [...pages].sort((a, b) => a - b);
 }
 
+function getStaffRowId(application) {
+  if (!application) return null;
+  return application.applicant_id ?? application.application_id ?? null;
+}
+
 export default function Salary({ authUser }) {
   const [approvedApplications, setApprovedApplications] = useState([]);
   const [statistics, setStatistics] = useState({
@@ -201,7 +206,9 @@ export default function Salary({ authUser }) {
       return;
     }
 
-    setEditingSalary(application.application_id);
+    const rowId = getStaffRowId(application);
+    if (rowId == null) return;
+    setEditingSalary(rowId);
     setSalaryAmount(application.salary_amount > 0 ? application.salary_amount.toString() : '');
     setEditMonth(monthNumber);
     setEditYear(yearValue);
@@ -873,7 +880,7 @@ export default function Salary({ authUser }) {
                         </label>
                       </td>
                       <td className="salary-table-cell salary-amount-cell">
-                        {editingSalary === app.application_id ? (
+                        {editingSalary != null && editingSalary === getStaffRowId(app) ? (
                           <div className="salary-edit-container">
                             <p className="salary-edit-warning">
                               This change affects {getMonthName(editMonth)} {editYear || getAcademicYearStart()} only.
@@ -948,7 +955,7 @@ export default function Salary({ authUser }) {
                         )}
                       </td>
                       <td className="salary-table-cell salary-actions-cell">
-                        {editingSalary === app.application_id ? (
+                        {editingSalary != null && editingSalary === getStaffRowId(app) ? (
                           <div className="salary-action-buttons">
                             <button
                               className="salary-action-btn salary-save-btn"
@@ -1087,7 +1094,7 @@ export default function Salary({ authUser }) {
                       <div className="salary-pay-search-results">
                         {filteredNames.map((app) => (
                           <button
-                            key={app.application_id}
+                            key={getStaffRowId(app) || app.applicant_name}
                             className="salary-pay-search-result-btn"
                             onClick={() => selectName(app)}
                           >
