@@ -2495,11 +2495,22 @@ class ApiService {
   // === End Applications API ===
 
   // === Salary API ===
-  async getApprovedApplications() {
+  async getApprovedApplications(options = {}) {
     try {
-      const response = await fetch(`${API_URL}/salary/approved-applications`, {
-        headers: this.getAuthHeaders(),
-      });
+      const params = new URLSearchParams();
+      if (options.month != null && options.month !== "") {
+        params.set("month", String(options.month));
+      }
+      if (options.year != null && options.year !== "") {
+        params.set("year", String(options.year));
+      }
+      const query = params.toString();
+      const response = await fetch(
+        `${API_URL}/salary/approved-applications${query ? `?${query}` : ""}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      );
       return this.handleResponse(response);
     } catch (error) {
       console.error("Get approved applications error:", error);
@@ -2507,11 +2518,22 @@ class ApiService {
     }
   }
 
-  async getSalaryStatistics() {
+  async getSalaryStatistics(options = {}) {
     try {
-      const response = await fetch(`${API_URL}/salary/statistics`, {
-        headers: this.getAuthHeaders(),
-      });
+      const params = new URLSearchParams();
+      if (options.month != null && options.month !== "") {
+        params.set("month", String(options.month));
+      }
+      if (options.year != null && options.year !== "") {
+        params.set("year", String(options.year));
+      }
+      const query = params.toString();
+      const response = await fetch(
+        `${API_URL}/salary/statistics${query ? `?${query}` : ""}`,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      );
       return this.handleResponse(response);
     } catch (error) {
       console.error("Get salary statistics error:", error);

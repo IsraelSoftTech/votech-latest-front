@@ -12,11 +12,11 @@ function blobToDataUrl(blob) {
   });
 }
 
-export async function fetchStudentThumbDataUrl(studentDbId, size = "card") {
+export async function fetchStudentThumbDataUrl(studentDbId, size = "card", version = "") {
   const id = Number(studentDbId);
   if (!id) return null;
 
-  const cacheKey = `${id}:${size}`;
+  const cacheKey = `${id}:${size}:${version || ""}`;
   if (photoCache.has(cacheKey)) {
     return photoCache.get(cacheKey);
   }
@@ -26,9 +26,10 @@ export async function fetchStudentThumbDataUrl(studentDbId, size = "card") {
     if (size === "card" || size === "print") {
       params.set("generate", "true");
     }
+    if (version) params.set("v", String(version));
     const response = await fetch(
       `${config.API_URL}/students/${id}/photo/thumb?${params}`,
-      { headers: api.getAuthHeaders() }
+      { headers: api.getAuthHeaders(), cache: "no-store" }
     );
     if (!response.ok) return null;
     const blob = await response.blob();
@@ -52,23 +53,24 @@ export async function buildStudentPhotoMap(students = [], { size = "card" } = {}
       student.has_photo ?? Boolean(student.photo_url || student.photo);
     if (!hasPhoto) continue;
 
+    const version = student.photo_url || "";
     if (size === "print") {
-      needFetch.push({ id, fallback: student.thumb_src || null });
+      needFetch.push({ id, fallback: null, version });
       continue;
     }
 
     if (student.thumb_src) {
       map[id] = student.thumb_src;
-      photoCache.set(`${id}:card`, student.thumb_src);
+      photoCache.set(`${id}:card:${version}`, student.thumb_src);
     } else {
-      needFetch.push({ id, fallback: null });
+      needFetch.push({ id, fallback: null, version });
     }
   }
 
   if (needFetch.length) {
     await Promise.all(
-      needFetch.map(async ({ id, fallback }) => {
-        const dataUrl = await fetchStudentThumbDataUrl(id, size);
+      needFetch.map(async ({ id, fallback, version }) => {
+        const dataUrl = await fetchStudentThumbDataUrl(id, size, version);
         if (dataUrl) map[id] = dataUrl;
         else if (fallback) map[id] = fallback;
       })

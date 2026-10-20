@@ -482,6 +482,8 @@ export default function StudentIdCards() {
     fetchPage();
   }, [fetchPage]);
 
+  useEffect(() => () => listCache.clear(), []);
+
   const startIndex =
     totalFiltered === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endIndex = Math.min(currentPage * itemsPerPage, totalFiltered);

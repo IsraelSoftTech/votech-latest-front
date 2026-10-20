@@ -39,6 +39,7 @@ export default function Salary({ authUser }) {
   const [salaryAmount, setSalaryAmount] = useState('');
   const [editMonth, setEditMonth] = useState(new Date().getMonth() + 1);
   const [editYear, setEditYear] = useState(null);
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth() + 1);
   const [successMessage, setSuccessMessage] = useState('');
   
   // Get permissions
@@ -93,10 +94,10 @@ export default function Salary({ authUser }) {
       setLoading(false);
       return;
     }
-    fetchData();
+    fetchData(viewMonth);
     // fetchData closes over the latest handlers; listing it would refetch on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authUser]);
+  }, [authUser, viewMonth]);
 
   // Persist CNPS preferences whenever they change
   useEffect(() => {
@@ -152,13 +153,17 @@ export default function Salary({ authUser }) {
     setMessageBox(prev => ({ ...prev, isOpen: false }));
   };
 
-  const fetchData = async () => {
+  const fetchData = async (monthNumber = viewMonth) => {
     try {
       setLoading(true);
+      const period = {
+        month: monthNumber,
+        year: getAcademicYearStart(),
+      };
       // Use backend aggregator that now returns all users with salary info
       const [applicationsData, statsData] = await Promise.all([
-        api.getApprovedApplications(),
-        api.getSalaryStatistics()
+        api.getApprovedApplications(period),
+        api.getSalaryStatistics(period)
       ]);
       setApprovedApplications(applicationsData);
       setStatistics(statsData);
@@ -188,14 +193,8 @@ export default function Salary({ authUser }) {
   };
 
   const handleEditSalary = (application) => {
-    const monthIndex = application.salary_month
-      ? [
-          'January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December',
-        ].indexOf(application.salary_month)
-      : -1;
-    const monthNumber = monthIndex >= 0 ? monthIndex + 1 : new Date().getMonth() + 1;
-    const yearValue = application.salary_year || getAcademicYearStart();
+    const monthNumber = viewMonth;
+    const yearValue = getAcademicYearStart();
 
     if (application.salary_status === 'paid') {
       showMessage(
@@ -220,6 +219,12 @@ export default function Salary({ authUser }) {
     return application.all_salary_records.find(
       (record) => record.month === monthName && Number(record.year) === Number(yearValue)
     );
+  };
+
+  const salaryAmountForMonth = (application, monthNumber, yearValue = getAcademicYearStart()) => {
+    const record = getSalaryRecordForEdit(application, monthNumber, yearValue);
+    const amount = Number(record?.amount);
+    return amount > 0 ? String(record.amount) : '';
   };
 
   const handleSaveSalary = async (application) => {
@@ -254,8 +259,12 @@ export default function Salary({ authUser }) {
       setSalaryAmount('');
       setEditMonth(new Date().getMonth() + 1);
       setEditYear(null);
-      
-      await fetchData();
+
+      if (Number(editMonth) !== Number(viewMonth)) {
+        setViewMonth(Number(editMonth));
+      } else {
+        await fetchData(Number(editMonth));
+      }
       
       setTimeout(() => {
         setSuccessMessage('');
@@ -442,7 +451,7 @@ export default function Salary({ authUser }) {
       
       if (app.all_salary_records) {
         const selectedMonthRecord = app.all_salary_records.find(record => 
-          record.month === selectedMonthName && record.year === getCurrentAcademicYear().split('/')[0] // Use current academic year's start year
+          record.month === selectedMonthName && Number(record.year) === getAcademicYearStart()
         );
         // Only exclude if this specific month is already paid
         alreadyPaidForSelectedPeriod = selectedMonthRecord && selectedMonthRecord.paid === true;
@@ -460,7 +469,7 @@ export default function Salary({ authUser }) {
     setPayForm({
       ...payForm,
       name: application.applicant_name,
-      salaryAmount: application.salary_amount > 0 ? application.salary_amount.toString() : ''
+      salaryAmount: salaryAmountForMonth(application, payForm.month)
     });
     setSelectedApplication(application);
     setSearchQuery(application.applicant_name);
@@ -469,34 +478,35 @@ export default function Salary({ authUser }) {
 
   const handlePayFormChange = (e) => {
     const { name, value } = e.target;
-    setPayForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const nextMonth = name === 'month' ? parseInt(value, 10) : payForm.month;
+    setPayForm(prev => {
+      const next = {
+        ...prev,
+        [name]: name === 'month' ? nextMonth : value
+      };
+      if (name === 'month' && selectedApplication) {
+        next.salaryAmount = salaryAmountForMonth(selectedApplication, nextMonth);
+      }
+      return next;
+    });
 
-    // If month or year changes, trigger a new search to update the filtered results
-    if ((name === 'month') && searchQuery.trim() !== '') {
-      // Trigger search again with the new month/year
+    // If month changes, refresh who can still be paid for that month
+    if (name === 'month' && searchQuery.trim() !== '') {
       const filtered = approvedApplications.filter(app => {
         const nameMatches = app.applicant_name.toLowerCase().includes(searchQuery.toLowerCase());
-        
-        // Only exclude if this employee is already paid for the SPECIFIC month being selected
-        const selectedMonthName = getMonthName(parseInt(value));
-        const selectedYear = getCurrentAcademicYear().split('/')[0]; // Use current academic year's start year
+        const selectedMonthName = getMonthName(nextMonth);
         let alreadyPaidForSelectedPeriod = false;
-        
+
         if (app.all_salary_records) {
-          const selectedMonthRecord = app.all_salary_records.find(record => 
-            record.month === selectedMonthName && record.year === selectedYear
+          const selectedMonthRecord = app.all_salary_records.find(record =>
+            record.month === selectedMonthName && Number(record.year) === getAcademicYearStart()
           );
-          // Only exclude if this specific month is already paid
           alreadyPaidForSelectedPeriod = selectedMonthRecord && selectedMonthRecord.paid === true;
         }
-        
-        // Show employee if name matches AND they haven't been paid for the selected month
+
         return nameMatches && !alreadyPaidForSelectedPeriod;
       });
-      
+
       setFilteredNames(filtered);
       setShowSearchResults(true);
     }
@@ -658,14 +668,6 @@ export default function Salary({ authUser }) {
     }).format(amount);
   };
 
-  const getCurrentMonthName = () => {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return months[new Date().getMonth()];
-  };
-
   const getMonthName = (monthNumber) => {
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
@@ -757,8 +759,8 @@ export default function Salary({ authUser }) {
           </h1>
           <p className="salary-subtitle">
             {isReadOnly 
-              ? `Salary records for staff — ${getCurrentMonthName()} ${new Date().getFullYear()}`
-              : `Manage salaries for staff — ${getCurrentMonthName()} ${new Date().getFullYear()}`
+              ? `Salary records for staff — ${getMonthName(viewMonth)} ${getAcademicYearStart()}`
+              : `Manage salaries for staff — ${getMonthName(viewMonth)} ${getAcademicYearStart()}`
             }
           </p>
         </div>
@@ -772,7 +774,7 @@ export default function Salary({ authUser }) {
             <div className="salary-stat-content">
               <h3 className="salary-stat-title">Total Paid</h3>
               <p className="salary-stat-amount">{formatCurrency(statistics.totalPaid)}</p>
-              <p className="salary-stat-label">This Month</p>
+              <p className="salary-stat-label">{getMonthName(viewMonth)}</p>
             </div>
           </div>
 
@@ -783,7 +785,7 @@ export default function Salary({ authUser }) {
             <div className="salary-stat-content">
               <h3 className="salary-stat-title">Total Pending</h3>
               <p className="salary-stat-amount">{formatCurrency(statistics.totalPending)}</p>
-              <p className="salary-stat-label">This Month</p>
+              <p className="salary-stat-label">{getMonthName(viewMonth)}</p>
             </div>
           </div>
         </div>
@@ -791,7 +793,24 @@ export default function Salary({ authUser }) {
         {/* Applications Table */}
         <div className="salary-table-container">
           <div className="salary-table-header">
-            <h2 className="salary-table-title">All Staff</h2>
+            <div className="salary-table-heading">
+              <h2 className="salary-table-title">All Staff</h2>
+              <label className="salary-month-filter">
+                <span>Status for</span>
+                <select
+                  value={viewMonth}
+                  onChange={(e) => {
+                    setEditingSalary(null);
+                    setViewMonth(parseInt(e.target.value, 10));
+                  }}
+                  aria-label="Salary month"
+                >
+                  {months.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
             {!isReadOnly && (
               <div className="salary-table-actions">
                 <button 
@@ -899,6 +918,8 @@ export default function Salary({ authUser }) {
                                   );
                                   if (record?.amount > 0) {
                                     setSalaryAmount(String(record.amount));
+                                  } else {
+                                    setSalaryAmount('');
                                   }
                                 }}
                               >
@@ -1123,7 +1144,7 @@ export default function Salary({ authUser }) {
                     min="0"
                     step="0.01"
                     className="salary-pay-form-input"
-                    readOnly={selectedApplication && selectedApplication.salary_amount > 0}
+                    readOnly={Boolean(selectedApplication && salaryAmountForMonth(selectedApplication, payForm.month))}
                   />
                 </div>
 

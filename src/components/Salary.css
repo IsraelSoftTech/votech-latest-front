@@ -170,11 +170,30 @@
   margin-bottom: 1rem;
 }
 
-.salary-table-title {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--vt-primary);
+.salary-table-heading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.salary-month-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--vt-ink-soft);
+}
+
+.salary-month-filter select {
+  border: 1.5px solid var(--vt-border);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--vt-ink);
+  background: #fff;
 }
 
 .salary-table-actions {
