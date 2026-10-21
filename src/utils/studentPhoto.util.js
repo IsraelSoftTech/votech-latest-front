@@ -41,6 +41,28 @@ export async function fetchStudentThumbDataUrl(studentDbId, size = "card", versi
   }
 }
 
+async function mapWithLimit(items, limit, worker) {
+  if (!items.length) return;
+  const queue = [...items];
+  const workers = Array.from(
+    { length: Math.min(limit, queue.length) },
+    async () => {
+      while (queue.length) {
+        const item = queue.shift();
+        await worker(item);
+      }
+    }
+  );
+  await Promise.all(workers);
+}
+
+async function fetchStudentThumbWithRetry(id, size, version) {
+  const first = await fetchStudentThumbDataUrl(id, size, version);
+  if (first) return first;
+  await new Promise((resolve) => setTimeout(resolve, 350));
+  return fetchStudentThumbDataUrl(id, size, version);
+}
+
 export async function buildStudentPhotoMap(students = [], { size = "card" } = {}) {
   const map = {};
   const needFetch = [];
@@ -49,13 +71,18 @@ export async function buildStudentPhotoMap(students = [], { size = "card" } = {}
     const id = student.student_db_id || student.id;
     if (!id) continue;
 
+    const version = student.photo_url || "";
+    if (size === "print" && student.print_src) {
+      map[id] = student.print_src;
+      continue;
+    }
+
     const hasPhoto =
-      student.has_photo ?? Boolean(student.photo_url || student.photo);
+      student.has_photo ?? Boolean(student.photo_url || student.photo || student.thumb_src);
     if (!hasPhoto) continue;
 
-    const version = student.photo_url || "";
     if (size === "print") {
-      needFetch.push({ id, fallback: null, version });
+      needFetch.push({ id, fallback: student.thumb_src || null, version });
       continue;
     }
 
@@ -67,15 +94,11 @@ export async function buildStudentPhotoMap(students = [], { size = "card" } = {}
     }
   }
 
-  if (needFetch.length) {
-    await Promise.all(
-      needFetch.map(async ({ id, fallback, version }) => {
-        const dataUrl = await fetchStudentThumbDataUrl(id, size, version);
-        if (dataUrl) map[id] = dataUrl;
-        else if (fallback) map[id] = fallback;
-      })
-    );
-  }
+  await mapWithLimit(needFetch, 3, async ({ id, fallback, version }) => {
+    const dataUrl = await fetchStudentThumbWithRetry(id, size, version);
+    if (dataUrl) map[id] = dataUrl;
+    else if (fallback) map[id] = fallback;
+  });
 
   return map;
 }

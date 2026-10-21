@@ -9,25 +9,31 @@ const COL_GAP_MM = 8;
 const ROW_GAP_MM = 4;
 const CARDS_PER_PAGE = 10;
 
-function waitForImages(root, timeoutMs = 10000) {
+function waitForImages(root, timeoutMs = 20000) {
   const imgs = [...root.querySelectorAll("img")];
   if (!imgs.length) return Promise.resolve();
 
+  const ready = Promise.all(
+    imgs.map(async (img) => {
+      if (img.complete && img.naturalWidth > 0) return;
+      if (typeof img.decode === "function") {
+        try {
+          await img.decode();
+          if (img.naturalWidth > 0) return;
+        } catch {
+          /* use the load events below */
+        }
+      }
+      await new Promise((resolve) => {
+        const done = () => resolve();
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      });
+    })
+  );
+
   return Promise.race([
-    Promise.all(
-      imgs.map(
-        (img) =>
-          new Promise((resolve) => {
-            if (img.complete && img.naturalWidth > 0) {
-              resolve();
-              return;
-            }
-            const done = () => resolve();
-            img.onload = done;
-            img.onerror = done;
-          })
-      )
-    ),
+    ready,
     new Promise((resolve) => setTimeout(resolve, timeoutMs)),
   ]);
 }

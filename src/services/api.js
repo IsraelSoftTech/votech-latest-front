@@ -832,6 +832,22 @@ class ApiService {
     return await response.json();
   }
 
+  async getStudentIdCardIds(options = {}) {
+    const params = new URLSearchParams();
+    if (options.academic_year_id != null && options.academic_year_id !== "") {
+      params.set("academic_year_id", String(options.academic_year_id));
+    }
+    if (options.class_name) params.set("class_name", options.class_name);
+    if (options.search) params.set("search", options.search);
+    const query = params.toString();
+    const response = await fetch(
+      `${API_URL}/student-id-cards/ids${query ? `?${query}` : ""}`,
+      { headers: this.getAuthHeaders() }
+    );
+    if (!response.ok) throw new Error("Failed to fetch class ID cards");
+    return await response.json();
+  }
+
   async getStudentIdCardsBatch(ids = []) {
     const response = await fetch(`${API_URL}/student-id-cards/batch`, {
       method: "POST",

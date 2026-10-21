@@ -583,18 +583,64 @@ export default function StudentIdCards() {
 
   const handleDownloadSelected = async () => {
     if (!selected.length) return;
+    setDownloading(true);
     try {
-      const students = await api.getStudentIdCardsBatch(selected);
-      const downloadable = students.filter((s) => s.card_status === "generated");
-      if (!downloadable.length) {
+      const students = await loadCardsForDownload(selected);
+      if (!students.length) {
         toast.warn("No downloadable cards in selection");
         return;
       }
-      await runDownloadJob(downloadable, "grid");
+      await runDownloadJob(students, "grid");
     } catch (e) {
       console.error(e);
       toast.error("Failed to prepare selected cards");
+    } finally {
+      setDownloading(false);
     }
+  };
+
+  const handleDownloadClass = async () => {
+    if (!classFilter || classFilter === "all") return;
+    setDownloading(true);
+    try {
+      const data = await api.getStudentIdCardIds({
+        academic_year_id: yearId,
+        class_name: classFilter,
+        search: debouncedSearch,
+      });
+      const ids = Array.isArray(data?.ids) ? data.ids : [];
+      if (!ids.length) {
+        toast.warn("No generated cards in this class");
+        return;
+      }
+      const students = await loadCardsForDownload(ids);
+      if (!students.length) {
+        toast.warn("No downloadable cards in this class");
+        return;
+      }
+      await runDownloadJob(students, "grid");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to download this class");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const loadCardsForDownload = async (ids) => {
+    const students = [];
+    const chunkSize = 20;
+    for (let index = 0; index < ids.length; index += chunkSize) {
+      const part = await api.getStudentIdCardsBatch(ids.slice(index, index + chunkSize));
+      if (Array.isArray(part)) students.push(...part);
+    }
+    return students
+      .filter((student) => student.card_status === "generated")
+      .sort((a, b) =>
+        String(a.full_name || "").localeCompare(String(b.full_name || ""), undefined, {
+          sensitivity: "base",
+        })
+      );
   };
 
   const handleBackfill = async () => {
@@ -694,6 +740,17 @@ export default function StudentIdCards() {
               <FaDownload />
               Download selected ({selectedPrintCount})
             </button>
+            {classFilter !== "all" && (
+              <button
+                type="button"
+                className="sidc-btn sidc-btn-primary"
+                onClick={handleDownloadClass}
+                disabled={downloading}
+              >
+                <FaDownload />
+                Download {classFilter}
+              </button>
+            )}
           </div>
         </header>
 
